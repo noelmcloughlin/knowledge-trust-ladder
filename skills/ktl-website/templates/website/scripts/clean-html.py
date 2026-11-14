@@ -2,21 +2,21 @@
 
     python scripts/clean-html.py <site folder> <mark>
 
-Hugo writes what each repository file renders to between two comments that
-carry the build's mark, which changes with every build, so no file can fake
-one. Within them, a tag GitHub allows in a README keeps the attributes it
-allows, with the class, id, data-* and aria-* attributes the site's own
+Hugo writes the HTML each repository file renders to between two comments
+that carry the build's mark, which changes with every build, so no file can
+fake one. Within them, a tag GitHub allows in a README keeps the attributes
+it allows, with the class, id, data-* and aria-* attributes the site's
 Markdown rendering writes, and a style that only aligns a table's cell. An
 address that is not http, https, mailto, a path or a fragment is dropped.
 Any other markup is shown as text, so the reader sees it and nothing in it
-runs, and each is named on the log. Comments go. Every element is closed,
-so nothing a file writes can reach the page around it. The Python standard
-library alone does this; the page's Content-Security-Policy stays as a
-second guard.
+runs, and each is named on the log. Comments are dropped. Every element is
+closed, so nothing a file writes can reach the page around it. The page's
+Content-Security-Policy stays as a second guard, and the script needs only
+the Python standard library.
 
 Exits 1 when a page holds a mark with no end, as it does when an unclosed
 comment or script swallowed the rest of the page, or when no page holds a
-mark at all.
+mark.
 """
 
 from __future__ import annotations

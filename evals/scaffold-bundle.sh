@@ -1,21 +1,17 @@
 #!/usr/bin/env bash
-# Copies this repository's knowledge bundle into the empty directory an eval
-# run starts in, so the docent has something to answer from. Each case's
-# scaffold.sh runs this one script, so the copy is written once.
+# Copy this repository's knowledge bundle into the empty directory an eval
+# run starts in. Each case's scaffold.sh runs this script.
 #
-# `claude plugin eval` runs a case's scaffold only when --scaffold is passed,
-# before the agent starts, as the operator and outside the agent's sandbox,
-# in the run's empty working directory, with a minimal environment: PATH, a
-# temporary HOME and TMPDIR. It has 120 seconds, and a non-zero exit scores
-# the run 0 with the message. Nothing in that environment names the
-# repository, so it is found from this script's own path, under evals/.
+# `claude plugin eval` runs a scaffold only under --scaffold: before the
+# agent starts, as the operator and outside the agent's sandbox, in the run's
+# empty working directory, with only PATH, a temporary HOME and TMPDIR set.
+# It has 120 seconds, and a non-zero exit scores the run 0 with the message.
+# Nothing there names the repository, so this script finds it from its own
+# path, under evals/.
 #
-# Only the bundle goes in: .lokf/knowledge/, and the knowledge_bundle
-# doorway link beside it, pointing where the repository's points. tests/
-# names each question's expected concept and evals/ holds the cases and
-# graders, so neither goes in, and nor does .lokf/feedback.md, which holds
-# other readers' reports. The agent under test sees the bundle a reader
-# would, and no answers.
+# Only .lokf/knowledge/ and the knowledge_bundle link go in. tests/, evals/
+# and .lokf/feedback.md stay out, since they hold the expected concepts, the
+# graders and other readers' reports.
 set -euo pipefail
 
 repo="$(cd "$(dirname "$0")/.." && pwd -P)"

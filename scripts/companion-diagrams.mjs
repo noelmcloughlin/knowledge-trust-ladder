@@ -1,23 +1,22 @@
 #!/usr/bin/env node
-// Regenerates the Archify companions of this repository's figures.
-//
-// A companion is a traditional flow diagram of a figure in .assets/, for a
-// reader who wants one beside the hand-made figure. Its source is an Archify
-// candidate, .assets/companions/<name>.archify.json. This script renders it
-// with the archify skill installed on this machine, exports the diagram in the
-// light and the dark theme through Archify's own viewer code, and writes
+// Regenerates the Archify companions of this repository's figures. A
+// companion is a traditional flow diagram of a hand-made figure in .assets/,
+// for a reader who wants one beside it. The script renders its source, an
+// Archify candidate in .assets/companions/<name>.archify.json, with the
+// archify skill installed on this machine, exports it in the light and the
+// dark theme through Archify's viewer code, and writes
 // .assets/companions/<name>.svg and <name>-dark.svg.
 //
 // Each export gains a band above the diagram with the KTL brand block and the
-// diagram's title. It loses the background grid that Archify's SVG export
-// keeps by mistake. Its connector labels are set in bold, which grows no label
-// because the font is monospaced. It opens 25 per cent larger where Archify
-// draws connector labels at 8 px, and it carries Archify's MIT notice.
+// diagram's title, and carries Archify's MIT notice. It loses the background
+// grid that Archify's SVG export keeps by mistake. Its connector labels are
+// bold, which makes no label wider, since the font is monospaced. It opens 25
+// per cent larger where Archify draws connector labels at 8 px.
 //
-// A maintainer runs it by hand when a figure's subject changes, and commits the
-// result. No workflow runs it, and no skill calls Archify. Archify's own
-// receipts hold local paths, so they stay in a temporary folder that is removed
-// afterwards.
+// A maintainer runs it by hand when a figure's subject changes, and commits
+// the result. No workflow runs it, and no skill calls Archify. Archify's
+// receipts hold local paths, so they stay in a temporary folder that is
+// removed afterwards.
 //
 // Usage: node scripts/companion-diagrams.mjs [--archify <dir>] [<name>...]
 //   <name>     a candidate's name without .archify.json; default: every one

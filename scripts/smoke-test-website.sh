@@ -1,21 +1,20 @@
 #!/usr/bin/env bash
 # Copies the ktl-website templates into a throwaway host built from the
-# sidecar's own dummy skeleton, as the skill's Steps 1 to 4 would. It builds
+# sidecar's dummy skeleton, as the skill's Steps 1 to 4 would. It builds
 # the site twice: once with a README, docs pages, a changelog, figures, a
 # LinkML schema, retellings, the federation workflow, a mirrored source and
-# data, and once with none of them. No setting names any of those: the site must find each, and show
-# none of what is not there. So both shapes of host are proved before a
-# template change reaches one. This repository's own site proves a fuller
-# site.toml; this proves a bundle that is not this repository's.
+# data, and once with none of them. No setting names any of those: the site
+# must find each, and show none of what is not there. This repository's own
+# site proves a fuller site.toml, and this test proves a bundle that is not
+# this repository's.
 #
 # Usage: scripts/smoke-test-website.sh [--keep]   (--keep leaves the host behind)
 # Needs: uv, git and python3, and the network for `uv lock`, for Hugo and
 # Pagefind from PyPI, and for the two libraries the site fetches once.
 #
-# The host's toolkit is resolved as of the newest file this repository's own
-# .lokf/uv.lock took, never as of today. A release uploaded since then could
-# otherwise fail the test before anyone relocks here: wrapt 2.5.1 reached
-# PyPI with wheels for CPython 3.10 and 3.11 only, and broke every run.
+# The host's toolkit is resolved as of the newest upload in this repository's
+# .lokf/uv.lock, never as of today, so a release uploaded since then cannot
+# fail the test before anyone relocks here.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -98,8 +97,9 @@ MD
   # shellcheck disable=SC2016 # literal backticks: a Markdown code fence
   printf '# Architecture\n\nHow the platform is built.\n\n> ```mermaid title="The platform"\n> flowchart LR\n>   web --> api\n> ```\n' > docs/architecture.md
   # A docs folder as an mkdocs site leaves it: an index.md, a folder with one
-  # of its own, a figure, a page with a frontmatter title that tries to move
-  # itself, and the templates and pages gen-doc keeps there, which are not pages.
+  # of its own, and a figure. It also holds a page whose frontmatter gives its
+  # title and tries to move it, and the templates and pages gen-doc keeps
+  # there, which are not pages.
   mkdir -p docs/how-to docs/img docs/templates-linkml docs/elements .assets
   printf '# Acme docs\n\nWhere to start.\n' > docs/index.md
   printf '# How-to guides\n\nTask by task.\n' > docs/how-to/index.md

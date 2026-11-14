@@ -33,14 +33,14 @@ scripts/prepare.sh
 # Links to repository files name the commit the site was built from, or the
 # branch where there is no git.
 if ref=$(git -C "$here/.." rev-parse HEAD 2>/dev/null); then export HUGO_PARAMS_REF=$ref; fi
-# The preview server's index lives here. A build never publishes it.
+# A build never publishes static/pagefind, the preview server's index.
 rm -rf static/pagefind .preview
 
 case "${1:-}" in
   "")
-    # The flag removes what an earlier build left in dist/. It is not set in
-    # hugo.toml, where a running preview server would act on it too. The
-    # mark, new each build, sets off each page's raw HTML for clean-html.py.
+    # --cleanDestinationDir removes what an earlier build left in dist/. It is
+    # not set in hugo.toml, where a running preview server would act on it too.
+    # The mark, new each build, sets off each page's raw HTML for clean-html.py.
     mark=$("${tool[@]}" python -c 'import secrets; print(secrets.token_hex(12))')
     HUGO_PARAMS_RAWMARK=$mark "${hugo[@]}" --gc --minify --cleanDestinationDir
     "${tool[@]}" python scripts/clean-html.py dist "$mark"

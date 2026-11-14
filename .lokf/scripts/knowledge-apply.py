@@ -6,61 +6,51 @@
 # exclude-newer = "2025-10-01T00:00:00Z"
 # ///
 # The pen, the librarian's only way to write the bundle. ktl-librarian
-# describes each change to the bundle as an operation in .lokf/patch.yaml, and
-# this script, run through knowledge-apply.sh, checks every operation and
-# writes the files. The agent never edits .lokf/knowledge/ itself, so what
-# reaches the bundle is what this script allows. It:
+# describes each change as an operation in .lokf/patch.yaml, and this script,
+# run through knowledge-apply.sh, checks every operation and writes the files.
+# Nothing is written unless every operation passes. The script:
 #   - stamps `generated` from the clock;
 #   - keeps a concept's description and its two index bullets equal;
 #   - files each log line under the day's heading, once however many
-#     operations give the same line;
+#     operations give it;
 #   - writes a bare web address in a log line or an open question as an
-#     autolink, <https://...>, which Markdown linters ask for;
-#   - moves a feedback entry an operation says it handled out of feedback.md
-#     and into the ledger of questions readers asked, ten to a patch at most;
+#     autolink, <https://...>;
+#   - moves each feedback entry an operation handled out of feedback.md and
+#     into the ledger of questions readers asked, ten to a patch at most;
 #   - refuses an operation that would write a `human:` actor, rewrite text a
 #     person wrote, or delete a concept a person confirmed or left a note on;
-#   - refuses a relation this patch adds that names no concept of the bundle,
+#   - refuses a relation the patch adds that names no concept of the bundle,
 #     and the deletion of a concept another still relates to;
 #   - refuses a patch whose concepts `lokf validate` rejects, with --dry-run
-#     too, when the sidecar's .venv holds the toolkit, and says when it could
-#     not check them. A `sources[].excerpt` is looked for in its local file
-#     in the same run, so a quote the file does not hold is never written;
+#     too, when the sidecar's .venv holds the toolkit, and says when it cannot
+#     check them; that check also refuses a `sources[].excerpt` its local file
+#     does not hold;
 #   - refuses an excerpt that is empty or longer than 500 characters.
-# Nothing is written unless every operation passes.
 #
-# Two things hold for every concept it writes, whatever the operations were.
-# A person's record is the same after as before: each `human:` event and each
-# note in a person's name, read as knowledge-provenance.sh --unattended reads
-# them. And a frontmatter value the operation did not name keeps the text the
-# file held. YAML reads `1.10`, `0123456`, `12:30:00`, `yes` and an unquoted
-# time as a number, a boolean or a date. Written back from that, they would
-# read `1.1`, `42798`, `45000`, `true` and a time in another shape.
+# Every concept it writes keeps a person's record as it was: each `human:`
+# event and each note in a person's name, as knowledge-provenance.sh
+# --unattended reads them. A frontmatter value that no operation names keeps
+# the text the file held. YAML would read it as a number, a boolean or a
+# date, and write `1.10` back as `1.1`, `0123456` as `42798`, `12:30:00` as
+# `45000`, `yes` as `true` and an unquoted time in another shape.
 #
-# `--format` prints the patch file's shape. So the format comes from the
-# script that enforces it, and a host needs no particular release of the skill
-# to learn it. ktl-librarian's references/patch.md carries the same block, and
-# the repository contract checks that the two are equal.
+# `--format` prints the patch file's shape, so a host learns the format from
+# the script that enforces it, whatever release of the skill it has.
 #
-# A patch may carry one `log` line of its own. It stands in for the line of
-# every operation that gives none, so a change made the same way to many
-# concepts is logged once rather than once for each. An operation's own `log`
-# still wins.
+# A patch may carry one `log` line, which stands for the line of every
+# operation that gives none, so a change made alike to many concepts is
+# logged once.
 #
 # A patch may also carry `handoff`: at most ten lines for the person who
-# reviews the change, in the librarian's own words. They are never written to
-# the bundle. The script accepts each only as one line of printable text,
-# with no backtick, and prints them; `--handoff <file>` also writes them there, which
-# is how the scheduled wrapper passes them to the pull request. A reader's
-# question, which goes to the ledger, is cleaned the same way.
+# reviews the change, in the librarian's own words, never written to the
+# bundle. The script prints them, and `--handoff <file>` writes them to the
+# file that the scheduled wrapper passes to the pull request.
 #
 # The dependency block above names one PyYAML release, and `exclude-newer`
-# takes no file uploaded after its date, so every run installs the files
-# that were there when the pin was set. Behind a mirror with no upload
-# times, knowledge-apply.sh lifts the date but keeps the version. Move the
-# two together, here and in knowledge-conventions.py. knowledge-apply.sh
-# runs the script with the sidecar's .venv first, which holds what uv.lock
-# pins.
+# takes no file uploaded after its date. Move the two together, here and in
+# knowledge-conventions.py. Behind a mirror with no upload times,
+# knowledge-apply.sh lifts the date but keeps the version. The sidecar's
+# .venv, which it tries first, holds what uv.lock pins instead.
 #
 # Operations (each a mapping under `ops:` with `op:` and `path:`):
 #   create    frontmatter + body for a concept that does not exist yet
@@ -71,8 +61,7 @@
 #   recheck   this run's own `verified` event, replacing its previous one
 #   delete    the concept, its index bullets, and a log line saying why
 #   reindex   both index bullets re-derived from the frontmatter; the concept itself is not touched
-# An operation may carry only the keys it reads, which KEYS below lists. Any
-# other key is refused by name, so no key is dropped without a word.
+# An operation may carry only the keys it reads, which KEYS below lists.
 #
 # Usage: knowledge-apply.py [--dry-run [--diff]] [--keep] [--handoff <file>] --root <repo-root> [<patch-file>]
 #        knowledge-apply.py --format
@@ -111,14 +100,14 @@ LOOSE_NOTE_RE = re.compile(r"^\s*[-*+]\s+\d{4}-\d{2}-\d{2}\s*,\s*human:")
 # A person's note as knowledge-report.sh lists one, under an open-questions heading outside a code fence.
 SEEN_NOTE_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, human:[^ ]*: ")
 ACTOR_RE = re.compile(r"process:\S+")
-# The curator's own actor, which stands for a person who could not sign in. A
+# The curator's actor, which stands for a person who could not sign in. A
 # patch under it would write that person's send-back and events.
 CURATOR_ACTOR = "process:ktl-curator"
 # Matched case-insensitively, and including the event-internal keys, so a
 # patch cannot write a top-level `by: human:...` or a `Verified:` that a line
 # reader would skip but a person, or another parser, could read as provenance.
-# `revised` and `refuted` are the event slots LOKF 0.9.0 added, each with an
-# actor of its own, so they are the script's and the curator's like the rest.
+# `revised` and `refuted`, the event slots of LOKF 0.9.0, each carry an actor,
+# so they belong to the script and the curator like the rest.
 DENIED_SET = {"id", "type", "generated", "verified", "revised", "refuted", "status", "stale_after", "timestamp", "by", "at", "revision"}
 DENIED_CREATE = {"generated", "verified", "revised", "refuted", "status", "stale_after", "timestamp", "by", "at", "revision"}
 RELATED_START, RELATED_END = "<!-- lokf:related -->", "<!-- /lokf:related -->"
@@ -150,11 +139,10 @@ FEEDBACK_ENTRIES = 10  # the reader entries one patch may handle; the rest wait 
 # and the combining grapheme joiner, among others. knowledge-ingest.py holds
 # the same list.
 IGNORABLE = re.compile("[\u034f\u115f\u1160\u17b4\u17b5\u180b-\u180f\u2065\u3164\ufe00-\ufe0f\uffa0\ufff0-\ufff8\U000e0000-\U000e0fff]")
-# The keys each operation reads besides `op` and `path`. The script refuses
-# any other key, naming it, because a key it skipped would pass a dry run and
-# change nothing. A `set` on a rewrite was once dropped that way. Every
-# operation that writes a log line reads the keys in LOGGED, and every one
-# that stamps `generated` reads `revision`.
+# The keys each operation reads besides `op` and `path`. Any other key is
+# refused by name, because a key the script skipped would pass a dry run and
+# change nothing. Every operation that writes a log line reads the keys in
+# LOGGED, and every one that stamps `generated` reads `revision`.
 LOGGED = ("log", "from_feedback", "asked")
 KEYS = {
     "create": ("frontmatter", "body", "revision", *LOGGED),
@@ -366,7 +354,7 @@ class Dumper(yaml.SafeDumper):
         return '"' if style == "'" else style
 
     def increase_indent(self, flow=False, indentless=False):
-        # PyYAML writes a list under a key with its dashes at the key's own
+        # PyYAML writes a list under a key with its dashes at the key's
         # column, as the YAML specification's examples do. People indent it,
         # and yamllint's default rules reject the other form, so every list
         # is indented under its key.
@@ -413,7 +401,7 @@ def one_line(value, what: str) -> str:
 
 
 def shown(text: str) -> str:
-    """The text without the characters no reader sees: a control character, a format character such as a zero-width space, a soft hyphen, a bidirectional control or a tag character, or another character Unicode calls default ignorable, such as a variation selector. knowledge-ingest.py drops the same characters, except the two joiners, which it keeps."""
+    """The text without the characters no reader sees: control and format characters, such as a zero-width space, a soft hyphen, a bidirectional control or a tag character, and the rest Unicode calls default ignorable, such as variation selectors. knowledge-ingest.py drops the same characters but keeps the two joiners."""
     return " ".join("".join(char for char in text if unicodedata.category(char) not in ("Cc", "Cf") and not IGNORABLE.match(char)).split())
 
 
@@ -430,7 +418,7 @@ def human_events(value, slot: str):
 
 
 def seen_notes(body: str) -> list:
-    """The notes in a person's name that knowledge-report.sh lists, read as it reads a body: a line of three backticks or tildes opens or closes a fence, a heading starts or ends the open questions, and a note counts under that heading outside a fence."""
+    """The notes in a person's name that knowledge-report.sh lists, read as it reads a body. A line of three backticks or tildes opens or closes a fence, a heading starts or ends the open questions, and a note counts under that heading outside a fence."""
     notes, fence, inq = [], False, False
     for line in body.split("\n"):
         line = line.rstrip("\r")
@@ -446,7 +434,7 @@ def seen_notes(body: str) -> list:
 
 
 def person_record(text: str | None) -> Counter:
-    """What a concept holds in a person's name. Each mapping in its frontmatter whose `by` names a person, under any key: `generated` and `verified`, the `revised` and `refuted` of LOKF 0.9.0, an exclusion a person decided, and a key spelt to look like one of them. Each line a person's note would be, read over the whole file as knowledge-provenance.sh --unattended reads it, and in the looser spellings a Markdown reader shows the same way. And each note the report lists, so a note that is still in the file and no longer listed counts as gone. A concept this script cannot read as a mapping still has its notes counted."""
+    """What a concept holds in a person's name. Each mapping in its frontmatter, under any key, whose `by` names a person: a `generated`, `verified`, `revised` or `refuted` event, an exclusion a person decided, or a key spelt like one of them. Each line that would be a person's note, read over the whole file as knowledge-provenance.sh --unattended reads it, and in the looser spellings a Markdown reader shows alike. Each note the report lists, so a note still in the file but no longer listed counts as gone. A concept that cannot be read as a mapping still has its notes counted."""
     record: Counter = Counter()
     if text is None:
         return record
@@ -1098,12 +1086,12 @@ class Bundle:
 
     @staticmethod
     def link_ref(link: str) -> "re.Pattern[str]":
-        """A Markdown link that points at the concept: its target led, where a host wrote it so, by `./`, and followed by a `#fragment`. A bare `]({link})` match would miss both forms and leave the link dangling after a delete."""
+        """A Markdown link to the concept, with or without a leading `./` and a `#fragment`. A bare `]({link})` match would miss both forms and leave the link dangling after a delete."""
         return re.compile(r"\]\((?:\./)?" + re.escape(link) + r"(?:#[^)]*)?\)")
 
     @staticmethod
     def unlink(line: str, link: str, path: str, where: str) -> str:
-        """The line with the concept's link taken out of a comma-separated list of links, where a link stands next to it. A link anywhere else, in a sentence say, is refused: rewording the host's own text is not this script's to do. The `./` lead and the `#fragment` are matched here as link_ref matches them, so neither form is left behind."""
+        """The line with the concept's link taken out of a comma-separated list of links, where a link stands next to it. A link anywhere else, in a sentence say, is refused: the host's text is not this script's to reword. The `./` and the `#fragment` are matched as link_ref matches them, so neither form is left behind."""
         item = r"\[[^\]]*\]\((?:\./)?" + re.escape(link) + r"(?:#[^)]*)?\)"
         after_link = re.compile(r"(\]\([^)]*\)), " + item)
         before_link = re.compile(item + r", (?=\[[^\]]*\]\()")
@@ -1327,27 +1315,23 @@ def resource_root(lokf_dir: Path) -> Path:
 
 
 def schema_findings(root: Path, files: dict) -> tuple:
-    """What `lokf validate` says of the concepts about to be written.
+    """What `lokf validate` says of the concepts about to be written, as the findings and a note.
 
     The rules above check what an operation may change, not the shape the
-    schema gives a slot, so a `sources` entry written as a bare string would
-    pass them and fail the validator after the write. The concepts are staged
-    in a folder inside .lokf/, so the validator finds the sidecar's
-    pyproject.toml as it does for the bundle. The validator runs with the
-    domain vocabulary the justfile names, from that file's folder, as the
-    justfile's recipes run it. The toolkit is the sidecar's .venv, which needs
-    no network. The check is skipped, and the note says why, when the .venv
-    holds no toolkit, when the toolkit cannot run, or when the justfile's
-    schema line is not in the form the release reads. Returns the findings
-    and a note.
+    schema gives a slot: a `sources` entry written as a bare string passes
+    them and fails the validator. The concepts are staged in a folder inside
+    .lokf/, so the validator finds the sidecar's pyproject.toml. It runs from
+    the sidecar's .venv, which needs no network, with the domain vocabulary
+    the justfile names, from that file's folder, as the justfile's recipes
+    run it. The check is skipped, and the note says why, when the .venv holds
+    no toolkit, the toolkit cannot run, or the justfile's schema line is not
+    in the form the release reads.
 
-    When a concept about to be written carries a `sources[].excerpt`, the
-    validator also looks for each one in its local file, as the gate's
-    `just lokf-check-refs` does, so a quote the file does not hold is refused
-    here and never reaches the bundle. An excerpt on a URL is counted and
-    not fetched. The flag is passed only then: a toolkit before lokf 0.9.0
-    knows neither the flag nor the key.
-
+    When a concept carries a `sources[].excerpt`, the validator also looks for
+    each excerpt in its local file, as the gate's `just lokf-check-refs` does,
+    and counts an excerpt on a URL without fetching it. `--check-excerpts` is
+    passed only then, since a toolkit older than lokf 0.9.0 knows neither the
+    flag nor the key.
     """
     lokf_dir = root / ".lokf"
     exe = next((p for p in (lokf_dir / ".venv" / "bin" / "lokf", lokf_dir / ".venv" / "Scripts" / "lokf.exe") if p.is_file()), None)
@@ -1413,13 +1397,13 @@ def main(argv: list[str]) -> int:
     if not a.root:
         print("--root <repo-root> is required", file=sys.stderr)
         return 2
+    if a.diff and not a.dry_run:
+        print("--diff goes with --dry-run: it shows a change before it is written", file=sys.stderr)
+        return 2
     # In the agent's step of a scheduled run the wrapper sets this, and applies
     # the patch file itself once the agent has finished. A write here would
     # delete the file and leave a bundle the wrapper refuses, so the pen only
     # checks, and says so.
-    if a.diff and not a.dry_run:
-        print("--diff goes with --dry-run: it shows a change before it is written", file=sys.stderr)
-        return 2
     deferred = os.environ.get("KNOWLEDGE_PEN_DRY_RUN_ONLY") == "1"
     if deferred and not a.dry_run:
         print("refused: this is the agent's step of a scheduled run, where the pen only checks the patch file (--dry-run). "
@@ -1483,12 +1467,10 @@ def main(argv: list[str]) -> int:
                 findings.append(f"op {n}: {exc}")
             except (OSError, UnicodeDecodeError) as exc:
                 findings.append(f"op {n}: {exc}")
-        # Whatever the operations were, a concept about to be written holds
-        # the same person's record as the file did. Each refusal above guards
-        # one way in. This compares the result, so a body that brings its own
-        # `## Open questions` section, a note spelt with an escaped line
-        # break and a second heading placed above the real one are all
-        # refused here.
+        # Each refusal above guards one way in. This compares a person's
+        # record in each concept before and after, so it also refuses a body
+        # that brings its own `## Open questions` section, a note spelt with
+        # an escaped line break, or a second heading above the real one.
         if not findings:
             for path, c in bundle.concepts.items():
                 if c.touched:
@@ -1552,10 +1534,9 @@ def main(argv: list[str]) -> int:
             if a.diff:
                 print_diff(file, rel, text)
     else:
-        # Write every changed file to a temporary file beside it first. Only
-        # once all of them are written does the run put them in place, so a
-        # write that fails (a read-only file, a full disk) stops the run with
-        # the bundle untouched, rather than leaving it half applied.
+        # Write each changed file to a temporary file beside it, and put them
+        # in place only once all are written, so a write that fails (a
+        # read-only file, a full disk) leaves the bundle untouched.
         staged: dict[Path, str] = {}
         try:
             for file, text in writes:

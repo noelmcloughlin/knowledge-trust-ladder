@@ -5,13 +5,12 @@
 // bundle in a room of its own, and `&iri=<iri>` names a concept there, since
 // two bundles may each hold a concept of one id.
 
-// The layout. The concept with the most relations goes in the middle and the
-// rest go on rings round it, in order of how many relations each has. Round
-// a ring, each concept sits in the direction of the concepts it is related
-// to, so an edge runs outward to its neighbours and related concepts end up
-// side by side. No force is simulated: the same graph draws the same way
-// each time, and a graph of thousands of concepts draws at once. Returns
-// the radius of the outermost ring.
+// The layout. The concept with the most relations goes in the middle, and the
+// rest go on rings round it in order of how many relations each has. Round a
+// ring, each concept sits in the direction of the concepts it is related to,
+// so related concepts end up side by side. No force is simulated, so the same
+// graph draws the same way each time, and a graph of thousands of concepts
+// draws at once. Returns the radius of the outermost ring.
 function rings(nodes, room = 110, gap = 120) {
   const byDegree = nodes.sort((a, b) => b.data("degree") - a.data("degree") || (a.id() < b.id() ? -1 : 1)).toArray();
   const ring = [[]];

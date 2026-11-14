@@ -1,14 +1,9 @@
 #!/usr/bin/env bash
-# Repository-contract checks for the knowledge-trust-ladder distribution
-# repo. Separate from specification/Markdown checks (workflows/validate.yml
-# runs those as their own jobs) so failures are easy to diagnose.
-# The behavioural tests of the sidecar scripts and the prose checker, on
-# throwaway bundles and repositories, are under tests/ and run with pytest
-# (tests/conftest.py says how). Until 2026-10-07 they were checks 8, 11 (its
-# synthetic bundle), 11c, 12 (most of it), 12a, 13, 13a, 18 and 19 (most of
-# each), 20, 20a and 22 here. Each number stays, with a line saying where its
-# check went, so a changelog entry or a bundle concept that names one still
-# points somewhere.
+# Repository-contract checks for knowledge-trust-ladder. validate.yml runs
+# the specification and Markdown checks as jobs of their own, and pytest runs
+# the behavioural tests under tests/ (tests/conftest.py says how). A check
+# that moved to tests/ keeps its number here, with a line saying where it
+# went, because changelog entries and bundle concepts cite the numbers.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -53,10 +48,9 @@ for dir in "${expected_dirs[@]}"; do
 done
 
 # 3b. Each skill states what it needs in the spec's optional `compatibility`
-#     field (agentskills.io/specification: 1-500 characters). So git, a POSIX
-#     shell, uv or an authenticated identity is declared where every installer
-#     shows it, not discovered after a report has offered a step. (The curator
-#     used to name `gh` only inside its Step 2.)
+#     field (agentskills.io/specification: 1-500 characters), which every
+#     installer shows. So a need for git, a POSIX shell, uv or an
+#     authenticated identity is known before a step asks for it.
 for dir in "${expected_dirs[@]}"; do
   skill_file="$dir/SKILL.md"
   [[ -f "$skill_file" ]] || continue
@@ -73,8 +67,8 @@ done
 # 3c. Catalogs have no tag field: `gh skill search` matches name and
 #     description, skills.sh matches file text. So each description ends in a
 #     `Keywords:` list, inside the spec's 1024 characters. The Claude Code
-#     plugin manifest and its marketplace entry carry one keyword list between
-#     them, written on one line in each so the two can be compared.
+#     plugin manifest and its marketplace entry carry the same keyword list,
+#     on one line in each so the two can be compared.
 for dir in "${expected_dirs[@]}"; do
   skill_file="$dir/SKILL.md"
   [[ -f "$skill_file" ]] || continue
@@ -105,15 +99,14 @@ else
   err "expected exactly ${#expected_dirs[@]} SKILL.md files under skills/, found ${#all_skill_md[@]}: ${all_skill_md[*]}"
 fi
 
-# 5. Relative references remain valid after the complete skill directory is
-#    copied, that is, resolved from each linking file's own directory. This
-#    is exactly how an installer copies one skill/ subtree at a time.
+# 5. Each relative link resolves from its file's directory, so it still works
+#    when an installer copies one skill/ subtree at a time.
 say ""
 say "Checking relative link targets..."
 broken=0
 while IFS= read -r file; do
-  # Blank out fenced code blocks first (keeping line numbers stable): example
-  # links inside ``` fences are documentation of syntax, not real links.
+  # Blank out fenced code first, keeping line numbers: a link inside ```
+  # fences is an example of syntax, not a real link.
   while IFS=: read -r line match; do
     link="${match#\](}"
     link="${link%)}"
@@ -149,14 +142,10 @@ else
   say "shellcheck not installed locally - CI runs it; skipping here (${#scripts[@]} script(s) found: ${scripts[*]:-none})"
 fi
 
-# 7. The LOKF class vocabulary is enumerated as prose in two files, with no
-#    generator behind it. Rule 3 in ktl-librarian/SKILL.md is the canonical
-#    list; the other enumeration, and any count a page still states, must
-#    agree with it. Prose elsewhere says "small" rather than a number: the
-#    count is the schema's to change, not this repository's.
-#    (On 2026-09-14 Rule 3 said fourteen and omitted Role while README.md and
-#    docs/for-the-curious.md said fifteen, and nobody noticed until a person
-#    read both. This check is why that cannot happen twice.)
+# 7. Two files list the LOKF classes in prose, with no generator behind them.
+#    Rule 3 in ktl-librarian/SKILL.md is the canonical list, and the other
+#    list and any count a page states must agree with it. Other prose says
+#    "small" rather than a number, since the count is the schema's to change.
 rule3_line="$(grep -m1 '^3\. \*\*Use a class from the LOKF type vocabulary' skills/ktl-librarian/SKILL.md || true)"
 if [[ -z "$rule3_line" ]]; then
   err "could not find Rule 3's class list in skills/ktl-librarian/SKILL.md"
@@ -204,20 +193,17 @@ else
   [[ "$bad_counts" -eq 0 ]] && ok "every stated class count agrees with Rule 3 ($canonical_count)"
 fi
 
-# 7c. The class list is the schema's to change, so Rule 3's enumeration is
-#     held to the classes the toolkit's schema declares at the lokf floor the
-#     templates pin. `lokf vocab --all --json` lists every class with an
-#     `is_type_value` flag, and the ones with it set are the types a concept
-#     may name. The toolkit runs through uvx at that floor, so the comparison
-#     is against the schema a host installs, not whatever this machine holds.
-#     Without uv the check fails, as check 11's does.
+# 7c. Rule 3's list is held to the classes the schema declares at the lokf
+#     floor the templates pin. `lokf vocab --all --json` marks each type a
+#     concept may name with `is_type_value`. uvx runs the toolkit at that
+#     floor, so the check reads the schema a host installs, not whatever this
+#     machine holds. Without uv the check fails, as check 11's does.
 #
 # 7d. knowledge-report.sh counts how many concepts rely on each concept from
-#     a fixed list of relation fields. The schema ranges every relation slot
-#     over Concept, so that list is held to the slots the schema declares,
-#     apart from the two structural ones: `concepts`, the bundle's own list,
-#     and `target`, a reified relation's. The script runs without the toolkit
-#     and cannot read the schema at run time, so the list is checked here.
+#     a fixed list of relation fields. It runs without the toolkit and cannot
+#     read the schema, so the list is held here to the slots the schema ranges
+#     over Concept, apart from two structural ones: `concepts`, the bundle's
+#     list, and `target`, a reified relation's.
 say ""
 say "Checking the class list and the relation fields against the LOKF schema..."
 lokf_floor="$(sed -n 's/.*"lokf\[build\]>=\([0-9.]*\)".*/\1/p' "$templates/pyproject.toml" | head -n 1)"
@@ -261,24 +247,19 @@ else
   fi
 fi
 
-# 8. The layout tests, which ran here until 2026-10-07, are
-#    tests/test_layouts.py: the wrapper, the three workflows and the lokf-link
-#    recipe, with and without the doorway link. validate.yml runs them in a
-#    job of their own.
+# 8. The layout tests are in tests/test_layouts.py: the wrapper, the three
+#    workflows and the lokf-link recipe, with and without the doorway link.
 
-# 9. The sibling repositories deep-link into files here by URL, as
-#    github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/<path> or as the
-#    site's persistent address, w3id.org/ktl/docs/<page>/ and
-#    w3id.org/ktl/knowledge/<id>, and their link checks follow those for real.
-#    Moving or renaming one of these paths passes every check in this repo,
-#    and breaks the build in the sibling that links to it: the two Obsidian
-#    plugins, ktl-federation, ai-linkmo or gist. (The mirror image
-#    happened on 2026-09-14: the curator referenced domain-vocabulary.md while it
-#    was still on a branch here, and its build failed with a 404 until this
-#    side merged. CONTRIBUTING.md carries the ordering rule; this check carries
-#    the paths.) An entry that names a heading, as path#anchor, also needs that
-#    heading: on 2026-10-13 the README's sections moved to docs/architecture.md,
-#    and the siblings' links to them still found a page, only not the heading.
+# 9. The sibling repositories link into files here by URL, as
+#    github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/<path> or as
+#    the site's persistent address, w3id.org/ktl/docs/<page>/ and
+#    w3id.org/ktl/knowledge/<id>, and their link checks follow those links.
+#    Moving or renaming one of these paths passes every check here and breaks
+#    the build of the sibling that links to it: the two Obsidian plugins,
+#    ktl-federation, ai-linkmo or gist. An entry that names a heading, as
+#    path#anchor, also needs that heading, since a link can still find its
+#    page after the heading has gone. CONTRIBUTING.md says which side merges
+#    first; this list holds the paths.
 say ""
 say "Checking the paths sibling repositories link into..."
 sibling_paths=(
@@ -337,36 +318,35 @@ for entry in "${sibling_paths[@]}"; do
   fi
 done
 
-# 9a. When the siblings are cloned beside this repo, confirm the list above is
-#     still complete: a sibling that adds a deep link should record the path
-#     here in the same breath, or the check silently stops covering it. CI has
-#     no siblings checked out, so this half only runs locally. The recorded
-#     list is the contract either way.
+# 9a. Where the siblings are cloned beside this repository, check that the
+#     list above records every path they link to, since check 9 does not
+#     cover a link the list lacks. A sibling that adds a link records its
+#     path here in the same change. CI clones no sibling, so this half runs
+#     only locally.
 mapfile -t cloned < <(for s in obsidian-ktl-curator obsidian-ktl-registrar ktl-federation ai-linkmo gist; do
   [[ -d "../$s/.git" ]] && printf '%s\n' "../$s"
 done || true)
 if [[ ${#cloned[@]} -eq 0 ]]; then
   say "      (no sibling clones beside this repo - skipping the completeness cross-check)"
 else
-  # Each sibling installs these skills under .agents/skills (with .claude/skills
-  # symlinked to it), so those trees are copies of this repository. Their
-  # self-links are not a sibling depending on us, and counting them reports
-  # every page the skills link to internally. Skip them, and .venv, which is
-  # only slow. (git-aware greps hide these via .gitignore; plain grep does not.)
+  # Skip .agents and .claude: each sibling installs these skills under
+  # .agents/skills, with .claude/skills a link to it, and the links between
+  # those copies are not a sibling depending on this repository. Skip .venv,
+  # which is only slow. Plain grep, unlike a git-aware one, reads what
+  # .gitignore hides.
   #
-  # A link to a heading is recorded with it, as path#anchor; a heading of the
-  # repository's front page counts as README.md#anchor, apart from GitHub's own
-  # #readme. A w3id.org/ktl address names a file by its page: docs/<page>/ is
+  # A link to a heading is recorded as path#anchor, and one to a heading of
+  # the front page as README.md#anchor, apart from GitHub's #readme. A
+  # w3id.org/ktl address names a file by its page: docs/<page>/ is
   # docs/<page>.md, knowledge/<id> is .lokf/knowledge/<id>.md, and the site's
   # root is the README. A sibling's own namespace under w3id.org/ktl/ is not
-  # a link into this repository and is dropped.
+  # a link into this repository, and is dropped.
   #
-  # A sibling's website build writes copies of its pages under its site's
-  # folder, which git ignores; one quotes a link inside a folded YAML string,
-  # and read as a link it ends in a backslash. A domain host's build writes its workspace
-  # under snapshot/, which git ignores too, and that holds a copy of each
-  # member's bundle, this repository's among them, whose own IRIs would read
-  # as links. Only what the sibling keeps counts.
+  # Skip what a sibling's build writes and git ignores. Its website build
+  # copies its pages under the site's folder, where a link quoted in a folded
+  # YAML string ends in a backslash. A domain host's snapshot/ holds each
+  # member's bundle, this repository's among them, whose IRIs would read as
+  # links.
   mapfile -t linked < <(grep -rHoE 'https://github\.com/noelmcloughlin/knowledge-trust-ladder(/blob/main/[^)"#[:space:]]+)?(#[A-Za-z0-9_-]+)?|https://w3id\.org/ktl/(docs/[a-z0-9.-]+/|knowledge/[a-z0-9-]+(/[a-z0-9-]+)*/?)?(#[A-Za-z0-9_-]+)?' \
     "${cloned[@]}" --include='*.md' --include='*.yaml' --include='justfile' \
     --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.agents \
@@ -395,13 +375,13 @@ fi
 
 # 10. CONTRIBUTING.md is a checklist, not a design log, and SECURITY.md is a
 #     policy, not a threat model. Each rule or surface is a line or two that
-#     links to where its reasoning lives: a code comment, a workflow header,
-#     a page under docs/. A word budget is the one signal every contributor,
-#     person or agent, reliably reads. CONTRIBUTING sits between 700 and 850
-#     across the three repositories, and 1000 is where one has started to
-#     become a design log again. SECURITY sits between 450 and 800, and was
-#     1,400 to 1,900 before docs/threat-model.md took the design, so 900 is
-#     its line. The siblings keep the same budgets in their own checks.
+#     links to its reasoning: a code comment, a workflow header or a page
+#     under docs/. A word budget is the one signal every contributor, person
+#     or agent, reads. CONTRIBUTING sits between 700 and 850 words in the
+#     three repositories, and past 1000 it becomes a design log again.
+#     SECURITY sits between 450 and 800, and was 1,400 to 1,900 before
+#     docs/threat-model.md took the design, so 900 is its line. The siblings
+#     check the same budgets.
 say ""
 say "Checking CONTRIBUTING.md and SECURITY.md stay short..."
 for spec in "CONTRIBUTING.md:1000:a checklist" "SECURITY.md:900:a policy"; do
@@ -418,13 +398,10 @@ done
 #      when the skill starts, and the Agent Skills specification recommends
 #      under 5,000 tokens for it. The detail a step needs goes in
 #      references/, which an agent opens only when a step sends it there.
-#      ktl-librarian's page was halved in #91, from 7,458 words to 3,664, and
-#      three commits added 328 words back within two days. Each budget sits
-#      just above the page's size when this check was added, so an edit that
-#      adds words moves as many into references/. A skill with no budget
-#      fails, so a new skill starts with one. A table's pipes and its
-#      separator row are not words: a table is the densest way to state a
-#      vocabulary, and a plain count taxed it hardest.
+#      Each budget sits just above its page's size, so an edit that adds
+#      words moves as many into references/. A skill with no budget fails. A
+#      table's pipes and separator row are not counted as words, since a
+#      table is the densest way to state a vocabulary.
 say ""
 say "Checking each SKILL.md stays within its word budget..."
 declare -A skill_budget=(
@@ -450,25 +427,21 @@ for dir in "${expected_dirs[@]}"; do
   fi
 done
 
-# 11. This repository runs its own sidecar from the templates, and CI lints
-#     the copies under .github/ and .lokf/scripts/ rather than the templates
-#     themselves (actionlint is pointed at both, ShellCheck scans the tree).
-#     So the copies must stay byte-identical, or a template change is
-#     released unlinted. Among them is knowledge-librarian.yaml, apart from
-#     the values of TRUST_LADDER_SKILLS_REF and TRUST_LADDER_SKILLS_SHA. The
-#     release commit moves the template's pin but may not touch
-#     .github/workflows/, and the install step that reads the pin is skipped
-#     in this repository anyway.
+# 11. This repository runs its own sidecar from the templates, so each copy
+#     under .github/ and .lokf/scripts/ must stay byte-identical to its
+#     template. knowledge-librarian.yaml may differ only in the values of
+#     TRUST_LADDER_SKILLS_REF and TRUST_LADDER_SKILLS_SHA: the release commit
+#     moves the pin in the template but may not touch .github/workflows/, and
+#     the install step that reads the pin is skipped in this repository.
 #
-#     Which copies there are is the sidecar's knowledge-sync.manifest, the
-#     one list the sync script, the preflight and this check read. So the
-#     manifest is checked first. Each template it names must exist, each
-#     always and needs line must name a template it lists, and each file
-#     under the templates' github/, scripts/ and m365/ folders must be in it.
-#     A new workflow or script then cannot be released without a sync for it.
+#     The sidecar's knowledge-sync.manifest is the one list of copies that the
+#     sync script, the preflight and this check read, so it is checked first.
+#     Each template it names must exist, each always and needs line must name
+#     a template it lists, and each file under the templates' github/,
+#     scripts/ and m365/ folders must be in it. So no new workflow or script
+#     is released without a sync.
 #
-#     Then the conventions script runs on this repository's own bundle. What
-#     it reports on a bundle that breaks each rule is tests/test_conventions.py.
+#     Last, knowledge-conventions.sh runs on this repository's bundle.
 say ""
 say "Checking the sidecar's manifest names every template, and nothing else..."
 manifest="$templates/knowledge-sync.manifest"
@@ -501,18 +474,16 @@ done
 
 say ""
 say "Checking the sidecar templates are the copies CI lints..."
-# The skills pin is each repository's own to move, so it is not drift.
+# The skills pin is each repository's to move, so it is not drift.
 unpin() { sed -E -e 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/' -e 's/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/\1COMMIT/' "$1"; }
-# The federation templates are installed on a domain host only (ktl-sidecar
-# Step 5), and this repository's bundle is not a domain. The sync templates
-# bring a host up to a release of this repository, which has nothing to sync
-# itself to. So each of those copies is held to its template only where one
-# exists here; actionlint reads the template itself, tests/test_federation.py
-# runs the federation script from the template, and tests/test_sync.py the
-# sync. Every other copy must be here.
-# The ingest templates serve a host with sources outside its repository,
-# which this one has none of; tests/test_ingest.py runs the script from the
-# template.
+# Three sets of copies may be absent here. The federation templates are for
+# a domain host only (ktl-sidecar Step 5), and this bundle is not a domain.
+# The sync templates bring a host up to a release of this repository, which
+# has nothing to sync to. The ingest templates serve a host with sources
+# outside its repository, and this one has none. Each such copy is held to
+# its template only where it exists: actionlint reads the templates, and
+# tests/test_federation.py, tests/test_sync.py and tests/test_ingest.py run
+# the scripts from them. Every other copy must be here.
 optional_here=" github/knowledge-federation.yaml scripts/knowledge-federate.py domain.yaml github/knowledge-sync.yaml github/knowledge-sync-pull-request.md scripts/knowledge-sync.sh github/knowledge-ingest.yaml github/knowledge-ingest-pull-request.md scripts/knowledge-ingest.sh scripts/knowledge-ingest.py "
 while read -r rule template copy _; do
   src="$templates/$template"; dst="$copy"
@@ -540,15 +511,14 @@ while read -r rule template copy _; do
   esac
 done < <(sed 's/#.*//' "$manifest")
 
-# 11w. The website skill's templates are this repository's own website/ and
-#      its deploy workflow, laid down by the same skill in every host, so the
-#      copies must stay byte-identical, as check 11 holds the sidecar's. Three
-#      files are each host's own once written, this repository's included:
-#      site.toml, README.md and assets/css/custom.css. The README's
-#      placeholders are filled with this repository's values and compared, so
-#      the template and the copy still say the same thing. The reverse holds
-#      too: every tracked file under website/ is a template or one of the
-#      three, so nothing of this repository's site escapes the template.
+# 11w. The website skill installs website/ and its deploy workflow in every
+#      host, this repository included, so the copies here must stay
+#      byte-identical to the templates, as check 11 holds the sidecar's.
+#      Three files belong to each host once written: site.toml, README.md and
+#      assets/css/custom.css. The README template is compared with this
+#      repository's values filled in. Every tracked file under website/ must
+#      be a template or one of the three, so a host gets each file of this
+#      site.
 say ""
 say "Checking the website skill's templates are this repository's own site..."
 wtemplates="skills/ktl-website/templates"
@@ -571,8 +541,8 @@ if cmp -s "$wtemplates/github/knowledge-website.yaml" ".github/workflows/knowled
 else
   err ".github/workflows/knowledge-website.yaml differs from $wtemplates/github/knowledge-website.yaml - copy one over the other, as check 11 says"
 fi
-# The Knowledge Trust Ladder logo a host's site shows when its site.toml
-# names no logo is a copy of this repository's own, so the two cannot drift.
+# The logo a host's site shows when its site.toml names none is a copy of
+# this repository's, and must stay one.
 for logo in knowledge-trust-ladder-logo.svg knowledge-trust-ladder-logo-dark.svg; do
   if cmp -s ".assets/$logo" "$wtemplates/website/static/brand/$logo"; then
     ok "$wtemplates/website/static/brand/$logo matches .assets/$logo"
@@ -596,10 +566,10 @@ for f in "${host_owned[@]}"; do
   [[ -f "$wtemplates/website/$f" ]] || err "$wtemplates/website/$f is missing - a host-owned file still needs its template"
 done
 
-# The two Python halves install PyYAML through `uv run`, from the dependency
-# block each carries. That block names one release and takes no file uploaded
-# after a date, so a gate never runs a parser nobody reviewed. The two files
-# must name the same release and the same date.
+# The two Python halves install PyYAML through `uv run`, from a dependency
+# block that names one release and takes no file uploaded after a date, so a
+# gate never runs a parser nobody reviewed. Both must name the same release
+# and date.
 pyyaml_pins="$(grep -hE '^# (dependencies = \["pyyaml==[0-9]+(\.[0-9]+)+"\]|exclude-newer = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]+Z")$' \
                  "$templates/scripts/knowledge-apply.py" "$templates/scripts/knowledge-conventions.py" | sort | uniq -c | awk '{ print $1 }' | tr '\n' ' ')"
 if [[ "$pyyaml_pins" == "2 2 " ]]; then
@@ -620,9 +590,9 @@ fi
 
 say ""
 say "Running knowledge-conventions.sh on this repository's bundle..."
-# Thirteen of the eighteen rules run through `uv run`, so without uv the script
-# reports none of them. Name the cause once, up front: a job that runs this
-# contract installs uv (validate.yml and publish.yml both do).
+# Thirteen of the eighteen rules run through `uv run`, so without uv the
+# script reports none of them. Say so once, up front: a job that runs this
+# contract installs uv, as validate.yml and publish.yml do.
 if ! command -v uv >/dev/null 2>&1; then
   err "uv is not on PATH, so rules 2, 3, 4, 7, 9, 10, 12, 13, 15, 16, 17 and 18 cannot run on this repository's bundle - install uv, or add the setup-uv step to the workflow running this"
 fi
@@ -631,15 +601,15 @@ if (cd .lokf && bash scripts/knowledge-conventions.sh knowledge --strict >/dev/n
 else
   err "this repository's bundle breaks a convention knowledge-conventions.sh checks - run it from .lokf/ to see which"
 fi
-# What the script reports on a bundle that breaks each rule, on a CRLF
-# checkout, through a link and without uv is tests/test_conventions.py.
+# tests/test_conventions.py tests what the script reports on a bundle that
+# breaks each rule, on a CRLF checkout, through a link and without uv.
 
 # 11a. ktl-docent runs its own copies of knowledge-report.sh and
 #      knowledge-feedback.sh, never the repository's, which anyone who can
-#      commit there can change. A question is enough to start the docent,
-#      often in a repository the reader has not reviewed. So the copies must
-#      match their templates and run from wherever an installer puts them,
-#      and no docent page may send an agent to a script under .lokf/scripts/.
+#      commit there can change: a question starts the docent, often in a
+#      repository the reader has not reviewed. So the copies must match their
+#      templates and run from wherever an installer puts them, and no docent
+#      page may send an agent to a script under .lokf/scripts/.
 say ""
 say "Checking ktl-docent runs its own copies of two sidecar scripts..."
 docent_scripts="skills/ktl-docent/scripts"
@@ -712,14 +682,13 @@ else
 fi
 
 # 11c. Conventions rule 14, which reads the commits after a pull request's
-#      base, is tests/test_conventions.py since 2026-10-07.
+#      base, is tested in tests/test_conventions.py.
 
 # 12. Every line the preflight can print as missing or a warning has a row on
-#     the sidecar's prerequisites page: the plain-words meaning, who fixes it
-#     and what to send them. So a new preflight line cannot be added without
-#     one. The preflight's behaviour, on this repository and on a bare
-#     directory, is tests/test_preflight.py since 2026-10-07, with each
-#     sidecar script's refusal to run under sh.
+#     the sidecar's prerequisites page: what it means in plain words, who
+#     fixes it and what to send them. tests/test_preflight.py tests the
+#     preflight on this repository and on a bare directory, and each sidecar
+#     script's refusal to run under sh.
 say ""
 say "Checking the prerequisites page explains each preflight line..."
 prereq="skills/ktl-sidecar/references/prerequisites.md"
@@ -745,23 +714,20 @@ while IFS= read -r key; do
 done < <(grep -oE '\b(miss|warn) [a-z]+' skills/ktl-website/scripts/website-preflight.sh | awk '{print $2}' | sort -u)
 
 # 12a. knowledge-feedback.sh, the recorder ktl-docent runs so that no other
-#      reader's report enters its session, is tests/test_feedback.py since
-#      2026-10-07.
+#      reader's report enters its session, is tested in tests/test_feedback.py.
 
 # 13. The forge-free provenance gate, with throwaway GPG and SSH keys, is
-#     tests/test_provenance.py since 2026-10-07.
+#     tested in tests/test_provenance.py.
 
 # 13a. The gate's --unattended form, which needs no key and no forge, is
-#      tests/test_provenance.py since 2026-10-07.
+#      tested in tests/test_provenance.py.
 
 # 14. CHANGELOG.md never carries two headings for one released version, and
 #     changelog-release.mjs's promote merges a second qualifying push between
-#     publish.yml runs into the still-unpublished section instead of adding
-#     one. That bug released two "## [0.19.0]" headings on 2026-09-17,
-#     because semantic-release.yml promotes on every push to main but only
-#     publish.yml tags. The first part needs nothing but the file on disk and
-#     always runs; the second exercises the fold in a throwaway repository
-#     and needs node.
+#     publish.yml runs into the unpublished section instead of adding one:
+#     semantic-release.yml promotes on every push to main, but only
+#     publish.yml tags. The first part reads the file and always runs; the
+#     second tests the fold in a throwaway repository and needs node.
 say ""
 say "Checking CHANGELOG.md for a version promoted twice..."
 mapfile -t headings < <(grep -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md)
@@ -779,19 +745,17 @@ if command -v node >/dev/null 2>&1; then
   cl_git() { (cd "$cl/repo" && GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git "$@"); }
   mkdir -p "$cl/repo/.github/scripts"
   cp "$repo_root/.github/scripts/changelog-release.mjs" "$cl/repo/.github/scripts/"
-  # A blank identity falls back to the OS account's GECOS full name, which a
-  # CI runner's account does not carry. Set one explicitly, as check 13's
-  # pv_git does, rather than depend on that fallback existing.
+  # Set an identity: without one, git falls back to the OS account's GECOS
+  # full name, which a CI runner's account does not carry.
   cl_git init -q \
     && cl_git config user.name contract \
     && cl_git config user.email contract@example.invalid \
     && cl_git commit -q --allow-empty -m base \
     && cl_git tag v0.18.0
-  # The state right after the first push's promote merged and a second push
-  # then wrote its own Unreleased entry above it, with v0.19.0 still untagged:
-  # exactly main's state before publish.yml ever ran for it. The second push
-  # also carries the first one's entry, as a branch stacked on it does; on
-  # 2026-10-14 the fold listed such entries twice.
+  # The state after the first push's promote merged and a second push wrote
+  # its Unreleased entry above it, with v0.19.0 still untagged. The second
+  # push also carries the first one's entry, as a branch stacked on it does,
+  # and the fold must list that entry once.
   cat > "$cl/repo/CHANGELOG.md" <<'EOF'
 ## [Unreleased]
 
@@ -824,9 +788,9 @@ EOF
     err "promote wrote $count heading(s) for 0.19.0 instead of folding, or listed an entry the section held twice"
   fi
   cl_git tag v0.19.0
-  # promote already left one empty "## [Unreleased]" at the top; fill it in
-  # place rather than appending a second one, which readUnreleased would
-  # never see (it reads the first "## [Unreleased]" in the file).
+  # promote left one empty "## [Unreleased]" at the top. Fill it in place:
+  # readUnreleased reads only the first such heading, so it would never see
+  # a second one.
   printf '\n### Fixed\n\n- a change after 0.19.0 shipped\n' \
     | sed -i '/^## \[Unreleased\]$/r /dev/stdin' "$cl/repo/CHANGELOG.md"
   (cd "$cl/repo" && node .github/scripts/changelog-release.mjs promote 0.19.1 2026-09-19 >/dev/null 2>&1)
@@ -837,9 +801,8 @@ EOF
   fi
   # A push with nothing to release, such as a docs merge, after a promote and
   # before publish.yml: semantic-release still finds the feat since the last
-  # tag and asks for the version already promoted. Unreleased is empty and
-  # that is right, so check passes and notes asks for no second promote; on
-  # 2026-10-11 check failed main's release job there instead.
+  # tag and asks for the version already promoted. Unreleased is rightly
+  # empty, so check must pass and notes must ask for no second promote.
   printf '## [Unreleased]\n\n## [0.20.0] - 2026-09-20\n\n### Added\n\n- promoted, not yet published\n\n## [0.19.1] - 2026-09-19\n' \
     > "$cl/repo/CHANGELOG.md"
   cl_out="$cl/github-output"
@@ -858,21 +821,16 @@ else
   say "node not installed locally - CI runs check 14; skipping here"
 fi
 
-# 15. The librarian template's TRUST_LADDER_SKILLS_REF pins the release of *this*
-#     repository that a host installs the skill from, so it goes stale
-#     silently: nothing fails when it falls behind, the host just keeps
-#     running an old librarian. It sat at v0.9.0 while this repository
-#     released v0.19.2.
+# 15. The librarian template's TRUST_LADDER_SKILLS_REF pins the release of
+#     this repository that a host installs the skill from. Nothing fails when
+#     the pin falls behind: the host keeps running an old librarian.
 #
-#     The pin must name a release that a host can actually clone, so it is
-#     held to one of the *two* newest released headings in CHANGELOG.md, not
-#     just the newest. The newest heading exists before its tag does:
-#     semantic-release.yml promotes it on merge to main, and publish.yml
-#     creates the tag later. During that window, which is exactly when
-#     publish.yml runs this contract, the only valid pin is the heading
-#     below the top one, so requiring the top one failed every release.
-#     Two headings of slack covers that window and still catches real rot,
-#     which is measured in many versions, not one.
+#     The pin must name a release that a host can clone, so it is held to one
+#     of the two newest released headings in CHANGELOG.md. The newest heading
+#     exists before its tag: semantic-release.yml promotes it on merge to
+#     main, and publish.yml runs this contract before it creates the tag.
+#     Two headings cover that window and still catch a stale pin, which falls
+#     many versions behind, not one.
 say ""
 say "Checking the librarian template's skills pin is a current release..."
 pin="$(grep -oE 'TRUST_LADDER_SKILLS_REF: v[0-9]+\.[0-9]+\.[0-9]+' \
@@ -890,16 +848,15 @@ elif printf '%s\n' "${recent[@]}" | grep -qxF -- "$pin"; then
 else
   err "the librarian template pins TRUST_LADDER_SKILLS_REF: $pin but this repository's two newest releases are ${recent[*]} - a host scaffolded from this template installs a librarian that old; bump the pin in the template and in each sibling's own copy of the workflow"
 fi
-# A current version is not the whole test. The install step clones that tag
-# and copies one path out of it, and a rename leaves the two disagreeing with
-# neither line looking wrong. Here v0.21.0 is a real release and skills/ktl-librarian
-# is a real path, but that path is not in that tag, since the skills were
-# lokf-* until v0.22.0. So every scheduled run on such a host failed there.
-# CI checks out one commit without tags, and the newest heading is tagged after
-# this contract runs, so the tag ref is often not here. The commit it names is,
-# though: it is recorded beside the pin and is an ancestor of this checkout, so
-# read the path out of that commit, and fall to the tag only to resolve it.
-# The half skips, rather than failing, only when neither is on the clone.
+# The install step clones the pinned tag and copies one skills/ path out of
+# it, so the tag must hold that path. After a rename, a current release and a
+# real path can disagree with neither looking wrong, and every scheduled run
+# on the host fails. CI checks out one commit without tags, and the newest
+# heading is tagged after this contract runs, so the tag is often not here.
+# The commit recorded beside the pin is an ancestor of this checkout, so the
+# path is read from the commit the tag names where the clone has the tag,
+# and otherwise from the recorded commit. The half skips only when the clone
+# has neither.
 # shellcheck disable=SC2016 # $tmp is the template's own literal, not ours
 skill_path="$(grep -oE '\$tmp/skills/[A-Za-z0-9._-]+' \
                 skills/ktl-sidecar/templates/github/knowledge-librarian.yaml \
@@ -919,15 +876,12 @@ else
   say "skipping the pinned tag's contents: neither $pin nor its commit ${pin_sha:0:12} is on this clone"
 fi
 # The pin is a tag and the commit that tag names, since a tag can be moved and
-# what it names here is the instructions an agent follows unattended. The
-# install step refuses a tag that names another commit. So the template's
-# commit must be the one its tag names, and whatever moves the tag must move
-# the commit with it: the release step, and the sync into a sibling. This
-# agreement can only be read where the tag is on the clone, so it skips where
-# the tag is not: a shallow or tag-less checkout has nothing to compare. The
-# skip says whether the recorded commit is at least a real object here, which
-# the content half above has read from, so the skip is not a blind one.
-# pin_sha is read above, beside the pin.
+# what it names is the instructions an agent follows unattended. The install
+# step refuses a tag that names another commit, so the template's commit must
+# be the one its tag names, and whatever moves the tag must move the commit
+# too: the release step and the sync into a sibling. A shallow or tag-less
+# checkout has no tag to compare, so this half skips there, and says whether
+# the recorded commit is at least a real object here.
 if [[ -z "$pin_sha" ]]; then
   err "no TRUST_LADDER_SKILLS_SHA beside the pin in the librarian template - a host would install whatever commit the tag names on the day"
 elif [[ -z "$pin" ]] || ! git rev-parse -q --verify "refs/tags/$pin" >/dev/null; then
@@ -955,10 +909,9 @@ for mover in .github/workflows/semantic-release.yml skills/ktl-sidecar/templates
     err "$mover moves TRUST_LADDER_SKILLS_REF without TRUST_LADDER_SKILLS_SHA, so the install step would refuse the next pin it writes"
   fi
 done
-# The content half reads the skill path out of the commit the pin records, not
-# only out of the tag ref, so it still runs on the scheduled, tag-less checkout
-# where it used to skip. This stages a commit that carries the path, with no tag
-# for it, and confirms the pin_sha fallback resolves the commit and reads it.
+# Stage a commit that carries the skill path, with no tag for it, and confirm
+# that the content half resolves the recorded commit and reads the path, as
+# it must on a scheduled, tag-less checkout.
 p15="$(mktemp -d)"
 p15_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$p15"
   -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid -c commit.gpgsign=false)
@@ -977,19 +930,16 @@ else
 fi
 rm -rf "$p15"
 
-# 16. The repository's old name stays gone from anything that still speaks in
-#     the present tense. It was renamed from lokf-agent-skills on 2026-09-19,
-#     and a branch written before that merges without conflict: the old name
-#     simply reappears, in a clone URL or an `npx skills add` path that then
-#     depends on GitHub's redirect. Three files keep it on purpose, and they
-#     are the ones whose job is history:
+# 16. The repository's old name, lokf-agent-skills, stays gone from every
+#     file that speaks in the present tense. A branch written before the
+#     rename merges without conflict and brings the name back, in a clone URL
+#     or an `npx skills add` path that then depends on GitHub's redirect.
+#     Only the files whose job is history keep it:
 #       - CHANGELOG.md;
 #       - the bundle's log.md, whose entries describe the repository as it
-#         was on the day they were written, since a log that renames its own
-#         past is no longer a record;
-#       - rename-plan.md, the plan of the rename, while it exists.
-#     Anywhere else is a merge that predates the rename; run the same
-#     replacement over it.
+#         was on the day they were written;
+#       - rename-plan.md, while it exists.
+#     Anywhere else, replace it.
 say ""
 say "Checking the old repository name has not come back..."
 old_name="lokf-agent-skills"
@@ -1021,10 +971,9 @@ else
   fi
 fi
 
-# 16a. The skills and plugins took the ktl- prefix on 2026-09-22; their lokf-
-#      names, and the ones before those, stay gone the same way. Only
-#      CHANGELOG.md keeps them, for the releases that carried them and the one
-#      line telling a host what to remove.
+# 16a. The old lokf- names of the skills and plugins, and the names before
+#      those, stay gone the same way. Only CHANGELOG.md keeps them, for the
+#      releases that carried them and the line telling a host what to remove.
 say ""
 say "Checking the old skill and plugin names have not come back..."
 old_names='lokf-(curator|docent|librarian|sidecar|registrar|enforcer|scaffolding)|LOKF (Curator|Registrar|Enforcer|Docent|Librarian|Sidecar)'
@@ -1050,8 +999,8 @@ fi
 # 16b. LOKF is the format, its schema and its toolkit. The roles, skills and
 #      repositories that keep a bundle are KTL's, and a page that names them
 #      after the format leaves a reader unsure which project answers for
-#      them. CHANGELOG.md and the bundle's log.md keep what was written at
-#      the time, and so do the dated maintainer notes in the source map.
+#      them. CHANGELOG.md, the bundle's log.md and the dated maintainer notes
+#      in the source map keep what was written at the time.
 say ""
 say "Checking that KTL's roles, skills and repositories are not named after LOKF..."
 named_after_format='LOKF (roles?|skills?|repositories)([^A-Za-z]|$)'
@@ -1080,8 +1029,8 @@ fi
 #     this repository: one shared builder and one instructions file per
 #     read-only role, the docent first. No file under templates/ may be a
 #     SKILL.md, every instructions file's trust labels stay word for word the
-#     docent's, this repository's own bundle builds inside Copilot's limits,
-#     and one input gives one zip, since the release workflow attaches it.
+#     docent's, this repository's bundle builds inside Copilot's limits, and
+#     one input gives one zip, since the release workflow attaches it.
 say ""
 say "Checking the Microsoft 365 Copilot skills build..."
 m365="$templates/m365"
@@ -1137,10 +1086,10 @@ else
   ok "every tracked SKILL.md is at skills/ktl-*/SKILL.md ($(git ls-files 'skills/ktl-*/SKILL.md' | wc -l | tr -d ' ') skills), so --all installs the ktl- skills only"
 fi
 
-# 18. ktl-prose's check script runs on this repository's own files: the
-#     bundle is given its verdicts, and the skill's own pages pass the style
-#     rules they state. What the script reports on staged files, and what it
-#     refuses, is tests/test_prose_check.py since 2026-10-07.
+# 18. ktl-prose's check script runs on this repository's files: the bundle is
+#     given its verdicts, and the skill's pages pass the style rules they
+#     state. tests/test_prose_check.py tests what the script reports on staged
+#     files, and what it refuses.
 say ""
 say "Running prose-check.py on this repository..."
 prose_py="skills/ktl-prose/scripts/prose-check.py"
@@ -1166,17 +1115,13 @@ expect_prose() {
 expect_prose 0 "rewrite" "this repository's own bundle is given its verdicts" -- --bundle .lokf/knowledge
 expect_prose 0 "OK" "the skill's own pages pass the style rules they state" -- skills/ktl-prose/SKILL.md skills/ktl-prose/references/*.md
 
-# 19. knowledge-apply.sh --format prints the block ktl-librarian's
+# 19. knowledge-apply.sh --format prints the block that ktl-librarian's
 #     references/patch.md shows, so a host learns the format from the script
-#     it has, whatever release of the skill it runs. The pen's writes and
-#     refusals, on a throwaway bundle, are tests/test_apply.py since
-#     2026-10-07.
+#     it has, whatever release of the skill it runs. tests/test_apply.py
+#     tests the pen's writes and refusals on a throwaway bundle.
 say ""
 say "Checking knowledge-apply.sh --format against patch.md..."
 apply="$repo_root/$templates/scripts/knowledge-apply.sh"
-# The format comes from the script that enforces it, so a host needs no
-# particular release of the skill to learn it. The skill's page shows the
-# same block, and this check keeps the two equal.
 # shellcheck disable=SC2016 # the backticks are a Markdown code fence, not a command
 if diff <(bash "$apply" --format) <(awk '/^```yaml$/ {on = 1; next} /^```$/ {on = 0} on' skills/ktl-librarian/references/patch.md) >/dev/null; then
   ok "knowledge-apply.sh --format prints the block ktl-librarian's references/patch.md shows"
@@ -1184,22 +1129,22 @@ else
   err "knowledge-apply.sh --format and the yaml block in skills/ktl-librarian/references/patch.md differ - one was edited without the other"
 fi
 
-# 20. knowledge-report.sh, on a throwaway repository: the health line, each
-#     label, the work list, `changes`, `quiet`, the retrieval test and the
-#     curator's queue (20a) are tests/test_report.py since 2026-10-07.
+# 20. tests/test_report.py tests knowledge-report.sh on a throwaway
+#     repository: the health line, each label, the work list, `changes`,
+#     `quiet`, the retrieval test and the curator's queue (20a).
 
-# 21. No tracked file holds a character a reader cannot see. That is a
-#     control character other than a tab or a line's closing carriage return,
-#     or a format character, such as a zero-width space, a byte order mark or
-#     the right-to-left override that the "Trojan Source" attack
-#     (CVE-2021-42574) hides code behind. It is also a line or paragraph
-#     separator, or one of the other characters the pen's IGNORABLE class
-#     names, such as a Hangul filler or a variation selector. The class below
-#     is the pen's, and tests/test_apply.py holds the two equal. A diff shows
-#     none of them, and GitHub warns of only some. An agent that types such a
-#     character's escape into a tool call can write the character itself,
-#     which once put three of them into a sanitizer here. Code that needs one
-#     spells it as an escape.
+# 21. No tracked file holds a character a reader cannot see:
+#       - a control character other than a tab or a line's closing carriage
+#         return;
+#       - a format character, such as a zero-width space, a byte order mark
+#         or the right-to-left override that the "Trojan Source" attack
+#         (CVE-2021-42574) hides code behind;
+#       - a line or paragraph separator;
+#       - a character of the pen's IGNORABLE class, which tests/test_apply.py
+#         holds equal to the class below.
+#     A diff shows none of them, and GitHub warns of only some. An agent that
+#     types such a character's escape into a tool call can write the
+#     character itself. Code that needs one spells it as an escape.
 say ""
 say "Searching tracked files for characters a reader cannot see..."
 read -r -d '' unseen_py <<'PY' || true
@@ -1249,8 +1194,7 @@ fi
 rm -rf "${unseen_dir:?}"
 
 # 22. Parser parity, which holds the gate's event reader to a YAML parser on
-#     every layout a person might write, is tests/test_provenance.py since
-#     2026-10-07.
+#     every layout a person might write, is tested in tests/test_provenance.py.
 
 say ""
 if [[ "$fail" -eq 0 ]]; then

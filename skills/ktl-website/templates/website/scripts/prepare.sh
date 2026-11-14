@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Writes what Hugo cannot work out for itself into generated/, which is never
-# committed: the four files `lokf export` writes, the pages gen-doc writes
-# for a LinkML schema, the trust labels and health line knowledge-report.sh
-# prints, the repository's tags, and the data when site.toml names it.
-# Everything else Hugo reads straight from the repository through the mounts
+# committed: the four files `lokf export` writes, the pages gen-doc writes for
+# a LinkML schema, and the trust labels and health line knowledge-report.sh
+# prints. It also writes the repository's tags, and the data when site.toml
+# names it. Hugo reads everything else from the repository through the mounts
 # in hugo.toml.
+#
 # Any step that fails stops the build: a site with no labels would show every
 # concept as unchecked.
 set -euo pipefail
@@ -40,12 +41,12 @@ schema=$(sed -n 's/^schema := "\(.*\)"$/\1/p' "$root/.lokf/justfile" 2>/dev/null
   --out-dir "$out/knowledge" \
   --source-base "$repo_url/blob/$ref/.lokf/knowledge"
 
-# A LinkML project's schema, src/<name>/schema/<name>.yaml at the root or in
-# the .linkml/ sidecar, the root's first. gen-doc writes a page per class, slot, enumeration
-# and type, each kind in a folder of its own, and gen-erdiagram the diagram
-# the overview shows. The schema file is copied beside them, with its path in
-# the repository. With no schema there is no generated/schema/, and the site
-# shows no Schema part.
+# A LinkML project's schema: src/<name>/schema/<name>.yaml, at the root first,
+# then in the .linkml/ sidecar. gen-doc writes a page per class, slot,
+# enumeration and type, each kind in a folder of its own, and gen-erdiagram
+# writes the diagram the overview shows. The schema file is copied beside
+# them, with its path in the repository. With no schema there is no
+# generated/schema/, and the site shows no Schema part.
 for model in "$root"/src/*/schema/*.yaml "$root"/.linkml/src/*/schema/*.yaml; do
   name=$(basename "$model" .yaml)
   [ -f "$model" ] && [ "$(basename "${model%/schema/*}")" = "$name" ] || continue
@@ -60,8 +61,8 @@ done
 # The data, when site.toml names its folder: each SQLite database in it,
 # served under browse/, and its Datasette metadata as metadata.json without
 # the plugins' settings, which Datasette Lite never runs and which can hold a
-# credential. The folder's own command writes it when it holds no database.
-# Nothing else in the folder is served.
+# credential. site.toml's browseBuild command writes the data when the folder
+# holds no database. Nothing else in the folder is served.
 browse=$(sed -n 's/^browse = "\(.*\)"$/\1/p' "$here/site.toml")
 if [ -n "$browse" ]; then
   build=$(sed -n 's/^browseBuild = "\(.*\)"$/\1/p' "$here/site.toml")

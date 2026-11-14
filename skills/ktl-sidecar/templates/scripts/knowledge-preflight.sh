@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
-# What this host can and cannot do for the KTL skills: one read-only
-# screen, no toolkit needed. Every skill runs it first and repeats its summary
-# line in the hand-off, so a missing tool disables a step out loud instead of
-# being discovered after a report has already offered that step.
+# A read-only screen of what this host can and cannot do for the KTL skills.
+# Every skill runs it first and repeats its summary line in the hand-off, so
+# a missing tool disables a step before a report offers it.
 #
 # Each line is `ok`, `warn`, `missing` or `info`, then one summary line:
-#   Preflight: <n> missing, <m> warnings. Missing disables: <steps>.
-# Exit 0 always: the skills read the lines; nothing here is a gate.
+#   Preflight: <n> missing, <m> warning(s). Missing disables: <steps>.
+# It always exits 0: the skills read the lines, and nothing here is a gate.
 #
-# Bash 3.2 and POSIX tools only, so it runs on macOS's stock bash and on Git
-# for Windows. From PowerShell, run it through Git for Windows' bash: the
-# one-liner is in ktl-sidecar/references/portability.md.
+# It needs only Bash 3.2 and POSIX tools, so it runs on the stock bash of
+# macOS and in Git for Windows. From PowerShell, run it through that bash,
+# as ktl-sidecar/references/portability.md shows.
 #
 # Usage: knowledge-preflight.sh [repo-root]   (default: the nearest ancestor of
 # the current directory holding `.lokf/`, else the current directory)
@@ -58,11 +57,9 @@ ok host "$host, bash ${BASH_VERSION%%(*}; digest: ${digest:-none (macOS: install
 case "$pyv" in
   2.*|3.[0-9]|3.10) warn python "python3 is $pyv and the skills' scripts need 3.11 or later: run each through uv run or the sidecar's .venv, never python3 or python" ;;
 esac
-# The skill's copy of this script, run from the skill's folder or a folder in
-# it, screens the skill, not the host. Step 0 runs it from the host
-# repository's root. A host's own copy sits in .lokf/scripts/. A repository
-# that holds the skill, as the skills repository does, is the skill's parent.
-# Neither is warned about.
+# Warn when the skill's copy of this script screens the skill's own folder
+# rather than a host: Step 0 runs it from the host repository's root. A copy
+# in .lokf/scripts/, and a repository that holds the skill, raise no warning.
 self="$(cd "$(dirname "$0")" 2>/dev/null && pwd -P)"
 case "$self" in
   */templates/scripts)
@@ -126,8 +123,8 @@ else
   info git "no git: gate, pull requests and signed-commit checks do not apply; the host's own version history is the record"
 fi
 if [ -d "$bundle" ]; then
-  # Each file is asked here, in the one walk. `grep -r --include` is GNU's,
-  # and a grep without it failed in silence, so the warning never showed.
+  # Walk the files here: `grep -r --include` is GNU only, and fails in
+  # silence on another grep.
   crlf_files=0; bom_files=0; cr="$(printf '\r')"
   while IFS= read -r f; do
     [ "$(head -c 3 "$f" | od -An -tx1 | tr -d ' \n')" = "efbbbf" ] && bom_files=$((bom_files + 1))
@@ -252,11 +249,9 @@ if have uv; then
     0.[0-8]|0.[0-8].*) warn toolkit "the floor is >=$floor and the justfile's recipes need lokf 0.9.0 - raise it to \"lokf[build]>=0.9.0\" in .lokf/pyproject.toml and run uv lock there" ;;
   esac
   # A domain vocabulary imports the copy of LOKF core beside it, and the gate
-  # runs the lokf that uv.lock pins, which may be newer than the floor. A
-  # copy from another release can reject a concept that lokf reads: 0.9.0
-  # reads a bare-date stale_after as a datetime, which 0.8.0's copy rejects.
-  # Each copy is checked: the one in .lokf/schema/, and the one at the root
-  # of .lokf/, where an older sidecar or linkml-sidecar keeps it.
+  # runs the lokf that uv.lock pins. A copy from another release can reject a
+  # concept that lokf reads. A copy sits in .lokf/schema/, or at the root of
+  # .lokf/ for an older sidecar or linkml-sidecar.
   pinned="$(awk '/^name = "lokf"$/ { hit = 1; next } hit { if (sub(/^version = "/, "")) { sub(/".*$/, ""); print } exit }' "$root/.lokf/uv.lock" 2>/dev/null)"
   pinned="${pinned:-${installed:-}}"
   for core in .lokf/schema/lokf.yaml .lokf/lokf.yaml; do
@@ -293,13 +288,12 @@ if [ -n "$tschema" ] && [ -z "$jschema" ]; then
 elif [ -n "$tschema" ] && [ "$tschema" != "$jschema" ]; then
   warn schema "[tool.lokf] schema in .lokf/pyproject.toml is $tschema and the justfile's schema line is $jschema - the recipes check against the line, a bare lokf command against pyproject.toml; set both to one path"
 fi
-# Schema files belong in .lokf/schema/: the domain vocabulary, the copy of LOKF
-# core and each file the schema imports. A sidecar laid out before the
-# folder keeps them at the root of .lokf/. A root file with a namesake in
-# schema/ is a copy left behind, since the sync keeps only the one in
-# schema/ current. A schema outside .lokf/, which an older linkml-sidecar
-# names on the schema line, imports the root copy of LOKF core by its
-# path, so that copy is left where it is.
+# Schema files belong in .lokf/schema/: the domain vocabulary, the copy of
+# LOKF core and each file the schema imports. An older sidecar keeps them at
+# the root of .lokf/. A root file with a namesake in schema/ is a stale copy,
+# since the sync updates only the one in schema/. A schema outside .lokf/, as
+# an older linkml-sidecar names, imports the root lokf.yaml by its path, so
+# that file is not reported.
 loose="" twice=""
 for f in "$root"/.lokf/*.yaml "$root"/.lokf/*.yml; do
   if [ ! -f "$f" ] || ! grep -q '^id:' "$f" || ! grep -qE '^(imports|classes|slots|prefixes):' "$f"; then continue; fi
@@ -373,14 +367,11 @@ done
 [ -z "$user" ] || info skills "user scope: $user; the scheduled librarian needs a copy in the repository"
 
 # ---- host copies of the sidecar's templates ----------------------------------
-# The conventions script runs its Python half, so a host holding the .sh
-# without the .py has a gate that fails, not a stale copy. This is reported
-# whether or not a sidecar is installed to compare against. A bundle with no
-# knowledge-feedback.sh is the same kind of gap rather than drift. A current
-# ktl-docent runs its own copy, but an earlier release runs this one, and
-# without it has to open feedback.md to add an entry, which is the one thing
-# that script exists to stop. A host on a sidecar that predates it should
-# hear so before a reader's first recorded gap, not after.
+# A missing script is a gap rather than drift, and is reported whether or not
+# a sidecar is installed to compare against. The conventions script runs its
+# Python half, so a .sh without the .py is a gate that fails. An earlier
+# ktl-docent runs the host's knowledge-feedback.sh, and without it edits
+# feedback.md by hand, which that script exists to stop.
 script_gaps=""
 if [ -f "$root/.lokf/scripts/knowledge-conventions.sh" ] && [ ! -f "$root/.lokf/scripts/knowledge-conventions.py" ]; then
   script_gaps=".lokf/scripts/knowledge-conventions.py missing beside the .sh, which runs it"
@@ -394,12 +385,11 @@ fi
 if [ -d "$bundle" ] && [ ! -f "$root/.lokf/scripts/knowledge-report.sh" ]; then
   script_gaps="${script_gaps}${script_gaps:+, }.lokf/scripts/knowledge-report.sh missing, so ktl-curator and an earlier ktl-docent must work each trust label out by hand"
 fi
-# A host moves TRUST_LADDER_SKILLS_REF, and the commit beside it, on its own
-# schedule, so a different pin is not drift; every other byte of the
-# librarian workflow still counts. The installed sidecar's
-# knowledge-sync.manifest says which copies a host may carry, and
-# knowledge-sync.sh keeps each at the release's bytes. The justfile is the
-# host's from its first line, and is not held here.
+# A host moves TRUST_LADDER_SKILLS_REF and the commit beside it on its own
+# schedule, so a different pin is not drift, and any other difference is.
+# The copies compared are the `copy` lines of the installed sidecar's
+# knowledge-sync.manifest, which knowledge-sync.sh holds at the release's
+# bytes.
 unpin() { sed -E -e 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/' -e 's/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/\1COMMIT/' "$1"; }
 if [ -n "$templates" ] && [ -d "$root/.lokf" ] && [ ! -f "$templates/knowledge-sync.manifest" ]; then
   warn copies "${templates#"$root"/} has no knowledge-sync.manifest, so the installed sidecar predates it and the host's copies were not compared; reinstall the sidecar at the release the librarian workflow pins"
@@ -424,11 +414,10 @@ fi
 # ---- scripts ---------------------------------------------------------------
 # The pen and the conventions script each run a Python half: on the
 # sidecar's .venv when it holds pyyaml on Python 3.11 or later, else through
-# uv after uv_ready, the same function as theirs. Nothing above runs either,
-# so a host whose index uv cannot install from would look ready while
-# ktl-librarian cannot write and the gate cannot check. uv keeps one
-# environment per script, so both are installed here, into uv's cache and
-# never into the repository. The pen alone falls back to python3.
+# uv after uv_ready, a copy of their function. Installing both here, into
+# uv's cache and never the repository, shows whether uv can install from the
+# host's index. uv keeps one environment per script, so each is installed.
+# Only the pen falls back to python3.
 uvflags=(); uverr=""; uvhint="Run uv sync in .lokf/ to pin them by hash."
 uv_ready() {
   local err names name again unpinned lifted=""
@@ -485,12 +474,11 @@ fi
 
 # ---- ingest ----------------------------------------------------------------
 # A host that mirrors sources from outside the repository has .lokf/ingest.yaml.
-# The script's own status line says how many entries, how many mirrored files
-# and which token names are present; it prints no value. A mirror file the
-# lock names and the disk has lost, or a file the lock does not name, is a
-# warning: a run restores the first, and the second is nobody's. So is a git
-# older than a `git` entry needs, since the run refuses that entry. Without
-# the script, the manifest is a wish nothing fulfils.
+# The status line of knowledge-ingest.sh counts entries and mirrored files and
+# names the tokens present, never a value. That line is a warning when the
+# disk has lost a mirror file the lock names, or the mirror holds a file the
+# lock does not name. So is a git too old for a `git` entry, which the run
+# refuses.
 if [ -f "$root/.lokf/ingest.yaml" ]; then
   if [ -f "$root/.lokf/scripts/knowledge-ingest.sh" ]; then
     status="$(bash "$root/.lokf/scripts/knowledge-ingest.sh" --root "$root" --status 2>/dev/null)" || status=""

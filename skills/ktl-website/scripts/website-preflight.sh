@@ -2,10 +2,10 @@
 # What this host can and cannot do for the ktl-website skill: one read-only
 # screen before the site is installed, built or deployed. The skill runs it
 # first and repeats its summary line in the hand-off, so a missing tool
-# disables a step out loud instead of failing a build.
+# disables a named step instead of failing a build.
 #
 # Each line is `ok`, `warn`, `missing` or `info`, then one summary line:
-#   Preflight: <n> missing, <m> warnings. Missing disables: <steps>.
+#   Preflight: <n> missing, <m> warning(s). Missing disables: <steps>.
 # Exit 0 always: the skill reads the lines, and nothing here is a gate.
 #
 # Bash 3.2 and POSIX tools only, as the sidecar's preflight, so it runs on
@@ -69,8 +69,8 @@ if [ -f "$root/.lokf/scripts/knowledge-preflight.sh" ]; then
 else
   info sidecar "no .lokf/scripts/knowledge-preflight.sh: a sidecar older than 0.30.0, or none - the ktl-sidecar repair lays it down"
 fi
-# The concept pages show the labels knowledge-report.sh prints, so the site
-# never works a label out a second way. Without the script there is no page.
+# The concept pages need knowledge-report.sh: they show the labels it prints,
+# so the site never works a label out a second way.
 if [ -f "$root/.lokf/scripts/knowledge-report.sh" ]; then
   health="$(cd "$root" && bash .lokf/scripts/knowledge-report.sh --root "$root" health 2>/dev/null | tail -n 1)"
   if [ -n "$health" ]; then ok report "knowledge-report.sh: $health"; else warn report "knowledge-report.sh printed no health line - run it by hand: bash .lokf/scripts/knowledge-report.sh health"; fi
@@ -79,10 +79,10 @@ else
 fi
 
 # ---- the toolkit -------------------------------------------------------------
-# The build runs `lokf export`, and LinkML's gen-doc for a schema, with `uv
-# run --frozen` from the sidecar's own environment, so it needs the lock
-# file, and the workflow needs it committed. Hugo and Pagefind come through
-# uv too, from the site's own lock.
+# The build runs `lokf export`, and LinkML's gen-doc for a schema, with
+# `uv run --frozen` from the sidecar's environment, so it needs the lock file,
+# and the workflow needs it committed. Hugo and Pagefind come through uv too,
+# from the site's own lock.
 ingit=0
 if have git && git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then ingit=1; fi
 if have uv; then
@@ -166,12 +166,11 @@ if [ -f "$root/mkdocs.yml" ]; then
 fi
 
 # ---- the site's folder: not yet, this skill's, or someone else's ---------------
-# The site lives in website/. Where that folder is another site's, it lives
-# in ktl-website/ instead, and a rerun finds it there. A folder is this
-# skill's when it holds site.toml. The three files the host owns are never
-# compared: site.toml, README.md and assets/css/custom.css. Every other file
-# is a copy of a template, and a difference is a deliberate edit or a bump
-# not yet copied.
+# The site lives in website/, or in ktl-website/ where website/ is another
+# site's, and a rerun looks in both. A folder is this skill's when it holds
+# site.toml and hugo.toml. The three files the host owns are never compared:
+# site.toml, README.md and assets/css/custom.css. Every other file is a copy
+# of a template, so a difference is a deliberate edit or a bump not yet copied.
 site=""
 for d in website ktl-website; do
   if [ -f "$root/$d/site.toml" ] && [ -f "$root/$d/hugo.toml" ]; then site="$d"; break; fi
@@ -262,7 +261,7 @@ fi
 
 # The schema, as the site's scripts/prepare.sh finds it: a LinkML project's
 # src/<name>/schema/<name>.yaml, at the root first, then in the .linkml/
-# sidecar. gen-doc from the sidecar's own environment writes its pages.
+# sidecar.
 schema=""
 for f in "$root"/src/*/schema/*.yaml "$root"/.linkml/src/*/schema/*.yaml; do
   [ -f "$f" ] || continue

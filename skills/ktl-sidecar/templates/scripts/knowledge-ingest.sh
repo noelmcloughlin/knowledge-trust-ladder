@@ -1,17 +1,16 @@
 #!/usr/bin/env bash
-# The ingest's shell half. It runs knowledge-ingest.py beside it with the
-# first of these that it finds:
-#   - the sidecar's own .venv, when that holds pyyaml and pypdf;
+# The shell half of the ingest, which reads .lokf/ingest.yaml, mirrors the
+# sources it names under .lokf/mirror/ and records them in
+# .lokf/ingest.lock.yaml. The ingest workflow runs this script with the
+# manifest's secrets and no agent; ktl-librarian runs it in a live session.
+#
+# It runs knowledge-ingest.py beside it with the first of these it finds:
+#   - the sidecar's .venv, when that holds pyyaml and pypdf;
 #   - `uv run` after uv_ready, since the script's header names both;
-#   - the .venv or python3 with pyyaml alone, which reads every source but a
+#   - the .venv or python3 with pyyaml only, which reads every source but a
 #     PDF.
 # knowledge-apply.sh explains the order, the Python 3.11 floor and uv_ready.
 # `uv add pypdf` in .lokf/ puts pypdf in the .venv, so no run needs `uv run`.
-#
-# The script reads .lokf/ingest.yaml, mirrors
-# the sources it names under .lokf/mirror/ and records them in
-# .lokf/ingest.lock.yaml. The ingest workflow runs it with the manifest's
-# secrets and no agent; ktl-librarian runs it in a live session.
 #
 # Usage: knowledge-ingest.sh [--root <dir>] [--visibility <v>] [--only <id>]... [--dry-run] [--prune] [--strict] [--summary <file>] [--status] [--patch [<file>]] [--time-limit <minutes>]
 #   The Python half's header says what each flag does. --root is the
@@ -64,9 +63,9 @@ uv_ready() {
   return 0
 }
 venv="$root/.lokf/.venv/bin/python"; [ -e "$venv" ] || venv="$root/.lokf/.venv/Scripts/python.exe"
-# --status reads the manifest and the lock and nothing else, so pyyaml alone
-# serves it without uv resolving the script's packages: the preflight calls it
-# on machines that may be offline.
+# --status reads only the manifest and the lock, so pyyaml serves it without
+# uv resolving the script's packages: the preflight calls it on machines that
+# may be offline.
 if [ -n "$status" ]; then
   for p in "$venv" python3; do
     usable "$p" yaml && exec "$p" "$py" --root "$root" ${args[@]+"${args[@]}"}

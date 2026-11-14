@@ -5,11 +5,11 @@
 A link, an image, a script or a page's social card that names a path under
 the site's address must be a file of the build, and a link to a heading must
 find that id on the page. A link that starts with / and falls outside the
-site's path is broken too, since it leaves the site by mistake. The text
-files for machines and the Markdown files beside the pages are read for
-their full addresses. Links that leave the site are not checked, and nor is
-the workspace a domain host's federation workflow adds after the build.
-Exits 1 and names each broken link.
+site's path is broken too, since it leaves the site by mistake. llms.txt,
+llms-full.txt and the Markdown files beside the pages are read for their
+full addresses. Links that leave the site are not checked, and nor is the
+workspace a domain host's federation workflow adds after the build. Exits 1
+and names each broken link.
 """
 
 from __future__ import annotations

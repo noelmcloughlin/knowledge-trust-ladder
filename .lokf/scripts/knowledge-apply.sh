@@ -1,30 +1,28 @@
 #!/usr/bin/env bash
 # The pen, the librarian's only way to write the bundle. ktl-librarian
-# describes each change to the bundle as an operation in .lokf/patch.yaml and
-# never edits .lokf/knowledge/ itself. This script checks every operation and
-# writes the files, or refuses the whole file and writes nothing. The
-# scheduled wrapper runs it after the agent has finished.
+# describes each change as an operation in .lokf/patch.yaml and never edits
+# .lokf/knowledge/ itself. This script checks every operation and writes the
+# files, or refuses the whole file and writes nothing. The scheduled wrapper
+# runs it after the agent has finished.
 #
-# The rules live in the Python half beside it, knowledge-apply.py. This
-# script runs it with the sidecar's own .venv when that holds pyyaml, then
-# through `uv run` (the script's own header names pyyaml), then through
-# python3 where pyyaml is installed. The .venv comes first because `uv sync`
-# installed it from uv.lock, so a run needs no package index and each file is
-# checked by hash. Each interpreter must be Python 3.11 or later. On an
-# enterprise host python3 is often older, and the script would stop at its
-# first line.
+# The rules are in knowledge-apply.py. This script runs it with the sidecar's
+# .venv when that holds pyyaml, then through `uv run`, which installs what the
+# Python header names, then through a python3 that has pyyaml. The .venv comes
+# first because `uv sync` installed it from uv.lock, so a run needs no package
+# index and each file is checked by hash. Each interpreter must be Python 3.11
+# or later, which the python3 of an enterprise host often is not.
 #
-# uv_ready installs the header's packages before the run, so uv's exit 1 on
-# a failed resolution never reads as findings. It tries offline first, so a
-# script environment that is already complete runs with the index down. On
-# an index with no upload times, as a Nexus or Artifactory mirror often is,
-# uv drops each file and warns that it "is missing an upload date". Only
-# then does uv_ready lift the date, round by round, for each package uv
-# names that the header pins with ==, so the versions stay pinned. It turns
-# uv's colour off, since FORCE_COLOR would hide that warning. Any other
-# failure is not retried, nor a package uv names again once lifted.
-# knowledge-conventions.sh and knowledge-ingest.sh carry the same function,
-# and the contract holds the three equal.
+# uv_ready installs the header's packages before the run, so a failed
+# resolution, on which uv exits 1, never reads as findings. It tries offline
+# first, so a complete script environment runs with the index down. A Nexus or
+# Artifactory mirror often serves no upload times, and uv then drops each
+# file and warns that it "is missing an upload date". Only then does uv_ready
+# lift the date, round by round, for each package that uv names and the
+# header pins with ==, so the versions stay pinned. uv runs without colour,
+# since FORCE_COLOR would hide that warning. No other failure is retried, and
+# neither is a package that uv names again once lifted.
+# knowledge-conventions.sh, knowledge-ingest.sh and knowledge-preflight.sh
+# carry the same function, and validate-repository.sh holds the four equal.
 #
 # Usage: knowledge-apply.sh [--dry-run [--diff]] [--keep] [--handoff <file>] [--root <repo-root>] [<patch-file>]
 #        knowledge-apply.sh --format
