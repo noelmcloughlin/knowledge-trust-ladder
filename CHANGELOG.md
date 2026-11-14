@@ -4,6 +4,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Added
+
+- **Each release carries its signed provenance as a `provenance-*.intoto.jsonl` asset**, which `gh attestation verify --bundle` reads.
+
 ## [0.65.0] - 2026-11-14
 
 ### Added

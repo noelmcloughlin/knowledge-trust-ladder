@@ -484,17 +484,33 @@ jobs:
       # A private repository needs GitHub Enterprise Cloud for it, so the step
       # skips itself there unless KNOWLEDGE_ATTEST_PRIVATE is "true".
       - name: Attest build provenance
+        id: attest
         if: needs.build.outputs.release == 'true' && (!github.event.repository.private || vars.KNOWLEDGE_ATTEST_PRIVATE == 'true')
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: ${{ runner.temp }}/release/*.zip
+
+      # As in knowledge-release.yaml, the release carries the attestation as
+      # provenance-<tag>-<name>.intoto.jsonl, for `gh attestation verify <file>
+      # --bundle <that file>` and for OpenSSF Scorecard's Signed-Releases check.
+      - name: Keep the provenance beside the zip
+        if: steps.attest.outcome == 'success'
+        env:
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          zips=(workspace-*.zip)
+          name="${zips[0]#workspace-}"
+          cp -- "$BUNDLE" "provenance-${name%.zip}.intoto.jsonl"
+        working-directory: ${{ runner.temp }}/release
 
       - name: Upload to the release
         if: needs.build.outputs.release == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: gh release upload "$TAG" ./*.zip ./*.sha256 --clobber
+        run: |
+          shopt -s nullglob
+          gh release upload "$TAG" ./*.zip ./*.sha256 ./*.intoto.jsonl --clobber
         working-directory: ${{ runner.temp }}/release
 
       # The notes gain what changed in the workspace once: a run started

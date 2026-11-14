@@ -11,8 +11,9 @@ name: Knowledge Release
 # this bundle can validate it on its own terms. An evidence table goes beside
 # the bundle as well, as evidence-<tag>-<name>.tsv with its own .sha256: one
 # row for each concept's `generated` record and each `verified` event, for an
-# auditor's spreadsheet. It runs no LLM or agent, and it never commits or
-# pushes.
+# auditor's spreadsheet. On a public repository the files' signed build
+# provenance goes beside them, as provenance-<tag>-<name>.intoto.jsonl. It
+# runs no LLM or agent, and it never commits or pushes.
 #
 # Two ways to start it:
 #
@@ -599,6 +600,7 @@ jobs:
       # KNOWLEDGE_ATTEST_PRIVATE is "true". A domain's build verifies a
       # member's attestation, so a private member needs it.
       - name: Attest build provenance
+        id: attest
         if: ${{ !github.event.repository.private || vars.KNOWLEDGE_ATTEST_PRIVATE == 'true' }}
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
@@ -608,15 +610,30 @@ jobs:
             ${{ runner.temp }}/release/*.yaml
             ${{ runner.temp }}/release/*.tsv
 
+      # The release carries that attestation too, in the JSON Lines form `gh
+      # attestation download` writes, as provenance-<tag>-<name>.intoto.jsonl.
+      # A reader then checks a file without GitHub's attestation API: `gh
+      # attestation verify <file> --bundle <that file> -R <owner>/<repo>`. It
+      # is also what OpenSSF Scorecard's Signed-Releases check looks for.
+      - name: Keep the provenance beside the files
+        if: steps.attest.outcome == 'success'
+        env:
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          bundle=(knowledge-"${TAG//\//-}"-*.zip)
+          name="${bundle[0]#knowledge-}"
+          cp -- "$BUNDLE" "provenance-${name%.zip}.intoto.jsonl"
+        working-directory: ${{ runner.temp }}/release
+
       # `--clobber` replaces an earlier upload of the same name, so running the
       # workflow again for one tag repairs its assets instead of failing. With
-      # nullglob, a pattern no file matches (no schema, no evidence table) is
-      # dropped, not passed.
+      # nullglob, a pattern no file matches (no schema, no evidence table, no
+      # provenance in a private repository) is dropped, not passed.
       - name: Upload to the release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           shopt -s nullglob
-          gh release upload "$TAG" ./*.zip ./*.yaml ./*.tsv ./*.sha256 --clobber
+          gh release upload "$TAG" ./*.zip ./*.yaml ./*.tsv ./*.sha256 ./*.intoto.jsonl --clobber
         working-directory: ${{ runner.temp }}/release

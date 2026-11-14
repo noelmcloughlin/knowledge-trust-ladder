@@ -264,7 +264,7 @@ When the bundle changed, `pack` runs the registrar's two checks, so a release ne
 - A link inside the bundle is stored as a link and never followed, so the zip can hold nothing from outside the bundle. A bundle normally carries none; the `knowledge_bundle` doorway sits at the repository root, outside it.
 - It is built with `zip` and checked with `unzip`, which GitHub's hosted Ubuntu runners carry. A self-hosted runner needs both installed.
 
-The `attach` job holds `contents: write`, runs no third-party packages, checks each file against its checksum and uploads them all, replacing an earlier upload of the same name. On a public repository it also records a build-provenance attestation; check one with `gh attestation verify <file> -R <owner>/<repo>`. A private repository needs GitHub Enterprise Cloud for attestations, so the step skips itself there.
+The `attach` job holds `contents: write`, runs no third-party packages, checks each file against its checksum and uploads them all, replacing an earlier upload of the same name. On a public repository it also records a build-provenance attestation; check one with `gh attestation verify <file> -R <owner>/<repo>`. The release carries it too, as `provenance-<tag>-<name>.intoto.jsonl`, so `--bundle` with that file checks one without GitHub's attestation API. A private repository needs GitHub Enterprise Cloud for attestations, so the step skips itself there.
 
 ## `knowledge-federation.yaml`: the workspace of a domain host
 

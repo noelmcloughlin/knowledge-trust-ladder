@@ -53,7 +53,7 @@ To open the pull requests yourself on the day of a release, run `scripts/sync-si
 
 ## The ktl package on PyPI
 
-`pypi.yml` builds two packages from the tag: `ktl`, which carries the skills, and `knowledge-trust-ladder`, which holds no code and installs `ktl` at the same version under the repository's name. The build backend comes at the hashes `.github/pypi/requirements.txt` holds. The workflow checks that the files carry the tag's version, builds them a second time and checks the bytes match, and installs the wheels with no index and the skills from them. It uploads only when the repository variable `PYPI_RELEASE_ENABLED` says where: `testpypi` for TestPyPI, `true` for PyPI. Unset, a release builds and checks the packages and uploads nothing. After an upload to PyPI, it attaches a `.sha256` file for each package file to the GitHub release.
+`pypi.yml` builds two packages from the tag: `ktl`, which carries the skills, and `knowledge-trust-ladder`, which holds no code and installs `ktl` at the same version under the repository's name. The build backend comes at the hashes `.github/pypi/requirements.txt` holds. The workflow checks that the files carry the tag's version, builds them a second time and checks the bytes match, and installs the wheels with no index and the skills from them. It uploads only when the repository variable `PYPI_RELEASE_ENABLED` says where: `testpypi` for TestPyPI, `true` for PyPI. Unset, a release builds and checks the packages and uploads nothing. After an upload to PyPI, it attaches a `.sha256` file for each package file to the GitHub release, and the files' signed provenance as `provenance-<tag>-packages.intoto.jsonl`.
 
 Before the first upload to each index, a maintainer does three things once:
 

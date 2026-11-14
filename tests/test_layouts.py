@@ -2020,7 +2020,37 @@ def test_the_attach_job_attests_and_uploads_the_evidence_table():
     assert "${{ runner.temp }}/release/*.tsv" in section(attach, r"^          subject-path: \|$", r"^$"), (
         "knowledge-release.yaml no longer names the evidence table among the attestation's subjects"
     )
-    assert 'gh release upload "$TAG" ./*.zip ./*.yaml ./*.tsv ./*.sha256 --clobber' in attach, (
-        "knowledge-release.yaml no longer uploads the evidence table"
+    assert 'gh release upload "$TAG" ./*.zip ./*.yaml ./*.tsv ./*.sha256 ./*.intoto.jsonl --clobber' in attach, (
+        "knowledge-release.yaml no longer uploads the evidence table and the provenance"
     )
     assert has_line(attach, "        run: sha256sum -c -- *.sha256"), "knowledge-release.yaml no longer checks every checksum before it uploads"
+
+
+@pytest.mark.parametrize(
+    "yaml_path, step, zips, tag, expected",
+    [
+        (RELEASE_YAML, "Keep the provenance beside the files",
+         ["knowledge-release-v1.2.0-acme-platform.zip", "ktl-docent-m365-release-v1.2.0-acme-platform.zip"],
+         "release/v1.2.0", "provenance-release-v1.2.0-acme-platform.intoto.jsonl"),
+        (FEDERATION_YAML, "Keep the provenance beside the zip", ["workspace-v2.0.0-acme-domain.zip"],
+         "v2.0.0", "provenance-v2.0.0-acme-domain.intoto.jsonl"),
+    ],
+)
+def test_the_release_carries_the_provenance_it_signed_named_after_its_zip(tmp_path, yaml_path, step, zips, tag, expected):
+    """The attestation goes on the release as the JSON Lines the attest action
+    wrote, so `gh attestation verify --bundle` needs no attestation API, and
+    OpenSSF Scorecard's Signed-Releases check finds it. A Copilot skill zip
+    beside the bundle, and a tag with a slash, leave the name alone."""
+    release = tmp_path / "release"
+    release.mkdir()
+    for name in zips:
+        (release / name).write_bytes(b"PK")
+    bundle = tmp_path / "attestation.json"
+    bundle.write_text('{"mediaType":"application/vnd.dev.sigstore.bundle.v0.3+json"}\n')
+    body = step_body(yaml_path, step, r"^        working-directory:")
+    r = run(["bash", "-euo", "pipefail", "-c", body], cwd=release, env={"TAG": tag, "BUNDLE": bundle})
+    assert r.rc == 0, r.out
+    assert sorted(p.name for p in release.glob("*.intoto.jsonl")) == [expected]
+    assert (release / expected).read_text() == bundle.read_text()
+    upload = section(read(yaml_path), r"^      - name: Upload to the release$", r"working-directory:")
+    assert "./*.intoto.jsonl" in upload and "shopt -s nullglob" in upload, "the provenance is uploaded, and a release with none skips it"
