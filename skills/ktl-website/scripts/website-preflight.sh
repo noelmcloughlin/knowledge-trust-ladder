@@ -172,6 +172,13 @@ fi
 # site.toml, README.md and assets/css/custom.css. Every other file is a copy
 # of a template, so a difference is a deliberate edit or a bump not yet copied.
 site=""
+# What makes a folder not this skill's, for the messages below.
+lacks() {
+  local gone=""
+  [ -f "$root/$1/site.toml" ] || gone="site.toml"
+  [ -f "$root/$1/hugo.toml" ] || gone="${gone}${gone:+ or }hugo.toml"
+  printf 'no %s' "$gone"
+}
 for d in website ktl-website; do
   if [ -f "$root/$d/site.toml" ] && [ -f "$root/$d/hugo.toml" ]; then site="$d"; break; fi
 done
@@ -203,10 +210,10 @@ elif [ -f "$root/website/site.config.mjs" ]; then
   site="website"
   warn website "website/ is this skill's earlier Astro site (site.config.mjs) - Step 1 moves it to Hugo in place: its values go into site.toml and its other files are removed"
 elif [ -d "$root/ktl-website" ]; then
-  miss website "ktl-website/ exists and is not this skill's (no site.toml), and so is website/ or it would be used - this skill writes nothing into either; ask where the site should go" "Step 1 and every step after it"
+  miss website "ktl-website/ exists and is not this skill's ($(lacks ktl-website)), and so is website/ or it would be used - this skill writes nothing into either; ask where the site should go" "Step 1 and every step after it"
 elif [ -e "$root/website" ]; then
   site="ktl-website"
-  info website "website/ exists and is not this skill's (no site.toml), so it is left alone - Step 1 installs the site in ktl-website/ instead"
+  info website "website/ exists and is not this skill's ($(lacks website)), so it is left alone - Step 1 installs the site in ktl-website/ instead"
 else
   site="website"
   ok website "no website/ yet - Step 1 installs the site there"

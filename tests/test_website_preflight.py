@@ -177,7 +177,12 @@ def test_installs_beside_another_site_s_website_folder_and_finds_its_own_on_a_re
     assert result and matches(result.out, r"^info    website +website/ exists and is not this skill's .* installs the site in ktl-website/ instead"), (
         f"preflight did not send the site to ktl-website/: {result.out}"
     )
+    assert "(no site.toml or hugo.toml)" in result.out, result.out
     assert not matches(result.out, r"^missing website"), f"another site's folder stopped the skill: {result.out}"
+    write(tmp_path / "website" / "site.toml", "")
+    result = preflight(tmp_path)
+    assert result and "website/ exists and is not this skill's (no hugo.toml)" in result.out, f"the message named a file that is there: {result.out}"
+    (tmp_path / "website" / "site.toml").unlink()
     site = install(tmp_path, "ktl-website")
     result = preflight(tmp_path)
     assert result and matches(result.out, r"^ok      website +ktl-website/ installed, and its files match"), f"the rerun missed ktl-website/: {result.out}"
