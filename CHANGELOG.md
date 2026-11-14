@@ -4,6 +4,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Changed
+
+- **The README links the `ktl` package's page on PyPI.**
+
 ## [0.64.0] - 2026-11-14
 
 ### Added
