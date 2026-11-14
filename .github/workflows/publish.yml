@@ -132,6 +132,7 @@ jobs:
         run: gh skill publish --dry-run
 
       - name: Publish
+        id: publish
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
@@ -140,8 +141,12 @@ jobs:
       # The release above is made with GITHUB_TOKEN, and GitHub starts no
       # workflow from an event that token causes, so knowledge-release.yaml's
       # release trigger never fires here. A dispatch is the one exception, so
-      # this step asks for the bundle zip directly, built from the tag.
+      # this step asks for the bundle zip directly, built from the tag. This
+      # step and the two after it each run once the tag exists, whether or
+      # not the one before them failed: a failed request fails the job and
+      # names itself, and the others still go out.
       - name: Attach the knowledge bundle
+        if: ${{ !cancelled() && steps.publish.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
@@ -154,6 +159,7 @@ jobs:
       # and uploads where PYPI_RELEASE_ENABLED says; unset, it builds and
       # checks the package and uploads nothing.
       - name: Publish the ktl package
+        if: ${{ !cancelled() && steps.publish.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
@@ -172,7 +178,7 @@ jobs:
       # and "true" names no host, which the step says. A host that cannot
       # be dispatched is reported and the others go ahead.
       - name: Ask the siblings to sync
-        if: vars.KNOWLEDGE_SYNC_HOSTS != ''
+        if: ${{ !cancelled() && steps.publish.outcome == 'success' && vars.KNOWLEDGE_SYNC_HOSTS != '' }}
         env:
           GH_TOKEN: ${{ secrets.KNOWLEDGE_SYNC_DISPATCH_TOKEN }}
           HOSTS: ${{ vars.KNOWLEDGE_SYNC_HOSTS }}
