@@ -48,6 +48,14 @@ A link to a file mkdocs served beside the pages, such as `schema/<name>.yaml`, g
 
 An `mkdocs.yml` inside `.linkml/`, the linkml-sidecar's copier project, publishes nothing and needs no retirement.
 
+### Reading mkdocs.yml
+
+Step 0 reads `mkdocs.yml` once, by eye, and Step 1 writes what it found into `site.toml`:
+
+- Give each page `nav` names an entry under `[params.redirects]` from its mkdocs address to its file, such as `"about" = "docs/about.md"`, so old links keep working. The schema's pages need none: each answers at `/elements/<Name>/`, where a schema's w3id rules point.
+- Add each folder `exclude_docs` names to `docsExclude`.
+- Check the Pages address against `site_url`.
+
 ## A custom domain, or a user site
 
 Set `baseURL` in `site.toml` to the domain, `https://docs.example.org/`. The domain's DNS and the Pages setting for it stay the repository's own; a deployment from Actions needs no `CNAME` file. A user site, the `<owner>.github.io` repository, sets `baseURL` to `https://<owner>.github.io/`.

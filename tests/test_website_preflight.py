@@ -127,7 +127,7 @@ def test_prints_no_credential_a_remote_address_carries(tmp_path):
 def test_finds_a_schema_at_the_root_first_then_in_the_linkml_sidecar(tmp_path):
     skeleton(tmp_path)
     result = preflight(tmp_path)
-    assert result and matches(result.out, r"^info    schema +no src/<name>/schema/<name>\.yaml"), f"preflight found a schema in a bare host: {result.out}"
+    assert result and matches(result.out, r"^info    schema +no src/<name>/schema/<name>\.yaml .* shows LOKF core"), f"preflight found a schema in a bare host: {result.out}"
     write(tmp_path / ".linkml" / "src" / "acme" / "schema" / "acme.yaml", "id: https://acme.example/schema\nname: acme\n")
     write(tmp_path / ".linkml" / "src" / "acme" / "schema" / "other.yaml", "id: https://acme.example/other\nname: other\n")
     result = preflight(tmp_path)

@@ -23,6 +23,7 @@ No setting names what the site shows: the build looks for each of these and show
 | `docs/<page>.<language>-simple.md` | a retelling, which `docs/<page>.md` offers above its title |
 | `docs/architecture.md` | the home page's Architecture button |
 | `src/<name>/schema/<name>.yaml`, at the root or under `.linkml/` | the Schema part, written by LinkML's `gen-doc`, and the home page leads with the schema |
+| `.lokf/schema/lokf.yaml`, or the copy in the `lokf` package | with no schema of the repository's own, the Schema part shows LOKF core, and the home page does not lead with it |
 | `CHANGELOG.md` | a page per release |
 | `.assets/` | the figures |
 | `.lokf/ingest.lock.yaml` | a mirrored source's origin, on its concept's card |
@@ -64,7 +65,7 @@ Resolve every placeholder from real sources before writing anything; never leave
 
 `<REPO_OWNER>` and `<REPO_NAME>` come from the remote, never from a person's name: Pages serves the site at `https://<REPO_OWNER>.github.io/<REPO_NAME>/`, and the sidecar's `<OWNER_SLUG>` is a different thing. `<PROJ_NAME>` and `<PROJ_DESC>` go inside double quotes in a TOML file, so write a `"` in either as `\"` and a `\` as `\\`.
 
-**When the site replaces an mkdocs site**, which the `mkdocs` line names, read `mkdocs.yml` once, by eye. Give each page `nav` names an entry under `[params.redirects]` from its mkdocs address to its file, such as `"about" = "docs/about.md"`, so old links keep working. The schema's pages need none: each answers at `/elements/<Name>/`, where a schema's w3id rules point. Add each folder `exclude_docs` names to `docsExclude`, and check the Pages address against `site_url`.
+**When the site replaces an mkdocs site**, which the `mkdocs` line names, read `mkdocs.yml` once, by eye, for the values [references/deploy.md](references/deploy.md#reading-mkdocsyml) lists.
 
 ## Step 1: install the site
 

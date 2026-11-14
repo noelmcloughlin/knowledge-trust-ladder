@@ -279,7 +279,7 @@ done
 if [ -n "$schema" ]; then
   ok schema "$schema: the Schema part, a page per class, slot, enumeration and type, and the home page leads with it"
 else
-  info schema "no src/<name>/schema/<name>.yaml at the root or under .linkml/ - no Schema part, and the home page's schema button is greyed"
+  info schema "no src/<name>/schema/<name>.yaml at the root or under .linkml/ - the Schema part shows LOKF core, the schema the bundle is written in, and the home page does not lead with it"
 fi
 if [ -f "$root/.github/workflows/knowledge-federation.yaml" ]; then
   ok workspace ".github/workflows/knowledge-federation.yaml: a domain host, so the graph page offers the workspace"

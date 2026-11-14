@@ -35,6 +35,9 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **`knowledge-conventions.sh --strict` fails when it could not check a rule**, and every workflow uses it.
 - **The ingest lock records each mirror file's digest, and a run writes a hand-edited file again.** `--status` counts edited files, and the first run after the upgrade rewrites the mirror once.
 - **A mirrored source shows its origin, version and fetch day on the concept page.**
+- **A ktl-website Mermaid diagram opens over the page with a click**, as a figure does, where the wheel or buttons zoom it and a drag moves it.
+- **The bundle page and the health page show their figures on a card**: a bar of the ladder's states and a tile per health figure, each linking to its list.
+- **A concept card names a Creative Commons licence by its short name**, shows each check's person or automation dot, offers its files as chips, rules its record's rows, and shows a genre that repeats the type only once.
 
 ### Changed
 
@@ -55,6 +58,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **A website's schema elements answer at `/elements/<Name>/` with no setting**, the address mkdocs gave each and the one a schema's w3id rules point at.
 - **`ktl-website` installs into `ktl-website/` when `website/` is another site's, and finds the site there on a rerun.** The website and federation workflows and the sidecar's sync look in both folders.
 - **`ktl-prose` rewords a changelog's released sections only when a person asks**, and keeps each heading, date, link and excerpt.
+- **A ktl-website site with no LinkML schema of its own shows LOKF core in its Schema part**, from `.lokf/schema/lokf.yaml` or the `lokf` package, so the home page's schema button is never greyed. The home page still leads only with a repository's own schema.
 
 ### Removed
 
@@ -101,6 +105,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **Conventions rule 10 says that a tag, an anchor, an alias or a merge key is refused on any frontmatter field**, as the check always did, not only on the fields the gates read.
 - **`website-preflight.sh` names the file a foreign site folder lacks**, `hugo.toml` as well as `site.toml`.
 - **`knowledge-sync.sh` and the automation page say that `--source` looks for the tag in that clone alone**, not on the remote.
+- **A concept page no longer scrolls sideways on a phone**: a long path or address in its record wraps.
 
 ### Security
 
