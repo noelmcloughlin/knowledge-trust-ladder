@@ -4,16 +4,6 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
-### Added
-
-- **Each release is also the `ktl` package on PyPI**, for a machine that reaches a package index and no git host. `uvx ktl skills install --scope user` installs the six skills for GitHub Copilot, or with `--agent` for Claude Code or Codex, and `ktl skills status` says whether the copies an agent reads are the release's. `knowledge-trust-ladder` installs the same package under the repository's name. `pypi.yml` uploads both once `PYPI_RELEASE_ENABLED` is set, from a build anyone can repeat byte for byte, and attaches each file's checksum to the release.
-
-### Changed
-
-- **The website's home page fills the Quick start button**, so a new reader sees where to begin. A site with no quick start fills the first button found, as before.
-- **The preflight reads a skill that `gh skill install` rewrote as the release it came from**, so a gh copy beside a verbatim copy of one release is no longer reported as stale.
-- **`llms.txt` names the PyPI route first**, for an agent at a site that reaches no git host.
-
 ## [0.64.0] - 2026-11-14
 
 ### Added
@@ -38,6 +28,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **A ktl-website Mermaid diagram opens over the page with a click**, as a figure does, where the wheel or buttons zoom it and a drag moves it.
 - **The bundle page and the health page show their figures on a card**: a bar of the ladder's states and a tile per health figure, each linking to its list.
 - **A concept card names a Creative Commons licence by its short name**, shows each check's person or automation dot, offers its files as chips, rules its record's rows, and shows a genre that repeats the type only once.
+- **Each release is also the `ktl` package on PyPI**, for a machine that reaches a package index and no git host. `uvx ktl skills install --scope user` installs the six skills for GitHub Copilot, or with `--agent` for Claude Code or Codex, and `ktl skills status` says whether the copies an agent reads are the release's. `knowledge-trust-ladder` installs the same package under the repository's name. `pypi.yml` uploads both once `PYPI_RELEASE_ENABLED` is set, from a build anyone can repeat byte for byte, and attaches each file's checksum to the release.
 
 ### Changed
 
@@ -59,6 +50,9 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **`ktl-website` installs into `ktl-website/` when `website/` is another site's, and finds the site there on a rerun.** The website and federation workflows and the sidecar's sync look in both folders.
 - **`ktl-prose` rewords a changelog's released sections only when a person asks**, and keeps each heading, date, link and excerpt.
 - **A ktl-website site with no LinkML schema of its own shows LOKF core in its Schema part**, from `.lokf/schema/lokf.yaml` or the `lokf` package, so the home page's schema button is never greyed. The home page still leads only with a repository's own schema.
+- **The website's home page fills the Quick start button**, so a new reader sees where to begin. A site with no quick start fills the first button found, as before.
+- **The preflight reads a skill that `gh skill install` rewrote as the release it came from**, so a gh copy beside a verbatim copy of one release is no longer reported as stale.
+- **`llms.txt` names the PyPI route first**, for an agent at a site that reaches no git host.
 
 ### Removed
 
