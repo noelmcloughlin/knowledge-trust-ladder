@@ -48,7 +48,7 @@ sources:
     excerpt: Environment has no required reviewers, so its approval proves nothing.
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-27T01:03:06Z"
+    at: "2026-11-14T12:32:59Z"
   - by: human:noelmcloughlin
     at: "2026-11-13T14:52:01Z"
     revision: "38892f8d2d5af8495e2b17d503f1f6dba9fd45ba"

@@ -26,7 +26,7 @@ verified:
     at: "2026-11-12T20:37:20Z"
     revision: "12d91cac03649375c1a0a547cfb4d5987f20c558"
   - by: process:ktl-librarian
-    at: "2026-11-13T14:41:35Z"
+    at: "2026-11-14T12:32:59Z"
 stale_after: 2028-11-12
 status: draft
 ---

@@ -20,7 +20,7 @@ generated:
 status: draft
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-13T14:41:35Z"
+    at: "2026-11-14T12:32:59Z"
 relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/registrar
 ---
