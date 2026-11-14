@@ -20,9 +20,9 @@
 # origin's default branch. It edits the pin line and runs `uv lock` because
 # `uv add` also writes an index named in UV_DEFAULT_INDEX into the file.
 #
-# The host's own copy runs, from a person, knowledge-sync.yaml or the skills
-# repository's scripts/sync-sidecar.sh. A manifest rule it does not know is
-# reported for the run after the newer copy is merged.
+# The host's own copy runs, from a person or knowledge-sync.yaml. A manifest
+# rule it does not know is reported for the run after the newer copy is
+# merged.
 #
 # Usage: knowledge-sync.sh [options] <tag>
 #   --host <dir>      the host; by default the nearest parent holding .lokf/

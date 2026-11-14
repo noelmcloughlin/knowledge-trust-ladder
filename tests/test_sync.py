@@ -1,4 +1,4 @@
-"""The sidecar's sync script brings a host to one release, and the fan-out runs it in each sibling.
+"""The sidecar's sync script brings a host to one release of the ktl package.
 
 knowledge-sync.sh is the template every host carries as
 .lokf/scripts/knowledge-sync.sh. These tests release the real templates as
@@ -21,14 +21,10 @@ two ktl wheels on a local file:// index, and run the script on a host whose
    --source folder of wheels, and reports a manifest rule it does not know;
 7. a manifest that names a copy path outside the host, or inside a .git
    folder, is refused;
-8. scripts/sync-sidecar.sh runs each sibling's own copy, or the tag's in a
-   sibling that has none, and its --finish keeps a branch that was never
-   pushed, or whose remote branch still exists, and removes one whose pull
-   request was merged;
-9. a run that copies a longer script over its own file stops when main
+8. a run that copies a longer script over its own file stops when main
    returns, and so does a copy that ends with a bare `main "$@"`;
-10. --apply takes the pin's line at the run's tag and a lock uv writes the
-    same from the index, and holds every workflow change.
+9. --apply takes the pin's line at the run's tag and a lock uv writes the
+   same from the index, and holds every workflow change.
 
 Every run skips the sidecar's checks (--no-checks): the preflight, the
 toolkit and the conventions script have modules of their own.
@@ -47,7 +43,6 @@ import pytest
 from conftest import REPO, SCRIPTS, TEMPLATES, WEBSITE_TEMPLATES, WORKFLOWS, Git, has_line, matches, read, run, write
 
 SYNC = SCRIPTS / "knowledge-sync.sh"
-FANOUT = REPO / "scripts" / "sync-sidecar.sh"
 LIBRARIAN = ".github/workflows/knowledge-librarian.yaml"
 PYPROJECT = ".lokf/pyproject.toml"
 LOCK = ".lokf/uv.lock"
@@ -429,59 +424,6 @@ def test_a_manifest_that_names_a_path_in_a_git_folder_is_refused(tmp_path, skill
     checks.ok(result.rc == 2 and "inside a .git folder" in result.out, "the manifest is refused before anything is written", result.out)
     checks.ok(not Git(host)("status", "--porcelain"), "the host is untouched")
     checks.ok(read(host / ".git" / "config") == config, "and so is its git configuration")
-
-
-def test_the_fan_out_runs_each_siblings_own_copy_and_finishes_merged_branches(tmp_path, skills, checks):
-    one = make_host(tmp_path, skills, "one")
-    two = make_host(tmp_path, skills, "two")
-    # The first sibling's copy ends with a bare `main "$@"`, so run in place
-    # it would read on into v1.1.0's longer script when main returns.
-    script = one / ".lokf" / "scripts" / "knowledge-sync.sh"
-    write(script, bare_main(read(script)))
-    Git(one)("commit", "-qam", "a copy from before the exit")
-    Git(one)("push", "-q", "origin", "main")
-    # The second sibling predates the sync script, so the tag's copy runs
-    # there and lays the sibling's own down.
-    (two / ".lokf" / "scripts" / "knowledge-sync.sh").unlink()
-    Git(two)("commit", "-qam", "no sync script yet")
-    Git(two)("push", "-q", "origin", "main")
-    result = run(["bash", FANOUT, "--push", "--no-checks", "--source", skills, "v1.1.0", one, two], cwd=tmp_path, env=skills.env)
-    checks.ok(result.rc == 0, "exit 0", result.out)
-    checks.ok(has_line(result.out, "   running  the sibling's own .lokf/scripts/knowledge-sync.sh"), "a sibling's own copy runs", result.out)
-    checks.ok(has_line(result.out, "   running  v1.1.0's knowledge-sync.sh, since the sibling has no copy yet"), "the tag's copy runs where there is none", result.out)
-    checks.ok((two / ".lokf" / "scripts" / "knowledge-sync.sh").is_file(), "and lays the sibling's own copy down")
-    for host in (one, two):
-        git = Git(host)
-        checks.ok(has_line(result.out, f"== {host}"), f"{host.name} is reported", result.out)
-        checks.ok(git("branch", "--show-current") == "sync-v1.1.0", f"{host.name} is on the sync branch")
-        checks.ok(git("rev-list", "--count", "main..sync-v1.1.0") == "1", f"{host.name} has the one commit")
-        checks.ok(git("rev-parse", "origin/sync-v1.1.0") == git("rev-parse", "sync-v1.1.0"), f"{host.name}'s branch is pushed")
-    checks.ok(matches(result.out, r"^When the pull requests are merged: scripts/sync-sidecar\.sh --finish v1\.1\.0 "), "the finish command is printed", result.out)
-    not_a_tag = run(["bash", FANOUT, "--no-checks", "--source", skills, "main", one], cwd=tmp_path, env=IDENT)
-    checks.ok(not_a_tag.rc == 2, "a branch name is refused", not_a_tag.out)
-
-    kept = run(["bash", FANOUT, "--finish", "v1.1.0", one], cwd=tmp_path, env=IDENT)
-    checks.ok(kept.rc == 0 and "origin/sync-v1.1.0 still exists" in kept.out, "a branch whose remote branch still exists is kept", kept.out)
-    # The pull request is squash-merged on origin and its branch deleted,
-    # as a merge in the browser does.
-    merger = tmp_path / "merger"
-    run(["git", "clone", "-q", "-b", "main", tmp_path / "one-origin.git", merger], env=IDENT)
-    m = Git(merger)
-    m("fetch", "-q", "origin", "sync-v1.1.0")
-    m("merge", "-q", "--squash", "FETCH_HEAD")
-    m("commit", "-qm", "security(sidecar): sync copies and skills pin from v1.1.0 (#1)")
-    m("push", "-q", "origin", "main")
-    m("push", "-q", "origin", "--delete", "sync-v1.1.0")
-    done = run(["bash", FANOUT, "--finish", "v1.1.0", one], cwd=tmp_path, env=IDENT)
-    git = Git(one)
-    checks.ok(done.rc == 0 and "sync-v1.1.0 removed" in done.out, "the merged branch is removed", done.out)
-    checks.ok(git("branch", "--show-current") == "main", "the host is back on main")
-    checks.ok(git("rev-parse", "main") == git("rev-parse", "origin/main"), "main is up to date")
-    checks.ok("sync-v1.1.0" not in git("branch"), "the branch is gone")
-
-    Git(two)("branch", "--unset-upstream", "sync-v1.1.0")
-    never = run(["bash", FANOUT, "--finish", "v1.1.0", two], cwd=tmp_path, env=IDENT)
-    checks.ok(never.rc == 1 and "was never pushed" in never.out, "a branch with no upstream is kept and reported", never.out)
 
 
 def test_a_changelog_with_crlf_endings_keeps_them(tmp_path, skills, checks):

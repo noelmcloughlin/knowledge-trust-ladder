@@ -66,7 +66,6 @@ scripts/
   validate-repository.sh   the contract: the checks validate.yml runs on this repository's own files
   smoke-test-install.sh    installs the six skills into a throwaway repo and checks them
   smoke-test-website.sh    copies the website templates into a host built from the dummy bundle and builds the site twice
-  sync-sidecar.sh          runs one release's knowledge-sync.sh in each sibling repository, and finishes the branches
   companion-diagrams.mjs   draws the Archify companions in .assets/companions/ again; a maintainer runs it by hand
 tests/                     the behavioural tests of the sidecar scripts and the prose checker, run with pytest; -n auto runs them in parallel
   conftest.py              the shared helpers, and how to run the tests

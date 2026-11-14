@@ -49,7 +49,7 @@ Each sibling keeps itself current. Its `knowledge-sync.yaml` reads the `ktl` pin
 
 A new template goes in the manifest and in ktl-sidecar's Step 5 table, and nowhere else: the preflight and contract check 11 read the manifest.
 
-To open the pull requests yourself on the day of a release, run `scripts/sync-sidecar.sh --pr <tag> <sibling>...` from this repository once the tag is on origin and its `ktl` package on PyPI. It runs each sibling's own copy of `knowledge-sync.sh`, which reads the release from the sibling's own index, or the tag's in a sibling that has none, on a branch of its own, `sync-<tag>`, from origin's default branch. A sibling with uncommitted changes is skipped. Without `--pr`, `--push` or `--commit` it leaves the sync uncommitted on the branch, with the commit command printed, and the diff is the review. Once the pull requests are merged, `scripts/sync-sidecar.sh --finish <tag> <sibling>...` puts each sibling back on its default branch, brings it up to date and removes the branch. A release that touched neither the templates nor the librarian skill needs no sync, and the workflow and the script both say so.
+To open a sibling's pull request on the day of a release, once its `ktl` package is on PyPI, start the sibling's `knowledge-sync.yaml` by hand with the tag, or run `.lokf/scripts/knowledge-sync.sh --pr <tag>` in a clone of it. A release that touched neither the templates nor the librarian skill needs no sync, and the workflow and the script both say so.
 
 ## The ktl package on PyPI
 
