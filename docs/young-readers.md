@@ -49,4 +49,4 @@ This repository has tried retellings on its own pages only. [The architecture pa
 
 ## The other end of the range
 
-A retelling for a ten-year-old and a policy for a bank's auditor sit on the same ladder. Each says where it came from, what checked it, and who vouched for it. [Three lines of defence](three-lines.md) is this page's counterpart for regulated industries.
+A retelling for a ten-year-old and a policy for a bank's auditor sit on the same ladder. Each says where it came from, what checked it, and who vouched for it. [Three lines of defence](three-lines.md) is this page's counterpart for regulated industries. [What KTL is for](uses.md) lists the other uses.

@@ -45,9 +45,9 @@ KTL is not the tooling side. It runs no scanner, stores no secret, writes no bil
 
 ### Technology governance
 
-KTL fits where governance needs to know who is accountable for a statement. Every confirmation names one person, the gate ties it to that person's signature or approval, and a policy is a concept that a person reviews on a date like any other. [Three lines of defence](three-lines.md) places each role in that model and lists what an auditor can check. Across repositories, a [domain](federation.md) is a set of bundles with one accountable owner.
+KTL fits where governance needs to know who is accountable for a statement. [Three lines of defence](three-lines.md) places each role in the model that regulated industries use, and says what an auditor can check and where that evidence stops. Across repositories, a [domain](federation.md) is a set of bundles with one accountable owner.
 
-KTL is not a governance, risk and compliance system. It keeps no risk register, tests no control and tracks no exception. It records that a named person agreed a concept says what its source says. Whether the source is right, and whether that person was the right one to ask, stay with the organisation.
+KTL is not a governance, risk and compliance system. It keeps no risk register, tests no control and tracks no exception. It records that a named person agreed a concept says what its source says. Whether the source is right stays with the organisation.
 
 ## What it is not
 
