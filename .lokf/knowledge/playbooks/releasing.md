@@ -2,12 +2,12 @@
 type: Playbook
 id: https://w3id.org/ktl/knowledge/playbooks/releasing
 title: Releasing
-description: "How a release happens: `semantic-release.yml` computes the version from Conventional Commits and promotes `CHANGELOG.md` on merge to `main` but never tags, and a maintainer's `publish.yml` run checks that version against the changelog, lets `gh skill publish` create the tag and release, dispatches `knowledge-release.yaml` to attach the bundle's zip, its domain vocabulary, its evidence table and the Copilot zips, and asks the sibling hosts to sync."
+description: "How a release happens: `semantic-release.yml` computes the version from Conventional Commits and promotes `CHANGELOG.md` on merge to `main` but never tags, and a maintainer's `publish.yml` run checks that version against the changelog, lets `gh skill publish` create the tag and release, dispatches `knowledge-release.yaml` to attach the bundle's zip, its domain vocabulary, its evidence table and, once `KNOWLEDGE_M365_ENABLED` is `true`, the Copilot zips, and asks the sibling hosts to sync."
 genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T18:33:42Z"
+  at: "2026-11-14T22:28:53Z"
 status: draft
 dependsOn:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -51,10 +51,10 @@ Since 0.38.0 an empty `[Unreleased]` passes `check` when that version is already
 
 - reads the version `--dry-run` computed;
 - promotes that section to a dated heading itself;
-- moves the librarian template's `TRUST_LADDER_SKILLS_REF` to the newest tag a host can clone;
+- moves the `ktl` pin in the sidecar's `templates/pyproject.toml` to the newest tag, whose package `publish.yml` put on PyPI;
 - commits both directly as `chore(release): <version> - changelog promoted [skip ci]`.
 
-The pin is two values, so the same step moves `TRUST_LADDER_SKILLS_SHA` to the commit that tag names: the install step refuses a tag that names any other commit. Only the template's pin moves. `GITHUB_TOKEN` may not push a change under `.github/workflows/`, so this repository's own copy keeps its old pin, which check 11 ignores (2026-09-24). `gh skill publish` stays this repository's only tag creator, for the reasons below.
+The template pins `ktl` one release behind, because the new changelog heading exists before its tag. Check 15 of `validate-repository.sh` requires the pin to name one of the two newest releases, and that tag to carry `skills/ktl-librarian` and the sync manifest.[^docs-releasing.md] `gh skill publish` stays this repository's only tag creator, for the reasons below.
 
 Two qualifying merges to `main` between one `publish.yml` run and the next compute the *same* next version twice. The next version is computed from the last tag, and `gh skill publish` is a separate, later, human-triggered step. `promote` now checks whether the top released heading's version is still untagged. If so, it folds the new entries into it by `###` subsection instead of inserting a second heading for the same version. That was the bug that wrote two `## [0.19.0] - 2026-09-17` headings, orphaning the second merge's entries above an empty `[Unreleased]`. Check 14 in `playbooks/repository-validation.md` proves the fold and would have caught the original duplication. Since 0.42.0 the fold leaves out an entry the pending section already holds, because a pull request stacked on another still carries the other's entries under `[Unreleased]`, and check 14 proves that each entry is listed once.
 
@@ -72,11 +72,13 @@ Each `publish.yml` run validates:
 
 Since 0.64.0 these checks, the repository contract and the sidecar scripts' tests under `tests/` (run with pytest) run in a read-only `verify` job, which installs the test packages by hash from `tests/requirements.txt`, compiled from `tests/requirements.in`. The `publish` job holds the write token behind the `release` Environment, needs `verify` and runs neither (`CHANGELOG.md`). It checks again that the tag is still free, since the tag may have been made while the run waited, then runs `gh skill publish --dry-run`, and only then publishes. The version is typed *with* the `v` (`v0.16.0`). The changelog heading never carries one, and the cross-check strips it before comparing.
 
-Since 2026-09-24 it then dispatches `knowledge-release.yaml` for the new tag. That workflow attaches the bundle to the release as `knowledge-vX.Y.Z-knowledge-trust-ladder.zip` when the bundle changed since the last release that carries one. The zip is named after the repository, or after the name its `KNOWLEDGE_RELEASE_NAME` variable sets. Beside it (since 2026-09-24) it attaches the docent as a Microsoft 365 Copilot skill, `ktl-docent-m365-vX.Y.Z-knowledge-trust-ladder.zip`. It attaches one zip per instructions file under `.lokf/m365/`, each with its own checksum and attested alongside the bundle zip. If the builder is missing or refuses the bundle, the release carries the bundle zip alone.
+Since 2026-09-24 it then dispatches `knowledge-release.yaml` for the new tag. That workflow attaches the bundle to the release as `knowledge-vX.Y.Z-knowledge-trust-ladder.zip` when the bundle changed since the last release that carries one. The zip is named after the repository, or after the name its `KNOWLEDGE_RELEASE_NAME` variable sets. Beside it (since 2026-09-24) it attaches the docent as a Microsoft 365 Copilot skill, `ktl-docent-m365-vX.Y.Z-knowledge-trust-ladder.zip`, once the repository variable `KNOWLEDGE_M365_ENABLED` is `true`, since the Copilot skill is unfinished.[^knowledge-release.yaml] It attaches one zip per instructions file under `.lokf/m365/`, each with its own checksum and attested alongside the bundle zip. If the builder is missing or refuses the bundle, the release carries the bundle zip alone.
 
 Since 0.46.0, when the host's `.lokf/justfile` names a domain vocabulary on its `schema :=` line, the workflow also attaches that file as `schema-<tag>-<name>.yaml`, with its own `.sha256` and attestation. A federation that admits the bundle can then validate it on its own terms. Since 0.55.0 the line may name any file in the repository, such as a linkml-sidecar schema, but never one outside it, and the released copy imports LOKF core as `lokf`. Since 0.59.0 a release whose only change is the schema packs again, and any other local file the schema imports is merged into the released copy, so a composite of two `lokf adapt` copies is released as one file. The merge stops the release on a name two files define differently. The release identifies that file by the tag and the schema's own file name alone, in the asset name and its `.sha256`, never by a `version:` slot inside the schema, so the schema's own `version:` can read the same across several releases that change its content.[^knowledge-release.yaml]
 
 Since 0.64.0, when the bundle changed, the workflow also attaches its evidence table as `evidence-<tag>-<name>.tsv`, with its own `.sha256` and attestation. The host's `knowledge-report.sh evidence` writes it from frontmatter alone: one row for each concept's `generated` record and one for each `verified` event, with a `check` column that says whether a person's event is a first confirmation, the same person confirming again or a second person's re-check. A sidecar whose script has no `evidence` form gets a notice, and its release carries no table.
+
+On a public repository the release also carries the files' signed build provenance, as `provenance-<tag>-<name>.intoto.jsonl`, which `gh attestation verify --bundle` reads.
 
 The dispatch is needed because GitHub starts no workflow from a release made with `GITHUB_TOKEN`, so that workflow's own release trigger never fires here. If the dispatch fails, the job fails and names the manual run to make.
 
@@ -86,30 +88,30 @@ This release-process detail moved out of `CONTRIBUTING.md` on 2026-09-14 to `doc
 
 The sibling repositories (the two Obsidian plugins) carry byte-identical copies of the sidecar templates and their own skills pin. Only the first line of `.lokf/justfile`, which names the host, and its `schema :=` line are a sibling's own.
 
-Since 0.47.0 each sibling keeps itself current. Its `knowledge-sync.yaml` reads the pin and this repository's newest release each week. When the pin is behind, it runs the sibling's own `.lokf/scripts/knowledge-sync.sh`, which reads what to copy from the release's `templates/knowledge-sync.manifest`, and opens one pull request with the diff: the copies, the pin, and the changelog entry under `## [Unreleased]` and `### Security`. A later week's run refreshes that one pull request to the newest release until it is merged. Since 0.53.0 the branch the sync pushes carries no workflow a release wrote (`CHANGELOG.md`). `publish` keeps every workflow but for the pin, and holds the release's workflow changes for a person, or for a reviewer of the Environment that `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` names. The header of `knowledge-sync.sh` says what a sync copies, adds and refuses.
+Since 0.47.0 each sibling keeps itself current. Its `knowledge-sync.yaml` reads the `ktl` pin in `.lokf/pyproject.toml` and asks its package index for the newest release each week. When the pin is behind, it runs the sibling's own `.lokf/scripts/knowledge-sync.sh`, which reads what to copy from the release's `templates/knowledge-sync.manifest`, and opens one pull request with the diff: the copies, the pin, and the changelog entry under `## [Unreleased]` and `### Security`. A later week's run refreshes that one pull request to the newest release until it is merged. Since 0.53.0 the branch the sync pushes carries no workflow a release wrote (`CHANGELOG.md`). `publish` keeps every workflow as the default branch has it, and holds the release's workflow changes for a person, or for a reviewer of the Environment that `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` names. The header of `knowledge-sync.sh` says what a sync copies, adds and refuses.
 
 A new template goes in the manifest and in ktl-sidecar's Step 5 table, and nowhere else, because the preflight and contract check 11 read the manifest.
 
-To open the pull requests on the day of a release, a maintainer runs `scripts/sync-sidecar.sh --pr <tag> <sibling>...` from this repository once the tag is on origin. The script:
+To open the pull requests on the day of a release, a maintainer runs `scripts/sync-sidecar.sh --pr <tag> <sibling>...` from this repository once the tag is on origin and its `ktl` package on PyPI. The script:
 
 - refuses anything but a release tag that is on origin and carries `skills/ktl-librarian/SKILL.md`;
-- runs each sibling's own copy of `knowledge-sync.sh`, or the tag's copy in a sibling that has none, on a branch of its own, `sync-<tag>`, from origin's default branch;
+- runs each sibling's own copy of `knowledge-sync.sh`, which reads the release from the sibling's own index, or the tag's copy in a sibling that has none, on a branch of its own, `sync-<tag>`, from origin's default branch;
 - skips a sibling with uncommitted changes;
 - without `--pr`, `--push` or `--commit`, leaves the sync uncommitted on the branch with the commit command printed, so the diff is the review.
 
 Once the pull requests are merged, `scripts/sync-sidecar.sh --finish <tag> <sibling>...` puts each sibling back on its default branch, brings it up to date and removes the branch.
 
-The pin and the copies move together because the skill a tag installs is written against the wrapper, gate and preflight that tag includes. Once a sibling turns on its scheduled librarian, the pin also decides which instructions run unattended. A release that touched neither the templates nor the librarian skill needs no sync, and the workflow and the script both say so. The template's pin is never bumped by hand, which would cut a pointless release. A tag that is not on origin is refused, because a sibling's scheduled librarian clones from there and would fail to install.
+The pin and the copies move together because the skill a tag installs is written against the wrapper, gate and preflight that tag includes. Once a sibling turns on its scheduled librarian, the pin also decides which instructions run unattended. A release that touched neither the templates nor the librarian skill needs no sync, and the workflow and the script both say so. The template's pin is never bumped by hand, which would cut a pointless release. A tag that is not on origin is refused, because no `ktl` package of it is on any index yet.
 
 Both checks read the `workflow_dispatch` version input through an `env:` variable rather than interpolating `${{ inputs.version }}` straight into the shell script. That hardening change (2026-09-12) closes a script-injection vector without changing what the checks verify.
 
 # The ktl package on PyPI
 
-`publish.yml` also dispatches `pypi.yml` for the new tag. It builds two packages from the tag: `ktl`, which carries the skills, and `knowledge-trust-ladder`, which holds no code and installs `ktl` at the same version. It checks that a second build makes the same bytes. It uploads only when the repository variable `PYPI_RELEASE_ENABLED` is `testpypi` or `true`, through the `testpypi` or `pypi` Environment, limited to tags matching `v*`.
+`publish.yml` also dispatches `pypi.yml` for the new tag. It builds two packages from the tag: `ktl`, which carries the skills, and `knowledge-trust-ladder`, which holds no code and installs `ktl` at the same version. It checks that a second build makes the same bytes. It uploads only when the repository variable `PYPI_RELEASE_ENABLED` is `testpypi` or `true`, through the `testpypi` or `pypi` Environment, limited to tags matching `v*`. After an upload to PyPI, it attaches a `.sha256` file for each package file to the GitHub release, and the files' signed provenance as `provenance-<tag>-packages.intoto.jsonl`.
 
 Before the first upload to each index, a maintainer registers a pending publisher for `ktl`. An index holds only one pending publisher for the same owner, repository, workflow and Environment at a time. So the first upload creates `ktl` and then fails at `knowledge-trust-ladder`. The maintainer then registers that project's publisher with the same details and runs the failed job again.[^docs-releasing.md]
 
 [^changelog.md]: CHANGELOG.md, 0.57.0, Fixed
-[^knowledge-release.yaml]: .github/workflows/knowledge-release.yaml, the Pack the domain vocabulary step
+[^knowledge-release.yaml]: .github/workflows/knowledge-release.yaml, the Pack the domain vocabulary step (quoted) and the Pack the Copilot skills step
 
-[^docs-releasing.md]: docs/releasing.md, The ktl package on PyPI
+[^docs-releasing.md]: docs/releasing.md, The ktl package on PyPI (quoted), and for check 15 the section on what follows a releasing merge

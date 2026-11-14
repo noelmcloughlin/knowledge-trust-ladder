@@ -7,7 +7,7 @@ genre: how-to
 resource: CONTRIBUTING.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T10:17:06Z"
+  at: "2026-11-14T22:28:53Z"
 status: draft
 references:
   - https://w3id.org/ktl/knowledge/playbooks/repository-validation
@@ -36,7 +36,7 @@ Before a pull request:
 
 The sibling repositories link deep into this repository's files, and their own link checks follow those URLs. `validate-repository.sh` check 9 lists the paths. Move one only together with its links, and when a change in a sibling needs something new in this repository, merge this repository's change first.
 
-A change under a skill's `templates/` is copied over each of this repository's copies, ktl-docent's included, in the same pull request. Checks 11, 11a and 11w name the pairs and hold each byte-identical. The one exception is the skills pin in `knowledge-librarian.yaml`, which the release commit moves in the template only.
+A change under a skill's `templates/` is copied over each of this repository's copies, ktl-docent's included, in the same pull request. Checks 11, 11a and 11w name the pairs and hold each byte-identical.
 
 When the commits would release, the pull request title carries the releasing type too (`feat:`, `fix:`, `security:`). A squash merge takes its subject from the title, and the `plan` job refuses a mismatch. Pinned action SHAs are bumped by Dependabot, and CI fails an action that floats on a tag or branch instead of a commit. The pull request template's checklist is the short form of this list.
 
