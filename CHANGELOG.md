@@ -4,6 +4,19 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Added
+
+- **`ktl gh check --strict` asks a public repository for a Scorecard workflow**, through the catalogue's new `workflow` kind.
+- **`ktl gh apply` turns back on a catalogued workflow that GitHub turned off for inactivity.**
+- **`scorecard.yml` publishes this repository's OpenSSF Scorecard**, which the README's badge shows.
+
+### Changed
+
+- **actionlint lints every workflow**, `pypi.yml` included.
+- **Links point to `lmodel/schema-sidecar`**, where `linkml-sidecar` moved.
+- **`llms.txt` lists the install routes in the install page's order.**
+- **The README links `ktl` on PyPI and says how to report a bug or contribute**; the issue templates name the `ktl` command.
+
 ## [0.64.0] - 2026-11-14
 
 ### Added

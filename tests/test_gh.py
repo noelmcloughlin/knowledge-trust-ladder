@@ -108,6 +108,9 @@ class FakeGitHub:
         self.changes = []
         self.secrets_set = []
         self.old_names = set()
+        # The Actions tab's state of each workflow file, by name: a file
+        # missing here counts as active.
+        self.workflow_states = {}
 
     # What a test sets up
 
@@ -175,6 +178,8 @@ class FakeGitHub:
             (r"actions/secrets(?:/(?P<name>[^/]+))?", self.repo_secrets),
             (r"actions/permissions", self.permissions),
             (r"actions/permissions/workflow", self.permissions),
+            (r"actions/workflows", self.list_workflows),
+            (r"actions/workflows/(?P<id>[0-9]+)/enable", self.enable_workflow),
             (r"actions/workflows/(?P<name>[^/]+)/dispatches", self.dispatch),
             (r"pages", self.pages_site),
             (r"private-vulnerability-reporting|vulnerability-alerts|automated-security-fixes", self.flag),
@@ -303,6 +308,21 @@ class FakeGitHub:
         return 200, dict(store)
 
     def dispatch(self, method, body, query, rest, name):
+        return 204, None
+
+    def list_workflows(self, method, body, query, rest):
+        # GitHub lists the Pages build it runs itself beside the files.
+        found = [{"id": 900, "name": "pages-build-deployment", "path": "dynamic/pages/pages-build-deployment", "state": "active"}]
+        for n, (name, state) in enumerate(sorted(self.workflow_states.items()), start=1):
+            found.append({"id": n, "name": name, "path": f".github/workflows/{name}", "state": state})
+        return 200, {"total_count": len(found), "workflows": self.page(found, query)}
+
+    def enable_workflow(self, method, body, query, rest, id):
+        assert method == "PUT", method
+        names = sorted(self.workflow_states)
+        if not 1 <= int(id) <= len(names):
+            return 404, {"message": "Not Found"}
+        self.workflow_states[names[int(id) - 1]] = "active"
         return 204, None
 
     def pages_site(self, method, body, query, rest):
@@ -445,6 +465,14 @@ def test_a_catalogue_with_a_field_the_command_does_not_know_is_refused(tmp_path,
     assert ktl(FakeGitHub(), "plan", "--catalogue", str(bad)) == 2
     assert "unknown field 'swtich'" in capsys.readouterr().err
     assert root.exists()
+
+
+def test_a_workflow_entry_names_an_action_and_no_files():
+    entry = {"kind": "workflow", "name": "W", "why": "y", "uses": "a/b@v1", "workflows": ["w.yml"], "inputs": {"x": True}}
+    problems = " ".join(gh.problems_of({"format": 1, "settings": [entry]}, "c.json"))
+    assert "uses names an action as owner/name" in problems
+    assert "not the files in workflows" in problems
+    assert "inputs maps each input" in problems
 
 
 def test_the_package_carries_a_catalogue_for_each_skill_that_installs_workflows():
@@ -607,6 +635,24 @@ def test_unpinned_actions_are_found():
     assert gh.unpinned_actions(text) == ["actions/checkout@v4"]
 
 
+def scorecard(value="true"):
+    """A workflow that runs Scorecard, with publish_results set to the value given."""
+    return (
+        "on: push\njobs:\n  analysis:\n    runs-on: ubuntu-latest\n    steps:\n"
+        "      - uses: OSSF/scorecard-action@" + "f" * 40 + " # v2.5.0\n"
+        f"        with:\n          results_file: results.sarif\n          publish_results: {value}\n"
+    )
+
+
+def test_an_action_and_its_inputs_are_found_at_any_ref_and_in_any_case():
+    assert gh.uses_action(scorecard(), "ossf/scorecard-action")
+    assert not gh.uses_action(scorecard(), "ossf/scorecard")
+    for value in ("true", "True", "'true'", '"true"  # publish'):
+        assert gh.sets_input(scorecard(value), "publish_results", "true"), value
+    for value in ("false", "truex", "'true"):
+        assert not gh.sets_input(scorecard(value), "publish_results", "true"), value
+
+
 # gh itself
 
 
@@ -690,6 +736,38 @@ def test_check_strict_counts_what_is_recommended(tmp_path, at, capsys):
     assert ktl(fake, "check") == 0
     assert ktl(fake, "check", "--strict") == 1
     assert "private vulnerability reporting" in capsys.readouterr().out
+
+
+def test_a_public_repository_is_asked_for_a_workflow_that_publishes_a_scorecard_result(tmp_path, at, capsys):
+    root = at(host(tmp_path, extra={"scorecard.yml": scorecard("false")}))
+    fake = FakeGitHub()
+    wanted = "Workflow OpenSSF Scorecard: no workflow here runs ossf/scorecard-action with publish_results: true; add one"
+    assert [f["level"] for f in planned(fake)["findings"] if f["text"] == wanted] == ["recommended"]
+    assert ktl(fake, "check") == 0
+    assert ktl(fake, "check", "--strict") == 1
+    assert "OpenSSF Scorecard" in capsys.readouterr().out
+    (root / ".github" / "workflows" / "scorecard.yml").write_text(scorecard("true"))
+    assert wanted not in texts(planned(fake))
+    assert ktl(fake, "check", "--strict") == 0
+    (root / ".github" / "workflows" / "scorecard.yml").unlink()
+    assert wanted not in texts(planned(FakeGitHub(visibility="private", plan="enterprise"))), "Scorecard publishes for a public repository only"
+
+
+def test_apply_turns_on_a_workflow_github_turned_off_and_leaves_one_a_person_turned_off(tmp_path, at):
+    own = "on:\n  schedule:\n    - cron: '0 6 * * 1'\njobs:\n  a:\n    runs-on: ubuntu-latest\n    steps:\n      - run: true\n"
+    at(host(tmp_path, *BUNDLE, extra={"own.yml": own}))
+    fake = FakeGitHub()
+    fake.environment("knowledge-librarian", branches=["main"])
+    fake.environment("knowledge-sync", branches=["main"])
+    fake.workflow_states = {"knowledge-sync.yaml": "disabled_inactivity", "knowledge-librarian.yaml": "disabled_manually", "own.yml": "disabled_inactivity", "knowledge-release.yaml": "active"}
+    result = planned(fake)
+    assert "Workflow knowledge-sync.yaml: GitHub turned it off after 60 days with no activity in the repository; turn it on again" in texts(result, "apply")
+    assert "Workflow knowledge-librarian.yaml is turned off in the Actions tab; turn it on there, or remove the file" in texts(result, "person")
+    assert any(t.startswith("Workflow own.yml: GitHub turned it off") for t in texts(result, "note")), "a workflow no catalogue describes is the repository's own"
+    assert ktl(fake, "check") == 1
+    assert ktl(fake, "apply", "--yes") == 0
+    assert fake.workflow_states == {"knowledge-sync.yaml": "active", "knowledge-librarian.yaml": "disabled_manually", "own.yml": "disabled_inactivity", "knowledge-release.yaml": "active"}
+    assert ktl(fake, "check") == 0
 
 
 def test_a_copy_older_than_a_name_is_not_asked_for_it(tmp_path, at):
@@ -1104,6 +1182,7 @@ def test_this_repositorys_own_catalogue_describes_its_switches(tmp_path, at):
     assert "Environment pypi: create it, limited to tags v*" in texts(result, "apply")
     reviewer = [f for f in result["findings"] if f["text"] == "Environment release: add noelmcloughlin as required reviewer"]
     assert [f["level"] for f in reviewer] == ["recommended"], "a reviewer on release waits until releases have downstream users"
+    assert not [t for t in texts(result) if "OpenSSF Scorecard" in t], "scorecard.yml publishes the score the threat model says it does"
 
 
 def test_check_strict_names_a_release_environment_without_a_reviewer(tmp_path, at, capsys):

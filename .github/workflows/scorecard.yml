@@ -1,0 +1,84 @@
+name: Scorecard
+
+# Runs the Open Source Security Foundation's Scorecard on this repository and
+# publishes the result, which the README's badge shows. Its checks cover much
+# of what docs/threat-model.md calls repository hardening: pinned actions,
+# token permissions, branch rules, dependency updates and a security policy,
+# among others. Each finding also becomes a code scanning alert, with
+# Scorecard's remedy beside it. It runs no LLM or agent, and it never commits
+# or pushes.
+#
+# It runs on each push to main, so a merged change shows in the score at
+# once, and weekly, for the settings that change outside git. A maintainer
+# can also run it by hand on the default branch, the one branch Scorecard
+# reads.
+#
+# Scorecard's API accepts a published result only from a workflow it can
+# trust. The workflow has no write permission, env or defaults at its top.
+# The job runs on one of GitHub's hosted Ubuntu runners, so it names
+# ubuntu-latest and not vars.KNOWLEDGE_RUNNER, and it holds no run step, only
+# checkout, Scorecard, harden-runner and the two upload actions. So no code
+# from the repository runs beside the job's two write permissions:
+# security-events, which the upload to code scanning needs, and id-token,
+# which proves to the API that the result comes from this workflow. The job
+# sets no cache-mode: actionlint 1.7.12, which validate.yml runs, does not
+# know the key, and no step here reads or writes a cache.
+#
+# `ktl gh check --strict` reports a public repository with no workflow like
+# this one (skills/ktl-sidecar/references/repository-settings.md).
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 5 * * 2" # Tuesdays at 05:17 UTC
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: scorecard
+  cancel-in-progress: true
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    # Scorecard refuses any branch but the default one, so a run by hand on
+    # another branch is skipped rather than failed.
+    if: github.event_name != 'workflow_dispatch' || github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      security-events: write
+      id-token: write
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run Scorecard and publish the result
+        uses: ossf/scorecard-action@fa7117db83c52d787ae5a89f350999701505d78e # v2.5.0
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      # Anyone can read the results file from the run for five days.
+      - name: Keep the results with the run
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: scorecard-results
+          path: results.sarif
+          retention-days: 5
+
+      - name: Add the findings to code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: results.sarif

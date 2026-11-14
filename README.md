@@ -5,14 +5,19 @@
 
 # Knowledge Trust Ladder (KTL)
 
+[![PyPI](https://img.shields.io/pypi/v/ktl?label=PyPI)](https://pypi.org/project/ktl/)
+[![Validate](https://github.com/noelmcloughlin/knowledge-trust-ladder/actions/workflows/validate.yml/badge.svg)](https://github.com/noelmcloughlin/knowledge-trust-ladder/actions/workflows/validate.yml)
+[![Licence](https://img.shields.io/github/license/noelmcloughlin/knowledge-trust-ladder?label=licence)](LICENSE)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/noelmcloughlin/knowledge-trust-ladder/badge)](https://scorecard.dev/viewer/?uri=github.com/noelmcloughlin/knowledge-trust-ladder)
+
 > "We lasso the world with networks of silver-coloured Italian hemp,\
 > We bind down the world into some sort of order;\
 > We balance the earth in a pair of scales of our own devising."\
 > — Amy Lowell, *The Congressional Library* (1922)
 
-Inspired by the poem, and [lokf](https://w3id.org/lokf/), the Knowledge Trust Ladder (KTL) keeps any repository's scattered knowledge as a **collection**: catalogued, authenticated and explained, with the trust in every claim left visible. An agent derives each claim, deterministic tools check it, and a named person vouches for it.
+Inspired by the poem, and [lokf](https://w3id.org/lokf/), the Knowledge Trust Ladder (KTL) keeps any repository's scattered knowledge as a portable **collection**: catalogued, authenticated and explained, with trust in every claim left visible. An agent derives each claim, deterministic tools check it, and a named person vouches for it.
 
-Documentation is at [w3id.org/ktl](https://w3id.org/ktl/). Readers aged 13 to 18 get [a shorter version](https://w3id.org/ktl/simple/).
+Documentation is at [w3id.org/ktl](https://w3id.org/ktl/). Young readers get [a shorter version](https://w3id.org/ktl/simple/).
 
 ## Get started
 
@@ -22,7 +27,7 @@ Install the skills:
 gh skill install noelmcloughlin/knowledge-trust-ladder --all --scope user
 ```
 
-Or from PyPI, which needs no access to GitHub and works behind a company mirror of PyPI. Like `gh skill`, it installs for GitHub Copilot unless you add `--agent claude-code` or `--agent codex`. Without uv, `pipx run ktl` does the same:
+Or as the [`ktl` package](https://pypi.org/project/ktl/) from PyPI. Like `gh skill`, it installs for GitHub Copilot unless you add `--agent claude-code` or `--agent codex`. Without uv, `pipx run ktl` does the same:
 
 ```bash
 uvx ktl skills install --scope user
@@ -74,3 +79,7 @@ The same ladder serves both ends of a range: [a school or a youth group](https:/
 
 - [KTL Federation](https://w3id.org/ktl/federation/knowledge/): the domain that federates member bundles into one workspace, as [a context layer](docs/context-layer.md).
 - todo
+
+## Feedback and contributing
+
+Report a bug or ask for a change in [the issue tracker](https://github.com/noelmcloughlin/knowledge-trust-ladder/issues). [CONTRIBUTING.md](CONTRIBUTING.md) lists what a pull request needs, and [SECURITY.md](SECURITY.md) says how to report a vulnerability privately.

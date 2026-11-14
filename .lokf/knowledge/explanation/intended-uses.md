@@ -2,23 +2,20 @@
 type: Explanation
 id: https://w3id.org/ktl/knowledge/explanation/intended-uses
 title: What Knowledge Trust Ladder is for, and what it is not
-description: "Which uses Knowledge Trust Ladder (KTL) fits and which it does not, as `docs/uses.md` says: the nine uses the skills were built for, among them knowledge retold for readers aged 8 to 18 in a school or a youth group, DevSecOps and technology governance, what KTL is not (a scanner, a judge of truth, a vector store, a live system), and three questions for judging any other use."
+description: "Which uses Knowledge Trust Ladder (KTL) fits and which it does not, as `docs/uses.md` says: the nine uses the skills were built for, among them knowledge retold for a younger reader, DevSecOps and technology governance, what KTL is not (a scanner, a judge of truth, a vector store, a live system), and three questions for judging any other use."
 genre: explanation
 resource: docs/uses.md
 sources:
   - resource: docs/uses.md
     id: uses.md
     excerpt: KTL keeps knowledge about systems. It does not scan, enforce or run them.
-  - resource: docs/young-readers.md
-    id: docs-young-readers.md
-    excerpt: We know of no school or youth group that has built a bundle this way.
   - resource: README.md
   - resource: docs/architecture.md
   - resource: docs/skills-repositories.md
   - resource: docs/context-layer.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-13T14:41:35Z"
+  at: "2026-11-14T20:13:07Z"
 status: draft
 relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
@@ -28,6 +25,8 @@ relatedTo:
 verified:
   - by: process:ktl-librarian
     at: "2026-10-29T00:48:33Z"
+references:
+  - https://w3id.org/ktl/knowledge/explanation/young-readers
 ---
 
 # Overview
@@ -50,14 +49,14 @@ The page lists nine, each with what carries it:
 - a site and a release that anyone can read, from the website skill and the release workflow;
 - the same knowledge retold for a younger reader.
 
-`docs/young-readers.md` covers that last use. It is for a teacher, a youth leader, or anyone who wants knowledge that adults wrote retold for readers aged 8 to 18, in two bands: 8 to 12, and 13 to 18. The README names a school or a youth group as the place for it. This repository has tried retellings on its own pages only, and knows of no school or youth group that has built a bundle this way.[^docs-young-readers.md]
+[Young readers](young-readers.md) covers that last use.
 
 The bundles that the README lists come from three kinds of repository: a repository of Agent Skills, an application, and a domain of bundles.
 
 ## The two uses readers asked about
 
 - **DevSecOps.** KTL fits as the knowledge side. A bundle can hold what a team's pipelines are, which checks a branch requires, which policy asks for them, and who confirmed each claim. A domain vocabulary adds the types a security standard defines, such as those of SLSA or CWE. KTL is not the tooling side: it runs no scanner, stores no secret, writes no bill of materials and decides no deployment, and its gate checks the bundle and never the code.
-- **Technology governance.** KTL fits where governance needs to know who is accountable for a statement. Every confirmation names one person, the gate ties it to that person's signature or approval, and a policy is a concept a person reviews on a date. KTL is not a governance, risk and compliance system: it keeps no risk register, tests no control and tracks no exception.
+- **Technology governance.** KTL fits where governance needs to know who is accountable for a statement. [Three lines of defence](three-lines-of-defence.md) places each role in the model that regulated industries use, and says what an auditor can check and where that evidence stops. KTL is not a governance, risk and compliance system: it keeps no risk register, tests no control and tracks no exception.
 
 ## What it is not
 
@@ -68,4 +67,3 @@ The page names six things: the source of truth, a judge of truth, a vector store
 Three questions settle most uses the page does not list. Is there a source to point at? Does it matter who vouched for it? Does it change slowly enough for a person to confirm? A use that passes all three still needs someone to play the curator, a little and regularly.
 
 [^uses.md]: docs/uses.md, the second paragraph
-[^docs-young-readers.md]: docs/young-readers.md, the note at the top and *What exists today*

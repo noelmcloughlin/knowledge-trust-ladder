@@ -16,7 +16,7 @@ uvx ktl gh check             # the gaps alone, exiting 1 while one remains
 ## What each verb does
 
 - **`plan`** reads the workflows under `.github/workflows/`, the catalogues and the repository's settings. It prints each item with the verb that deals with it and the reason. `--role bundle`, `domain`, `ingest` or `website` counts that role's workflows as present before they are installed. `--json` prints the plan for a script.
-- **`apply`** creates each Environment the workflows name, limited to the refs the catalogue gives, and adds what is missing: a branch rule, a required reviewer (you, or whom `--reviewer` names), a rule of a ruleset, a setting. It never loosens. A wider branch rule, a reviewer the catalogue does not ask for, or a variable with another value is reported for you to decide. It never turns a switch on. `--recommended` makes the [hardening](#hardening) changes too. `--agent copilot`, `claude-code` or `members` sets the librarian's agent variables to the commands [automation.md](automation.md#setting-it-up) gives.
+- **`apply`** creates each Environment the workflows name, limited to the refs the catalogue gives, and adds what is missing: a branch rule, a required reviewer (you, or whom `--reviewer` names), a rule of a ruleset, a setting. It never loosens. A wider branch rule, a reviewer the catalogue does not ask for, or a variable with another value is reported for you to decide. It never turns a switch on. It turns on again a workflow a catalogue describes that GitHub turned off, which GitHub does to a scheduled workflow in a public repository after 60 days with no activity there. `--recommended` makes the [hardening](#hardening) changes too. `--agent copilot`, `claude-code` or `members` sets the librarian's agent variables to the commands [automation.md](automation.md#setting-it-up) gives.
 - **`secrets`** asks for each missing secret, saying what it is for. An empty answer skips one. Without a terminal it reads `NAME=value` lines from standard input, or from the file `--from` names. Each value reaches `gh secret set` on standard input, never in an argument. It sets no secret before its Environment exists.
 - **`enable <switch>`** turns one switch on once what it needs holds: `librarian`, `release`, `website`, `ingest`, `federation`, `sync-review`, `curation`, or another a catalogue names. It makes the settings it can, such as letting Actions open pull requests or taking Pages from Actions, and stops on the rest. `--run` starts the workflow's first run by hand. `ktl gh enable` alone lists the switches.
 - **`prune`** removes a variable or secret a release retired, a switch set on an Environment, where no job's condition reads it, and a repository copy of a secret its Environment now holds. It keeps a name a workflow in the repository still reads.
@@ -35,6 +35,7 @@ These are recommended for every repository: `apply --recommended` makes them, an
 - Secret scanning, push protection and private vulnerability reporting, on a public repository.
 - Dependabot alerts and security updates.
 - A required reviewer on an Environment named `release`, where one exists.
+- A workflow that publishes an OpenSSF Scorecard result, on a public repository. `ktl gh` writes no workflow, so `plan` leaves it to you: `scorecard.yml` among [KTL's own workflows](https://github.com/noelmcloughlin/knowledge-trust-ladder/tree/main/.github/workflows) is one to copy, with its badge in the README.
 
 ## The catalogue
 
@@ -60,6 +61,7 @@ Every entry has a `kind`, a `name` and a `why`, and may have `docs`. `workflows`
 | `environment` | `branches`, where `{default}` is the default branch; `tags`; `reviewers`, the least number, where `0` asks for none since each run would wait; `named_by`, the variable that holds its name |
 | `setting` | `value`; `visibility`, the visibilities it applies to; `report_only` |
 | `ruleset` | `target`, `branch` or `tag`; `include`, refs as GitHub writes them, `~DEFAULT_BRANCH` among them; `rules`, the rule types |
+| `workflow` | `uses`, the action as `owner/name`, which a workflow under `.github/workflows/` must use; `inputs`, each input that workflow must give and its value; `visibility`. It names no `workflows`, since it asks for whichever file does the work |
 
 A requirement in `requires` or `unless` is one of `variable`, which may say what it `equals`; `unset`; `secret`, with its `environment`; `any`, a list; `setting`, with its `value`; `pages`; `without`, a workflow that must be absent; `without_publishers`; `file`; `secrets_from`; `visibility`; or `confirm`, a fact a person confirms because GitHub cannot see it. Its `text` says it in words.
 

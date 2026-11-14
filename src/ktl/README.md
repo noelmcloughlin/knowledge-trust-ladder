@@ -2,7 +2,7 @@
 
 The six Knowledge Trust Ladder (KTL) agent skills, and a command that installs them for GitHub Copilot, Claude Code, Codex or any other agent that reads skill folders, and sets the GitHub settings their workflows need. The skills keep a LOKF knowledge bundle beside a repository true, and record who checked each claim. [The KTL site](https://w3id.org/ktl/) says what each skill does.
 
-The package has no dependencies, needs Python 3.9 or later, and installs from PyPI or any mirror of it, so it serves a machine that cannot reach github.com.
+The package has no dependencies and needs Python 3.9 or later.
 
 ## Install the skills
 

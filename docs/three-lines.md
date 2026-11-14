@@ -4,7 +4,7 @@ This page is for a governance reader who asks three things of Knowledge Trust La
 
 Regulated industries use the **three lines of defence** to say who owns a risk, who keeps the rules, and who checks independently. The reference version is the Three Lines Model of The Institute of Internal Auditors (IIA), [updated in 2020](https://www.theiia.org/en/content/position-papers/2020/the-iias-three-lines-model-an-update-of-the-three-lines-of-defense/) and reissued as a [Statement of Position](https://www.theiia.org/globalassets/site/resources/statements-of-position/tlm_assurance_advice_support_effective_gov_en.pdf) in 2026.
 
-KTL was not built to it, but each of its roles fits. Every control named on this page already exists in KTL.
+KTL was not built to it, but each of its roles fits. Every control named on this page already exists in KTL. [What KTL is for](uses.md) lists the other uses, and [young readers](young-readers.md) is this page's counterpart at the other end of the range.
 
 | Line | In the model | In KTL |
 | --- | --- | --- |

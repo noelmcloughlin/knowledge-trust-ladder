@@ -58,6 +58,7 @@ KEYS = {
     "environment": COMMON | {"branches", "tags", "reviewers", "named_by"},
     "setting": COMMON | {"value", "report_only", "visibility"},
     "ruleset": COMMON | {"target", "include", "rules"},
+    "workflow": COMMON | {"uses", "inputs", "visibility"},
 }
 TOP_KEYS = {"format", "source", "about", "docs", "roles", "presets", "settings", "retired"}
 SWITCH_KEYS = {"name", "values", "requires", "run", "environment"}
@@ -161,6 +162,16 @@ def problems_of(data: object, path: str) -> list:
             problems.append(f"{where}: level is one of {', '.join(LEVELS)}")
         if kind == "setting" and entry.get("name") not in SETTINGS:
             problems.append(f"{where}: unknown setting; this ktl knows {', '.join(SETTINGS)}")
+        if kind == "workflow":
+            # The entry asks for a workflow by what it does, so it names the
+            # action, never the file that would carry it.
+            if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+", str(entry.get("uses", ""))):
+                problems.append(f"{where}: uses names an action as owner/name, without a ref")
+            if "workflows" in entry:
+                problems.append(f"{where}: a workflow entry names the action in uses, not the files in workflows")
+            inputs = entry.get("inputs", {})
+            if not isinstance(inputs, dict) or not all(isinstance(v, str) for v in inputs.values()):
+                problems.append(f"{where}: inputs maps each input to the value it must have, as a string")
         switch = entry.get("switch")
         if switch is not None:
             problems += [f"{where}: switch: unknown field {k!r}" for k in switch if k not in SWITCH_KEYS]
@@ -253,6 +264,18 @@ def unpinned_actions(text: str) -> list:
         if not SHA.fullmatch(ref.partition("@")[2]):
             found.append(ref)
     return found
+
+
+def uses_action(text: str, action: str) -> bool:
+    """Whether a workflow uses an action, at whatever ref it is pinned to."""
+    return any(ref.partition("@")[0].lower() == action.lower() for ref in USES.findall(text))
+
+
+def sets_input(text: str, name: str, value: str) -> bool:
+    """Whether a workflow gives an input this value, quoted or not. YAML
+    reads true, True and TRUE alike, so the case is ignored."""
+    pattern = rf"^[ \t]*{re.escape(name)}:[ \t]*(['\"]?){re.escape(value)}\1[ \t]*(?:#.*)?$"
+    return re.search(pattern, text, re.M | re.I) is not None
 
 
 def environment_values(text: str) -> list:
@@ -553,6 +576,13 @@ class State:
         summaries = self.listing(f"repos/{self.slug}/rulesets", None, 100)
         return [self.get(f"repos/{self.slug}/rulesets/{r['id']}", missing=None, soft=True) or r for r in summaries]
 
+    @functools.cached_property
+    def workflow_states(self) -> dict:
+        """Each workflow file the Actions tab lists, by file name, with its
+        id and its state: active, or turned off by hand or by GitHub."""
+        found = self.listing(f"repos/{self.slug}/actions/workflows", "workflows", 100)
+        return {w["path"].rsplit("/", 1)[-1]: w for w in found if str(w.get("path", "")).startswith(f"{WORKFLOWS}/")}
+
     def flag(self, path: str) -> bool | None:
         """A setting the API turns on with a PUT: True, False, or None when it cannot be read."""
         status, payload = self.github.call("GET", path)
@@ -789,6 +819,8 @@ class Planner:
         self.secrets()
         self.settings()
         self.rulesets()
+        self.wanted_workflows()
+        self.turned_off()
         self.switch_states()
         self.presets()
         self.retired()
@@ -1096,6 +1128,57 @@ class Planner:
                 op = Op("POST", f"repos/{self.repo.slug}/rulesets", body)
                 refs = ", ".join(entry.get("include", [])).replace("~DEFAULT_BRANCH", "the default branch")
                 self.add("apply", level, f"Ruleset {name}: create it for {refs}, blocking {', '.join(missing)}", entry, [op], STAGE_RULESET)
+
+    # Workflows
+
+    def using(self, entry: dict) -> list:
+        """The workflows here that use a workflow entry's action with its inputs."""
+        return sorted(
+            name
+            for name, text in self.repo.workflows.items()
+            if uses_action(text, entry["uses"]) and all(sets_input(text, k, v) for k, v in entry.get("inputs", {}).items())
+        )
+
+    def wanted_workflows(self) -> None:
+        """A workflow an entry asks for by the action it uses, such as one
+        that publishes a Scorecard result. This command writes no workflow,
+        so a missing one is for a person to add."""
+        for entry in self.entries_of("workflow"):
+            if entry.get("visibility") and self.state.visibility not in entry["visibility"]:
+                continue
+            if self.using(entry):
+                continue
+            inputs = " and ".join(f"{k}: {v}" for k, v in entry.get("inputs", {}).items())
+            how = f" with {inputs}" if inputs else ""
+            self.add("person", entry["level"], f"Workflow {entry['name']}: no workflow here runs {entry['uses']}{how}; add one", entry)
+
+    def catalogued_workflows(self) -> set:
+        """The workflows the catalogues describe: those an entry or a role
+        names, and those that do what a workflow entry asks for."""
+        names = {w for entry in self.all_entries() for w in entry.get("workflows", [])}
+        names |= {w for c in self.catalogues for role in c.roles.values() for w in role.get("workflows", [])}
+        for entry in self.entries_of("workflow"):
+            names.update(self.using(entry))
+        return names
+
+    def turned_off(self) -> None:
+        """A workflow GitHub has turned off runs on no event, so a switch
+        that names it turns nothing on. GitHub turns off a scheduled workflow
+        in a public repository after 60 days in which nothing happens there.
+        apply turns such a workflow on again where a catalogue describes it,
+        and leaves one a person turned off to that person."""
+        why = "A workflow turned off runs on no event, schedule and switch included."
+        catalogued = self.catalogued_workflows()
+        for name in sorted(self.repo.workflows):
+            flow = self.state.workflow_states.get(name) or {}
+            state, ours = flow.get("state"), name in catalogued
+            if state == "disabled_inactivity" and ours:
+                op = Op("PUT", f"repos/{self.repo.slug}/actions/workflows/{flow['id']}/enable")
+                self.add("apply", "required", f"Workflow {name}: GitHub turned it off after 60 days with no activity in the repository; turn it on again", ops=[op], stage=STAGE_SETTING, why=why)
+            elif state == "disabled_inactivity":
+                self.add("note", "optional", f"Workflow {name}: GitHub turned it off after 60 days with no activity in the repository; turn it on in the Actions tab if it should run")
+            elif state == "disabled_manually" and ours:
+                self.add("person", "recommended", f"Workflow {name} is turned off in the Actions tab; turn it on there, or remove the file", why=why)
 
     # Switches
 
