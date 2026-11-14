@@ -449,7 +449,7 @@ if [ -n "$runner" ]; then
     *) unrun=1
        printf '%s\n' "$out" >&2
        hint=""
-       [ "$runner" = uv ] && hint=" Behind a package mirror, run uv sync in .lokf/ and this script uses that .venv."
+       [ "$runner" = uv ] && hint=" Run uv sync in .lokf/ and this script uses that .venv."
        echo "$rules not checked: $runner could not run $py (exit $rc).$hint" >&2 ;;
   esac
 elif [ "$unrun" -eq 0 ]; then

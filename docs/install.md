@@ -24,7 +24,7 @@ gh skill install noelmcloughlin/knowledge-trust-ladder ktl-docent --scope user
 
 ### Open Skills CLI
 
-Install all six skills with the Open Skills CLI, [`npx skills`](https://github.com/vercel-labs/skills). Behind a company proxy or an internal npm registry, the command could fail.
+Install all six skills with the Open Skills CLI, [`npx skills`](https://github.com/vercel-labs/skills).
 
 ```bash
 npx skills add noelmcloughlin/knowledge-trust-ladder --global --yes \
@@ -43,7 +43,7 @@ In PowerShell or cmd, type the command on one line without the `\` continuations
 
 ### PyPI
 
-Each release is also the [`ktl`](https://pypi.org/project/ktl/) package on PyPI, which carries the six skills and a command that installs them. It has no dependencies and needs Python 3.9 or later, so it installs through a company mirror of PyPI, such as Nexus or Artifactory, on a machine that cannot reach github.com. It installs for GitHub Copilot unless you add `--agent claude-code` or `--agent codex`, or give the folder your agent reads with `--dest`:
+Each release is also the [`ktl`](https://pypi.org/project/ktl/) package on PyPI, which carries the six skills and a command that installs them. It has no dependencies and needs Python 3.9 or later. It installs for GitHub Copilot unless you add `--agent claude-code` or `--agent codex`, or give the folder your agent reads with `--dest`:
 
 ```bash
 uvx ktl skills install --scope user

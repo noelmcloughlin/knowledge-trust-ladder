@@ -6,8 +6,7 @@ The package holds the six skills under `ktl/skills/` and the Claude Code
 plugin manifest under `ktl/.claude-plugin/`, each byte for byte as the
 release tag holds them. `ktl skills install` copies skill folders into the
 folder an agent reads, and calls no other tool, so it works the same on
-every operating system and forge, and with no network once the package is
-installed. `gh skill install --from-local` and `npx skills add` take the
+every operating system and forge. `gh skill install --from-local` and `npx skills add` take the
 folder `ktl skills path` prints, where either is at hand. `ktl skills
 status` says, for each folder an agent reads, whether the KTL skills there
 are this package's.

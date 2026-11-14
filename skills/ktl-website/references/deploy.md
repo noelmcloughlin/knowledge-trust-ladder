@@ -70,10 +70,6 @@ The workflow builds from the checkout, which lacks a gitignored bundle. Build th
 
 The workflow is GitHub Actions. On GitLab, Codeberg, Forgejo, Gitea or another forge, run the same command in that forge's CI, `bash website/scripts/build.sh`, on an image with bash, git and uv, and publish `website/dist` as its pages artifact. GitLab, for example, takes a `public/` folder from a job named `pages`. Links to repository files are built from `params.repo` in GitHub's form, `<repo>/blob/<commit>/<path>`. A forge that spells them another way needs a change to `layouts/_partials/route.html`.
 
-## Behind a proxy
-
-The build fetches from two places. uv installs Hugo and Pagefind from PyPI, so a mirror set for uv (`UV_DEFAULT_INDEX`, and `UV_SYSTEM_CERTS=true` for a root certificate of your own) serves them. Hugo fetches Cytoscape and Mermaid once from a public CDN and checks each against the hash in `hugo.toml`; give `params.vendor.cytoscape.url` and `params.vendor.mermaid.url` a mirror's address in `site.toml`. Nothing is fetched from github.com.
-
 ## Keeping the site's tools current
 
 Hugo and Pagefind are pinned in the site folder's `pyproject.toml` and `uv.lock`. A Dependabot entry keeps them current, and the workflow builds each bump on its pull request:

@@ -1,6 +1,6 @@
 # The tools that build the site: Hugo and Pagefind, each from PyPI at one
 # version. uv.lock holds every file's hash, so `uv run --frozen` installs
-# exactly these, on Linux, macOS or Windows, from PyPI or a mirror of it.
+# exactly these, on Linux, macOS or Windows.
 [project]
 name = "knowledge-website"
 version = "0.0.0"

@@ -217,7 +217,7 @@
         ]
       },
       "why": "true attests the release files of a private or internal repository.",
-      "docs": "automation.md#in-a-locked-down-organisation"
+      "docs": "automation.md#private-repositories-and-self-hosted-runners"
     },
     {
       "kind": "variable",
@@ -328,7 +328,7 @@
       "workflows": ["knowledge-sync.yaml", "knowledge-librarian.yaml"],
       "level": "optional",
       "why": "A read token for a private copy of the skills repository. The sync's earlier and sync jobs run in no Environment, so it is a repository secret.",
-      "docs": "automation.md#in-a-locked-down-organisation"
+      "docs": "automation.md#private-repositories-and-self-hosted-runners"
     },
     {
       "kind": "secret",

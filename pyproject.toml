@@ -1,8 +1,8 @@
 # The `ktl` package on PyPI: the six skills and the Claude Code plugin
 # manifest, carried verbatim, and a `ktl` command that installs them and
 # sets the GitHub settings their workflows need (`ktl gh`). It has
-# no dependencies and uses the standard library alone, so it installs from
-# PyPI or any mirror of it on the oldest Python a supported system ships.
+# no dependencies and uses the standard library alone, so it runs on the
+# oldest Python a supported system ships.
 # The version is the release tag, read from git at build time.
 #
 #   uvx ktl skills install --agent claude-code --scope user

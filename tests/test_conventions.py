@@ -525,7 +525,7 @@ def test_a_call_it_cannot_read_is_refused(good, args):
 
 
 def failing_uv(tmp_path):
-    """A PATH whose uv fails as uv does behind a package mirror that serves no upload times."""
+    """A PATH whose uv fails as uv does on an index that serves no upload times."""
     fake = write(
         tmp_path / "fakebin" / "uv",
         "#!/bin/sh\necho 'x No solution found when resolving script dependencies:' >&2\nexit 1\n",
@@ -552,7 +552,7 @@ def test_behind_a_mirror_without_upload_times_the_parser_half_still_runs(good, t
 
 
 def test_the_sidecar_venv_runs_the_parser_half_before_uv(good, tmp_path):
-    """A host behind a mirror runs the parser's half from .lokf/.venv, which uv sync installed from uv.lock."""
+    """A host runs the parser's half from .lokf/.venv, which uv sync installed from uv.lock."""
     scripts = tmp_path / ".lokf" / "scripts"
     scripts.mkdir(parents=True)
     for name in ("knowledge-conventions.sh", "knowledge-conventions.py"):

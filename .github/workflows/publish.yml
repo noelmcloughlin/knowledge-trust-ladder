@@ -154,10 +154,9 @@ jobs:
           gh workflow run knowledge-release.yaml --ref "$VERSION" -f tag="$VERSION" \
             || { echo "::error::The skills published under $VERSION, but the bundle zip was not requested. Run the Knowledge Release workflow by hand with tag=$VERSION."; exit 1; }
 
-      # The same skills go to PyPI as the `ktl` package, for a machine that
-      # reaches a package index and no git host. pypi.yml builds from the tag
-      # and uploads where PYPI_RELEASE_ENABLED says; unset, it builds and
-      # checks the package and uploads nothing.
+      # The same skills go to PyPI as the `ktl` package. pypi.yml builds from
+      # the tag and uploads where PYPI_RELEASE_ENABLED says; unset, it builds
+      # and checks the package and uploads nothing.
       - name: Publish the ktl package
         if: ${{ !cancelled() && steps.publish.outcome == 'success' }}
         env:

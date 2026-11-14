@@ -491,7 +491,7 @@ def test_a_pinned_git_stops_at_a_redirect_that_git_would_otherwise_follow(tmp_pa
     cert, key = tmp_path / "cert.pem", tmp_path / "key.pem"
     subprocess.run(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", str(key), "-out", str(cert), "-days", "1",
                     "-subj", "/CN=rebind.example.invalid", "-addext", "subjectAltName=DNS:rebind.example.invalid"], check=True, capture_output=True)
-    monkeypatch.setenv("GIT_SSL_CAINFO", str(cert))  # passed through to git, as a company's certificate is
+    monkeypatch.setenv("GIT_SSL_CAINFO", str(cert))  # passed through to git, as a proxy's certificate is
     elsewhere, reached = recording_listener()
     asked = []
 
@@ -2381,7 +2381,7 @@ def venv_python(root, refuse=""):
 
 
 def failing_uv(tmp_path):
-    """A PATH whose uv fails as uv does behind a package mirror that serves no upload times."""
+    """A PATH whose uv fails as uv does on an index that serves no upload times."""
     uv = write(tmp_path / "fakebin" / "uv", "#!/bin/sh\necho 'x No solution found' >&2\nexit 1\n")
     uv.chmod(0o755)
     return f"{uv.parent}:{os.environ['PATH']}"

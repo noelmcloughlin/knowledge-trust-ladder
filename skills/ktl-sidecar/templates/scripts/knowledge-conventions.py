@@ -27,7 +27,7 @@
 #
 # That block names one PyYAML release, and `exclude-newer` takes no file
 # uploaded after its date. A registry never replaces a file, so every run
-# installs the files a person reviewed when the pin was set. Behind a mirror
+# installs the files a person reviewed when the pin was set. On an index
 # with no upload times, the shell half lifts the date but keeps the version.
 # The .venv holds what uv.lock pins, by hash, which a person reviewed too.
 # Move the version and the date together, here and in knowledge-apply.py:

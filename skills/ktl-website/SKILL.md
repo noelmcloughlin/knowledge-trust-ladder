@@ -111,7 +111,7 @@ No match means every placeholder is resolved. The build refuses a `site.toml` th
 bash website/scripts/build.sh
 ```
 
-The script runs `scripts/prepare.sh` (`lokf export` and, for a schema, `gen-doc`, both from `.lokf/`'s own environment, and the report script), then Hugo and Pagefind, which uv installs from PyPI at the versions the site's `uv.lock` holds, then the raw-HTML cleaning and a check of every link between the pages. It needs the network once. Where PyPI or the CDN is blocked, [references/deploy.md](references/deploy.md#behind-a-proxy) says what to set.
+The script runs `scripts/prepare.sh` (`lokf export` and, for a schema, `gen-doc`, both from `.lokf/`'s own environment, and the report script), then Hugo and Pagefind, which uv installs from PyPI at the versions the site's `uv.lock` holds, then the raw-HTML cleaning and a check of every link between the pages. It needs the network once.
 
 `bash website/scripts/build.sh serve` serves the site at `http://localhost:1313/<REPO_NAME>/` and rebuilds it on each edit. Commit `website/`. With no uv, report the build as skipped: the workflow builds in CI.
 

@@ -10,13 +10,13 @@
 # Python header names, then through a python3 that has pyyaml. The .venv comes
 # first because `uv sync` installed it from uv.lock, so a run needs no package
 # index and each file is checked by hash. Each interpreter must be Python 3.11
-# or later, which the python3 of an enterprise host often is not.
+# or later.
 #
 # uv_ready installs the header's packages before the run, so a failed
 # resolution, on which uv exits 1, never reads as findings. It tries offline
-# first, so a complete script environment runs with the index down. A Nexus or
-# Artifactory mirror often serves no upload times, and uv then drops each
-# file and warns that it "is missing an upload date". Only then does uv_ready
+# first, so a complete script environment runs with the index down. On an
+# index that serves no upload times, uv drops each file and warns that it "is
+# missing an upload date". Only then does uv_ready
 # lift the date, round by round, for each package that uv names and the
 # header pins with ==, so the versions stay pinned. uv runs without colour,
 # since FORCE_COLOR would hide that warning. No other failure is retried, and

@@ -48,8 +48,7 @@ case "$os" in
 esac
 if have sha256sum; then digest="sha256sum"; elif have shasum; then digest="shasum -a 256"; else digest=""; fi
 # Only python3 is probed, because bare `python` is Python 2 on some hosts.
-# The skills' scripts need 3.11 or later, which an enterprise host's python3
-# often is not.
+# The skills' scripts need 3.11 or later.
 pyv=""
 have python3 && pyv="$(python3 -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null)"
 printf 'Preflight for %s\n' "$root"
