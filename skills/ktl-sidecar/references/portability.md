@@ -25,7 +25,7 @@ A skill installed for one user, under `~/.copilot/skills/`, `~/.claude/skills/` 
 
 Two copies of a skill in two of those directories drift: an installer updates one and not the other, and whichever an agent reads wins. The preflight compares every pair it finds and warns when they differ. Keep one, or reinstall both from the same release.
 
-[`knowledge-trust-ladder`](https://github.com/noelmcloughlin/knowledge-trust-ladder) is the sole, canonical source of all four skills. Install from it with `gh skill install` or `npx skills add` rather than by copying files, and pin all four to the same release.
+[`knowledge-trust-ladder`](https://github.com/noelmcloughlin/knowledge-trust-ladder) is the sole, canonical source of the skills, and the `ktl` package on PyPI carries each of its releases unchanged. Install with `uvx ktl skills install`, `gh skill install` or `npx skills add` rather than by copying files by hand, and pin all four to the same release. `ktl skills status` says whether each installed copy is still the release's.
 
 ## Tooling
 

@@ -6,11 +6,13 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ### Added
 
-- **Each release is also the `ktl` package on PyPI**, for a machine that reaches a package index and no git host. `uvx ktl skills install --scope user` installs the six skills for GitHub Copilot, or with `--agent` for Claude Code or Codex; `pypi.yml` uploads once `PYPI_RELEASE_ENABLED` is set.
+- **Each release is also the `ktl` package on PyPI**, for a machine that reaches a package index and no git host. `uvx ktl skills install --scope user` installs the six skills for GitHub Copilot, or with `--agent` for Claude Code or Codex, and `ktl skills status` says whether the copies an agent reads are the release's. `knowledge-trust-ladder` installs the same package under the repository's name. `pypi.yml` uploads both once `PYPI_RELEASE_ENABLED` is set, from a build anyone can repeat byte for byte, and attaches each file's checksum to the release.
 
 ### Changed
 
 - **The website's home page fills the Quick start button**, so a new reader sees where to begin. A site with no quick start fills the first button found, as before.
+- **The preflight reads a skill that `gh skill install` rewrote as the release it came from**, so a gh copy beside a verbatim copy of one release is no longer reported as stale.
+- **`llms.txt` names the PyPI route first**, for an agent at a site that reaches no git host.
 
 ## [0.64.0] - 2026-11-14
 

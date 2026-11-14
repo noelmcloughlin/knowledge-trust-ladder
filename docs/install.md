@@ -49,7 +49,7 @@ Each release is also the [`ktl`](https://pypi.org/project/ktl/) package on PyPI,
 uvx ktl skills install --scope user
 ```
 
-Without uv, run `python3 -m pip install --user ktl` and then the same `ktl skills install` command. `ktl skills path` prints the folder that holds the skills, which `gh skill install --from-local` and `npx skills add` take in place of `noelmcloughlin/knowledge-trust-ladder`. The [package's page](https://pypi.org/project/ktl/) gives the Claude Code plugin route from the installed package.
+Without uv, `pipx run ktl skills install --scope user` does the same. `python3 -m pip install --user ktl` works where the system lets pip install for a user; Debian, Ubuntu and Homebrew refuse it. To update, add `@latest`: `uvx ktl@latest skills install --scope user`. `ktl skills status` says whether the skills in each folder an agent reads are the package's. `ktl skills path` prints the folder that holds the skills, which `gh skill install --from-local` and `npx skills add` take in place of `noelmcloughlin/knowledge-trust-ladder`. The [package's page](https://pypi.org/project/ktl/) gives the Claude Code plugin route from the installed package.
 
 ## Install for your user, not into the repository
 
@@ -63,7 +63,7 @@ The workflows are GitHub Actions. On GitLab, Codeberg, Forgejo or Gitea, [the si
 
 ## Pin to one tag
 
-All six skills are released together under one tag, so pin them to the same one. Append it to the skill name (`ktl-docent@v0.16.0`) or pass `--pin v0.16.0`. From PyPI, the package version is the tag without its `v`: `uvx ktl@0.16.0 skills install ...`. [releasing.md](releasing.md) says what each version level means.
+All six skills are released together under one tag, so pin them to the same one. Append it to the skill name (`ktl-docent@v0.16.0`) or pass `--pin v0.16.0`. From PyPI, the package version is the tag without its `v`: `uvx ktl@X.Y.Z skills install ...` for `vX.Y.Z`. [releasing.md](releasing.md) says what each version level means.
 
 ## Microsoft 365 Copilot
 

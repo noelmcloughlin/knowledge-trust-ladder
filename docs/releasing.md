@@ -53,15 +53,24 @@ To open the pull requests yourself on the day of a release, run `scripts/sync-si
 
 ## The ktl package on PyPI
 
-`pypi.yml` builds the package from the tag, checks that its files carry the tag's version, installs the wheel with no index and installs the skills from it. It uploads only when the repository variable `PYPI_RELEASE_ENABLED` says where: `testpypi` for TestPyPI, `true` for PyPI. Unset, a release builds and checks the package and uploads nothing.
+`pypi.yml` builds two packages from the tag: `ktl`, which carries the skills, and `knowledge-trust-ladder`, which holds no code and installs `ktl` at the same version under the repository's name. The build backend comes at the hashes `.github/pypi/requirements.txt` holds. The workflow checks that the files carry the tag's version, builds them a second time and checks the bytes match, and installs the wheels with no index and the skills from them. It uploads only when the repository variable `PYPI_RELEASE_ENABLED` says where: `testpypi` for TestPyPI, `true` for PyPI. Unset, a release builds and checks the packages and uploads nothing. After an upload to PyPI, it attaches a `.sha256` file for each package file to the GitHub release.
 
 Before the first upload to each index, a maintainer does three things once:
 
 1. Creates the Environment the upload names, `testpypi` or `pypi`, limited to tags matching `v*`.
-2. Adds a pending publisher for the project `ktl` on that index, naming owner `noelmcloughlin`, repository `knowledge-trust-ladder`, workflow `pypi.yml` and that Environment.
+2. Adds a pending publisher on that index for each of the projects `ktl` and `knowledge-trust-ladder`, naming owner `noelmcloughlin`, repository `knowledge-trust-ladder`, workflow `pypi.yml` and that Environment.
 3. Sets `PYPI_RELEASE_ENABLED`, `testpypi` first, and `true` once a TestPyPI release installs.
 
-If an upload fails after the tag exists, run the workflow again on the tag: `gh workflow run pypi.yml --ref vX.Y.Z -f tag=vX.Y.Z`. A bad file on PyPI is yanked with a reason, never deleted, since PyPI never takes the same file name twice.
+If an upload fails after the tag exists, run the workflow again on the tag: `gh workflow run pypi.yml --ref vX.Y.Z -f tag=vX.Y.Z`. A file the index already holds is skipped, so a repeated run finishes a partial upload. A bad file on PyPI is yanked with a reason, never deleted, since PyPI never takes the same file name twice.
+
+Anyone can check a release's files against the tag. On Linux or macOS, rebuild them with the workflow's command and compare the result with PyPI's file, and with the release's `.sha256` files:
+
+```bash
+git clone --branch vX.Y.Z https://github.com/noelmcloughlin/knowledge-trust-ladder ktl-check && cd ktl-check
+uv build --python 3.12 --build-constraints .github/pypi/requirements.txt --require-hashes --out-dir rebuilt
+python3 -m pip download --no-deps --dest from-pypi ktl==X.Y.Z
+cmp rebuilt/ktl-X.Y.Z-py3-none-any.whl from-pypi/ktl-X.Y.Z-py3-none-any.whl
+```
 
 ## What the repository settings mean for you
 
