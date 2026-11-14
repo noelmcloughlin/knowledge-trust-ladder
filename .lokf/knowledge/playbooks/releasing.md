@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-11-13T14:41:35Z"
+  at: "2026-11-14T18:33:42Z"
 status: draft
 dependsOn:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -19,6 +19,8 @@ references:
 sources:
   - resource: .github/workflows/publish.yml
   - resource: docs/releasing.md
+    id: docs-releasing.md
+    excerpt: An index holds only one pending publisher for those details at a time
   - resource: .github/workflows/semantic-release.yml
   - resource: .github/scripts/changelog-release.mjs
   - resource: .releaserc.json
@@ -32,6 +34,8 @@ sources:
   - resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/README.md
   - resource: https://github.com/semantic-release/commit-analyzer/blob/v13.0.1/lib/default-release-rules.js
   - resource: https://github.com/conventional-changelog/conventional-changelog/blob/conventional-changelog-conventionalcommits-v8.0.0/packages/conventional-changelog-conventionalcommits/src/parser.js
+  - resource: .github/workflows/pypi.yml
+  - resource: .github/pypi
 verified:
   - by: process:ktl-librarian
     at: "2026-11-14T12:32:59Z"
@@ -58,7 +62,7 @@ The `plan` job also calls `changelog-release.mjs check` as its own step, not onl
 
 When the commits would release, a second step requires the pull request *title* to carry a releasing type, because a squash merge takes its subject from the title. GitHub's default title has none: pull request #46 merged that way and released nothing, its notes left waiting in `[Unreleased]`. The trigger names `edited` alongside the default pull-request types, because retitling is how that check is cleared and the default types never fire on a title change. Without it, the remedy the error message asks for could not clear the check.
 
-Releases are still never tag-triggered. `gh skill publish` creates the tag *and* the GitHub release itself, so a tag-push trigger would race the tag the command is about to create. `workflow_dispatch` keeps the timing an explicit human decision. The `release` environment adds a maintainer-approval gate in front of the `contents: write` scope, the same Environment that `semantic-release.yml`'s write-scoped job now waits behind too.
+Releases are still never tag-triggered. `gh skill publish` creates the tag *and* the GitHub release itself, so a tag-push trigger would race the tag the command is about to create. `workflow_dispatch` keeps the timing an explicit human decision. The `release` environment, once it has required reviewers, adds a maintainer-approval gate in front of the `contents: write` scope, the same Environment that `semantic-release.yml`'s write-scoped job now waits behind too.
 
 Each `publish.yml` run validates:
 
@@ -76,9 +80,9 @@ Since 0.64.0, when the bundle changed, the workflow also attaches its evidence t
 
 The dispatch is needed because GitHub starts no workflow from a release made with `GITHUB_TOKEN`, so that workflow's own release trigger never fires here. If the dispatch fails, the job fails and names the manual run to make.
 
-Since 0.47.0 `publish.yml` then asks the hosts named in the `KNOWLEDGE_SYNC_HOSTS` repository variable, as `owner/repo` separated by spaces, to run their `knowledge-sync.yaml` for the new tag. The dispatch needs the `KNOWLEDGE_SYNC_DISPATCH_TOKEN` secret, a token with Actions write on each host. Unset, or set to `false`, the variable asks nobody, and each host syncs on its own schedule. A host that cannot be asked is reported, and the others go ahead.
+Since 0.47.0 `publish.yml` then asks the hosts named in the `KNOWLEDGE_SYNC_HOSTS` repository variable, as `owner/repo` separated by spaces, to run their `knowledge-sync.yaml` for the new tag. The dispatch needs the `KNOWLEDGE_SYNC_DISPATCH_TOKEN` secret, a token with Actions write on each host. Unset, or set to `false`, the variable asks nobody, and each host syncs on its own schedule. A host that cannot be asked is reported, and the others go ahead. A fine-grained token reaches one owner's repositories alone, so a host under another owner is reported and syncs on its schedule. `ktl gh plan` names a host that was renamed.
 
-This release-process detail moved out of `CONTRIBUTING.md` on 2026-09-14 to `docs/releasing.md`, which states it for the three KTL repositories in one place. All six skills are released together under one tag, so a consumer can pin them to a single release. The `release` Environment's required reviewers are configured once, by hand, in each repository's settings, or a qualifying merge is released unattended. Changes reach `main` by pull request, but no ruleset enforces it, and "Require signed commits" as a branch rule is off and must stay off.
+This release-process detail moved out of `CONTRIBUTING.md` on 2026-09-14 to `docs/releasing.md`, which states it for the three KTL repositories in one place. All six skills are released together under one tag, so a consumer can pin them to a single release. Required reviewers on the `release` Environment wait until releases have downstream users, so until then a qualifying merge is released unattended. A maintainer then adds them in each repository's settings, or with `ktl gh apply --recommended`, and `ktl gh check --strict` names a repository without one. Changes reach `main` by pull request, but no ruleset enforces it, and "Require signed commits" as a branch rule is off and must stay off.
 
 The sibling repositories (the two Obsidian plugins) carry byte-identical copies of the sidecar templates and their own skills pin. Only the first line of `.lokf/justfile`, which names the host, and its `schema :=` line are a sibling's own.
 
@@ -99,5 +103,13 @@ The pin and the copies move together because the skill a tag installs is written
 
 Both checks read the `workflow_dispatch` version input through an `env:` variable rather than interpolating `${{ inputs.version }}` straight into the shell script. That hardening change (2026-09-12) closes a script-injection vector without changing what the checks verify.
 
+# The ktl package on PyPI
+
+`publish.yml` also dispatches `pypi.yml` for the new tag. It builds two packages from the tag: `ktl`, which carries the skills, and `knowledge-trust-ladder`, which holds no code and installs `ktl` at the same version. It checks that a second build makes the same bytes. It uploads only when the repository variable `PYPI_RELEASE_ENABLED` is `testpypi` or `true`, through the `testpypi` or `pypi` Environment, limited to tags matching `v*`.
+
+Before the first upload to each index, a maintainer registers a pending publisher for `ktl`. An index holds only one pending publisher for the same owner, repository, workflow and Environment at a time. So the first upload creates `ktl` and then fails at `knowledge-trust-ladder`. The maintainer then registers that project's publisher with the same details and runs the failed job again.[^docs-releasing.md]
+
 [^changelog.md]: CHANGELOG.md, 0.57.0, Fixed
 [^knowledge-release.yaml]: .github/workflows/knowledge-release.yaml, the Pack the domain vocabulary step
+
+[^docs-releasing.md]: docs/releasing.md, The ktl package on PyPI

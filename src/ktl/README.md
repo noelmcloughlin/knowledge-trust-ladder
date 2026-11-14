@@ -1,6 +1,6 @@
 # ktl
 
-The six Knowledge Trust Ladder (KTL) agent skills, and a command that installs them for GitHub Copilot, Claude Code, Codex or any other agent that reads skill folders. The skills keep a LOKF knowledge bundle beside a repository true, and record who checked each claim. [The KTL site](https://w3id.org/ktl/) says what each skill does.
+The six Knowledge Trust Ladder (KTL) agent skills, and a command that installs them for GitHub Copilot, Claude Code, Codex or any other agent that reads skill folders, and sets the GitHub settings their workflows need. The skills keep a LOKF knowledge bundle beside a repository true, and record who checked each claim. [The KTL site](https://w3id.org/ktl/) says what each skill does.
 
 The package has no dependencies, needs Python 3.9 or later, and installs from PyPI or any mirror of it, so it serves a machine that cannot reach github.com.
 
@@ -25,6 +25,20 @@ pipx run ktl skills install --scope user
 ## Check what is installed
 
 `ktl skills status` says, for each folder an agent reads at project and user scope, whether each KTL skill there is the same as this package's, and names each file that differs. A copy `gh skill install` made counts as the same when only gh's own rewrite of its `SKILL.md` differs. It exits 1 when a copy differs, so a script can act on it. `--dest` checks one folder.
+
+## Set the GitHub settings
+
+The workflows the skills install read repository variables, secrets kept in Environments, and a few repository settings. `ktl gh` compares what each skill's catalogue asks for with a repository's settings, through the GitHub CLI and your own login, and sets what is missing:
+
+```bash
+uvx ktl gh plan              # what is missing, and why; changes nothing
+uvx ktl gh apply             # the Environments, their branch rules, and the values a catalogue gives
+uvx ktl gh secrets           # each secret, asked for without an echo
+uvx ktl gh enable librarian  # one switch, once what it needs is in place
+uvx ktl gh prune             # the variables a release retired
+```
+
+Run it in a clone, or name a repository with `--repo owner/name`. It needs `gh auth login` and admin rights on the repository. `apply` never loosens a setting and never turns a switch on, and each verb that changes something prints the change and asks first. [Turn on the workflows](https://w3id.org/ktl/docs/install/#turn-on-the-workflows) says what each workflow needs, and links the page on each verb.
 
 ## Other installers
 

@@ -116,7 +116,7 @@ Say plainly to whoever clicks what the attestation means. It records that a pers
 
 ### Marking the required checks
 
-Mark `validate` and `provenance` as required in branch protection, and `attestation` too if you enable it. When a confirmation is backed, `attestation` is skipped rather than run. If your branch protection treats a skipped required check as blocking, that errs toward a stuck pull request rather than a silent bypass: annoying, but the safe direction.
+Mark `validate` and `provenance` as required in branch protection, and `attestation` too if you enable it. A repository whose release job pushes to the default branch with `GITHUB_TOKEN`, as the KTL repositories' do, cannot: the rule would refuse that push too, and a ruleset cannot exempt the job's token. There, a person reads the checks before each merge. When a confirmation is backed, `attestation` is skipped rather than run. If your branch protection treats a skipped required check as blocking, that errs toward a stuck pull request rather than a silent bypass: annoying, but the safe direction.
 
 Add one line to the repository's pull request template for whoever approves a curation pull request: *I opened the sources named by every confirmation I am approving.* An approval then records a task done, not only a click. The gate can prove who approved, never what they read.
 

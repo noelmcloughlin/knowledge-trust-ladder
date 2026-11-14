@@ -21,9 +21,11 @@ name: PyPI
 # PyPI's trusted publisher names this workflow file and the environment, not
 # the ref, so the environment is the guard: limit `pypi` and `testpypi` to
 # tags matching v*, under Settings, Environments, Deployment branches and
-# tags, and register a publisher once on each index for each of the two
-# projects, with owner noelmcloughlin, repository knowledge-trust-ladder,
-# workflow pypi.yml and that environment's name.
+# tags, and register a publisher on each index for ktl, with owner
+# noelmcloughlin, repository knowledge-trust-ladder, workflow pypi.yml and
+# that environment's name. An index takes one pending publisher for those
+# details at a time, so the first upload stops at knowledge-trust-ladder:
+# register its publisher with the same details, then run the job again.
 #
 # Three jobs, for least privilege. `build` runs the build backend
 # (third-party packages, installed at the hashes .github/pypi/requirements.txt

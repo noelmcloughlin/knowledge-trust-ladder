@@ -1,5 +1,6 @@
 """The `ktl` command: list, locate, install and check the Knowledge Trust
-Ladder skills that this package carries.
+Ladder skills that this package carries, and, with `ktl gh`, set the GitHub
+settings the workflows those skills install need (src/ktl/gh.py).
 
 The package holds the six skills under `ktl/skills/` and the Claude Code
 plugin manifest under `ktl/.claude-plugin/`, each byte for byte as the
@@ -306,10 +307,11 @@ def cmd_status(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="ktl",
-        description="List, locate, install and check the Knowledge Trust Ladder (KTL) skills this package carries.",
+        description="List, locate, install and check the Knowledge Trust Ladder (KTL) skills this package carries, "
+        "and set the GitHub settings the workflows they install need.",
     )
     parser.add_argument("--version", action="version", version=f"ktl {version()}")
-    groups = parser.add_subparsers(dest="group", metavar="skills")
+    groups = parser.add_subparsers(dest="group", metavar="{skills,gh}")
     skills = groups.add_parser("skills", help="the six skills: list (the default), path, install, status")
     actions = skills.add_subparsers(dest="action", metavar="{list,path,install,status}")
 
@@ -353,12 +355,20 @@ def build_parser() -> argparse.ArgumentParser:
         "gh's own rewrite of its SKILL.md differs. Exits 1 when an installed copy differs, so a script can act on it.",
     )
     status.add_argument("--dest", type=Path, help="check this folder only")
+
+    from ktl import gh
+
+    gh.add_parser(groups)
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.group == "gh":
+        from ktl import gh
+
+        return gh.main(args)
     if args.group != "skills":
         parser.print_help()
         return 2

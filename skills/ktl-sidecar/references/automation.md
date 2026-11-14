@@ -44,8 +44,11 @@ Every variable below is a **repository variable**: Settings, Secrets and variabl
 | `KNOWLEDGE_INGEST_ENABLED` | variable | `knowledge-ingest.yaml` | `true` turns the ingest on; unset or anything else, the workflow does nothing ([below](#knowledge-ingestyaml-knowledge-outside-the-repository)) |
 | `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` | variable | `knowledge-sync.yaml` | optional: the Environment whose reviewers approve the workflow changes a release brings, so the workflow pushes them ([below](#workflow-changes-wait-for-a-person)) |
 | `KNOWLEDGE_INGEST_*` | secrets, in `knowledge-ingest` | `knowledge-ingest.yaml` | the credentials `.lokf/ingest.yaml` names, one secret per name; the workflow hands these names over and no other secret |
+| `KNOWLEDGE_CURATION_ENVIRONMENT` | variable | `knowledge-registrar.yaml` | optional: the Environment whose required reviewers may attest a curation no signature backs ([gate.md](gate.md#if-you-cannot-sign-the-attestation-job)) |
 
 The librarian also needs one repository setting: Settings, Actions, General, Workflow permissions, *Allow GitHub Actions to create and approve pull requests* ([below](#before-turning-on-the-schedule)).
+
+`ktl gh`, a command of the `ktl` package, sets what this page asks of GitHub from the catalogue beside it: `uvx ktl gh plan` lists what is missing, and `ktl gh apply`, `secrets` and `enable` set it, as [repository-settings.md](repository-settings.md) says.
 
 ## Keep each secret in its Environment
 
@@ -76,7 +79,7 @@ gh secret delete KNOWLEDGE_SYNC_TOKEN
 
 Add no required reviewers to these three: the librarian and the sync run on a schedule, and each run would wait for a click. The jobs record no deployment, so the repository's Deployments list stays as it was.
 
-The workflows still read a repository secret of the same name, so a host keeps working while it moves. That is a step on the way, not a place to stay. A private repository on GitHub Free has no Environments: GitHub ignores their rules and secrets there, so the secrets stay repository secrets, and any branch's workflow can read them. Environments are a GitHub feature; on another forge, keep each secret to the protected branch the way that forge allows, as [portability.md](portability.md#not-github-gitlab-codeberg-forgejo-gitea-another-forge-or-none) says.
+The workflows still read a repository secret of the same name, so a host keeps working while it moves. That is a step on the way, not a place to stay. Two secrets stay on the repository by design, each a read-only token for what it reads and nothing else: `KNOWLEDGE_SKILLS_TOKEN`, which the sync's jobs read outside any Environment, and a domain host's copy of `KNOWLEDGE_FEDERATE_TOKEN` for the federation's `check` job. A private repository on GitHub Free has no Environments: GitHub ignores their rules and secrets there, so the secrets stay repository secrets, and any branch's workflow can read them. Environments are a GitHub feature; on another forge, keep each secret to the protected branch the way that forge allows, as [portability.md](portability.md#not-github-gitlab-codeberg-forgejo-gitea-another-forge-or-none) says.
 
 ## `knowledge-librarian.yaml`: the scheduled refresh loop
 
@@ -207,7 +210,7 @@ gh api -X PUT repos/<owner>/<repo>/actions/permissions/workflow -f default_workf
 
 The same setting lets a workflow approve a pull request. No workflow the sidecar installs does, and the registrar's gate counts an approval only from the person a confirmation names, so a workflow's approval never stands in for one.
 
-Whichever agent, run the workflow once by hand from the Actions tab before turning on the schedule, and read the agent's log for denied tool calls. A run that ends with *the agent wrote no `.lokf/patch.yaml`* on a bundle with work waiting usually means a denied write: look for the agent's file tool in the log, and widen the approval to the patch file.
+Whichever agent, set the switch, then run the workflow once by hand from the Actions tab before its first Monday, and read the agent's log for denied tool calls. `ktl gh enable librarian --run` does both. A run that ends with *the agent wrote no `.lokf/patch.yaml`* on a bundle with work waiting usually means a denied write: look for the agent's file tool in the log, and widen the approval to the patch file.
 
 ## `knowledge-librarian.sh`: the agent wrapper
 
@@ -295,7 +298,7 @@ A domain host is one whose bundle names other bundles. Each `MemberBundle` conce
 
 To set it up:
 
-1. Tell Pages once to take its site from Actions (`gh api -X POST repos/{owner}/{repo}/pages -f build_type=workflow`).
+1. Tell Pages once to take its site from Actions (`gh api -X POST repos/{owner}/{repo}/pages -f build_type=workflow`). Let its `github-pages` Environment admit the release tags as well as the default branch, since `publish` deploys from the release's tag. The push trigger names `main`, so with a default branch of another name the site rebuilds only on a release or by hand.
 2. Set `KNOWLEDGE_FEDERATION_ENABLED` to `true`, and leave `KNOWLEDGE_WEBSITE_ENABLED` unset.
 3. Set `AGENT_CLI`, `AGENT_USE_JOB_TOKEN` and `AGENT_API_KEY_ENV` as above, with `KNOWLEDGE_LIBRARIAN_ENABLED` `true`.
 4. Let the workflow open its pull request as [Before turning on the schedule](#before-turning-on-the-schedule) says.

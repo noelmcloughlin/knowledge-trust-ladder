@@ -37,7 +37,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T10:17:06Z"
+  at: "2026-11-14T18:33:42Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -100,6 +100,8 @@ It has eight steps, 0 to 6 with a 5b:
 The workflow has two jobs. `build` checks the repository out with its full history, finds the site's folder, `website/` or `ktl-website/`, and runs its `scripts/build.sh`. When `browseBuild` runs `just`, a step before the build installs the copy `.lokf/uv.lock` pins. The job uploads the folder's `dist` as the Pages artifact, and holds `contents: read` and no secret. Third-party code runs in that job only, beside the repository's own.
 
 `deploy` runs harden-runner and GitHub's own `deploy-pages` action, in the `github-pages` environment, which GitHub limits to the default branch when it creates it. It runs on the default branch only, and only once the repository variable `KNOWLEDGE_WEBSITE_ENABLED` is `true`. Until then the workflow builds on every pull request that touches the site's inputs and deploys nothing. It also runs every Monday from the default branch, so a change elsewhere, such as a promoted changelog, reaches the site with that weekly run.
+
+A domain host deploys the site from its federation workflow, from the release's tag as well as the default branch, so its `github-pages` Environment admits release tags too. `uvx ktl gh enable website --run` switches Pages on, sets the variable and starts the first run, where Pages is off and no other publisher remains.
 
 The variable goes under Repository variables, never on an environment, because the deploy job's `if:` sees only repository and organization variables. The maintainer sets it, and tells Pages once to take its site from Actions. The skill gives the two commands and does not run them. A repository whose Pages another publisher already holds keeps the variable unset until that publisher is retired, since two publishers overwrite each other's site. A domain host leaves the variable unset, because its federation workflow builds the site and deploys it with the workspace beside it.
 

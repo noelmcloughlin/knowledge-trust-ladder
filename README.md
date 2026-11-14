@@ -35,7 +35,7 @@ Then open your agent in a repository and say, in turn:
 3. "What in the bundle needs my confirmation?"
 4. Any question about the project.
 
-[Your first bundle](https://w3id.org/ktl/docs/first-bundle/) walks through those steps. [The install page](https://w3id.org/ktl/docs/install/#quick-start) gives the other ways to install, and names the agents.
+[Your first bundle](https://w3id.org/ktl/docs/first-bundle/) walks through those steps. On GitHub, `uvx ktl gh plan` then lists the settings the bundle's workflows still need, and `uvx ktl gh apply` sets them. [The install page](https://w3id.org/ktl/docs/install/#quick-start) gives the other ways to install, and names the agents.
 
 > **Only want to ask?** Install `ktl-docent` into any agent you use, by a route from [the install page](https://w3id.org/ktl/docs/install/), and ask it about this project. It answers from the bundle and says how far each answer has been checked.
 >

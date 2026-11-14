@@ -405,7 +405,7 @@ def test_the_wheel_carries_the_skills_and_plugin_and_nothing_else(wheel):
         wheel_mode = (members[name].external_attr >> 16) & 0o777
         assert bool(wheel_mode & stat.S_IXUSR) == (mode == "100755"), name
     code = {name for name in members if name.startswith("ktl/") and name not in carried}
-    assert code == {"ktl/README.md", "ktl/__init__.py", "ktl/__main__.py", "ktl/cli.py"}
+    assert code == {"ktl/README.md", "ktl/__init__.py", "ktl/__main__.py", "ktl/cli.py", "ktl/gh.py"}
 
 
 @needs_uv

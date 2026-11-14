@@ -1,0 +1,457 @@
+{
+  "format": 1,
+  "source": "ktl-sidecar",
+  "about": "What the workflows ktl-sidecar installs need from GitHub, and where each setting goes. `ktl gh` reads this file; repository-settings.md describes its fields. A recommended setting with no workflow applies to every repository.",
+  "docs": "https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/skills/ktl-sidecar/references/",
+  "roles": {
+    "bundle": {
+      "title": "bundle producer",
+      "workflows": ["knowledge-registrar.yaml", "knowledge-librarian.yaml", "knowledge-release.yaml", "knowledge-sync.yaml"]
+    },
+    "domain": {
+      "title": "domain host",
+      "workflows": ["knowledge-federation.yaml"],
+      "with": ["bundle"]
+    },
+    "ingest": {
+      "title": "host of knowledge from outside the repository",
+      "workflows": ["knowledge-ingest.yaml"],
+      "with": ["bundle"]
+    }
+  },
+  "presets": {
+    "copilot": {
+      "title": "GitHub Copilot CLI",
+      "docs": "automation.md#copilot-cli",
+      "variables": {
+        "AGENT_CLI": "npx -y @github/copilot@1.0.88 --no-ask-user --allow-tool=read --allow-tool=write --allow-tool=shell(git:*) --allow-tool=shell(uv:*) --allow-tool=shell(uvx:*) --allow-tool=shell(just:*) --allow-tool=shell(bash:*)",
+        "AGENT_API_KEY_ENV": "COPILOT_GITHUB_TOKEN",
+        "AGENT_USE_JOB_TOKEN": "true",
+        "AGENT_PROMPT_FLAG": null
+      }
+    },
+    "claude-code": {
+      "title": "Claude Code",
+      "docs": "automation.md#claude-code",
+      "variables": {
+        "AGENT_CLI": "npx -y @anthropic-ai/claude-code@2.1.281 --permission-mode dontAsk --allowedTools Read,Edit(.lokf/patch.yaml),Bash(git:*),Bash(uv:*),Bash(uvx:*),Bash(just:*),Bash(bash:*)",
+        "AGENT_API_KEY_ENV": "ANTHROPIC_API_KEY",
+        "AGENT_USE_JOB_TOKEN": null,
+        "AGENT_PROMPT_FLAG": null
+      }
+    },
+    "members": {
+      "title": "the domain host's members script",
+      "docs": "automation.md#knowledge-federationyaml-the-workspace-of-a-domain-host",
+      "default_for": "knowledge-federation.yaml",
+      "variables": {
+        "AGENT_CLI": "uv run --project .lokf .lokf/scripts/knowledge-federate.py members",
+        "AGENT_API_KEY_ENV": "KNOWLEDGE_FEDERATE_TOKEN",
+        "AGENT_USE_JOB_TOKEN": "true",
+        "AGENT_PROMPT_FLAG": null
+      }
+    }
+  },
+  "settings": [
+    {
+      "kind": "environment",
+      "name": "knowledge-librarian",
+      "workflows": ["knowledge-librarian.yaml"],
+      "branches": ["{default}"],
+      "reviewers": 0,
+      "why": "It holds the agent's key for the refresh job on the default branch alone. A reviewer would hold up every scheduled run.",
+      "docs": "automation.md#keep-each-secret-in-its-environment"
+    },
+    {
+      "kind": "environment",
+      "name": "knowledge-sync",
+      "workflows": ["knowledge-sync.yaml"],
+      "branches": ["{default}"],
+      "reviewers": 0,
+      "why": "It holds the sync's token for the sync's jobs on the default branch alone. A reviewer would hold up every scheduled run.",
+      "docs": "automation.md#keep-each-secret-in-its-environment"
+    },
+    {
+      "kind": "environment",
+      "name": "knowledge-ingest",
+      "workflows": ["knowledge-ingest.yaml"],
+      "branches": ["{default}"],
+      "reviewers": 0,
+      "why": "It holds the ingest's credentials for the ingest job on the default branch alone. A reviewer would hold up every scheduled run.",
+      "docs": "automation.md#keep-each-secret-in-its-environment"
+    },
+    {
+      "kind": "environment",
+      "name": "knowledge-federation",
+      "workflows": ["knowledge-federation.yaml"],
+      "branches": ["{default}"],
+      "tags": ["v*"],
+      "why": "The build reads the members' token here, and a release build runs on the release's tag.",
+      "docs": "automation.md#knowledge-federationyaml-the-workspace-of-a-domain-host"
+    },
+    {
+      "kind": "environment",
+      "name": "github-pages",
+      "workflows": ["knowledge-federation.yaml"],
+      "branches": ["{default}"],
+      "tags": ["v*"],
+      "why": "The federation deploys the site from the release's tag as well as from the default branch.",
+      "docs": "automation.md#knowledge-federationyaml-the-workspace-of-a-domain-host"
+    },
+    {
+      "kind": "environment",
+      "name": "knowledge-sync-review",
+      "named_by": "KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT",
+      "workflows": ["knowledge-sync.yaml"],
+      "branches": ["{default}"],
+      "reviewers": 1,
+      "why": "Its reviewers approve the workflow changes a release brings. With none it approves itself, and push-workflows pushes nothing.",
+      "docs": "automation.md#workflow-changes-wait-for-a-person"
+    },
+    {
+      "kind": "environment",
+      "name": "knowledge-curation",
+      "named_by": "KNOWLEDGE_CURATION_ENVIRONMENT",
+      "workflows": ["knowledge-registrar.yaml"],
+      "reviewers": 1,
+      "why": "Its required reviewers are the people who may attest a curation. With none it approves itself the moment it is reached.",
+      "docs": "gate.md#if-you-cannot-sign-the-attestation-job"
+    },
+    {
+      "kind": "variable",
+      "name": "KNOWLEDGE_LIBRARIAN_ENABLED",
+      "workflows": ["knowledge-librarian.yaml", "knowledge-federation.yaml"],
+      "level": "optional",
+      "job_level": true,
+      "switch": {
+        "name": "librarian",
+        "run": "knowledge-librarian.yaml",
+        "requires": [
+          {
+            "any": [{"variable": "AGENT_CLI"}, {"secret": "AGENT_CLI", "environment": "knowledge-librarian"}],
+            "text": "AGENT_CLI, the agent's command"
+          },
+          {"variable": "AGENT_API_KEY_ENV", "text": "AGENT_API_KEY_ENV, the name the agent reads its credential from"},
+          {
+            "any": [{"variable": "AGENT_USE_JOB_TOKEN", "equals": "true"}, {"secret": "AGENT_API_KEY", "environment": "knowledge-librarian"}],
+            "text": "a credential: AGENT_USE_JOB_TOKEN set to true, or the AGENT_API_KEY secret in Environment knowledge-librarian"
+          },
+          {"setting": "actions.can_approve_pull_request_reviews", "value": true, "text": "Actions may create pull requests, so that the publish job can open its own"}
+        ]
+      },
+      "why": "true runs the librarian, on its schedule and by hand. Unset, every job is skipped.",
+      "docs": "automation.md#setting-it-up"
+    },
+    {
+      "kind": "variable",
+      "name": "AGENT_CLI",
+      "workflows": ["knowledge-librarian.yaml"],
+      "level": "optional",
+      "why": "The agent's command, split on spaces with no quotes. It is a secret in knowledge-librarian instead only when it must embed a credential.",
+      "docs": "automation.md#setting-it-up"
+    },
+    {
+      "kind": "variable",
+      "name": "AGENT_PROMPT_FLAG",
+      "workflows": ["knowledge-librarian.yaml"],
+      "level": "optional",
+      "pattern": "-[A-Za-z]|--[a-z][a-z0-9-]*|arg",
+      "why": "Where the prompt goes: after -p unless set, after another flag, or as the last argument with arg.",
+      "docs": "automation.md#any-other-agent"
+    },
+    {
+      "kind": "variable",
+      "name": "AGENT_API_KEY_ENV",
+      "workflows": ["knowledge-librarian.yaml"],
+      "level": "optional",
+      "pattern": "(?!(GITHUB|GH|GIT|RUNNER|ACTIONS)_)[A-Z][A-Z0-9_]*_(API_KEY|TOKEN|KEY)",
+      "why": "The name the agent reads its credential from. The wrapper refuses one that is not a credential's name, or that gh, git or the runner also read.",
+      "docs": "automation.md#what-the-wrapper-refuses"
+    },
+    {
+      "kind": "variable",
+      "name": "AGENT_USE_JOB_TOKEN",
+      "workflows": ["knowledge-librarian.yaml"],
+      "level": "optional",
+      "why": "true hands the agent the job's own token, for Copilot CLI and a domain host's members script.",
+      "docs": "automation.md#setting-it-up"
+    },
+    {
+      "kind": "variable",
+      "name": "KNOWLEDGE_RETRIEVAL",
+      "workflows": ["knowledge-librarian.yaml"],
+      "level": "optional",
+      "switch": {"name": "retrieval"},
+      "why": "true makes one more agent call on each run that changes the bundle, and puts the retrieval score in the pull request.",
+      "docs": "automation.md#the-retrieval-score"
+    },
+    {
+      "kind": "variable",
+      "name": "KNOWLEDGE_RELEASE_ENABLED",
+      "workflows": ["knowledge-release.yaml"],
+      "level": "optional",
+      "job_level": true,
+      "switch": {"name": "release"},
+      "why": "true attaches the bundle to each published release. A run by hand needs no switch.",
+      "docs": "automation.md#knowledge-releaseyaml-the-bundle-as-a-release-asset"
+    },
+    {
+      "kind": "variable",
+      "name": "KNOWLEDGE_RELEASE_NAME",
+      "workflows": ["knowledge-release.yaml"],
+      "level": "optional",
+      "pattern": "[A-Za-z0-9][A-Za-z0-9._-]*",
+      "why": "The name the release's files carry, when it is not the repository's.",
+      "docs": "automation.md#knowledge-releaseyaml-the-bundle-as-a-release-asset"
+    },
+    {
+      "kind": "variable",
+      "name": "KNOWLEDGE_ATTEST_PRIVATE",
+      "workflows": ["knowledge-release.yaml", "knowledge-federation.yaml"],
+      "level": "optional",
+      "switch": {
+        "name": "attest-private",
+        "requires": [
+          {"visibility": ["private", "internal"], "text": "a private or internal repository; a public one is attested without it"},
+          {"confirm": "the owner has GitHub Enterprise Cloud, which attestations of a private repository need"}
+        ]
+      },
+      "why": "true attests the release files of a private or internal repository.",
+      "docs": "automation.md#in-a-locked-down-organisation"
+    },
+    {
+      "kind": "variable",
+      "name": "KNOWLEDGE_FEDERATION_ENABLED",
+      "workflows": ["knowledge-federation.yaml"],
+      "level": "optional",
+      "job_level": true,
+      "switch": {
+        "name": "federation",
+        "requires": [
+          {"pages": "workflow", "text": "Pages builds its site from GitHub Actions"},
+          {"without_publishers": true, "text": "no other publisher of the Pages site"},
+          {"unset": "KNOWLEDGE_WEBSITE_ENABLED", "text": "KNOWLEDGE_WEBSITE_ENABLED unset, since this workflow deploys the site"}
+        ]
+      },
+      "why": "true builds the workspace on each release and deploys the site with it.",
+      "docs": "automation.md#knowledge-federationyaml-the-workspace-of-a-domain-host"
+    },
+    {
+      "kind": "variable",
+      "name": "KNOWLEDGE_INGEST_ENABLED",
+      "workflows": ["knowledge-ingest.yaml"],
+      "level": "optional",
+      "job_level": true,
+      "switch": {
+        "name": "ingest",
+        "run": "knowledge-ingest.yaml",
+        "requires": [
+          {"file": ".lokf/ingest.yaml", "text": ".lokf/ingest.yaml, the manifest of what to mirror"},
+          {"secrets_from": "ingest", "environment": "knowledge-ingest", "text": "each KNOWLEDGE_INGEST_ secret the manifest names, in Environment knowledge-ingest"},
+          {"setting": "actions.can_approve_pull_request_reviews", "value": true, "text": "Actions may create pull requests, so that the publish job can open its own"}
+        ]
+      },
+      "why": "true turns the weekly ingest on.",
+      "docs": "automation.md#setting-it-up-2"
+    },
+    {
+      "kind": "variable",
+      "name": "KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT",
+      "workflows": ["knowledge-sync.yaml"],
+      "level": "optional",
+      "job_level": true,
+      "switch": {"name": "sync-review", "environment": "knowledge-sync-review"},
+      "why": "Names the Environment whose reviewers approve the workflow changes a release brings, so that the sync pushes them. Unset, a person applies them by hand.",
+      "docs": "automation.md#workflow-changes-wait-for-a-person"
+    },
+    {
+      "kind": "variable",
+      "name": "KNOWLEDGE_CURATION_ENVIRONMENT",
+      "workflows": ["knowledge-registrar.yaml"],
+      "level": "optional",
+      "job_level": true,
+      "switch": {"name": "curation", "environment": "knowledge-curation"},
+      "why": "Names the Environment whose reviewers may attest a curation no signature backs. Unset, the attestation job never runs.",
+      "docs": "gate.md#if-you-cannot-sign-the-attestation-job"
+    },
+    {
+      "kind": "variable",
+      "name": "KNOWLEDGE_RUNNER",
+      "workflows": ["knowledge-registrar.yaml", "knowledge-librarian.yaml", "knowledge-release.yaml", "knowledge-sync.yaml", "knowledge-federation.yaml", "knowledge-ingest.yaml"],
+      "level": "optional",
+      "job_level": true,
+      "why": "The label of the runner every job runs on, ubuntu-latest unless set.",
+      "docs": "automation.md#customising"
+    },
+    {
+      "kind": "secret",
+      "name": "AGENT_API_KEY",
+      "environment": "knowledge-librarian",
+      "workflows": ["knowledge-librarian.yaml"],
+      "level": "optional",
+      "unless": {"variable": "AGENT_USE_JOB_TOKEN", "equals": "true"},
+      "why": "The agent's key or token. The wrapper hands it to the agent alone, under the name AGENT_API_KEY_ENV gives.",
+      "docs": "automation.md#setting-it-up"
+    },
+    {
+      "kind": "secret",
+      "name": "AGENT_CLI",
+      "environment": "knowledge-librarian",
+      "workflows": ["knowledge-librarian.yaml"],
+      "level": "optional",
+      "unless": {"variable": "AGENT_CLI"},
+      "why": "The agent's command as a secret, only when it must embed a credential.",
+      "docs": "automation.md#setting-it-up"
+    },
+    {
+      "kind": "secret",
+      "name": "KNOWLEDGE_SYNC_TOKEN",
+      "environment": "knowledge-sync",
+      "workflows": ["knowledge-sync.yaml"],
+      "level": "recommended",
+      "why": "A fine-grained token for this repository alone, with Contents, Pull requests and Workflows read and write. Without it, each sync attaches its change and opens no pull request.",
+      "docs": "automation.md#setting-it-up-1"
+    },
+    {
+      "kind": "secret",
+      "name": "KNOWLEDGE_FEDERATE_TOKEN",
+      "environment": "knowledge-federation",
+      "workflows": ["knowledge-federation.yaml"],
+      "level": "optional",
+      "repository_copy": true,
+      "why": "A token that reads the members in private or internal repositories. The check job reads a repository copy, so keep one there only when the token reads the members and nothing else.",
+      "docs": "automation.md#knowledge-federationyaml-the-workspace-of-a-domain-host"
+    },
+    {
+      "kind": "secret",
+      "name": "KNOWLEDGE_SKILLS_TOKEN",
+      "workflows": ["knowledge-sync.yaml", "knowledge-librarian.yaml"],
+      "level": "optional",
+      "why": "A read token for a private copy of the skills repository. The sync's earlier and sync jobs run in no Environment, so it is a repository secret.",
+      "docs": "automation.md#in-a-locked-down-organisation"
+    },
+    {
+      "kind": "secret",
+      "name": "KNOWLEDGE_INGEST_*",
+      "names_from": "ingest",
+      "environment": "knowledge-ingest",
+      "workflows": ["knowledge-ingest.yaml"],
+      "level": "optional",
+      "why": "A credential .lokf/ingest.yaml names. The workflow hands over these and no other secret.",
+      "docs": "automation.md#setting-it-up-2"
+    },
+    {
+      "kind": "setting",
+      "name": "repository.default_branch",
+      "value": "main",
+      "workflows": ["knowledge-federation.yaml"],
+      "level": "recommended",
+      "report_only": true,
+      "why": "The workflow's push trigger names main, so with another default branch the site rebuilds only on a release or by hand.",
+      "docs": "automation.md#knowledge-federationyaml-the-workspace-of-a-domain-host"
+    },
+    {
+      "kind": "setting",
+      "name": "actions.default_workflow_permissions",
+      "value": "read",
+      "level": "recommended",
+      "why": "A workflow that names no permissions gets a read-only token. Every KTL workflow names its own.",
+      "docs": "repository-settings.md#hardening"
+    },
+    {
+      "kind": "setting",
+      "name": "actions.sha_pinning_required",
+      "value": true,
+      "level": "recommended",
+      "why": "GitHub runs no action that is not pinned to a commit, so a moved tag cannot change what runs. Every KTL workflow pins by commit.",
+      "docs": "repository-settings.md#hardening"
+    },
+    {
+      "kind": "setting",
+      "name": "security.secret_scanning",
+      "value": true,
+      "level": "recommended",
+      "visibility": ["public"],
+      "why": "GitHub reports a credential committed by mistake.",
+      "docs": "repository-settings.md#hardening"
+    },
+    {
+      "kind": "setting",
+      "name": "security.secret_scanning_push_protection",
+      "value": true,
+      "level": "recommended",
+      "visibility": ["public"],
+      "why": "GitHub refuses a push that carries a credential it recognises.",
+      "docs": "repository-settings.md#hardening"
+    },
+    {
+      "kind": "setting",
+      "name": "security.private_vulnerability_reporting",
+      "value": true,
+      "level": "recommended",
+      "visibility": ["public"],
+      "why": "A reporter can tell you of a vulnerability in private. GitHub offers it on public repositories only.",
+      "docs": "repository-settings.md#hardening"
+    },
+    {
+      "kind": "setting",
+      "name": "security.vulnerability_alerts",
+      "value": true,
+      "level": "recommended",
+      "why": "Dependabot says when a dependency has a known vulnerability.",
+      "docs": "repository-settings.md#hardening"
+    },
+    {
+      "kind": "setting",
+      "name": "security.dependabot_security_updates",
+      "value": true,
+      "level": "recommended",
+      "why": "Dependabot opens a pull request that moves a vulnerable dependency to a fixed release.",
+      "docs": "repository-settings.md#hardening"
+    },
+    {
+      "kind": "environment",
+      "name": "release",
+      "level": "optional",
+      "reviewers": 1,
+      "why": "By convention, the Environment a release job runs in. With no required reviewer, a qualifying merge releases with no person's step.",
+      "docs": "repository-settings.md#hardening"
+    },
+    {
+      "kind": "ruleset",
+      "name": "default branch",
+      "target": "branch",
+      "include": ["~DEFAULT_BRANCH"],
+      "rules": ["deletion", "non_fast_forward"],
+      "level": "recommended",
+      "why": "Nobody can delete the default branch or rewrite its history, so the commit each confirmation and release names stays in it.",
+      "docs": "repository-settings.md#hardening"
+    },
+    {
+      "kind": "ruleset",
+      "name": "release tags",
+      "target": "tag",
+      "include": ["refs/tags/v*"],
+      "rules": ["update", "deletion"],
+      "level": "recommended",
+      "why": "A release tag cannot be moved or deleted, so a pin or a member concept that names it names what was released. Creating a tag stays open to the release job.",
+      "docs": "repository-settings.md#hardening"
+    }
+  ],
+  "retired": [
+    {
+      "kind": "variable",
+      "name": "KNOWLEDGE_LIBRARIAN_CMD",
+      "replaced_by": "KNOWLEDGE_LIBRARIAN_ENABLED",
+      "changelog": "0.11.0",
+      "why": "The librarian workflow runs the reviewed wrapper, not a command a variable names. KNOWLEDGE_LIBRARIAN_ENABLED turns it on, and AGENT_CLI names the agent."
+    },
+    {
+      "kind": "secret",
+      "name": "KNOWLEDGE_LIBRARIAN_CMD",
+      "replaced_by": "AGENT_CLI",
+      "changelog": "0.11.0",
+      "why": "The librarian workflow runs the reviewed wrapper, not a command a secret names. A command that must embed a credential is the AGENT_CLI secret."
+    }
+  ]
+}

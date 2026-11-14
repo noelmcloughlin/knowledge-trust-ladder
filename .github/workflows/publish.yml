@@ -4,8 +4,8 @@ name: Publish
 # release itself, so this workflow must never be tag-triggered. A tag-push
 # trigger here would race the very tag `gh skill publish` is about to
 # create. `workflow_dispatch` keeps release timing an explicit human
-# decision. The `release` environment (configure required reviewers on it in
-# repo settings) adds a maintainer-approval gate in front of the write scope.
+# decision. The `release` environment, once it has required reviewers, adds
+# a maintainer-approval gate in front of the write scope.
 on:
   workflow_dispatch:
     inputs:

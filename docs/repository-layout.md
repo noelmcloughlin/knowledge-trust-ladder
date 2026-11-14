@@ -16,6 +16,7 @@ skills/
 .claude-plugin/
   plugin.json           the six skills as one Claude Code plugin, with catalogue keywords
   marketplace.json      lets `/plugin marketplace add` find that plugin
+.github/repository-settings.json  what this repository's own workflows need from GitHub, and the hardening it keeps; `ktl gh` reads it beside the skills' catalogues
 .github/release/
   package.json, package-lock.json  the release tools semantic-release.yml installs with npm ci, every package pinned
 .github/pypi/
@@ -68,14 +69,14 @@ tests/                     the behavioural tests of the sidecar scripts and the 
   test_*.py                one module per script: the pen, the gate, the report, the conventions checker,
                            the feedback recorder, the preflight, the prose checker, the layouts the
                            wrapper and the workflows run in, the website skill's preflight and templates,
-                           and the ktl package and its command
+                           and the ktl package and its two commands
   docent-holdout.yaml      the eight captured docent questions and the concept each answer should rest on, as data; outside .lokf/ so the docent cannot read it
   docent-holdout-schema.yaml  its LinkML shape, importing LOKF's schema for Concept
   test_docent_holdout.py   checks that each expected concept still exists and that evals/ asks the same questions
 evals/                     the holdout as `claude plugin eval` cases, one directory per question with its prompt, graders and scaffold; README.md says how to run it
   scaffold-bundle.sh       copies .lokf/knowledge/ alone into a run's empty directory
 pyproject.toml             builds the ktl package for PyPI: the skills and .claude-plugin/ verbatim, and the command in src/ktl/
-src/ktl/                   the `ktl` command (`ktl skills list|path|install|status`), standard library only, and the package's PyPI page
+src/ktl/                   the `ktl` command, standard library only: `ktl skills list|path|install|status`, `ktl gh` for a repository's GitHub settings, and the package's PyPI page
 alias/                     the knowledge-trust-ladder package: no code, it installs ktl at the same version under the repository's name
 justfile                   `just docent-eval` runs that suite under a cost cap, `just docent-holdout` its test; the sidecar's recipes stay in .lokf/justfile
 website/                   the website: Hugo, this repository's copy of ktl-website's templates
