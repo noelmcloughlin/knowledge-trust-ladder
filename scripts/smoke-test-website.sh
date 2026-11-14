@@ -183,7 +183,10 @@ enums:
 YAML
   printf 'name: Knowledge federation\n' > .github/workflows/knowledge-federation.yaml
   printf '# Changelog\n\n## [Unreleased]\n\n## [1.0.0] - 2026-01-01\n\n### Added\n\n- The platform.\n' > CHANGELOG.md
-  (cd .lokf && UV_EXCLUDE_NEWER="$newest_upload" uv lock -q && UV_EXCLUDE_NEWER="$newest_upload" uv sync -q --locked)
+  # The template pins ktl exactly, often at a release newer than this
+  # repository's lock, so the cutoff leaves ktl out.
+  spare=(--exclude-newer-package "ktl=$(date -u +%Y-%m-%dT%H:%M:%SZ)")
+  (cd .lokf && UV_EXCLUDE_NEWER="$newest_upload" uv lock -q "${spare[@]}" && UV_EXCLUDE_NEWER="$newest_upload" uv sync -q --locked "${spare[@]}")
   git add -A
   git commit -q -m "a host with a bundle"
   git tag v1.0.0

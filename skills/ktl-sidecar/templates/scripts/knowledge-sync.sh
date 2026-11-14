@@ -82,6 +82,7 @@ die() { echo "knowledge-sync: $*" >&2; exit 2; }
 # branch the host was on.
 work=""
 undo_host=""; undo_previous=""; undo_branch=""
+# shellcheck disable=SC2329 # main runs it from `trap cleanup EXIT`
 cleanup() {
   if [[ -n "$undo_host" ]]; then
     local f
