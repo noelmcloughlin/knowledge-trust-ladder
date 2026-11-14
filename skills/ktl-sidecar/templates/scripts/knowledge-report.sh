@@ -443,7 +443,7 @@ body {
   }
 }
 END { if (NR > 0) finish() }
-# One concept ends: its C and I lines, and its V lines when `rows` is set.
+# One concept ends: its C, I and H lines, and its V lines when `rows` is set.
 function finish() {
   if (!started) return
   relend()
@@ -475,7 +475,7 @@ function finish() {
   if (!hasgen && vn == 0) print head "\t\t\t\t"
 }'
 
-facts() {  # every concept in the bundle -> its C, R and Q lines, and its V lines when `rows` is 1
+facts() {  # every concept in the bundle -> the lines in the table above, V only when `rows` is 1
   # One awk reads them all. A path from find is absolute, so awk never takes
   # it for an assignment. The shell leaves out a folder whose name ends in
   # .md, or a link to one, since mawk stops at a folder. The function returns
