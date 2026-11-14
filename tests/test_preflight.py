@@ -267,6 +267,53 @@ def test_names_skills_installed_for_one_user(tmp_path):
     )
 
 
+# A SKILL.md as the release holds it, and as `gh skill install` leaves it:
+# the keys sorted, a quote YAML does not need dropped, a metadata block that
+# names the source, and no blank line after the frontmatter.
+RELEASED_SKILL_MD = """---
+name: ktl-docent
+description: 'Answer from the bundle. Use when: a question comes. Keywords: OKF, trust ladder.'
+compatibility: 'Reads files; a label runs the skill''s own bash script.'
+---
+
+# Docent
+
+Answer from the bundle first.
+"""
+GH_SKILL_MD = """---
+compatibility: Reads files; a label runs the skill's own bash script.
+description: 'Answer from the bundle. Use when: a question comes. Keywords: OKF, trust ladder.'
+metadata:
+    github-path: skills/ktl-docent
+    github-ref: refs/tags/v1.0.0
+    github-repo: https://github.com/acme/skills
+    github-tree-sha: 0123456789abcdef0123456789abcdef01234567
+name: ktl-docent
+---
+# Docent
+
+Answer from the bundle first.
+"""
+
+
+@pytest.mark.parametrize(
+    ("installed", "warns"),
+    [
+        (GH_SKILL_MD, False),
+        (GH_SKILL_MD.replace("first.", "first, and say so."), True),
+        (GH_SKILL_MD.replace("own bash script", "own script"), True),
+    ],
+    ids=["gh's rewrite of one release", "a changed body", "a changed value"],
+)
+def test_reads_a_copy_gh_rewrote_as_the_release_it_came_from(tmp_path, installed, warns):
+    for folder, skill_md in ((".claude", RELEASED_SKILL_MD), (".agents", installed)):
+        write(tmp_path / folder / "skills" / "ktl-docent" / "SKILL.md", skill_md)
+        write(tmp_path / folder / "skills" / "ktl-docent" / "references" / "answering.md", "# Answering\n")
+    result = preflight(tmp_path, env={"HOME": tmp_path / "home"})
+    said = matches(result.out, r"^warn    skills +two copies of ktl-docent differ: \.claude/skills/ktl-docent and \.agents/skills/ktl-docent")
+    assert result and bool(said) == warns, result.out
+
+
 def test_warns_when_run_from_a_folder_inside_the_sidecar_skill(tmp_path):
     skill = tmp_path / "ktl-sidecar"
     write(skill / "SKILL.md", "---\nname: ktl-sidecar\n---\n")
