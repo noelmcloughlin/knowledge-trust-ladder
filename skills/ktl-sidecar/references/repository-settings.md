@@ -35,7 +35,7 @@ These are recommended for every repository: `apply --recommended` makes them, an
 - Secret scanning, push protection and private vulnerability reporting, on a public repository.
 - Dependabot alerts and security updates.
 - A required reviewer on an Environment named `release`, where one exists.
-- A workflow that publishes an OpenSSF Scorecard result, on a public repository. `ktl gh` writes no workflow, so `plan` leaves it to you: [scorecard.yml](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/.github/workflows/scorecard.yml) in KTL's own repository is one to copy, with its badge in the README.
+- A workflow that publishes an OpenSSF Scorecard result, on a public repository. `ktl gh` writes no workflow, so `plan` leaves it to you: `scorecard.yml` among [KTL's own workflows](https://github.com/noelmcloughlin/knowledge-trust-ladder/tree/main/.github/workflows) is one to copy, with its badge in the README.
 
 ## The catalogue
 
