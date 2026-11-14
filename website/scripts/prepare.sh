@@ -45,18 +45,38 @@ schema=$(sed -n 's/^schema := "\(.*\)"$/\1/p' "$root/.lokf/justfile" 2>/dev/null
 # then in the .linkml/ sidecar. gen-doc writes a page per class, slot,
 # enumeration and type, each kind in a folder of its own, and gen-erdiagram
 # writes the diagram the overview shows. The schema file is copied beside
-# them, with its path in the repository. With no schema there is no
-# generated/schema/, and the site shows no Schema part.
+# them, with its path in the repository.
+gendoc() {
+  # gen-doc prints a stray "None" when it ends.
+  "${lokf[@]}" gen-doc --subfolder-type-separation --index-name _index -d "$out/schema" "$1" >/dev/null
+  "${lokf[@]}" gen-erdiagram --format mermaid "$1" >"$out/schema/diagram.mmd"
+  cp "$1" "$out/schema/"
+}
 for model in "$root"/src/*/schema/*.yaml "$root"/.linkml/src/*/schema/*.yaml; do
   name=$(basename "$model" .yaml)
   [ -f "$model" ] && [ "$(basename "${model%/schema/*}")" = "$name" ] || continue
-  # gen-doc prints a stray "None" when it ends.
-  "${lokf[@]}" gen-doc --subfolder-type-separation --index-name _index -d "$out/schema" "$model" >/dev/null
-  "${lokf[@]}" gen-erdiagram --format mermaid "$model" >"$out/schema/diagram.mmd"
-  cp "$model" "$out/schema/"
+  gendoc "$model"
   echo "${model#"$root/"}" >"$out/schema/source.txt"
   break
 done
+
+# With no schema of its own, the repository still has the one its bundle is
+# written in: LOKF core, the copy in .lokf/schema/ that a domain vocabulary
+# imports, or else the one in the lokf package the sidecar installs.
+# core.txt holds its version, and source.txt the copy's path, when the
+# repository has one.
+if [ ! -d "$out/schema" ]; then
+  core="$root/.lokf/schema/lokf.yaml"
+  if [ -f "$core" ]; then
+    gendoc "$core"
+    echo ".lokf/schema/lokf.yaml" >"$out/schema/source.txt"
+    sed -n 's/^version: *"\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' "$core" | head -1 >"$out/schema/core.txt"
+  else
+    core=$("${lokf[@]}" python -c 'import lokf, pathlib; print(next(pathlib.Path(lokf.__file__).parent.rglob("lokf.yaml")))')
+    gendoc "$core"
+    "${lokf[@]}" python -c 'import importlib.metadata; print(importlib.metadata.version("lokf"))' >"$out/schema/core.txt"
+  fi
+fi
 
 # The data, when site.toml names its folder: each SQLite database in it,
 # served under browse/, and its Datasette metadata as metadata.json without

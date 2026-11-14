@@ -4,6 +4,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Changed
+
+- **A ktl-website site with no LinkML schema of its own shows LOKF core in its Schema part**, from `.lokf/schema/lokf.yaml` or the `lokf` package, so the home page's schema button is never greyed. The home page still leads only with a repository's own schema.
+
 ## [0.64.0] - 2026-11-14
 
 ### Added

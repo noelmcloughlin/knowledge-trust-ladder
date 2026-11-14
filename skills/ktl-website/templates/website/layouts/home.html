@@ -1,7 +1,7 @@
 {{ define "main" }}
 <article class="prose">
-  {{- with site.GetPage "/schema" }}
-  {{- /* A repository that holds a LinkML schema leads with it: the schema is what the visitor came to see. */ -}}
+  {{- with and (not (resources.Get "gendoc/core.txt")) (site.GetPage "/schema") }}
+  {{- /* A repository that holds a LinkML schema of its own leads with it: the schema is what the visitor came to see. LOKF core, shown when it holds none, has only its button. */ -}}
   <section class="hero" aria-label="The schema" data-pagefind-ignore>
     <p class="eyebrow">On exhibit · LinkML schema</p>
     <p class="hero__title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></p>

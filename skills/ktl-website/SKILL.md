@@ -23,6 +23,7 @@ No setting names what the site shows: the build looks for each of these and show
 | `docs/<page>.<language>-simple.md` | a retelling, which `docs/<page>.md` offers above its title |
 | `docs/architecture.md` | the home page's Architecture button |
 | `src/<name>/schema/<name>.yaml`, at the root or under `.linkml/` | the Schema part, written by LinkML's `gen-doc`, and the home page leads with the schema |
+| `.lokf/schema/lokf.yaml`, or the copy in the `lokf` package | with no schema of the repository's own, the Schema part shows LOKF core, and the home page does not lead with it |
 | `CHANGELOG.md` | a page per release |
 | `.assets/` | the figures |
 | `.lokf/ingest.lock.yaml` | a mirrored source's origin, on its concept's card |

@@ -1,9 +1,17 @@
-{{- /* The schema file prepare.sh copied, served beside the schema's pages, with its path in the repository: (dict "file" "path"), or false when the repository holds no schema. */ -}}
+{{- /*
+  The schema file prepare.sh copied, served beside the schema's pages:
+  (dict "file" "path" "core"), or false when there is no schema. "path" is
+  its path in the repository, empty for LOKF core from the lokf package.
+  "core" is LOKF core's version when the repository has no schema of its
+  own, and empty otherwise.
+*/ -}}
 {{- $out := false -}}
-{{- with resources.Get "gendoc/source.txt" -}}
-  {{- $path := .Content | strings.TrimSpace -}}
-  {{- with resources.Get (printf "gendoc/%s" (path.Base $path)) -}}
-    {{- $out = dict "file" (. | resources.Copy (printf "schema/%s" (path.Base $path))) "path" $path -}}
+{{- $path := "" }}{{ with resources.Get "gendoc/source.txt" }}{{ $path = .Content | strings.TrimSpace }}{{ end -}}
+{{- $core := "" }}{{ with resources.Get "gendoc/core.txt" }}{{ $core = .Content | strings.TrimSpace }}{{ end -}}
+{{- $name := cond (ne $path "") (path.Base $path) "lokf.yaml" -}}
+{{- if or $path $core -}}
+  {{- with resources.Get (printf "gendoc/%s" $name) -}}
+    {{- $out = dict "file" (. | resources.Copy (printf "schema/%s" $name)) "path" $path "core" $core -}}
   {{- end -}}
 {{- end -}}
 {{- return $out -}}

@@ -17,12 +17,12 @@ A file the repository lacks is passed over without a setting: its mount finds no
 ## The home page
 
 - `README.md`, as written, its `#` title included. Its frontmatter is read as data, so no key in it can move or hide the page. Its Markdown is served at `/index.md`, as a docs page's is. With no README, the page opens with the site's title, its description and the bundle's own introduction.
-- A repository with a LinkML schema leads with it: the schema's title and description, how many classes, slots, enumerations and types it has, and its first six classes.
+- A repository with a LinkML schema of its own leads with it: the schema's title and description, how many classes, slots, enumerations and types it has, and its first six classes.
 - Five buttons, the same on every site and in the same order. Each is looked for among the site's pages, and one that is not found keeps its place, greyed, with the reason on hover:
 
 | Button | Found when |
 | --- | --- |
-| The schema | the repository has a schema, as *The schema's pages* below says |
+| The schema | always: the repository's own schema, or LOKF core, as *The schema's pages* below says |
 | The bundle | always |
 | Architecture | `docs/architecture.md` exists |
 | Glossary | the bundle has a `glossary` group, or `docs/glossary.md` exists |
@@ -45,6 +45,7 @@ A file the repository lacks is passed over without a setting: its mount finds no
 ## The schema's pages
 
 - The schema is the first `src/<name>/schema/<name>.yaml` whose folder and file share a name, at the root, then under `.linkml/`.
+- With none, it is LOKF core, the schema the bundle is written in: `.lokf/schema/lokf.yaml`, or else the copy in the `lokf` package that `.lokf/uv.lock` pins. Its overview says so and names the version, and its elements have no `/elements/<Name>/` address, since LOKF's identifiers resolve elsewhere.
 - `prepare.sh` runs LinkML's `gen-doc` on it, with the LinkML that `.lokf/uv.lock` already pins, so the site adds no tool for it. Each class, slot, enumeration and type has `gen-doc`'s own page under `/schema/classes/`, `/schema/slots/`, `/schema/enums/` and `/schema/types/`, its name's case kept: a class has its Mermaid diagram, its slots with the inherited ones, where it is used, its mappings, and its YAML as written and as induced. Imports are read, so a type such as `string` has a page.
 - Each element also answers at `/elements/<Name>/`, whatever its kind, which sends the browser on to its page. That is the address mkdocs gave it and the one a schema's w3id rules point at, so it needs no setting. `/elements/` itself goes to the overview.
 - The overview shows an entity-relationship diagram of the whole schema, which `gen-erdiagram` writes, unless it is too large for Mermaid to draw. The schema file is served beside the pages.
