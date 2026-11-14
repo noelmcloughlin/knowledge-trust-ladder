@@ -1,5 +1,32 @@
 # Change Log
 
+## 2026-11-14
+
+* **Changed**: dropped the KTL release numbers that dated a fact in passing, since versions in user-facing prose are unnecessary detail; no fact changed. `explanation/skillwiki.md`, `policies/versioning.md` and `policies/security.md` were edited since a person confirmed them; each label says so until the curator looks again.
+* **Rewrite**: the ktl-website skill builds a Hugo site with uv and no Node.js, finds each input with no setting, takes four required values in `site.toml`, and installs into `ktl-website/` when `website/` is another site's, as its `SKILL.md` and references now say. The Astro steps, options and dated history are gone.
+* **Rewrite**: the website playbook describes the Hugo site from `website/README.md`: what the build finds by itself, the preview through `scripts/build.sh`, the two files to edit, the raw-HTML cleaning and the workflow's jobs. The Astro files it named and `website/NOTICE` are gone. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Repository validation describes the website tests and contract check 11w for the Hugo site: the three host-owned files are `site.toml`, `README.md` and `assets/css/custom.css`, the smoke test builds a host with every input and one with none, and the template and preflight tests check what the site finds and which folder it goes in.
+* **Changed**: Knowledge sources maps the Hugo site: the two website rows name its layout and exclude the site's code as concepts in place of the Astro files, and the folders `website/` and the skill's `templates/website/` replace the Astro files among the sources. The release row adds `.github/release/`, the release tools' pinned packages. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: the ktl-sidecar skill says the sync and the federation workflow find a host's site in `website/` or `ktl-website/`, keep the three files a host owns, and read the workspace's address from `site.toml`, as the sidecar's templates now do. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Contributing names `bash website/scripts/build.sh` as the website's build, as `CONTRIBUTING.md` now does.
+* **Changed**: the Security policy carries a question for the curator: `SECURITY.md`'s ktl-website row still describes the npm build the website template no longer runs.
+* **Changed**: the ktl-librarian skill drops every KTL release number from its body, as a person's note asked, with no fact lost. It also says the librarian adapts a published release of a domain schema, never the project's working copy, since the linkml-sidecar skills never write in `.lokf/`, as `references/domain-vocabulary.md` now says. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: the ktl-docent skill no longer names the release in which the feedback script began to refuse an attribution, as a person's note asked. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: the ktl-prose skill names the check of "stops without" under rule 11, and the python3 of 3.11 or later its script needs, as `references/rules.md` and `SKILL.md` now say. Its KTL release numbers are gone.
+* **Changed**: Hosts and doorways says the sidecar's scripts need a python3 of 3.11 or later, and names RHEL 9's and Ubuntu 22.04's as older, as `skills/ktl-sidecar/references/portability.md` now says. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Domain schema says the librarian adapts a published release, not the project's working copy, and that linkml-sidecar installs a project at a new repository's root too and never writes in `.lokf/`, as both skills' domain pages now say.
+* **Changed**: Domain vocabulary says `lokf adapt` reads a published release of a domain schema, as `skills/ktl-librarian/references/domain-vocabulary.md` now says, and drops a KTL release number.
+* **Changed**: a question on When the built-in vocabulary stops fitting asks whether it should say that a published release of a domain schema is adapted, as both skills' domain pages now say.
+* **Changed**: Three lines of defence drops a dated aside `docs/three-lines.md` does not state, and adds the second-person check and the released evidence table that the page lists. It now references the curation policy, which the page names as a concept in the bundle. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Three lines of defence carries a question on whether What remains should name OKF issues 45 and 46, which `docs/three-lines.md` does not.
+* **Changed**: Trust label says a confirmation's `revision` is compared with the concept's `resource` alone, and other sources with the recording commit, as `trust-fields.md` now says. A release number is dropped. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: the threat model describes the Hugo website's build, its cleaning of raw HTML and its opt-in data, as `docs/threat-model.md` now does, and drops a dated aside the page does not state. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: The pen gives its three exit codes, as `knowledge-apply.sh` and `references/patch.md` list them, and drops a release number.
+* **Changed**: The pen for readers aged 13 to 18 gives the pen's exit codes, as the full page now does.
+* **From reader feedback**: Obsidian, the editor the docs name for the bundle, from what `docs/obsidian.md` and `docs/architecture.md` say of it.
+* **Changed**: Obsidian carries a question on what no repository page says of it.
+* **Added**: Your first bundle, a tutorial from `docs/first-bundle.md`, which no concept named.
+
 ## 2026-11-13
 
 * **Curation**: human:noelmcloughlin confirmed the ktl-sidecar skill again, after a change merged since their first confirmation today raised the python version its preflight warns on to 3.11.

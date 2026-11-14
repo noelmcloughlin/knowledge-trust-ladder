@@ -16,7 +16,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 generated:
   by: process:ktl-librarian
-  at: "2026-11-13T14:41:35Z"
+  at: "2026-11-14T10:18:02Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -27,7 +27,7 @@ verified:
 
 `docs/obsidian.md` names two vaults. The bundle is the **exhibition**: the checked part of what the [workshop](workshop.md) knows, and the part that teammates, CI and agents read. It opens as a small vault of its own, and the two never index the same file. The vault a person already has is the workshop, and nothing in it is moved or migrated.
 
-Since 0.42.0 the README uses the word for the sites too. Its Exhibitions section says that `ktl-website` built a site for each of these knowledge bundles:[^readme.md]
+The README uses the word for the sites too. Its Exhibitions section says that `ktl-website` built a site for each of these knowledge bundles:[^readme.md]
 
 - this repository's own bundle, at `https://w3id.org/ktl/knowledge/`;
 - the KTL Curator Obsidian plugin's, at `https://w3id.org/ktl/curator/knowledge/`;

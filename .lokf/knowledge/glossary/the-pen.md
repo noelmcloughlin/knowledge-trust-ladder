@@ -17,7 +17,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
 generated:
   by: process:ktl-librarian
-  at: "2026-11-12T13:38:49Z"
+  at: "2026-11-14T10:17:06Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -33,11 +33,13 @@ The pen:
 - stamps `generated` from the clock;
 - keeps a concept's `description` equal to its two index bullets;
 - files each line in `log.md`;
-- runs `lokf validate` on every concept a patch would write, with `--dry-run` too, when `.lokf/.venv` holds the toolkit (0.55.0);
+- runs `lokf validate` on every concept a patch would write, with `--dry-run` too, when `.lokf/.venv` holds the toolkit;
 - moves a feedback entry the librarian handled into `.lokf/questions.md`, ten to a patch at most.
 
 It refuses a `human:` actor, a rewrite of text a person wrote, and the deletion of a concept a person confirmed or left a note on. It also refuses a patch after which any concept it writes would hold a person's record other than the one the file held. That covers a `human:` event or a person's note added, changed or removed, however the operations spelt it.
 
 In the scheduled run, the wrapper applies the patch file after the agent has finished, and refuses a run in which the agent changed any other file. In the agent's step the pen only checks the patch: the wrapper sets `KNOWLEDGE_PEN_DRY_RUN_ONLY`, so a run without `--dry-run` exits 2, writes nothing and leaves the patch file for the wrapper. A patch may also carry `handoff`, up to ten lines for the person reviewing the change, in the librarian's own words. The pen holds each to one line of printable text and writes none of it to the bundle. The scheduled pull request shows them under *From the librarian*.
+
+The pen exits 0 when it applied the patch, or with `--dry-run` would apply it. It exits 1 with its findings, and writes nothing. It exits 2 when there is no bundle, no patch file, a file that is not YAML or no runner, and on a run without `--dry-run` in the agent's step of a scheduled run.
 
 The pen is the librarian's only way to write the bundle, and the bundle has other writers: a person writes the curator's verdicts through ktl-curator or the KTL Curator plugin. The architecture page names the pen as the registrar for the librarian.

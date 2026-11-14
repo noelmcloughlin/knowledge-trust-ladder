@@ -16,7 +16,7 @@ tags:
   - audience-13-18
 generated:
   by: process:ktl-librarian
-  at: "2026-10-28T00:35:16Z"
+  at: "2026-11-14T10:17:06Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -57,7 +57,15 @@ It also refuses a patch that would add, change or remove a person's record. That
 
 In the scheduled run, the wrapper applies the patch file after the agent has finished. It refuses a run in which the agent changed any other file.
 
-In the agent's step, the pen only checks the patch. The wrapper sets `KNOWLEDGE_PEN_DRY_RUN_ONLY`. So a run without `--dry-run` writes nothing, and it leaves the patch file for the wrapper.
+In the agent's step, the pen only checks the patch. The wrapper sets `KNOWLEDGE_PEN_DRY_RUN_ONLY`. So a run without `--dry-run` stops with exit code 2. It writes nothing, and it leaves the patch file for the wrapper.
+
+# What exit codes does the pen give?
+
+The pen ends with one of three exit codes:
+
+- 0: it applied the patch, or with `--dry-run` it would apply it.
+- 1: it found problems, and it wrote nothing.
+- 2: there is no bundle, no patch file, a file that is not YAML, or no runner. It also gives 2 on a run without `--dry-run` in the agent's step of a scheduled run.
 
 # What can the librarian tell the reviewer?
 

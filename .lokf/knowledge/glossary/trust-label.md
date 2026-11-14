@@ -8,7 +8,7 @@ genre: reference
 resource: skills/ktl-curator/references/trust-fields.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-13T14:41:35Z"
+  at: "2026-11-14T10:17:06Z"
 definedBy: []
 about:
   - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
@@ -21,7 +21,7 @@ verified:
     at: "2026-10-19T20:36:44Z"
   - by: human:noelmcloughlin
     at: "2026-11-12T20:48:50Z"
-    revision: 7339a7009322e249bf9b04e485cef7e94747a39b
+    revision: "7339a7009322e249bf9b04e485cef7e94747a39b"
 stale_after: 2028-11-12
 status: draft
 references:
@@ -42,11 +42,11 @@ The labels restate OKF v0.2 section 5's trust fields in words a non-specialist c
 
 It reads `.lokf/feedback.md` for the label *a reader disputed this*: a waiting `**Disagreement**` that names the concept, never on a retired concept. It reads the newest `**Deprecation**` line in `log.md` for the successor a retired concept names. It reads `derivedFrom` for the label *derived from a concept edited since its confirmation*.
 
-A `revision` on an event (lokf 0.9.0 and later) is shown beside that event's date. Its absence means unrecorded, never unchanged, so it changes no label. When a confirmation carries a `revision` that names a commit this history holds, the script compares each source with that commit for the label *a source moved since the confirmation*.
+A `revision` on an event (lokf 0.9.0 and later) is shown beside that event's date. Its absence means unrecorded, never unchanged, so it changes no label. When a confirmation carries a `revision` that names a commit this history holds, the script compares the concept's `resource` with that commit for the label *a source moved since the confirmation*. It compares every other source with the commit that recorded the confirmation.
 
 The labels overlap. A concept can be confirmed *and* past its review date, so the counts in a curator report are not a partition. One pair never overlaps: a concept edited since its confirmation is counted under *edited since confirmed* and not as confirmed, because the person confirmed an earlier text. Nothing is scored and nothing is stored: the spec keeps scores out of frontmatter.
 
-A question asked after a confirmation reopens a concept and flags what waits. It never drops the rung: only an edit after the confirmation does that. The health line counts the two apart since 0.45.0: *Drafts* for a concept no person has confirmed, and *Reopened* for one a person confirmed and a question has since put back to `status: draft`.
+A question asked after a confirmation reopens a concept and flags what waits. It never drops the rung: only an edit after the confirmation does that. The health line counts the two apart: *Drafts* for a concept no person has confirmed, and *Reopened* for one a person confirmed and a question has since put back to `status: draft`.
 
 ## Open questions
 

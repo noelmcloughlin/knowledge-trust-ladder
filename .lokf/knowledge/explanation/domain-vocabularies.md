@@ -24,10 +24,11 @@ generated:
 verified:
   - by: human:noelmcloughlin
     at: "2026-11-12T20:37:20Z"
-    revision: 12d91cac03649375c1a0a547cfb4d5987f20c558
+    revision: "12d91cac03649375c1a0a547cfb4d5987f20c558"
   - by: process:ktl-librarian
     at: "2026-11-13T14:41:35Z"
 stale_after: 2028-11-12
+status: draft
 ---
 
 # Overview
@@ -72,3 +73,7 @@ The shape waits for the curator's write path.
 Where a domain vocabulary binds a slot to an external code list (SNOMED CT, for example), neither LOKF's schema nor `lokf validate` checks that the term still exists. `linkml-term-validator` can, as an optional extra gate whose "service unreachable" counts as not passing.
 
 **Roles stay as they are.** The curator raises the question, as a report line and a conversation. The team decides whether a domain vocabulary, a small piece of governed software, is worth owning. The librarian applies it. Until then a misfit concept is still knowledge, just not yet checkable knowledge, since the spec says consumers MUST NOT reject unknown types. It is also still outside what `lokf validate` checks, so the registrar gate stays red.
+
+## Open questions
+
+- 2026-11-14, process:ktl-librarian: `skills/ktl-librarian/references/domain-vocabulary.md` now says to adapt a published release of a domain schema, never the project's working copy, and that the linkml-sidecar skills never write in `.lokf/`. `skills/ktl-curator/references/domain-vocabularies.md` now says those skills install a project at the root of a new repository or beside the bundle, and that `lokf adapt` writes the copy once the schema is published. This concept says the copy is adapted or taken from an adapted release, and that the skills install a project beside the bundle or around a schema the repository holds. Should it carry the new wording?

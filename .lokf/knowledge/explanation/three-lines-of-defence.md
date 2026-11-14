@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-13T00:00:06Z"
+  at: "2026-11-14T10:17:06Z"
 about: []
 relatedTo:
   - https://w3id.org/ktl/knowledge/policies/ai-covenant
@@ -29,6 +29,8 @@ sources:
   - resource: CHANGELOG.md
   - resource: docs/architecture.md
   - resource: docs/m365.md
+references:
+  - https://w3id.org/ktl/knowledge/policies/knowledge-curation
 ---
 # Overview
 
@@ -56,6 +58,9 @@ An auditor's questions each have a fixed place to look:
 - What changed, and why: `log.md` and git.
 - Which words of the source a claim rests on: `sources[].excerpt`, joined to the claim by a footnote. The gate finds each one in its file on every change, and fetches no URL.
 - Whether the checker is independent of the checked: the JSON Schema, which is generated from the upstream `lokf.yaml` rather than written by the bundle's authors. The toolkit also generates SHACL shapes, which no KTL check runs yet. The bundle projects to RDF and answers SPARQL.
+- Whether a second person re-checked it: the `check` column of `knowledge-report.sh evidence`, where `second-person` marks a `human:` event by anyone but the first person to confirm.
+
+`knowledge-report.sh evidence` prints every `generated` record and `verified` event as one tab-separated table. `knowledge-release.yaml` attaches that table beside the bundle's zip as `evidence-<tag>-<name>.tsv`, with a checksum and a signed build provenance.
 
 Four limits bound what that evidence proves:
 
@@ -64,7 +69,7 @@ Four limits bound what that evidence proves:
 - An Environment attestation records only that a listed reviewer clicked Approve.
 - The `provenance` job runs on GitHub. Elsewhere `knowledge-provenance.sh` checks signatures against the keys on file, and nothing checks approvals. A host without git has only its platform's version history.
 
-The critics have a section of the page, arranged since 2026-09-23 by criticism rather than by critic. A table at its head lists nine points with who raised them and a verdict. Each criticism then has a section that quotes the criticism from its source, says what KTL does about it, and gives the verdict. A sources list closes the page, citing each paper by DOI and the two reports by URL.
+The critics have a section of the page, arranged by criticism rather than by critic. A table at its head lists nine points with who raised them and a verdict. Each criticism then has a section that quotes the criticism from its source, says what KTL does about it, and gives the verdict. A sources list closes the page, citing each paper by DOI and the two reports by URL.
 
 Three points are met by construction:
 
@@ -95,3 +100,4 @@ The page then lists what remains and who owns it, in four lines:
 
 - 2026-11-12, human:noelmcloughlin: remove stale information from docs/three-lines.md
 - 2026-11-13, human:noelmcloughlin: check if <https://github.com/GoogleCloudPlatform/open-knowledge-format/issues/45> and <https://github.com/GoogleCloudPlatform/open-knowledge-format/issues/46> are required for What remains to do
+- 2026-11-14, process:ktl-librarian: OKF issues 45 and 46 propose `digest` and `revision` on a `sources` entry. LOKF's `Source` class carries neither, and the Upstream line of `docs/three-lines.md` names only the fields LOKF already carries as its own, `revision` on an event and `excerpt`. So the page as it stands does not need them. Whether What remains should name them is the maintainer's choice for `docs/three-lines.md`, and this concept follows the page.

@@ -34,7 +34,7 @@ sources:
   - resource: https://github.com/conventional-changelog/conventional-changelog/blob/conventional-changelog-conventionalcommits-v8.0.0/packages/conventional-changelog-conventionalcommits/src/parser.js
 verified:
   - by: process:ktl-librarian
-    at: "2026-10-29T12:26:25Z"
+    at: "2026-11-14T10:17:06Z"
 ---
 
 # Overview
