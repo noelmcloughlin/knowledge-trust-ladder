@@ -436,6 +436,16 @@
       "level": "recommended",
       "why": "A release tag cannot be moved or deleted, so a pin or a member concept that names it names what was released. Creating a tag stays open to the release job.",
       "docs": "repository-settings.md#hardening"
+    },
+    {
+      "kind": "workflow",
+      "name": "OpenSSF Scorecard",
+      "uses": "ossf/scorecard-action",
+      "inputs": {"publish_results": "true"},
+      "level": "recommended",
+      "visibility": ["public"],
+      "why": "OpenSSF Scorecard checks pinned actions, token permissions, branch rules and more each week, and publishes a score that a README badge can show. It publishes for a public repository only.",
+      "docs": "repository-settings.md#hardening"
     }
   ],
   "retired": [

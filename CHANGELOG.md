@@ -4,6 +4,11 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Added
+
+- **`ktl gh check --strict` asks a public repository for a Scorecard workflow**, through the catalogue's new `workflow` kind.
+- **`ktl gh apply` turns back on a catalogued workflow that GitHub turned off for inactivity.**
+
 ### Changed
 
 - **`llms.txt` lists the install routes in the install page's order**: the GitHub CLI, the Open Skills CLI, then PyPI.
