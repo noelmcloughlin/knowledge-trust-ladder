@@ -38,7 +38,7 @@ uvx ktl gh enable librarian  # one switch, once what it needs is in place
 uvx ktl gh prune             # the variables a release retired
 ```
 
-Run it in a clone, or name a repository with `--repo owner/name`. It needs `gh auth login` and admin rights on the repository. `apply` never loosens a setting and never turns a switch on, and each verb that changes something prints the change and asks first. [The settings page](https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/skills/ktl-sidecar/references/repository-settings.md) says what each verb does.
+Run it in a clone, or name a repository with `--repo owner/name`. It needs `gh auth login` and admin rights on the repository. `apply` never loosens a setting and never turns a switch on, and each verb that changes something prints the change and asks first. [Turn on the workflows](https://w3id.org/ktl/docs/install/#turn-on-the-workflows) says what each workflow needs, and links the page on each verb.
 
 ## Other installers
 
