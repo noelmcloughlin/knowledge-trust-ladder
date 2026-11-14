@@ -1,6 +1,6 @@
 # The bundle in Obsidian
 
-This page is for the people who open the bundle in Obsidian.
+[Obsidian](https://obsidian.md/) is a desktop and mobile app for writing and linking Markdown notes. It opens a folder as a *vault*. This page is for the people who open the bundle in it.
 
 ## Two vaults
 
