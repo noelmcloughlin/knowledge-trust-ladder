@@ -2,6 +2,7 @@
 
 ## 2026-11-14
 
+* **Changed**: six concepts no longer describe package mirrors, proxies or a blocked GitHub, since the install page, the ktl package's page, the sidecar's portability, automation and prerequisites pages, and the website's deploy page and README no longer do. `explanation/hosts-and-doorways.md`, `playbooks/ktl-sidecar-skill.md` and `playbooks/website.md` were edited since a person confirmed them; each label says so until the curator looks again.
 * **Prose**: reworded the body of `playbooks/ktl-command.md` in plain English. No link, number or frontmatter changed.
 * **Added**: The ktl command, from `src/ktl/README.md` and ktl-sidecar's `repository-settings.md`: how `ktl skills` installs the skills and how `ktl gh` sets a repository's GitHub settings from the catalogues.
 * **Changed**: Releasing now says the `release` reviewers wait until releases have downstream users, adds the PyPI upload and its one pending publisher at a time, and names the owner limit of the sync dispatch token, as `docs/releasing.md` says.

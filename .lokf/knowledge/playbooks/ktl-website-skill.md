@@ -37,7 +37,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T18:33:42Z"
+  at: "2026-11-14T19:45:34Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -105,7 +105,7 @@ A domain host deploys the site from its federation workflow, from the release's 
 
 The variable goes under Repository variables, never on an environment, because the deploy job's `if:` sees only repository and organization variables. The maintainer sets it, and tells Pages once to take its site from Actions. The skill gives the two commands and does not run them. A repository whose Pages another publisher already holds keeps the variable unset until that publisher is retired, since two publishers overwrite each other's site. A domain host leaves the variable unset, because its federation workflow builds the site and deploys it with the workspace beside it.
 
-On another forge, the same `bash website/scripts/build.sh` runs in that forge's CI, and the forge publishes `website/dist`. Behind a proxy, a mirror set for uv serves Hugo and Pagefind, and `site.toml` can name a mirror for each of the two libraries the build fetches from a CDN. Nothing is fetched from github.com.
+On another forge, the same `bash website/scripts/build.sh` runs in that forge's CI, and the forge publishes `website/dist`.
 
 # In this repository
 
