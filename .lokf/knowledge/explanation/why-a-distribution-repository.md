@@ -14,7 +14,7 @@ sources:
   - resource: CHANGELOG.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T22:28:53Z"
+  at: "2026-11-14T22:54:18Z"
 status: draft
 references:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -40,4 +40,4 @@ All six skills are released together under one `vMAJOR.MINOR.PATCH` tag with one
 
 The repository also carries its own bundle, kept by its own skills, so a reader can install the docent anywhere and ask about this project. The docent answers from this repository's `.lokf/`, saying how far each answer has been checked. Microsoft 365 Copilot is a fourth route for the docent alone. Once the repository's `KNOWLEDGE_M365_ENABLED` variable is `true`, each release that changes the bundle carries the docent as a zip with a snapshot of the bundle inside, to upload to a declarative agent ([The docent in Microsoft 365 Copilot](../playbooks/docent-in-m365-copilot.md)).
 
-The repository was renamed, and GitHub redirects the old clone and `npx skills add` paths, as `CHANGELOG.md` records. The skills themselves took the `ktl-` prefix in 0.22.0. `CHANGELOG.md` lists their old names, and says that a host upgrading from 0.21.0 removes the old copies.
+The repository was renamed, and GitHub redirects the old clone and `npx skills add` paths, as `CHANGELOG.md` records. The skills themselves took the `ktl-` prefix. `CHANGELOG.md` lists their old names, and says that a host upgrading from a release before the prefix removes the old copies.

@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/trust-label
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T10:17:06Z"
+  at: "2026-11-14T22:54:18Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:04:01Z"
@@ -40,7 +40,7 @@ The folder `website/` builds the project's site with Hugo. The Knowledge website
 
 No setting names any of these. The build looks for each and shows what it finds:
 
-- Each concept in `.lokf/knowledge/` becomes a page under `knowledge/`, with its trust label from `knowledge-report.sh`, its sources and its relations both ways. The bundle also gives the health page, the graph, the four files `lokf export` writes, each concept's Markdown and JSON-LD, and the bundle log as an Atom feed, `knowledge/log.xml`.
+- Each concept in `.lokf/knowledge/` becomes a page under `knowledge/`, with its trust label from `knowledge-report.sh`, its sources and its relations both ways. The bundle also gives the health page, the graph, the four files `lokf export` writes, each concept's Markdown and JSON-LD, the bundle log as an Atom feed, `knowledge/log.xml`, and `badge.json`: how many of the bundle's concepts a person confirmed, as `n of m`, retired ones aside, in the form a shields.io endpoint badge reads. A README shows it as a badge that links to the health page.
 - The README becomes the home page, and its Markdown is served at `index.md`. With no README, the home page opens with the bundle's own introduction.
 - Each page under `docs/` becomes a page under `docs/`, and its Markdown is served at `docs/<name>.md`, with every address made full.
 - `docs/<page>.<language>-simple.md` is a retelling of `docs/<page>.md`. Both pages offer each other above their titles, and the retelling has no line in the navigation. A concept tagged `audience-13-18` retells the one concept it is `derivedFrom` in the same way.
@@ -49,11 +49,12 @@ No setting names any of these. The build looks for each and shows what it finds:
 - `.assets/` gives the figures, under `assets/`.
 - `.lokf/ingest.lock.yaml` says where each source the ingest mirrored came from, on its concept's card.
 - A LinkML schema at `src/<name>/schema/<name>.yaml`, or the same under `.linkml/`, gives the Schema part: a page per class, slot, enumeration and type, written by LinkML's `gen-doc`, each also at `elements/<Name>/`, where a schema's w3id rules point. The home page then leads with the schema.
+- With no schema of the repository's own, the Schema part shows LOKF core, the schema the bundle is written in, from `.lokf/schema/lokf.yaml` or the copy in the `lokf` package, with no `elements/` addresses. The home page does not lead with it.
 - `.github/workflows/knowledge-federation.yaml` adds, on the graph page, the workspace a domain host's federation serves.
 
 One part is set, never found: the data. `browse` in `site.toml` names a folder of SQLite databases, which the site serves under `browse/` with a page that opens each in Datasette Lite.
 
-The home page has the same five buttons on every site: the schema, the bundle, the architecture page, the glossary and the quick start. One whose page is not there is greyed. The glossary is the bundle's `glossary` group or `docs/glossary.md`. The quick start is a docs page named `quick-start`, `quickstart` or `getting-started`, or the first heading of one of those names.
+The home page has the same five buttons on every site: the schema, the bundle, the architecture page, the glossary and the quick start. One whose page is not there is greyed. The quick start is the filled button, and on a site without one, the first button found is filled. The glossary is the bundle's `glossary` group or `docs/glossary.md`. The quick start is a docs page named `quick-start`, `quickstart` or `getting-started`, or the first heading of one of those names.
 
 A release page links the repository, the docs and the bundle at the release's tag. The commit that promotes a release's changelog skips CI, so its page appears with the next build: the workflow's weekly run at the latest, or a run by hand.
 

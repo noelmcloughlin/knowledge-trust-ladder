@@ -71,7 +71,7 @@ A [LOKF](https://lokf.nolan-nichols.com) knowledge base for Knowledge Trust Ladd
 * [Domain schema](glossary/domain-schema.md) - A LinkML schema that models a domain, owned by a LinkML project in `src/<slug>/schema/` or `.linkml/src/<slug>/schema/`. It never imports LOKF's schema: a bundle borrows its classes through the domain vocabulary that `lokf adapt` writes from it into `.lokf/schema/`.
 * [Three lines of defence](glossary/three-lines-of-defence.md) - The model regulated industries use to say who owns a risk, who keeps the rules and who checks independently, whose reference version is the IIA's Three Lines Model. In Knowledge Trust Ladder the librarian and the curator are the first line, the registrar the second, and the bundle holds the evidence a third line would need.
 * [Domain vocabulary](glossary/domain-vocabulary.md) - The bundle's own LinkML file in `.lokf/schema/`, importing LOKF's schema, that declares the classes and keys its concepts may use beyond LOKF's. The `schema :=` line in `.lokf/justfile` names it, and `lokf validate --schema` checks the bundle against it.
-* [Obsidian](glossary/obsidian.md) - Obsidian, the editor the docs name for reading and editing the bundle: it opens a folder as a vault, installs plugins per vault, and has no CI, so two optional KTL plugins work inside it.
+* [Obsidian](glossary/obsidian.md) - Obsidian, a desktop and mobile app for writing and linking Markdown notes and the editor the docs name for reading and editing the bundle: it opens a folder as a vault, installs plugins per vault, and has no CI, so two optional KTL plugins work inside it.
 
 # Policies
 
