@@ -4,6 +4,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Added
+
+- **The website serves `badge.json`, a KTL badge of how many concepts a person confirmed**, for a README to show.
+
 ## [0.65.0] - 2026-11-14
 
 ### Added

@@ -89,6 +89,10 @@ A file the repository lacks is passed over without a setting: its mount finds no
 - `/llms.txt` opens with the site's description, then lists the four export files, the data page and the schema file when there are, the home page and each docs page by its Markdown file, and every concept with its Markdown file and its trust label.
 - `/llms-full.txt` holds every concept's text in one file, each under its address, trust label, type and definition, with every link a full address and its headings under the concept's title.
 
+## `badge.json`
+
+- `/badge.json` says how many of the bundle's concepts a person confirmed, retired ones aside, beside the mark of the Knowledge Trust Ladder (KTL), in the form a shields.io endpoint badge reads. A README shows the image `https://img.shields.io/endpoint?url=<site>/badge.json` and links it to `<site>/health/`, where `<site>` is the site's address.
+
 ## What search leaves out
 
 - The release pages, the schema's slots and types, and a concept's record card apart from its definition. The card's type, genre and trust label are the Type, Genre and Trust filters beside the search box.

@@ -238,7 +238,7 @@ dist="$host/website/dist"
 for f in index.html knowledge/index.html knowledge/services/example-service-a/index.html health/index.html graph/index.html \
          knowledge/concepts.jsonld knowledge/graph.json knowledge/graph.nt knowledge/datasets.jsonld \
          knowledge/services/example-service-a.md knowledge/services/example-service-a.jsonld \
-         knowledge/log.xml llms.txt llms-full.txt docs/index.html docs/guide/index.html docs/guide.md docs/how-to/index.html \
+         knowledge/log.xml llms.txt llms-full.txt badge.json docs/index.html docs/guide/index.html docs/guide.md docs/how-to/index.html \
          docs/how-to/first/index.html docs/img/map.png assets/figure.svg changelog/index.html changelog/version/1-0-0/index.html \
          og/index.png brand/knowledge-trust-ladder-logo.svg pagefind/pagefind.js \
          schema/index.html schema/classes/Service/index.html schema/enums/ServiceStatus/index.html schema/slots/owner/index.html \
@@ -262,6 +262,8 @@ assert "a release page links the repository, the docs and the bundle at the rele
   "grep -q 'https://github.com/acme/acme-platform/tree/v1.0.0/docs' \"$dist/changelog/version/1-0-0/index.html\" && grep -q 'https://github.com/acme/acme-platform/tree/v1.0.0/.lokf/knowledge' \"$dist/changelog/version/1-0-0/index.html\" && grep -q 'https://github.com/acme/acme-platform/releases/tag/v1.0.0' \"$dist/changelog/version/1-0-0/index.html\""
 assert "llms.txt offers llms-full.txt, the docs pages as Markdown and the schema" \
   "grep -q '/llms-full.txt)' \"$dist/llms.txt\" && grep -q '(https://acme.github.io/acme-platform/docs/guide.md)' \"$dist/llms.txt\" && grep -q '/schema/acme_platform.yaml)' \"$dist/llms.txt\""
+assert "badge.json is a shields.io endpoint badge with KTL's mark and the count of confirmed concepts" \
+  "python3 -I -c 'import json, sys; d = json.load(open(sys.argv[1])); assert d[\"schemaVersion\"] == 1 and d[\"label\"] == \"KTL\" and d[\"message\"].endswith(\" confirmed\") and d[\"logoSvg\"].startswith(\"<svg\")' \"$dist/badge.json\""
 assert "the log feed is well-formed" "python3 -c 'import sys, xml.dom.minidom; xml.dom.minidom.parse(sys.argv[1])' \"$dist/knowledge/log.xml\""
 assert "every page names the log feed" "grep -q 'application/atom+xml[^>]*knowledge/log.xml' \"$dist/index.html\""
 assert "every page carries the policy that stops raw HTML running a script" "grep -q \"Content-Security-Policy.*script-src https://acme.github.io/acme-platform/js/\" \"$dist/docs/guide/index.html\""
