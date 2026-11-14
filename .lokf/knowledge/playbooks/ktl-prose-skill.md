@@ -27,7 +27,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T12:32:59Z"
+  at: "2026-11-14T12:46:18Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -97,7 +97,7 @@ A note gives the line where it can. `strength` names a word of strength that cam
 
 # Outside the bundle
 
-The bundle is where the skill works. A person may still name another Markdown file. `references/other-files.md` says what never to touch, such as the released sections of a changelog unless the person names them, how to list the concepts derived from that file, and what a rewording costs them. It also says how to find the host's layout.
+The bundle is where the skill works. A person may still name another Markdown file. `references/other-files.md` says what never to touch, such as the released sections of a changelog unless the person asks, never on its own, how to list the concepts derived from that file, and what a rewording costs them. It also says how to find the host's layout.
 
 The script reads a script too. Given a `.sh`, `.bash`, `.py`, `.yaml`, `.yml` or `.toml` file, or a justfile, it reads the `#` comments and, in Python, the docstrings, each block of comment lines as a paragraph. It never reads the code. `references/other-files.md` makes the block a change touches, not the lines it adds, the unit of a comment review. The script also reads a comment's layout as a person does. It reads a table of options row by row, and does not read a command after a colon or a `Usage` line. `--against` compares a script as its comments.
 

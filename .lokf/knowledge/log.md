@@ -2,6 +2,9 @@
 
 ## 2026-11-14
 
+* **Changed**: Security policy's row on the website templates follows `SECURITY.md`, which now names Hugo and Pagefind from PyPI and the raw-HTML cleaning in place of npm. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Resolved**: the maintainer updated `SECURITY.md`'s website row, so the concept now carries it.
+* **Changed**: the ktl-prose skill rewords a changelog's released sections only when the person asks, as `references/other-files.md` now says, with no example phrasing.
 * **Changed**: the ktl-prose skill rewords a changelog's released sections when a person names them, as `references/other-files.md` now says.
 * **Curation**: human:noelmcloughlin confirmed 1 concept, Build, preview and edit the website, against its Hugo rewrite, due for review on 2027-11-14.
 * **Prose**: reworded 1 concept body in plain English, the ktl-website skill. No link, number or frontmatter changed.
