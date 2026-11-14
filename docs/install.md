@@ -41,7 +41,7 @@ In PowerShell or cmd, type the command on one line without the `\` continuations
 /plugin install knowledge-trust-ladder@knowledge-trust-ladder
 ```
 
-### PyPI, where GitHub is out of reach
+### PyPI
 
 Each release is also the [`ktl`](https://pypi.org/project/ktl/) package on PyPI, which carries the six skills and a command that installs them. It has no dependencies and needs Python 3.9 or later, so it installs through a company mirror of PyPI, such as Nexus or Artifactory, on a machine that cannot reach github.com. Name your agent (`claude-code`, `codex` or `github-copilot`), or give the folder it reads with `--dest`:
 
