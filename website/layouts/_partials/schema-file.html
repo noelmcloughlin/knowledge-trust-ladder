@@ -1,0 +1,9 @@
+{{- /* The schema file prepare.sh copied, served beside the schema's pages, with its path in the repository: (dict "file" "path"), or false when the repository holds no schema. */ -}}
+{{- $out := false -}}
+{{- with resources.Get "gendoc/source.txt" -}}
+  {{- $path := .Content | strings.TrimSpace -}}
+  {{- with resources.Get (printf "gendoc/%s" (path.Base $path)) -}}
+    {{- $out = dict "file" (. | resources.Copy (printf "schema/%s" (path.Base $path))) "path" $path -}}
+  {{- end -}}
+{{- end -}}
+{{- return $out -}}

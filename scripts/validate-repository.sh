@@ -361,9 +361,9 @@ else
   # root is the README. A sibling's own namespace under w3id.org/ktl/ is not
   # a link into this repository and is dropped.
   #
-  # A sibling's website build writes copies of its pages under website/, which
-  # git ignores; one quotes a link inside a folded YAML string, and read as a
-  # link it ends in a backslash. A domain host's build writes its workspace
+  # A sibling's website build writes copies of its pages under its site's
+  # folder, which git ignores; one quotes a link inside a folded YAML string,
+  # and read as a link it ends in a backslash. A domain host's build writes its workspace
   # under snapshot/, which git ignores too, and that holds a copy of each
   # member's bundle, this repository's among them, whose own IRIs would read
   # as links. Only what the sibling keeps counts.
@@ -371,7 +371,7 @@ else
     "${cloned[@]}" --include='*.md' --include='*.yaml' --include='justfile' \
     --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.agents \
     --exclude-dir=.claude --exclude-dir=.venv 2>/dev/null \
-    | grep -vE '/website/(dist|public|src/content|src/generated)/|^\.\./[^/]+/snapshot(\.new)?/' | sed -E 's|^[^:]*:||' \
+    | grep -vE '/(ktl-)?website/(dist|generated|resources|public|src/content|src/generated)/|^\.\./[^/]+/snapshot(\.new)?/' | sed -E 's|^[^:]*:||' \
     | sed -E 's|^https://w3id\.org/ktl/docs/([a-z0-9.-]+)/|docs/\1.md|; s|^https://w3id\.org/ktl/knowledge/([a-z0-9-]+(/[a-z0-9-]+)*)/?|.lokf/knowledge/\1.md|; s|^https://w3id\.org/ktl/#|README.md#|; /^https:\/\/w3id\.org\/ktl\//d; s|^https://github\.com/noelmcloughlin/knowledge-trust-ladder||; s|^/blob/main/||; s|^#|README.md#|; s/[.,]$//; /^$/d; /^README\.md#readme$/d' \
     | sort -u || true)
   unrecorded=0
@@ -544,7 +544,7 @@ done < <(sed 's/#.*//' "$manifest")
 #      its deploy workflow, laid down by the same skill in every host, so the
 #      copies must stay byte-identical, as check 11 holds the sidecar's. Three
 #      files are each host's own once written, this repository's included:
-#      site.config.mjs, README.md and src/styles/custom.css. The README's
+#      site.toml, README.md and assets/css/custom.css. The README's
 #      placeholders are filled with this repository's values and compared, so
 #      the template and the copy still say the same thing. The reverse holds
 #      too: every tracked file under website/ is a template or one of the
@@ -552,7 +552,7 @@ done < <(sed 's/#.*//' "$manifest")
 say ""
 say "Checking the website skill's templates are this repository's own site..."
 wtemplates="skills/ktl-website/templates"
-host_owned=("site.config.mjs" "README.md" "src/styles/custom.css")
+host_owned=("site.toml" "README.md" "assets/css/custom.css")
 owned() { local f; for f in "${host_owned[@]}"; do [[ "$1" == "$f" ]] && return 0; done; return 1; }
 while IFS= read -r src; do
   rel="${src#"$wtemplates/website/"}"
@@ -563,7 +563,7 @@ while IFS= read -r src; do
   elif cmp -s "$src" "$dst"; then
     ok "$dst matches its template"
   else
-    err "$dst differs from $src - this repository runs the site its skill lays down, so the two must match: copy the template over the site file after editing the template, or the site file over the template after a Dependabot npm bump, which only ever edits website/package.json and package-lock.json"
+    err "$dst differs from $src - this repository runs the site its skill lays down, so the two must match: copy the template over the site file after editing the template, or the site file over the template after a Dependabot uv bump, which only ever edits website/pyproject.toml and uv.lock"
   fi
 done < <(find "$wtemplates/website" -type f | sort)
 if cmp -s "$wtemplates/github/knowledge-website.yaml" ".github/workflows/knowledge-website.yaml"; then
@@ -571,13 +571,13 @@ if cmp -s "$wtemplates/github/knowledge-website.yaml" ".github/workflows/knowled
 else
   err ".github/workflows/knowledge-website.yaml differs from $wtemplates/github/knowledge-website.yaml - copy one over the other, as check 11 says"
 fi
-# The Knowledge Trust Ladder logo a host's site shows when its LOGO is left
-# at "auto" is a copy of this repository's own, so the two cannot drift.
+# The Knowledge Trust Ladder logo a host's site shows when its site.toml
+# names no logo is a copy of this repository's own, so the two cannot drift.
 for logo in knowledge-trust-ladder-logo.svg knowledge-trust-ladder-logo-dark.svg; do
-  if cmp -s ".assets/$logo" "$wtemplates/website/src/assets/$logo"; then
-    ok "$wtemplates/website/src/assets/$logo matches .assets/$logo"
+  if cmp -s ".assets/$logo" "$wtemplates/website/static/brand/$logo"; then
+    ok "$wtemplates/website/static/brand/$logo matches .assets/$logo"
   else
-    err "$wtemplates/website/src/assets/$logo differs from .assets/$logo - copy .assets/$logo over it, and over website/src/assets/$logo, so every site shows this repository's logo"
+    err "$wtemplates/website/static/brand/$logo differs from .assets/$logo - copy .assets/$logo over it, and over website/static/brand/$logo, so every site shows this repository's logo"
   fi
 done
 filled="$(sed -e 's|<REPO_OWNER>|noelmcloughlin|g' -e 's|<REPO_NAME>|knowledge-trust-ladder|g' -e 's|<PROJ_NAME>|Knowledge Trust Ladder|g' "$wtemplates/website/README.md")"

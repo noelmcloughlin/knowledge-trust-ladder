@@ -1,76 +1,93 @@
 # What the site reads from the repository
 
-Every page comes from a file the repository already holds, so a change to the site is a change to that file. This page lists each input and the rule the sync applies to it, so a page that looks wrong can be traced to its source. The sync is `website/scripts/sync.mjs`. It runs before every build and commits nothing.
+Every page comes from a file the repository already holds, so a change to the site is a change to that file. This page lists each input and the rule applied to it, so a page that looks wrong can be traced to its source. Nothing is copied into the site's folder before a build: Hugo reads the files where they are, through the mounts in `hugo.toml`. Only `scripts/prepare.sh` runs first, and what it writes into `generated/` is never committed. After Hugo, `scripts/clean-html.py` cleans each page's raw HTML and `scripts/check-links.py` checks its links.
+
+A file the repository lacks is passed over without a setting: its mount finds nothing, and the part of the site built from it is not drawn.
 
 ## The bundle
 
-- `.lokf/knowledge/index.md`: its frontmatter (`base_iri`, `context`, `license`, `publisher`, `title`, `description`) fills the table on the bundle's overview page, and its text before the first heading opens that page. The sync needs this file.
-- Each concept file: `title` (the page title; the concept's path when absent), `description` (the page's meta description, as plain words), `type`, `status`, `definition`, `stale_after` (shown as the review date), `tags`, `generated` and `verified`. Its `sources`, or its `resource`, each become a link to the file on GitHub at the built commit, or to the address given. A source whose entry carries an `excerpt` shows that passage under its link. A source under `.lokf/mirror/` shows where the ingest fetched it, the source's version and the day, from the committed `.lokf/ingest.lock.yaml`; the confidential cache's lock is never read. A concept's page is at `/knowledge/<id>/`, its id as written, capitals and dots kept. Each folder of the bundle is a sidebar topic of its own, listed under the bundle's, so a concept page carries its own folder's sidebar. `verified` is read from the concept's entry in `concepts.jsonld`, so one event written as a bare mapping counts. The body is rendered from its first line, with every heading moved down one level when the body starts at `#`. The typed relations come from the `graph.json` that `lokf export` writes, both ways, not from the frontmatter.
-- A concept with an `audience` field, or an `audience-` tag, whose `derivedFrom` names one concept of the bundle is a retelling of that concept: both pages open with a Reading level line, as a `PAGES` retelling does. The tag `audience-13-18` reads "Ages 13 to 18", and `audience-beginners` reads "Beginners".
-- A concept's `license`, or the root file's: the record names it, the page head carries it as `rel="license"`, and the overview page, the feed and the two text files name the root file's. A Creative Commons or SPDX address shows as its short name, an `spdx:` CURIE as its identifier, and anything else as written. The record also links the concept file's history on GitHub, up to the built commit.
-- `.lokf/knowledge/log.md`: the bundle log page, and `/knowledge/log.xml`, an Atom feed of its newest 20 days. Each `## YYYY-MM-DD` section is an entry, titled with the kinds of change it holds, which are its categories too. Git dates it: published when its first line was committed, updated when its newest was. Its id is the bundle's `base_iri` with `log#` and the date, so it outlives a move of the site. Every page names the feed in its head, so a feed reader finds it from any of the site's addresses.
-- `.lokf/scripts/knowledge-report.sh labels` and `health`: the trust label on each concept page and the numbers the health page charts. The site never derives a label itself.
-- `lokf export`, from the sidecar's own environment: `concepts.jsonld`, `graph.json`, `graph.nt` and `datasets.jsonld` under `/knowledge/`, with every bundle `.md` file as it is in the repository and one `.jsonld` per concept beside it. Each concept page links its own two files in its head. The graph page draws `graph.json`, and `/graph/?concept=<id>` opens it on that concept, as each concept page's record and its neighbourhood map link it.
+- `.lokf/knowledge/index.md`: its frontmatter (`base_iri`, `license`, `publisher`, `description`) fills the table on the bundle's overview page, and its text is that page's. The build needs this file.
+- Each concept file becomes a page at `/knowledge/<id>/`. Its frontmatter is read as data, so a concept that sets `url`, `aliases`, `draft` or `layout` changes nothing. An id with a capital keeps it in the address. The page shows the concept's type, genre and tags, its definition, its checks, its review date, its sources with any `excerpt`, and its licence or the bundle's. A source under `.lokf/mirror/` names where the ingest fetched it, the source's version and the day, from the committed `.lokf/ingest.lock.yaml`; the confidential cache's lock is never read. The typed relations come from the `graph.json` that `lokf export` writes, both ways, not from the frontmatter.
+- Each folder of the bundle is a group in the navigation, from its `index.md`. A new folder needs no line anywhere.
+- A concept's neighbours are listed beside its words: the concepts that point at it, then the concepts it points at, each with its trust dot and the relation.
+- `.lokf/knowledge/log.md`: the bundle log page, and `/knowledge/log.xml`, an Atom feed of its newest thirty days, a day being a `## YYYY-MM-DD` section. Every page names the feed in its head.
+- `.lokf/scripts/knowledge-report.sh labels` and `health`: the trust label on each concept page and the numbers the health page charts. The site never derives a label itself, and the build stops on a concept with no label.
+- `lokf export`, from the sidecar's own environment under the justfile's domain vocabulary: `concepts.jsonld`, `graph.json`, `graph.nt` and `datasets.jsonld` under `/knowledge/`, with every bundle `.md` file as it is in the repository and one `.jsonld` per concept. The graph page draws `graph.json`, and `/graph/?concept=<id>` opens it on that concept.
 
-## The home page and the extra pages
+## The home page
 
-- The home page's source, from its first `#` title down (a `#` heading inside fenced code does not count). A line that links the site's own address is dropped, since on the site it would link to the page it is on. With no source, the page opens with the bundle's own introduction.
-- A `PAGES` entry, from its file's `#` title down, with the entry's label as the title when the file has none.
-- A `PAGES` entry whose `retells` names a file with a page on the site is a retelling of that page, at the reading level its `level` words. Both pages open with a Reading level line under the title: the page as Full, then each retelling by its level, the current one unlinked. Search leaves the line out.
-- The home page, each `PAGES` entry and each docs page is served as Markdown too, at the page's path with `.md` added (`/index.md`, `/<slug>.md`, `/docs/<name>.md`). That Markdown is the file from its `#` title down, with every link, image and raw-HTML address made a full one, as in `llms-full.txt`. The page's head names the file as its `text/markdown` alternate, and `llms.txt` links it.
-- GitHub's `> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` and `[!CAUTION]` alerts become the site's asides.
-- A `<picture>` with a dark source becomes two images, one shown in each of the site's themes.
+- `README.md`, as written, its `#` title included. Its frontmatter is read as data, so no key in it can move or hide the page. Its Markdown is served at `/index.md`, as a docs page's is. With no README, the page opens with the site's title, its description and the bundle's own introduction.
+- A repository with a LinkML schema leads with it: the schema's title and description, how many classes, slots, enumerations and types it has, and its first six classes.
+- Five buttons, the same on every site and in the same order. Each is looked for among the site's pages, and one that is not found keeps its place, greyed, with the reason on hover:
+
+| Button | Found when |
+| --- | --- |
+| The schema | the repository has a schema, as *The schema's pages* below says |
+| The bundle | always |
+| Architecture | `docs/architecture.md` exists |
+| Glossary | the bundle has a `glossary` group, or `docs/glossary.md` exists |
+| Quick start | a docs page is named `quick-start`, `quickstart` or `getting-started`; or the install page, another docs page or the README has a heading of one of those names, or *Get started* |
 
 ## The docs pages
 
-- Each `.md` file git sees under the docs folder (tracked, or untracked and not ignored), except a file `PAGES` names. The title is the file's `#` line, and the description its first sentence.
-- With `DOCS.groups`, a page sits where its group says. Without them, every page sits in one group by title, nested folders included, and the folder's `index.md` comes first, as its Overview at `/docs/`.
-- A page's address is the one Starlight gives it: `/docs/<name>/` in lower case, and an `index.md` at its folder's address.
-- A file or folder that `DOCS.exclude` names is not a page.
+- Each `.md` file under `docs/` becomes a page at `/docs/<name>/`, in lower case. A folder's `index.md` is that folder's own page. A file or folder whose name starts with a dot is left out, and so is a folder `docsExclude` names.
+- The title is the frontmatter's `title`, or the file's first `#` heading. No other frontmatter key reaches Hugo.
+- Each page's Markdown is served at `/docs/<name>.md`: the file from its `#` title down, with every link, image and raw-HTML address made a full one, so it reads the same away from the site. Fenced code is left as written. The page's head names the file as its `text/markdown` alternate, and `llms.txt` lists it.
+- Every other file of the folder is served as it is, such as a figure, except an HTML or XML document, which would run as a page of the site's origin. The same holds for `.assets/` and the bundle.
+- The pages sit in groups in the navigation, found or set as [customising.md](customising.md) says.
+
+## Retellings
+
+- A docs file named `<page>.<language>-simple.md` retells `<page>.md` beside it. Both pages offer *Full* and the retelling above their titles. The retelling's button reads *For readers aged 13 to 18* when the file says "This page is for readers aged 13 to 18.", and *In shorter words* otherwise.
+- A concept retells the one concept it is `derivedFrom` when it names its readers, in `audience` or in a tag such as `audience-13-18`.
+- A retelling has no line in the navigation, and a page with no retelling shows no choice.
 
 ## The schema's pages
 
-- LinkML's `gen-doc` writes its pages into one folder by default, and each `.md` file in that `SCHEMA` folder becomes a page. `index.md` is the Schema topic's overview at `/schema/`, and every other page sits at `/schema/<file name>/`, its case kept, so the links in its diagram resolve. Its title is its `#` line, such as `Class: Action`, and its description the italic line under it. The sidebar groups the pages by the word that opens the title: Classes, Slots, Enumerations, Types and Subsets. A page whose title opens with none of them, the schema's own, has a page and no sidebar entry.
-- mkdocs-material's frontmatter and its `<div data-search-exclude>` wrapper are dropped, and a blank line goes around each `<details>`, so the YAML inside is a code block.
-- Search leaves the schema's pages out, and they share the home page's social card.
-- A concept whose source is in the `SCHEMA` folder links that source's page on the site, since the folder is never on GitHub.
-- Pages that `gen-doc --subfolder-type-separation` writes into a folder per kind stop the sync, since the site would show none of them.
+- The schema is the first `src/<name>/schema/<name>.yaml` whose folder and file share a name, at the root, then under `.linkml/`.
+- `prepare.sh` runs LinkML's `gen-doc` on it, with the LinkML that `.lokf/uv.lock` already pins, so the site adds no tool for it. Each class, slot, enumeration and type has `gen-doc`'s own page under `/schema/classes/`, `/schema/slots/`, `/schema/enums/` and `/schema/types/`, its name's case kept: a class has its Mermaid diagram, its slots with the inherited ones, where it is used, its mappings, and its YAML as written and as induced. Imports are read, so a type such as `string` has a page.
+- Each element also answers at `/elements/<Name>/`, whatever its kind, which sends the browser on to its page. That is the address mkdocs gave it and the one a schema's w3id rules point at, so it needs no setting. `/elements/` itself goes to the overview.
+- The overview shows an entity-relationship diagram of the whole schema, which `gen-erdiagram` writes, unless it is too large for Mermaid to draw. The schema file is served beside the pages.
+- `gen-doc` writes for mkdocs, so its frontmatter and search wrapper are removed and each `<details>` is given the blank lines that make its YAML a code block.
+- Search covers the schema's overview, classes and enumerations, and leaves its slots and types out.
 
-## Diagrams
+## The workspace
 
-- A ```` ```mermaid ```` block on any page the sync writes, quoted or not, is drawn in the reader's browser in the site's light or dark theme, as each schema page's class diagram is. A button under it shows it at its own size. The script that draws it loads only on a page that has one. A diagram's link to another page of the site opens in the same tab.
+- A repository with `.github/workflows/knowledge-federation.yaml` is a domain host, whose workflow serves the host's workspace at `workspace/` beside the site. Its graph page offers *The workspace*, under the heading *Context workspace*: each member bundle in a room of its own, with the links between bundles dashed. On any other repository the choice is greyed.
 
 ## The data
 
-- Each `.sqlite`, `.sqlite3` or `.db` file in the `BROWSE` folder is served under `/browse/`, and nothing else in the folder is.
+- `site.toml`'s `browse` names a folder of SQLite databases, from the repository's root. Nothing is served until it is set, since the databases go on the public site.
+- Each `.sqlite`, `.sqlite3` or `.db` file in the folder is served under `/browse/`, and nothing else in it is. When the folder holds none, `prepare.sh` first runs `browseBuild` from the repository's root.
 - The Datasette metadata beside them, `metadata.yaml`, `metadata.yml` or `metadata.json`, is served as `metadata.json` without its `plugins` settings. Datasette Lite runs no plugin, and those settings can hold a credential.
-- Two metadata files stop the sync, and so does a database with a journal beside it that is not empty, since a copy of the database could be inconsistent.
-- The page at `/browse/` gives each database a section, titled and described from the metadata's `databases` entry when it has one, with its size, a download link and a link that opens it in Datasette Lite with the metadata. Datasette Lite runs Datasette in the reader's browser, and the link turns its analytics off.
+- Two metadata files stop the build, and so does a database with a journal beside it that is not empty, since a copy of it could be torn.
+- The page at `/browse/` gives each database a section, titled and described from the metadata's `databases` entry when it has one, with its size, a download link and a link that opens it in Datasette Lite with the metadata and its analytics off. Datasette Lite runs Datasette in the reader's browser. The navigation lists the page before the changelog.
+
+## Diagrams and figures
+
+- A ```` ```mermaid ```` block on any page, quoted or not, is drawn in the reader's browser. The script that draws it loads only on a page that has one.
+- `.assets/` is served under `/assets/`. A click on a figure opens it over the page, as large as the window allows.
+- An SVG that holds a script, an event handler or a `javascript:` address stops the build, since an SVG is served as a page of its own.
 
 ## Links
 
-- Raw HTML in any Markdown the site renders, the feed included, passes as GitHub renders a README. A tag GitHub allows keeps the attributes it allows, and an address that is not http, https, mailto, a path or a fragment is dropped. Any other markup is shown as text. The build's log names each one (`scripts/raw-html.mjs`).
-- A file the sync copies, under `.assets/`, the bundle, the logo or the databases, is copied as a file. A link is followed only when it ends inside the repository, and an SVG that holds a script, an event handler or a `javascript:` address is left out. The build's log names each file left out.
-- A relative link, image or raw-HTML `src` or `href` in any of the pages above is rewritten to the page it names. The home page's source goes to `/`, a docs page to `/docs/<name>/`, a `PAGES` source to `/<slug>/`, a schema page to `/schema/<name>/`, a concept to `/knowledge/<id>/`, a bundle folder to its overview, and a figure to `/assets/...`. A `knowledge_bundle/...` path reads as `.lokf/knowledge/...`. Any other file goes to its page on GitHub at the commit the site was built from.
-- An Obsidian `[[wikilink]]` in a concept becomes a link to the concept whose path is the name, or ends in `/name`, when exactly one does. Otherwise the text stays as written.
-- A link to a concept page, in a page's content, shows the concept's title, type, trust label and definition while the pointer or the keyboard focus rests on it, and Escape dismisses it. The script reads `/knowledge/previews.json`, which the sync writes, once per page. The sidebars' links are left out, since each sidebar entry carries its label as a tooltip.
-- After the build, `scripts/check-links.mjs` fails the build when a link between the site's own pages, a link to a heading, or a page's social card does not resolve. It reads `llms.txt`, `llms-full.txt` and the bundle log's feed too, and fails when one names a page of the site that is not there. Links that leave the site are not checked.
+- A relative link or image in any Markdown the site renders is resolved against the file it was written in, and a path that starts with `/` against the repository's root, as GitHub reads it. It goes to the page built from the file it names, to the figure under `/assets/` or `/docs/`, or to the file on GitHub at the commit the site was built from. A `knowledge_bundle/...` path reads as `.lokf/knowledge/...`. A link to a release's heading in the changelog, as GitHub names it, goes to that release's page.
+- An Obsidian `[[wikilink]]` in a concept becomes a link to the concept whose id is the name, or ends in `/name`, when exactly one does. Otherwise the text stays as written. The match is by pattern, so one inside a code span is rewritten too.
+- A link to a concept shows the concept's trust label and definition on hover or focus.
+- Raw HTML's relative `src`, `srcset` and `href` addresses resolve as a Markdown link's do. After the build, `scripts/clean-html.py` cleans it to the tags GitHub allows in a README: a tag GitHub allows keeps the attributes it allows, an address that is not `http`, `https`, `mailto`, a path or a fragment is dropped, and any other markup, such as a `<meta>` refresh or a `<style>`, is shown as text and named on the build's log. Comments go, and every element is closed. A Content-Security-Policy in every page stays as a second guard: a script loads only from the site's own `js/` and `pagefind/` folders. A Markdown link whose address is not `http`, `https`, `mailto` or a path goes nowhere.
+- A Hugo shortcode, `{{< name >}}` or `{{% name %}}`, is shown as written, in a code block or out of one.
+- After the build, `scripts/check-links.py` fails it when a link between the site's own pages, a link to a heading or a page's social card does not resolve, or when a link that starts with `/` falls outside the site's path. It reads the full addresses in `llms.txt`, `llms-full.txt` and every Markdown file the site serves. Links that leave the site are not checked.
 
 ## The changelog
 
-- Keep a Changelog headings, `## [x.y.z] - YYYY-MM-DD`, become one page per release and a comparison page between each pair. `## [Unreleased]` is skipped. The brackets are stripped for the plugin, and links to repository files are rewritten as above.
-- A release whose tag git has opens with a line that links the repository, the docs folder and `.lokf/knowledge/` at that tag on GitHub, and the release itself, so a reader can see each as it stood. The tag is `RELEASE_TAG` with the release's number in place of `{version}`. A release promoted but not yet tagged, or a tag not yet fetched, has no such line until the next build.
-
-## The figures and the logo
-
-- The figures folder is served under `/assets/`. The logo's light and dark files are copied to `src/generated/`, and the favicon to `/favicon.<type>`. With `LOGO = null`, the site's own ladder mark is the favicon and the title is shown as text.
-- `LOGO` left out or `"auto"` takes the Knowledge Trust Ladder logo. That is a `knowledge-trust-ladder-logo.svg` git sees in the repository, tracked or untracked but never ignored, outside `website/` and outside a skill's templates, the one nearest the root first. With none, it is the copy in `website/src/assets/`. The `-dark.svg` file beside it is the dark version when there is one.
+- Keep a Changelog headings, `## [x.y.z] - YYYY-MM-DD`, become one page per release under `/changelog/version/`. What is under `## [Unreleased]` stays on the changelog's own page, under an Unreleased heading. The changelog is last in the navigation.
+- A release whose tag git has links the repository, the docs folder and `.lokf/knowledge/` at that tag on GitHub, and the release itself. The tag is `releaseTag` with the release's number in place of `{version}`.
 
 ## `llms.txt` and `llms-full.txt`
 
-- The quoted `>` line of the repository's `llms.txt` is the summary of the site's own `/llms.txt`, or `DESCRIPTION` when there is no such line. The rest of that file is generated: the docs pages and the extra pages, each by its Markdown file, then every concept with its Markdown file and its trust label. Under Optional come the bundle in full, then the schema's overview and the data page when the site has them.
-- `/llms-full.txt` holds every concept's text in one file, under the same summary. Each concept opens with its trust label, its type, its address, its page, its Markdown file and its sources. Its headings move down under its title, and its links and wikilinks become full addresses, since the file has none of its own to resolve them against.
+- `/llms.txt` opens with the site's description, then lists the four export files, the data page and the schema file when there are, the home page and each docs page by its Markdown file, and every concept with its Markdown file and its trust label.
+- `/llms-full.txt` holds every concept's text in one file, each under its address, trust label, type and definition, with every link a full address and its headings under the concept's title.
 
 ## What search leaves out
 
-- The release pages, the schema's pages, and a concept's record card apart from its definition. The card's type and trust label become the Trust and Type filters beside the search box.
+- The release pages, the schema's slots and types, and a concept's record card apart from its definition. The card's type, genre and trust label are the Type, Genre and Trust filters beside the search box.

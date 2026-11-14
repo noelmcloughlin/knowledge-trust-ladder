@@ -4,6 +4,16 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Changed
+
+- **`ktl-website` builds a Hugo site in place of the Astro one, and needs uv and no Node.js.** Hugo and Pagefind come from PyPI at hashed versions. The site finds the README, the docs, retellings named `<page>.<language>-simple.md`, the changelog, the figures, a LinkML schema and a domain host's workspace with no setting. The schema's pages are `gen-doc`'s own. The home page has five buttons on every site, and greys the one whose page is missing. `site.toml` holds the four values a site needs. [customising.md](skills/ktl-website/references/customising.md#from-the-earlier-astro-site) says how to move an Astro site.
+- **A website's schema elements answer at `/elements/<Name>/` with no setting**, the address mkdocs gave each and the one a schema's w3id rules point at.
+- **`ktl-website` installs into `ktl-website/` when `website/` is another site's, and finds the site there on a rerun.** The website and federation workflows and the sidecar's sync look in both folders.
+
+### Removed
+
+- **The website takes no `PAGES` entries.** A retelling is found by its file name instead.
+
 ## [0.64.0] - 2026-11-13
 
 ### Added

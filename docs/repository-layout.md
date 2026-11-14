@@ -71,11 +71,14 @@ tests/                     the behavioural tests of the sidecar scripts and the 
 evals/                     the holdout as `claude plugin eval` cases, one directory per question with its prompt, graders and scaffold; README.md says how to run it
   scaffold-bundle.sh       copies .lokf/knowledge/ alone into a run's empty directory
 justfile                   `just docent-eval` runs that suite under a cost cap, `just docent-holdout` its test; the sidecar's recipes stay in .lokf/justfile
-website/                   the website: Astro Starlight, this repository's copy of ktl-website's templates
-  site.config.mjs          the site's values and options: addresses, title, logo, docs groups, extra pages
-  scripts/config.mjs       settles those options against the repository; `node scripts/config.mjs` prints them
-  scripts/sync.mjs         writes the pages and the bundle's exported files before each build
-  scripts/check-links.mjs  fails the build on a link between two pages that does not resolve
+website/                   the website: Hugo, this repository's copy of ktl-website's templates
+  site.toml                this repository's values: address, title, repository, docs groups, redirects
+  hugo.toml                what every site shares: the mounts that find each input, the output formats
+  content/*/_content.gotmpl  the adapters that make the home page and a page per docs file, concept, release and schema element
+  scripts/build.sh         prepare, Hugo, the raw-HTML cleaning, Pagefind and the link check; `serve` and `preview` for a local look
+  scripts/prepare.sh       `lokf export`, the trust labels, gen-doc for a LinkML schema and the data site.toml names, into generated/
+  scripts/clean-html.py    cleans each page's raw HTML to the tags GitHub allows
+  scripts/check-links.py   fails the build on a link between two pages that does not resolve
 .lokf/                  this repository's own sidecar: the bundle and its tooling
 knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar creates (Step 2)
 ```

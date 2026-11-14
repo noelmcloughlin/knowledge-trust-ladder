@@ -93,9 +93,10 @@ manifest="knowledge-sync.manifest"
 rules="copy titled always needs"
 # The website skill's templates, for a host that built its site with
 # ktl-website: every file under skills/ktl-website/templates/website/ but the
-# three the host owns, and the deploy workflow. A host with no
-# website/site.config.mjs gets none of them: that is ktl-website's decision.
-website_owned=("site.config.mjs" "README.md" "src/styles/custom.css")
+# three the host owns, and the deploy workflow. The site is in website/, or
+# in ktl-website/ where website/ was another site's. A host with no
+# site.toml in either gets none of them: that is ktl-website's decision.
+website_owned=("site.toml" "README.md" "assets/css/custom.css")
 
 usage() {
   sed -n '/^# Usage:/,/^# Exit 0/p' "$0" | sed -e '$d' -e 's/^# \{0,1\}//' >&2
@@ -180,8 +181,8 @@ add_entry() {
 # pin and the changelog. The three site files the host owns are refused by
 # name, and so is a path with a character outside the plain set the
 # templates use, or a .git segment.
-sync_paths='^(\.github/workflows/knowledge-[a-z]+\.yaml|\.github/PULL_REQUEST_TEMPLATE/knowledge-[a-z]+\.md|\.lokf/scripts/knowledge-[a-z]+\.(sh|py)|\.lokf/m365/[A-Za-z0-9._-]+|\.lokf/(schema/)?domain\.yaml|\.lokf/\.gitattributes|\.lokf/\.gitignore|\.lokf/justfile|website/.+|CHANGELOG\.md)$'
-owned_paths='^website/(site\.config\.mjs|README\.md|src/styles/custom\.css)$'
+sync_paths='^(\.github/workflows/knowledge-[a-z]+\.yaml|\.github/PULL_REQUEST_TEMPLATE/knowledge-[a-z]+\.md|\.lokf/scripts/knowledge-[a-z]+\.(sh|py)|\.lokf/m365/[A-Za-z0-9._-]+|\.lokf/(schema/)?domain\.yaml|\.lokf/\.gitattributes|\.lokf/\.gitignore|\.lokf/justfile|(ktl-)?website/.+|CHANGELOG\.md)$'
+owned_paths='^(ktl-)?website/(site\.toml|README\.md|assets/css/custom\.css)$'
 plain_path='^[]A-Za-z0-9._/@+[-]+$'
 
 # --apply: put a patch another run of this script made onto this checkout,
@@ -544,19 +545,21 @@ main() {
 
   # The site, when the host has one: a template it lacks is added, since the
   # site cannot build without any of them.
-  local website=0 tpath rel skip o
-  if [[ -f "$host/website/site.config.mjs" ]]; then
+  local website=0 site="" tpath rel skip o
+  for o in website ktl-website; do
+    if [[ -z "$site" && -f "$host/$o/site.toml" ]]; then site="$o"; fi
+  done
+  if [[ -n "$site" ]]; then
     website=1
     while IFS= read -r tpath; do
       rel="${tpath#"$website_templates/website/"}"
-      # The same plain set as --apply's, brackets and all: Astro names a
-      # route with them, as in src/pages/og/[...route].ts.
+      # The same plain set as --apply's.
       if [[ ! "$rel" =~ $plain_path ||"/$rel/" =~ /\.[Gg][Ii][Tt]/ || "/$rel/" == */../* ]]; then
         die "$tag's website templates hold a path a host may not carry: $rel"
       fi
       skip=0; for o in "${website_owned[@]}"; do [[ "$rel" == "$o" ]] && skip=1; done
       [[ "$skip" -eq 1 ]] && continue
-      dst="website/$rel"; [[ "$rel" == gitignore ]] && dst="website/.gitignore"
+      dst="$site/$rel"; [[ "$rel" == gitignore ]] && dst="$site/.gitignore"
       if [[ ! -f "$host/$dst" ]]; then
         mkdir -p "$(dirname "$host/$dst")"
         git -C "$source" show "$tag:$tpath" > "$host/$dst"
@@ -637,7 +640,7 @@ main() {
     fi
   fi
   if [[ "$website" -eq 1 ]]; then
-    echo "   website  the site's copies are synced; build it there to check: cd website && npm ci --ignore-scripts && npm run build"
+    echo "   website  the site's copies are synced; build it there to check: bash $site/scripts/build.sh"
   fi
 
   if [[ ${#copied[@]} -eq 0 && ${#added[@]} -eq 0 && ${#overwrote[@]} -eq 0 && "$pin_moved" -eq 0 ]]; then

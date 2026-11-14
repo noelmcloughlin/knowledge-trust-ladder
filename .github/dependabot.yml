@@ -42,10 +42,11 @@ updates:
       release-tools:
         patterns: ["*"]
 
-  # The website's build dependencies (website/package.json). One weekly pull
-  # request for all of them, so a Starlight or Astro release arrives with
-  # what it needs; the website workflow builds it and checks every link.
-  - package-ecosystem: "npm"
+  # The website's build tools, Hugo and Pagefind (website/pyproject.toml and
+  # uv.lock). One weekly pull request for both; the website workflow builds
+  # it and checks every link. Contract check 11w then asks for the same
+  # bump in the skill's templates.
+  - package-ecosystem: "uv"
     directory: "/website"
     schedule:
       interval: "weekly"

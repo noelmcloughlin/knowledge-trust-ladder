@@ -9,10 +9,11 @@ no site, where every section has to cope with absence rather than fail. It:
 - warns of a changelog with no released version;
 - reads the owner and the name from the origin remote;
 - names the report script the sidecar must still install;
-- finds a linkmo project's gen-doc and build-browse recipes, in a justfile of
-  any name just reads and with parameters, but not an assignment of the same
-  name, and else the sidecar's domain vocabulary when its name is a plain path,
-  warning when git does not ignore the folder its pages go to.
+- finds a LinkML schema at the root or under .linkml/, and a domain host's
+  federation workflow;
+- settles the site's folder: website/, or ktl-website/ where website/ is
+  another site's, on a first run and on a rerun, and names the earlier Astro
+  site as one to move.
 
 Run under sh it stops on one line that names bash.
 
@@ -24,7 +25,7 @@ from __future__ import annotations
 
 import shutil
 
-from conftest import REPO, SCRIPTS, TEMPLATES, WEBSITE_PREFLIGHT, WEBSITE_TEMPLATES, Git, bash, matches, run, write
+from conftest import REPO, SCRIPTS, TEMPLATES, WEBSITE_PREFLIGHT, WEBSITE_TEMPLATES, Git, bash, matches, read, run, write
 
 
 def preflight(*args, cwd=None):
@@ -50,7 +51,7 @@ def test_copes_with_a_bare_directory(tmp_path):
         result
         and matches(result.out, r"^missing bundle")
         and matches(result.out, r"^info    git ")
-        and matches(result.out, r"^ok      website .*no website/ yet")
+        and matches(result.out, r"^ok      website .*no website/ yet - Step 1 installs the site there")
         and matches(result.out, r"^Preflight: ")
     ), f"preflight misbehaves on a bare directory: {result.out}"
 
@@ -77,7 +78,7 @@ def test_warns_of_another_pages_publisher(tmp_path):
     write(tmp_path / "mkdocs.yml", "site_name: acme\nsite_url: https://acme.github.io/acme-platform\n")
     result = preflight(tmp_path)
     assert result and matches(result.out, r"^warn    pages .*deploy-docs\.yaml, mkdocs\.yml with a site_url"), f"preflight missed mkdocs' site_url: {result.out}"
-    assert matches(result.out, r"^info    mkdocs +mkdocs\.yml at the root - the site replaces it: .*REDIRECTS and DOCS\.exclude"), (
+    assert matches(result.out, r"^info    mkdocs +mkdocs\.yml at the root - the site replaces it: .*redirects and docsExclude"), (
         f"preflight did not name the mkdocs site the site replaces: {result.out}"
     )
 
@@ -123,62 +124,90 @@ def test_prints_no_credential_a_remote_address_carries(tmp_path):
     )
 
 
-def test_falls_back_to_the_sidecar_s_domain_vocabulary(tmp_path):
+def test_finds_a_schema_at_the_root_first_then_in_the_linkml_sidecar(tmp_path):
     skeleton(tmp_path)
-    write(tmp_path / ".lokf" / "gh-workflows.yaml", "id: https://acme.example/schema\nname: acme\n")
-    write(tmp_path / ".lokf" / "justfile", 'schema := "gh-workflows.yaml"\n')
     result = preflight(tmp_path)
-    assert result and matches(
-        result.out, r"^ok      schema +the sidecar's domain vocabulary \.lokf/gh-workflows\.yaml: .*\.lokf/docs/elements.*cd \.lokf && uv run --frozen gen-doc gh-workflows\.yaml"
-    ), f"preflight missed the sidecar's domain vocabulary: {result.out}"
-    assert "warn    schema" not in result.out, f"preflight warned outside git: {result.out}"
-    Git(tmp_path).init()
+    assert result and matches(result.out, r"^info    schema +no src/<name>/schema/<name>\.yaml"), f"preflight found a schema in a bare host: {result.out}"
+    write(tmp_path / ".linkml" / "src" / "acme" / "schema" / "acme.yaml", "id: https://acme.example/schema\nname: acme\n")
+    write(tmp_path / ".linkml" / "src" / "acme" / "schema" / "other.yaml", "id: https://acme.example/other\nname: other\n")
     result = preflight(tmp_path)
-    assert result and matches(result.out, r"^warn    schema +git does not ignore \.lokf/docs/elements/"), f"preflight missed the unignored pages: {result.out}"
-    write(tmp_path / ".lokf" / ".gitignore", "docs/elements/\n")
+    assert result and matches(result.out, r"^ok      schema +\.linkml/src/acme/schema/acme\.yaml: the Schema part"), f"preflight missed the sidecar's schema: {result.out}"
+    write(tmp_path / "src" / "platform" / "schema" / "platform.yaml", "id: https://acme.example/platform\nname: platform\n")
     result = preflight(tmp_path)
-    assert result and "warn    schema" not in result.out, f"preflight warned though git ignores the pages: {result.out}"
-    write(tmp_path / ".lokf" / "-d.yaml", "id: https://acme.example/schema\nname: acme\n")
-    for line in ('schema := "x.yaml; rm -rf ~"', 'schema := "-d.yaml"'):
-        write(tmp_path / ".lokf" / "justfile", line + "\n")
-        result = preflight(tmp_path)
-        assert result and matches(result.out, r"^info    schema +no justfile"), f"preflight took {line}, which a shell or gen-doc would read as more than a path: {result.out}"
+    assert result and matches(result.out, r"^ok      schema +src/platform/schema/platform\.yaml"), f"the root's schema does not come first: {result.out}"
 
 
-def test_finds_a_linkmo_project_s_schema_and_data_recipes(tmp_path):
+def test_names_a_domain_host_by_its_federation_workflow(tmp_path):
     skeleton(tmp_path)
-    write(tmp_path / ".copier-answers.linkmo.yml", "linkmo_dir: acme-linkmo\nproject_slug: acme\n")
-    write(tmp_path / "acme-linkmo" / "justfile", "gen-doc: gen-examples\n    gen-doc x\n\nbuild-browse:\n    python b.py\n")
     result = preflight(tmp_path)
-    assert result and matches(
-        result.out, r"^ok      schema .*acme-linkmo/docs/elements.*just --justfile acme-linkmo/justfile gen-doc"
-    ), f"preflight missed linkmo's gen-doc recipe: {result.out}"
-    assert matches(result.out, r"^info    data .*just --justfile acme-linkmo/justfile build-browse"), (
-        f"preflight missed linkmo's build-browse recipe: {result.out}"
+    assert result and matches(result.out, r"^info    workspace .*greys the workspace"), result.out
+    write(tmp_path / ".github" / "workflows" / "knowledge-federation.yaml", "name: Knowledge federation\n")
+    result = preflight(tmp_path)
+    assert result and matches(result.out, r"^ok      workspace .*a domain host"), result.out
+
+
+def test_says_what_the_docs_folder_gives_the_home_page(tmp_path):
+    skeleton(tmp_path)
+    write(tmp_path / "docs" / "guide.md", "# The guide\n")
+    result = preflight(tmp_path)
+    assert result and matches(result.out, r"^ok      docs .*no architecture\.md.*; 0 retelling"), result.out
+    write(tmp_path / "docs" / "architecture.md", "# Architecture\n")
+    write(tmp_path / "docs" / "architecture.en-simple.md", "# Architecture, in short\n")
+    result = preflight(tmp_path)
+    assert result and matches(result.out, r"^ok      docs .*architecture\.md, the home page's Architecture button; 1 retelling"), result.out
+
+
+def install(root, folder):
+    """The site as Step 1 leaves it, placeholders filled."""
+    site = root / folder
+    shutil.copytree(WEBSITE_TEMPLATES / "website", site)
+    (site / "gitignore").rename(site / ".gitignore")
+    for name in ("site.toml", "README.md"):
+        text = (site / name).read_text(encoding="utf-8")
+        for token in ("REPO_OWNER", "REPO_NAME", "PROJ_NAME", "PROJ_DESC"):
+            text = text.replace(f"<{token}>", "acme")
+        (site / name).write_text(text, encoding="utf-8")
+    return site
+
+
+def test_installs_beside_another_site_s_website_folder_and_finds_its_own_on_a_rerun(tmp_path):
+    skeleton(tmp_path)
+    write(tmp_path / "website" / "index.html", "<p>another site</p>\n")
+    result = preflight(tmp_path)
+    assert result and matches(result.out, r"^info    website +website/ exists and is not this skill's .* installs the site in ktl-website/ instead"), (
+        f"preflight did not send the site to ktl-website/: {result.out}"
     )
-    assert matches(result.out, r"^(ok|warn) +just "), f"preflight did not say whether just is installed: {result.out}"
+    assert not matches(result.out, r"^missing website"), f"another site's folder stopped the skill: {result.out}"
+    site = install(tmp_path, "ktl-website")
+    result = preflight(tmp_path)
+    assert result and matches(result.out, r"^ok      website +ktl-website/ installed, and its files match"), f"the rerun missed ktl-website/: {result.out}"
+    (site / "hugo.toml").write_text(read(site / "hugo.toml") + "# an edit\n")
+    (site / "layouts" / "404.html").unlink()
+    result = preflight(tmp_path)
+    assert result and matches(result.out, r"^warn    website +ktl-website/ installed; differs from the templates: hugo\.toml, layouts/404\.html \(missing\)"), result.out
+    assert "site.toml" not in result.out.split("differs from the templates:")[1].splitlines()[0], "a host-owned file is never compared"
 
 
-def test_reads_a_justfile_by_any_name_just_reads_and_a_recipe_with_parameters(tmp_path):
+def test_prefers_website_when_it_is_this_skill_s_and_warns_of_a_placeholder(tmp_path):
     skeleton(tmp_path)
-    write(tmp_path / ".linkml" / ".justfile", 'gen-doc dir="docs/elements": _gen-yaml\n    uv run gen-doc -d {{dir}} s.yaml\n')
+    install(tmp_path, "website")
+    (tmp_path / "ktl-website").mkdir()
     result = preflight(tmp_path)
-    assert result and matches(
-        result.out, r"^ok      schema .*\.linkml/docs/elements.*just --justfile \.linkml/\.justfile gen-doc"
-    ), f"preflight missed a recipe with a parameter in .justfile: {result.out}"
-    write(tmp_path / "Justfile", "build-browse *ARGS:\n    python b.py {{ARGS}}\n")
+    assert result and matches(result.out, r"^ok      website +website/ installed"), result.out
+    shutil.copy(WEBSITE_TEMPLATES / "website" / "site.toml", tmp_path / "website" / "site.toml")
     result = preflight(tmp_path)
-    assert result and matches(result.out, r"^info    data .*\(just build-browse\)"), f"preflight missed the Justfile: {result.out}"
+    assert result and matches(result.out, r"^warn    website +website/site\.toml still holds a <PLACEHOLDER>"), result.out
 
 
-def test_takes_no_assignment_for_a_recipe(tmp_path):
+def test_names_the_earlier_astro_site_as_one_to_move_and_two_foreign_folders_as_a_stop(tmp_path):
     skeleton(tmp_path)
-    write(tmp_path / "justfile", 'gen-doc := "docs"\n\nbuild:\n    echo {{gen-doc}}\n')
+    write(tmp_path / "website" / "site.config.mjs", 'export const TITLE = "Acme";\n')
     result = preflight(tmp_path)
-    assert result and matches(result.out, r"^info    schema .*no justfile with a gen-doc recipe"), (
-        f"preflight read an assignment as a recipe: {result.out}"
-    )
-    assert not matches(result.out, r"^(ok|warn) +just "), f"preflight asked for just with no recipe to run: {result.out}"
+    assert result and matches(result.out, r"^warn    website +website/ is this skill's earlier Astro site"), result.out
+    (tmp_path / "website" / "site.config.mjs").unlink()
+    (tmp_path / "ktl-website").mkdir()
+    result = preflight(tmp_path)
+    assert result and matches(result.out, r"^missing website +ktl-website/ exists and is not this skill's") and "Step 1 and every step after it" in result.out, result.out
 
 
 def test_names_the_report_script_the_sidecar_must_lay_down(tmp_path):

@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # Copies the ktl-website templates into a throwaway host built from the
 # sidecar's own dummy skeleton, as the skill's Steps 1 to 4 would. It builds
-# the site twice: once with a README, a docs page, a changelog, the schema's
-# pages and the data, and once with none of them. So both shapes of host are
-# proved before a template change reaches one. This repository's own site
-# proves the fuller configuration; this proves a bundle that is not this
-# repository's.
+# the site twice: once with a README, docs pages, a changelog, figures, a
+# LinkML schema, retellings, the federation workflow, a mirrored source and
+# data, and once with none of them. No setting names any of those: the site must find each, and show
+# none of what is not there. So both shapes of host are proved before a
+# template change reaches one. This repository's own site proves a fuller
+# site.toml; this proves a bundle that is not this repository's.
 #
 # Usage: scripts/smoke-test-website.sh [--keep]   (--keep leaves the host behind)
-# Needs: uv, node 22.12 or later, npm, git and python3, and the network for
-# `uv lock` and `npm ci`.
+# Needs: uv, git and python3, and the network for `uv lock`, for Hugo and
+# Pagefind from PyPI, and for the two libraries the site fetches once.
 #
 # The host's toolkit is resolved as of the newest file this repository's own
 # .lokf/uv.lock took, never as of today. A release uploaded since then could
@@ -22,8 +23,8 @@ skill="$repo_root/skills/ktl-website"
 sidecar="$repo_root/skills/ktl-sidecar/templates"
 newest_upload="$(grep -o 'upload-time = "[^"]*"' "$repo_root/.lokf/uv.lock" | cut -d'"' -f2 | sort | tail -1)"
 [[ -n "$newest_upload" ]] || { echo "no upload-time in .lokf/uv.lock - the host's toolkit cannot be resolved as of this repository's lock" >&2; exit 1; }
-for tool in uv node npm git python3; do
-  command -v "$tool" >/dev/null 2>&1 || { echo "$tool not found - the website smoke test needs uv, node, npm, git and python3" >&2; exit 1; }
+for tool in uv git python3; do
+  command -v "$tool" >/dev/null 2>&1 || { echo "$tool not found - the website smoke test needs uv, git and python3" >&2; exit 1; }
 done
 
 test_root="$(mktemp -d)"
@@ -73,10 +74,114 @@ open(path, "w", encoding="utf-8").write(text)
   substitute PROJ_NAME="Acme Platform" PROJ_DESC="The platform Acme runs." PROJ_SLUG=acme-platform \
     BASE_IRI=https://acme.example/knowledge/ OWNER_NAME=Acme OWNER_SLUG=acme TODAY=2026-01-01 \
     -- -e '<PROJ_' -e '<BASE_IRI>' -e '<OWNER_' -e '<TODAY>' .lokf
-  printf '# Acme Platform\n\nThe platform Acme runs. See [the bundle](.lokf/knowledge/index.md) and [the guide](docs/guide.md).\n' > README.md
+  printf '# Acme Platform\n\nThe platform Acme runs. See [the bundle](.lokf/knowledge/index.md), [the guide](docs/guide.md) and [the about page](/docs/about.md), the last from the root as GitHub reads it.\n' > README.md
   mkdir -p docs
-  printf '# The guide\n\nHow to use the platform.\n' > docs/guide.md
-  printf '# Architecture\n\nHow the platform is built.\n' > docs/architecture.md
+  printf '# The guide\n\nHow to use the platform. See [the tutorial](how-to/first.md) and ![the map](img/map.png).\n' > docs/guide.md
+  # Links that leave the docs folder, raw HTML GitHub would not show, and a
+  # shortcode, which Hugo would otherwise run.
+  cat >> docs/guide.md <<'MD'
+
+## Out of the folder
+
+See [the README](../README.md), [the first release](../CHANGELOG.md#100---2026-01-01) and <a href="about.md">About, in raw HTML</a>.
+
+```text
+A fenced [link](../README.md) stays as written.
+```
+
+<meta http-equiv="refresh" content="0;url=https://example.com/">
+<p onclick="alert(1)" style="color:red">Click <a href="javascript:alert(1)">here</a> or press <kbd>Q</kbd>.</p>
+
+Hugo shows {{< mention >}} as written.
+MD
+  printf '<!doctype html><title>A report</title><script>alert(1)</script>\n' > docs/report.html
+  # shellcheck disable=SC2016 # literal backticks: a Markdown code fence
+  printf '# Architecture\n\nHow the platform is built.\n\n> ```mermaid title="The platform"\n> flowchart LR\n>   web --> api\n> ```\n' > docs/architecture.md
+  # A docs folder as an mkdocs site leaves it: an index.md, a folder with one
+  # of its own, a figure, a page with a frontmatter title that tries to move
+  # itself, and the templates and pages gen-doc keeps there, which are not pages.
+  mkdir -p docs/how-to docs/img docs/templates-linkml docs/elements .assets
+  printf '# Acme docs\n\nWhere to start.\n' > docs/index.md
+  printf '# How-to guides\n\nTask by task.\n' > docs/how-to/index.md
+  printf '# A first service\n\n## Quick start\n\nRun it.\n' > docs/how-to/first.md
+  printf -- '---\ntitle: About Acme\nurl: /stolen/\ndraft: true\n---\n\n# About Acme\n\nWho runs the platform.\n' > docs/about.md
+  printf 'not really a png\n' > docs/img/map.png
+  printf '# Templates for gen-doc\n' > docs/templates-linkml/README.md
+  printf '# Class: Old\n' > docs/elements/Old.md
+  printf '<svg xmlns="http://www.w3.org/2000/svg"/>\n' > .assets/figure.svg
+  # A retelling of the guide, and one of a concept, each for one audience.
+  printf '# The guide, in short\n\nThis page is for readers aged 13 to 18.\n\nThe platform, in fewer words.\n' > docs/guide.en-simple.md
+  cat > .lokf/knowledge/services/example-service-a-simple.md <<'MD'
+---
+type: Service
+id: https://acme.example/knowledge/services/example-service-a-simple
+title: Example Service A, for readers aged 13 to 18
+description: Example Service A retold for readers aged 13 to 18.
+derivedFrom:
+- https://acme.example/knowledge/services/example-service-a
+tags:
+- audience-13-18
+---
+
+# Overview
+
+Example Service A, in fewer words.
+MD
+  # A source the ingest mirrored, as its committed lock records it.
+  mkdir -p .lokf/mirror/vendor
+  printf -- '---\norigin: https://vendor.example/page\n---\n\nThe vendor page.\n' > .lokf/mirror/vendor/page.md
+  printf 'ingest_lock_version: 1\nentries:\n  vendor:\n    status: ok\n    items:\n      page:\n        path: .lokf/mirror/vendor/page.md\n        origin: https://vendor.example/page\n        version: "2.1"\n        retrieved_at: "2026-03-04T05:06:07Z"\n' > .lokf/ingest.lock.yaml
+  python3 - .lokf/knowledge/services/example-service-a.md <<'PY'
+import sys
+path = sys.argv[1]
+text = open(path, encoding="utf-8").read()
+text = text.replace("\n---\n", "\nsources:\n- resource: .lokf/mirror/vendor/page.md\n  excerpt: The vendor page.\n---\n", 1)
+open(path, "w", encoding="utf-8").write(text)
+PY
+  # The data, which its command writes on the first build. Its metadata
+  # carries plugin settings that must not reach the site.
+  cat > make-data.sh <<'SH'
+mkdir -p data/browse
+python3 - <<'PY'
+import sqlite3
+db = sqlite3.connect("data/browse/acme.sqlite")
+db.execute("create table service (id text primary key, owner text)")
+db.execute("insert into service values ('a', 'Acme')")
+db.commit()
+PY
+printf 'plugins:\n  datasette-auth-tokens:\n    tokens: [SECRET-TOKEN]\ndatabases:\n  acme:\n    title: The services\n    plugins: {x: SECRET-DB}\n' > data/browse/metadata.yaml
+printf 'create table service (id text);\n' > data/browse/schema.sql
+SH
+  printf 'data/\n' > .gitignore
+  # A LinkML schema where linkml-sidecar keeps one, and a domain host's workflow.
+  mkdir -p .linkml/src/acme_platform/schema .github/workflows
+  cat > .linkml/src/acme_platform/schema/acme_platform.yaml <<'YAML'
+id: https://acme.example/schema
+name: acme_platform
+title: Acme platform schema
+description: What the platform runs.
+prefixes:
+  acme: https://acme.example/schema/
+  linkml: https://w3id.org/linkml/
+default_prefix: acme
+default_range: string
+imports:
+  - linkml:types
+classes:
+  Service:
+    description: A service the platform runs.
+    attributes:
+      owner:
+        description: Who owns the service.
+      status:
+        range: ServiceStatus
+enums:
+  ServiceStatus:
+    permissible_values:
+      LIVE:
+      RETIRED:
+YAML
+  printf 'name: Knowledge federation\n' > .github/workflows/knowledge-federation.yaml
   printf '# Changelog\n\n## [Unreleased]\n\n## [1.0.0] - 2026-01-01\n\n### Added\n\n- The platform.\n' > CHANGELOG.md
   (cd .lokf && UV_EXCLUDE_NEWER="$newest_upload" uv lock -q && UV_EXCLUDE_NEWER="$newest_upload" uv sync -q --locked)
   git add -A
@@ -100,134 +205,19 @@ echo "Step 1: install the site"
   cp -R "$skill/templates/website" website
   mv website/gitignore website/.gitignore
   substitute REPO_OWNER=acme REPO_NAME=acme-platform PROJ_NAME="Acme Platform" PROJ_DESC="The platform Acme runs." \
-    -- -e '<REPO_' -e '<PROJ_' website
+    -- -e '<REPO_' -e '<PROJ_' website/site.toml website/README.md
   git add -A
   git commit -q -m "the site"
 )
 assert "every template file landed" \
-  "[[ \$(find \"$skill/templates/website\" -type f | wc -l) -eq \$(find \"$host/website\" -type f -not -path '*/node_modules/*' | wc -l) ]]"
-assert "the bracket file name survived the copy" "[[ -f \"$host/website/src/pages/og/[...route].ts\" ]]"
-assert "no placeholder is left in website/" "! grep -rq -e '<REPO_' -e '<PROJ_' \"$host/website\""
-assert "the settled configuration shows the docs and the changelog" \
-  "(cd \"$host/website\" && node scripts/config.mjs | grep -q '\"CHANGELOG\": \"CHANGELOG.md\"' && node scripts/config.mjs | grep -q '\"dir\": \"docs\"')"
+  "[[ \$(find \"$skill/templates/website\" -type f | wc -l) -eq \$(find \"$host/website\" -type f | wc -l) ]]"
+assert "no placeholder is left in the two files that carry one" "! grep -q -e '<REPO_' -e '<PROJ_' \"$host/website/site.toml\" \"$host/website/README.md\""
 
 echo ""
-echo "Step 1 again: the schema's pages and the data, which the host's own commands build"
-(
-  cd "$host"
-  # Stand-ins for LinkML's gen-doc and a build-browse recipe, so the test
-  # needs neither LinkML nor just. The pages carry what gen-doc writes and
-  # the site must undo: mkdocs-material's frontmatter and search wrapper, a
-  # type's title with no line break after its frontmatter, YAML in a
-  # <details>, and a class diagram whose links keep the element's case.
-  mkdir -p tools
-  cat > tools/schema-pages.py <<'PY'
-from pathlib import Path
-
-out = Path("docs/elements")
-out.mkdir(parents=True, exist_ok=True)
-fence = "`" * 3
-(out / "index.md").write_text(
-    "# acme\n\nThe Acme platform's schema\n\nURI: https://acme.example/schema\n\n"
-    "## Classes\n\n| Class | Description |\n| --- | --- |\n| [Service](Service.md) | A service the platform runs |\n\n"
-    "## Slots\n\n| Slot | Description |\n| --- | --- |\n| [owner](owner.md) | Who owns the service |\n\n"
-    "## Types\n\n| Type | Description |\n| --- | --- |\n| [String](String.md) | A character string |\n"
-)
-(out / "Service.md").write_text(
-    "---\nsearch:\n  boost: 10.0\n---\n\n# Class: Service \n\n\n_A service the platform runs_\n\n\n\n"
-    '<div data-search-exclude markdown="1">\n\n\n\nURI: [acme:Service](https://acme.example/schema/Service)\n\n\n\n'
-    f'{fence}mermaid\n classDiagram\n    class Service\n    click Service href "../Service/"\n'
-    f'      Service --> "0..1" String : owner\n        click String href "../String/"\n{fence}\n\n\n'
-    "## Slots\n\n| Name | Cardinality and Range | Description |\n| --- | --- | --- |\n"
-    "| [owner](owner.md) | 0..1 <br/> [String](String.md) | Who owns the service |\n\n"
-    f"## LinkML Source\n\n<details>\n{fence}yaml\nname: Service\nslots:\n- owner\n\n{fence}\n</details></div>\n"
-)
-(out / "owner.md").write_text(
-    "---\nsearch:\n  boost: 1.0\n---\n\n# Slot: owner \n\n\n_Who owns the service_\n\n\n\n"
-    '<div data-search-exclude markdown="1">\n\n## Applicable Classes\n\n| Name | Description |\n| --- | --- |\n'
-    "| [Service](Service.md) | A service the platform runs |\n\n</div>\n"
-)
-(out / "String.md").write_text(
-    "---\nsearch:\n  boost: 1.0\n---# Type: String \n\n\n\n\n_A character string_\n\n\n\n"
-    '<div data-search-exclude markdown="1">\n\nURI: [xsd:string](http://www.w3.org/2001/XMLSchema#string)\n\n</div>\n'
-)
-PY
-  cat > tools/data.py <<'PY'
-import sqlite3
-from pathlib import Path
-
-out = Path("data")
-out.mkdir(exist_ok=True)
-db = sqlite3.connect(out / "acme.sqlite")
-db.execute("create table Service (id text primary key, name text, owner text)")
-db.execute("insert into Service values ('svc-a', 'Service A', 'Acme')")
-db.commit()
-db.close()
-(out / "metadata.yaml").write_text(
-    "plugins:\n  datasette-auth-tokens:\n    secret: not-for-the-site\n"
-    "databases:\n  acme:\n    description: The services the platform runs.\n"
-    "    plugins:\n      datasette-cluster-map:\n        api_key: not-for-the-site-either\n"
-)
-(out / "notes.txt").write_text("Not a database, and never published.\n")
-PY
-  printf '/docs/elements/\n/data/\n' > .gitignore
-  # The Markdown parser reads this quoted block, with more words after its
-  # language, as a diagram, so the sync must still mark the page for drawing.
-  cat >> docs/architecture.md <<'MD'
-
-> ```mermaid title="The platform"
-> flowchart LR
->   web --> api
-> ```
-MD
-  # A retired mkdocs site leaves an About page, whose old address a w3id rule
-  # names, and gen-doc's templates folder, which is not a page.
-  printf '# About\n\nWho runs the platform.\n' > docs/about.md
-  mkdir -p docs/templates-linkml
-  printf '# Templates for gen-doc\n' > docs/templates-linkml/README.md
-  # A retelling of the guide, and one of a concept, each for one audience.
-  printf '# The guide, in short\n\nThe platform, in fewer words.\n' > docs/guide.en-simple.md
-  cat > .lokf/knowledge/services/example-service-a-simple.md <<'MD'
----
-type: Service
-id: https://acme.example/knowledge/services/example-service-a-simple
-title: Example Service A, for readers aged 13 to 18
-description: Example Service A retold for readers aged 13 to 18.
-derivedFrom:
-- https://acme.example/knowledge/services/example-service-a
-tags:
-- audience-13-18
----
-
-# Overview
-
-Example Service A, in fewer words.
-MD
-  python3 - <<'PY'
-from pathlib import Path
-
-config = Path("website/site.config.mjs")
-text = config.read_text(encoding="utf-8")
-for old, new in (
-    ('export const SCHEMA = "auto";', 'export const SCHEMA = { dir: "docs/elements", build: "python3 tools/schema-pages.py" };'),
-    ("export const BROWSE = null;", 'export const BROWSE = { dir: "data", build: "python3 tools/data.py" };'),
-    ("export const PAGES = [];", 'export const PAGES = [{ slug: "simple", source: "docs/guide.en-simple.md", label: "In short", retells: "docs/guide.md" }];'),
-    ('export const DOCS = "auto";', 'export const DOCS = { dir: "docs", exclude: ["templates-linkml"] };'),
-    ("export const REDIRECTS = {};", 'export const REDIRECTS = { "/elements": "/schema/", "/elements/[...slug]": "/schema/[...slug]", "/about": "/docs/about/" };'),
-):
-    assert text.count(old) == 1, old
-    text = text.replace(old, new)
-config.write_text(text, encoding="utf-8")
-PY
-  git add -A
-  git commit -q -m "the schema's pages and the data"
-)
-
-echo ""
-echo "Step 4: build, with a README, a docs page and a changelog"
+echo "Step 4: build, with everything the site can find, and site.toml as Step 1 left it but for two old addresses and the data"
 build() {
   # The whole log on a failure, its last line otherwise.
-  if (cd "$host/website" && npm run build > "$test_root/build.log" 2>&1); then
+  if (cd "$host/website" && bash scripts/build.sh > "$test_root/build.log" 2>&1); then
     tail -n 1 "$test_root/build.log"
   else
     echo "FAIL: the build failed; its log:"
@@ -235,89 +225,98 @@ build() {
     fail=1
   fi
 }
-(cd "$host/website" && npm ci --ignore-scripts --no-audit --no-fund --silent)
+python3 - "$host/website/site.toml" <<'PY'
+import sys
+path = sys.argv[1]
+text = open(path, encoding="utf-8").read()
+text = text.replace('repo = "https://github.com/acme/acme-platform"\n', 'repo = "https://github.com/acme/acme-platform"\nbrowse = "data/browse"\nbrowseBuild = "bash make-data.sh"\n', 1)
+open(path, "w", encoding="utf-8").write(text + '\n[params.redirects]\n"about" = "docs/about.md"\n"schema/*" = "schema/*"\n')
+PY
+git -C "$host" commit -qam "two old addresses, and the data"
 build
+dist="$host/website/dist"
 for f in index.html knowledge/index.html knowledge/services/example-service-a/index.html health/index.html graph/index.html \
          knowledge/concepts.jsonld knowledge/graph.json knowledge/graph.nt knowledge/datasets.jsonld \
          knowledge/services/example-service-a.md knowledge/services/example-service-a.jsonld \
-         knowledge/log.xml llms.txt llms-full.txt docs/guide/index.html changelog/index.html og/index.png favicon.svg; do
-  assert "dist/$f is there" "[[ -f \"$host/website/dist/$f\" ]]"
+         knowledge/log.xml llms.txt llms-full.txt docs/index.html docs/guide/index.html docs/guide.md docs/how-to/index.html \
+         docs/how-to/first/index.html docs/img/map.png assets/figure.svg changelog/index.html changelog/version/1-0-0/index.html \
+         og/index.png brand/knowledge-trust-ladder-logo.svg pagefind/pagefind.js \
+         schema/index.html schema/classes/Service/index.html schema/enums/ServiceStatus/index.html schema/slots/owner/index.html \
+         schema/types/String/index.html schema/acme_platform.yaml; do
+  assert "dist/$f is there" "[[ -f \"$dist/$f\" ]]"
 done
-assert "the home page is the README's" "grep -q 'The platform Acme runs' \"$host/website/dist/index.html\""
-assert "the README's link to the guide goes to its page" "grep -q 'href=\"/acme-platform/docs/guide/\"' \"$host/website/dist/index.html\""
-assert "the home page offers the architecture page as a button" "grep -q 'class=\"sl-link-button[^\"]*\" href=\"/acme-platform/docs/architecture/\"' \"$host/website/dist/index.html\""
-assert "the home page offers the schema's pages as a button" "grep -q 'class=\"sl-link-button[^\"]*\" href=\"/acme-platform/schema/\"' \"$host/website/dist/index.html\""
-assert "the header shows the Knowledge Trust Ladder logo" "grep -q '_astro/logo-light[^\"]*\\.svg' \"$host/website/dist/index.html\""
-assert "a concept page carries its trust label" "grep -qi 'checked' \"$host/website/dist/knowledge/services/example-service-a/index.html\""
-assert "the sync writes each concept's preview, and a concept page carries the script that shows one" \
-  "python3 -c 'import json, sys; p = json.load(open(sys.argv[1]))[\"services/example-service-a\"]; assert p[\"title\"] == \"Example Service A\" and p[\"type\"] == \"Service\" and p[\"label\"] and p[\"tone\"]' \"$host/website/dist/knowledge/previews.json\" && { grep -q 'previews.json' \"$host/website/dist/knowledge/services/example-service-a/index.html\" || grep -rq 'previews.json' \"$host/website/dist/_astro\"; }"
-assert "a concept page links the graph opened on it" "grep -q 'href=\"/acme-platform/graph/?concept=services/example-service-a\"' \"$host/website/dist/knowledge/services/example-service-a/index.html\""
-assert "a concept page links its file's history and names the bundle's licence" \
-  "grep -q 'href=\"https://github.com/acme/acme-platform/commits/[0-9a-f]*/.lokf/knowledge/services/example-service-a.md\"' \"$host/website/dist/knowledge/services/example-service-a/index.html\" && grep -q '>CC BY 4.0</a>' \"$host/website/dist/knowledge/services/example-service-a/index.html\" && grep -q 'rel=\"license\"[^>]*href=\"https://creativecommons.org/licenses/by/4.0/\"' \"$host/website/dist/knowledge/services/example-service-a/index.html\""
-assert "llms-full.txt opens each concept with its label and its page, its headings under its title" \
-  "grep -A2 '^## Example Service A$' \"$host/website/dist/llms-full.txt\" | grep -q '^- Label: ' && grep -q '^- Page: https://acme.github.io/acme-platform/knowledge/services/example-service-a/$' \"$host/website/dist/llms-full.txt\" && grep -q '^### Overview$' \"$host/website/dist/llms-full.txt\""
+assert "the link check passed" "grep -q 'check-links: .* 0 broken link' \"$test_root/build.log\""
+assert "the home page is the README's" "grep -q 'The platform Acme runs' \"$dist/index.html\""
+assert "the README's link to the guide goes to its page" "grep -q 'href=\"\\?/acme-platform/docs/guide/\"\\?' \"$dist/index.html\""
+assert "the home page leads with the schema" "grep -q 'On exhibit' \"$dist/index.html\" && grep -q 'Acme platform schema' \"$dist/index.html\""
+assert "four buttons are links (schema, bundle, architecture, quick start) and the glossary's, which the bundle lacks, is greyed" \
+  "grep -q 'href=\"\\?/acme-platform/schema/>The schema' \"$dist/index.html\" && grep -q 'href=\"\\?/acme-platform/docs/architecture/' \"$dist/index.html\" && grep -q 'href=\"\\?/acme-platform/docs/how-to/first/#quick-start' \"$dist/index.html\" && [[ \$(grep -o 'button--missing' \"$dist/index.html\" | wc -l) -eq 1 ]] && grep -q 'The bundle has no glossary group' \"$dist/index.html\""
+assert "the header shows the Knowledge Trust Ladder logo" "grep -q 'brand/knowledge-trust-ladder-logo.svg' \"$dist/index.html\""
+assert "a concept page carries its trust label" "grep -qi 'checked' \"$dist/knowledge/services/example-service-a/index.html\""
+assert "a concept page links the graph opened on it" "grep -q 'graph/?concept=services%2fexample-service-a' \"$dist/knowledge/services/example-service-a/index.html\""
+assert "a concept page links its file's history at the built commit" \
+  "grep -q 'https://github.com/acme/acme-platform/commits/[0-9a-f]\\{40\\}/.lokf/knowledge/services/example-service-a.md' \"$dist/knowledge/services/example-service-a/index.html\""
 assert "a release page links the repository, the docs and the bundle at the release's tag, and the release" \
-  "grep -q 'href=\"https://github.com/acme/acme-platform/tree/v1.0.0/docs\"' \"$host/website/dist/changelog/version/1-0-0/index.html\" && grep -q 'href=\"https://github.com/acme/acme-platform/tree/v1.0.0/.lokf/knowledge\"' \"$host/website/dist/changelog/version/1-0-0/index.html\" && grep -q 'href=\"https://github.com/acme/acme-platform/releases/tag/v1.0.0\"' \"$host/website/dist/changelog/version/1-0-0/index.html\""
-assert "the link check reads the text files too" "grep -q 'text files all resolve' \"$test_root/build.log\""
-assert "llms.txt offers llms-full.txt" "grep -q '/llms-full.txt)' \"$host/website/dist/llms.txt\""
-assert "a docs page and the home page are served as Markdown, their links full addresses, named by the page's head and by llms.txt" \
-  "grep -q '^# The guide$' \"$host/website/dist/docs/guide.md\" && grep -q '](https://acme.github.io/acme-platform/docs/guide/)' \"$host/website/dist/index.md\" && grep -q 'type=\"text/markdown\"[^>]*href=\"/acme-platform/docs/guide.md\"' \"$host/website/dist/docs/guide/index.html\" && grep -q '(https://acme.github.io/acme-platform/docs/guide.md)' \"$host/website/dist/llms.txt\" && grep -q '(https://acme.github.io/acme-platform/index.md)' \"$host/website/dist/llms.txt\""
-assert "the log feed is well-formed, with the skeleton's day as an entry, dated from git, in its category" \
-  "python3 -c 'import sys, xml.dom.minidom; xml.dom.minidom.parse(sys.argv[1])' \"$host/website/dist/knowledge/log.xml\" && grep -q 'Initialization: 1</title>' \"$host/website/dist/knowledge/log.xml\" && grep -q '<published>' \"$host/website/dist/knowledge/log.xml\" && grep -q '<category term=\"Initialization\"/>' \"$host/website/dist/knowledge/log.xml\""
-assert "the feed's entries are named by the bundle's base_iri" "grep -q '<id>https://acme.example/knowledge/log#' \"$host/website/dist/knowledge/log.xml\""
-assert "the feed, the overview page and the text files name the bundle's licence" \
-  "grep -q '<rights>CC BY 4.0</rights>' \"$host/website/dist/knowledge/log.xml\" && grep -q '<link rel=\"license\" href=\"https://creativecommons.org/licenses/by/4.0/\"/>' \"$host/website/dist/knowledge/log.xml\" && grep -q 'href=\"https://creativecommons.org/licenses/by/4.0/\"[^>]*>CC BY 4.0</a>' \"$host/website/dist/knowledge/index.html\" && grep -q 'offered under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)' \"$host/website/dist/llms.txt\" && grep -q 'offered under CC BY 4.0' \"$host/website/dist/llms-full.txt\""
-assert "every page names the log feed" "grep -q 'type=\"application/atom+xml\"[^>]*href=\"/acme-platform/knowledge/log.xml\"' \"$host/website/dist/index.html\""
-assert "the sync built the schema's pages and the data with their commands" \
-  "grep -q 'building docs/elements with' \"$test_root/build.log\" && grep -q 'building data with' \"$test_root/build.log\""
-for f in schema/index.html schema/Service/index.html schema/owner/index.html schema/String/index.html \
-         browse/index.html browse/acme.sqlite browse/metadata.json; do
-  assert "dist/$f is there" "[[ -f \"$host/website/dist/$f\" ]]"
-done
-dist="$host/website/dist"
-assert "a class page leaves its diagram for the browser to draw, with the script that draws it" \
-  "grep -q 'class=\"ktl-mermaid\"' \"$dist/schema/Service/index.html\" && grep -q '_astro/Mermaid' \"$dist/schema/Service/index.html\""
-assert "a page with no diagram loads no mermaid" "! grep -q '_astro/Mermaid' \"$dist/schema/owner/index.html\""
-assert "the YAML inside <details> is a code block" "grep -q 'data-language=\"yaml\"' \"$dist/schema/Service/index.html\""
-assert "gen-doc's search wrapper is gone" "! grep -q 'data-search-exclude' \"$dist/schema/Service/index.html\""
-assert "search leaves the schema's pages out" "! grep -q 'data-pagefind-body' \"$dist/schema/Service/index.html\""
-assert "a type's title glued to its frontmatter is its title" "grep -q '<title>Type: String' \"$dist/schema/String/index.html\""
-assert "a schema page links its neighbour by the neighbour's own name" "grep -q 'href=\"/acme-platform/schema/owner/\"' \"$dist/schema/Service/index.html\""
-assert "the data page opens the database in Datasette Lite in a new tab, with its analytics off" \
-  "grep -q 'lite.datasette.io/?url=' \"$dist/browse/index.html\" && grep -q 'analytics=off' \"$dist/browse/index.html\" && grep -q 'target=\"_blank\" rel=\"noopener\">Open in Datasette Lite' \"$dist/browse/index.html\""
-assert "the data page describes the database from its metadata" "grep -q 'The services the platform runs' \"$dist/browse/index.html\""
-assert "only the databases and their metadata are published" "[[ ! -e \"$dist/browse/notes.txt\" && ! -e \"$dist/browse/metadata.yaml\" ]]"
-assert "the metadata is published without its plugins' settings" \
-  "grep -q 'The services the platform runs' \"$dist/browse/metadata.json\" && ! grep -q 'not-for-the-site' \"$dist/browse/metadata.json\""
-assert "a quoted diagram with words after its language is drawn" \
-  "grep -q 'class=\"ktl-mermaid\"' \"$dist/docs/architecture/index.html\" && grep -q '_astro/Mermaid' \"$dist/docs/architecture/index.html\""
-assert "a page and its retelling offer each other as reading levels, among the docs and in the bundle" \
-  "grep -q 'aria-label=\"Reading levels\"' \"$dist/docs/guide/index.html\" && grep -q 'href=\"/acme-platform/simple/\">In short</a>' \"$dist/docs/guide/index.html\" && grep -q 'href=\"/acme-platform/docs/guide/\">Full</a>' \"$dist/simple/index.html\" && grep -q 'href=\"/acme-platform/knowledge/services/example-service-a-simple/\">Ages 13 to 18</a>' \"$dist/knowledge/services/example-service-a/index.html\" && grep -q 'href=\"/acme-platform/knowledge/services/example-service-a/\">Full</a>' \"$dist/knowledge/services/example-service-a-simple/index.html\" && ! grep -q 'Reading levels' \"$dist/docs/architecture/index.html\""
-assert "a schema page's old address sends the browser on to its page" \
-  "grep -q 'http-equiv=\"refresh\" content=\"0;url=/acme-platform/schema/Service/\"' \"$dist/elements/Service/index.html\""
-assert "the About page's old address sends the browser on to its page" "grep -q 'url=/acme-platform/docs/about/\"' \"$dist/about/index.html\""
-assert "the folder DOCS.exclude names is not on the site" "[[ ! -e \"$dist/docs/templates-linkml\" ]]"
-assert "llms.txt lists the schema and the data" "grep -q '/schema/)' \"$dist/llms.txt\" && grep -q '/browse/)' \"$dist/llms.txt\""
-assert "nothing of the template is left to commit" "[[ -z \$(git -C \"$host\" status --porcelain) ]]"
+  "grep -q 'https://github.com/acme/acme-platform/tree/v1.0.0/docs' \"$dist/changelog/version/1-0-0/index.html\" && grep -q 'https://github.com/acme/acme-platform/tree/v1.0.0/.lokf/knowledge' \"$dist/changelog/version/1-0-0/index.html\" && grep -q 'https://github.com/acme/acme-platform/releases/tag/v1.0.0' \"$dist/changelog/version/1-0-0/index.html\""
+assert "llms.txt offers llms-full.txt, the docs pages as Markdown and the schema" \
+  "grep -q '/llms-full.txt)' \"$dist/llms.txt\" && grep -q '(https://acme.github.io/acme-platform/docs/guide.md)' \"$dist/llms.txt\" && grep -q '/schema/acme_platform.yaml)' \"$dist/llms.txt\""
+assert "the log feed is well-formed" "python3 -c 'import sys, xml.dom.minidom; xml.dom.minidom.parse(sys.argv[1])' \"$dist/knowledge/log.xml\""
+assert "every page names the log feed" "grep -q 'application/atom+xml[^>]*knowledge/log.xml' \"$dist/index.html\""
+assert "every page carries the policy that stops raw HTML running a script" "grep -q \"Content-Security-Policy.*script-src https://acme.github.io/acme-platform/js/\" \"$dist/docs/guide/index.html\""
+assert "a docs folder's index.md is that folder's page, and names its group" \
+  "grep -q 'Task by task' \"$dist/docs/how-to/index.html\" && grep -q '<summary>How-to guides</summary>' \"$dist/docs/guide/index.html\" && grep -q '<summary>Guides</summary>' \"$dist/docs/guide/index.html\""
+assert "a docs page's frontmatter gives its title and cannot move or hide it" \
+  "grep -q '<h1>About Acme</h1>' \"$dist/docs/about/index.html\" && [[ ! -e \"$dist/stolen\" ]]"
+assert "a figure in the docs folder is served from the site, and a link between docs pages goes to the page" \
+  "grep -q 'src=\"\\?/acme-platform/docs/img/map.png' \"$dist/docs/guide/index.html\" && grep -q 'href=\"\\?/acme-platform/docs/how-to/first/' \"$dist/docs/guide/index.html\""
+assert "gen-doc's own folders under docs/ are not pages" "[[ ! -e \"$dist/docs/templates-linkml/readme\" && ! -e \"$dist/docs/elements/old\" ]]"
+assert "a quoted diagram with words after its language is drawn, and a page with none loads no mermaid" \
+  "grep -q 'class=\"\\?mermaid' \"$dist/docs/architecture/index.html\" && grep -q 'js/vendor/mermaid' \"$dist/docs/architecture/index.html\" && ! grep -q 'js/vendor/mermaid' \"$dist/docs/guide/index.html\""
+assert "a class page has gen-doc's diagram and its YAML as a code block, without the mkdocs wrapper" \
+  "grep -q 'class=\"\\?mermaid' \"$dist/schema/classes/Service/index.html\" && grep -q '<summary>YAML</summary>' \"$dist/schema/classes/Service/index.html\" && ! grep -q 'data-search-exclude' \"$dist/schema/classes/Service/index.html\""
+assert "search leaves the schema's slots and types out" "! grep -q 'data-pagefind-body' \"$dist/schema/slots/owner/index.html\" && grep -q 'data-pagefind-body' \"$dist/schema/classes/Service/index.html\""
+assert "a page and its retelling offer each other, among the docs and in the bundle, and a page with none offers nothing" \
+  "grep -q 'docs/guide.en-simple/[^>]*>For readers aged 13 to 18</a>' \"$dist/docs/guide/index.html\" && grep -q 'docs/guide/[^>]*>Full</a>' \"$dist/docs/guide.en-simple/index.html\" && grep -q 'example-service-a-simple/[^>]*>For readers aged 13 to 18</a>' \"$dist/knowledge/services/example-service-a/index.html\" && ! grep -q 'Reading level' \"$dist/docs/architecture/index.html\""
+assert "a retelling has no line in the navigation" "! grep -q 'guide.en-simple' \"$dist/docs/architecture/index.html\""
+assert "a docs page's Markdown has every address made full and its fenced code as written" \
+  "grep -qF '[the README](https://acme.github.io/acme-platform/)' \"$dist/docs/guide.md\" && grep -qF '[the tutorial](https://acme.github.io/acme-platform/docs/how-to/first/)' \"$dist/docs/guide.md\" && grep -qF 'href=\"https://acme.github.io/acme-platform/docs/about/\"' \"$dist/docs/guide.md\" && grep -qF 'A fenced [link](../README.md)' \"$dist/docs/guide.md\""
+assert "the README's Markdown is served at index.md, from its title, and the page names it" \
+  "head -n 1 \"$dist/index.md\" | grep -qx '# Acme Platform' && grep -q 'text/markdown[^>]*acme-platform/index.md' \"$dist/index.html\""
+assert "a link from the root, one to a release's heading and one in raw HTML go to their pages" \
+  "grep -q 'href=\"\\?/acme-platform/docs/about/\"\\?>the about page' \"$dist/index.html\" && grep -q 'href=\"\\?/acme-platform/changelog/version/1-0-0/\"\\?>the first release' \"$dist/docs/guide/index.html\" && grep -q 'href=\"\\?/acme-platform/docs/about/\"\\?>About, in raw HTML' \"$dist/docs/guide/index.html\""
+assert "raw HTML GitHub would not show is shown as text, and no handler, style or javascript: address is left" \
+  "grep -q '&lt;meta http-equiv' \"$dist/docs/guide/index.html\" && ! grep -qiE '<meta http-equiv=\"?refresh|onclick|javascript:|color:red' \"$dist/docs/guide/index.html\" && grep -q '<kbd>Q</kbd>' \"$dist/docs/guide/index.html\" && grep -q 'clean-html: docs/guide/index.html: <meta' \"$test_root/build.log\""
+assert "a shortcode in a docs page is shown as written" "grep -q '{{&lt; mention' \"$dist/docs/guide/index.html\""
+assert "an HTML document in the docs folder is not served" "[[ ! -e \"$dist/docs/report.html\" ]]"
+assert "a mirrored source names its origin, version and fetch day, and links its own path" \
+  "grep -q 'A copy of <a href=\"\\?https://vendor.example/page' \"$dist/knowledge/services/example-service-a/index.html\" && grep -q 'version <code>2.1</code>, fetched 2026-03-04' \"$dist/knowledge/services/example-service-a/index.html\" && grep -q 'blob/[0-9a-f]\\{40\\}/.lokf/mirror/vendor/page.md' \"$dist/knowledge/services/example-service-a/index.html\""
+assert "the data's command ran, and its database and metadata are served, without plugin settings or the folder's other files" \
+  "[[ -f \"$dist/browse/acme.sqlite\" && -f \"$dist/browse/metadata.json\" && ! -e \"$dist/browse/schema.sql\" ]] && ! grep -q SECRET \"$dist/browse/metadata.json\" && grep -q 'building data/browse with' \"$test_root/build.log\""
+assert "the data page opens each database in Datasette Lite, and the navigation and llms.txt name it" \
+  "grep -q 'lite.datasette.io/?analytics=off&amp;metadata=https%3A%2F%2Facme.github.io%2Facme-platform%2Fbrowse%2Fmetadata.json&amp;url=https%3A%2F%2Facme.github.io%2Facme-platform%2Fbrowse%2Facme.sqlite#/acme' \"$dist/browse/index.html\" && grep -q '>The services<' \"$dist/browse/index.html\" && grep -q 'Browse the data</a>' \"$dist/index.html\" && grep -q '/browse/)' \"$dist/llms.txt\""
+assert "a schema page's old address sends the browser on to its page, with no setting for /elements/, and so does the About page's" \
+  "grep -q 'url=/acme-platform/schema/classes/Service/' \"$dist/elements/Service/index.html\" && grep -q 'url=/acme-platform/schema/' \"$dist/elements/index.html\" && grep -q 'url=/acme-platform/schema/classes/Service/' \"$dist/schema/Service/index.html\" && grep -q 'url=/acme-platform/docs/about/' \"$dist/about/index.html\""
+assert "the graph page offers the workspace on a domain host" "grep -q 'graph=workspace' \"$dist/graph/index.html\""
+assert "nothing of the build is left to commit" "[[ -z \$(git -C \"$host\" status --porcelain) ]]"
 
 echo ""
-echo "Step 4 again: the bare shape, with no README, docs or changelog, and the configuration as Step 1 left it"
+echo "Step 4 again: the bare shape, with a bundle and nothing else, and site.toml as Step 1 left it"
 (
   cd "$host"
-  git rm -rq README.md docs CHANGELOG.md
-  git checkout -q HEAD~1 -- website/site.config.mjs
+  git rm -rq README.md docs CHANGELOG.md .assets .linkml .github
+  git checkout -q HEAD~1 -- website/site.toml
   git commit -q -m "a bare host"
 )
 build
-assert "the home page is there, from the bundle's own introduction" "[[ -f \"$host/website/dist/index.html\" ]] && grep -q 'Acme Platform' \"$host/website/dist/index.html\""
-assert "no docs pages" "[[ ! -d \"$host/website/dist/docs\" ]]"
-assert "the home page offers no architecture page" "! grep -q 'docs/architecture/' \"$host/website/dist/index.html\""
-assert "the home page offers no schema" "! grep -q '/acme-platform/schema/' \"$host/website/dist/index.html\""
-assert "no release pages" "[[ ! -d \"$host/website/dist/changelog\" ]]"
-assert "no schema pages and no data page" "[[ ! -d \"$host/website/dist/schema\" && ! -d \"$host/website/dist/browse\" ]]"
+assert "the link check passed" "grep -q 'check-links: .* 0 broken link' \"$test_root/build.log\""
+assert "the home page is there, from the bundle's own introduction" "[[ -f \"$dist/index.html\" ]] && grep -q '<h1>Acme Platform</h1>' \"$dist/index.html\""
+assert "no docs pages, no release pages, no schema pages and their old addresses, and no data" "[[ ! -d \"$dist/docs\" && ! -d \"$dist/changelog\" && ! -d \"$dist/schema\" && ! -d \"$dist/elements\" && ! -d \"$dist/browse\" && ! -e \"$dist/index.md\" ]]"
+assert "the home page keeps its five buttons, with the bundle's a link and the schema's, the architecture page's and the quick start's greyed" \
+  "[[ \$(grep -o 'button--missing' \"$dist/index.html\" | wc -l) -ge 3 ]] && grep -q 'This repository holds no LinkML schema' \"$dist/index.html\" && grep -q 'This repository has no docs/architecture.md' \"$dist/index.html\" && ! grep -q 'On exhibit' \"$dist/index.html\""
+assert "the navigation has no Schema part and no changelog" "! grep -q '>Schema</summary>' \"$dist/index.html\" && ! grep -q 'changelog/' \"$dist/index.html\""
+assert "the graph page greys the workspace" "grep -q 'aria-disabled=\"\\?true\"\\?[^>]*>The workspace' \"$dist/graph/index.html\" && ! grep -q 'graph=workspace' \"$dist/graph/index.html\""
 assert "the bundle's pages, the health page and the graph are still there" \
-  "[[ -f \"$host/website/dist/knowledge/index.html\" && -f \"$host/website/dist/health/index.html\" && -f \"$host/website/dist/graph/index.html\" ]]"
-assert "the Knowledge Trust Ladder logo is the favicon" "cmp -s \"$host/website/dist/favicon.svg\" \"$skill/templates/website/src/assets/knowledge-trust-ladder-logo.svg\""
+  "[[ -f \"$dist/knowledge/index.html\" && -f \"$dist/health/index.html\" && -f \"$dist/graph/index.html\" ]]"
 
 echo ""
 if [[ "$fail" -eq 0 ]]; then

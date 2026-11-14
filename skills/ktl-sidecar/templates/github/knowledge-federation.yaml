@@ -251,41 +251,14 @@ jobs:
         run: uv sync --locked
         working-directory: .lokf
 
-      - name: Use Node.js, when the host has a website
-        if: hashFiles('website/package-lock.json') != ''
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: website/package-lock.json
-
-      # As the website workflow does: a schema or a data folder the site
-      # shows is built with just, which the runner image lacks. The copy
-      # .lokf/uv.lock pins is linked alone, else the same version is
-      # installed by name.
-      - name: Install just, when the site builds a folder with it
-        if: hashFiles('website/package-lock.json') != ''
-        run: |
-          if node website/scripts/config.mjs | grep -q '"build": "just '; then
-            if grep -qx 'name = "rust-just"' .lokf/uv.lock; then
-              mkdir -p "$HOME/.local/bin"
-              ln -sf "$PWD/.lokf/.venv/bin/just" "$HOME/.local/bin/just"
-            else
-              uv tool install rust-just==1.47.0
-            fi
-            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          fi
-
-      # The same two commands the website workflow runs; this workflow
-      # deploys in its place on a domain host.
+      # The same build the website workflow runs; this workflow deploys in
+      # its place on a domain host. The site is in website/, or in
+      # ktl-website/ where website/ was another site's.
       - name: Build the site, when the host has one
-        if: hashFiles('website/package-lock.json') != ''
-        working-directory: website
-        env:
-          ASTRO_TELEMETRY_DISABLED: "1"
+        if: hashFiles('website/site.toml', 'ktl-website/site.toml') != ''
         run: |
-          npm ci --ignore-scripts
-          npm run build
+          if [ -f ktl-website/site.toml ]; then site=ktl-website; else site=website; fi
+          bash "$site/scripts/build.sh"
 
       # The workspace the release before this one carries: the build holds
       # a member at its last good state from it when that member's
@@ -423,7 +396,7 @@ jobs:
       - name: Assemble the Pages artifact
         run: |
           set -euo pipefail
-          if [ -d website/dist ]; then dist=website/dist; else mkdir -p dist; dist=dist; fi
+          if [ -d ktl-website/dist ]; then dist=ktl-website/dist; elif [ -d website/dist ]; then dist=website/dist; else mkdir -p dist; dist=dist; fi
           if [ -d snapshot ] && grep -qx 'sensitivity: internal' snapshot/workspace.lock.yaml; then
             echo "::notice::The workspace holds internal metadata, so the site is deployed without it; it is attached to the release alone."
           elif [ -d snapshot ]; then

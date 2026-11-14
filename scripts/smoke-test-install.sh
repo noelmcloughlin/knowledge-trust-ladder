@@ -119,8 +119,8 @@ website_dir="$(find "$test_root/consumer" \( -path "*.agents/skills/ktl-website"
 assert "ktl-website discovered by name" "[[ -n \"$website_dir\" ]]"
 assert "ktl-website SKILL.md installed" "[[ -f \"$website_dir/SKILL.md\" ]]"
 assert "ktl-website templates/website carried along, the lock file included" \
-  "[[ -f \"$website_dir/templates/website/package.json\" && -f \"$website_dir/templates/website/package-lock.json\" ]]"
-assert "the bracket file name survived the installer" "[[ -f \"$website_dir/templates/website/src/pages/og/[...route].ts\" ]]"
+  "[[ -f \"$website_dir/templates/website/pyproject.toml\" && -f \"$website_dir/templates/website/uv.lock\" ]]"
+assert "the site's binary files survived the installer" "[[ -s \"$website_dir/templates/website/static/fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2\" && -s \"$website_dir/templates/website/assets/card.png\" ]]"
 assert "ktl-website templates/github/knowledge-website.yaml carried along" "[[ -f \"$website_dir/templates/github/knowledge-website.yaml\" ]]"
 assert "the installed website preflight runs on the reader's repository and ends on its summary line" \
   "bash \"$website_dir/scripts/website-preflight.sh\" \"$test_root/reader\" 2>&1 | grep -qE '^Preflight: '"

@@ -1619,9 +1619,20 @@ def label_blank_nodes_fast() -> bool:
 
 
 def public_url(root: pathlib.Path, given: str | None) -> str:
-    """Where the snapshot is served: --public-url, else the website's SITE + BASE + /workspace, else nothing."""
+    """Where the snapshot is served: --public-url, else the website's address + /workspace, else nothing.
+
+    The address is `baseURL` in the site.toml of website/, or of ktl-website/
+    where website/ was another site's. A site not yet moved from Astro has
+    it as SITE and BASE in website/site.config.mjs.
+    """
     if given is not None:
         return given.rstrip("/")
+    for folder in ("website", "ktl-website"):
+        cfg = root / folder / "site.toml"
+        if cfg.is_file():
+            address = re.search(r'^baseURL = "([^"]*)"', cfg.read_text(encoding="utf-8"), re.M)
+            if address:
+                return f"{address.group(1).rstrip('/')}/workspace"
     cfg = root / "website" / "site.config.mjs"
     if cfg.is_file():
         text = cfg.read_text(encoding="utf-8")
@@ -4112,7 +4123,7 @@ def main(argv=None) -> int:
     b.add_argument("--tag", default="", help="this domain release's tag, named in the lock graph")
     b.add_argument("--release-base", default="", help="the release page prefix, e.g. https://github.com/o/r/releases/tag; with --tag it names the snapshot")
     b.add_argument("--snapshot-iri", default="", help="the lock graph's IRI, when not derived from --release-base and --tag")
-    b.add_argument("--public-url", default=None, help="where the snapshot is served; default from website/site.config.mjs")
+    b.add_argument("--public-url", default=None, help="where the snapshot is served; default from the website's site.toml")
     b.add_argument("--cache", default=None, help=CACHE_HELP)
     b.add_argument("--max-bytes", type=int, default=DEFAULT_MAX_BYTES, help="refuse a zip that unpacks to more than this")
     b.add_argument("--no-attestation", action="store_true", help="skip gh attestation verify")
