@@ -1164,7 +1164,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **The no-Python schema fallback names the `v0.8.0` tag of `lokf.yaml`**, not upstream `main`, and moves with the toolkit's floor.
 
 - **A pull request that releases nothing needs no release notes**, so a `chore:` or `docs:` one, such as a Dependabot bump, passes.
-- **A Dependabot action bump no longer breaks the contract on its own.** Check 11's failure names both directions, not only "copy the template over it".
+- **Check 11's failure after a Dependabot action bump names both directions**, not only "copy the template over it". The bump still fails the contract until the template copy is synced, since the bot cannot see it.
 
 ## [0.19.0] - 2026-09-17
 
