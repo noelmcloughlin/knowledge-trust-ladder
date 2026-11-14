@@ -14,6 +14,10 @@ All notable changes to this repository are documented here. Format follows [Keep
 
 - **The website takes no `PAGES` entries.** A retelling is found by its file name instead.
 
+### Fixed
+
+- **A concept's page no longer lists a retired concept among those that point at it.** The report counts a retired concept for none, and a successor with the same title was listed twice.
+
 ## [0.64.0] - 2026-11-13
 
 ### Added

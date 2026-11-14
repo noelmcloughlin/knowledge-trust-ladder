@@ -4,7 +4,8 @@
   one, then this one, then the concepts it points at. Each neighbour is a
   link with its trust dot, its whole title and the relation that joins the
   two. A neighbour joined both ways is listed once, among those this concept
-  points at. A concept with no neighbour draws nothing.
+  points at. A retired concept that points here is left out, as the report
+  counts it for none. A concept with no neighbour draws nothing.
 */ -}}
 {{- $all := partialCached "concepts.html" "concepts" -}}
 {{- $iri := .Params.concept.id -}}
@@ -16,7 +17,9 @@
   {{- $other := cond (eq $side "out") $e.data.target $e.data.source -}}
   {{- if and $side (ne $other $iri) -}}
     {{- with index $all.iri $other -}}
+      {{- if not (and (eq $side "in") (eq .trust.tone "retired")) -}}
       {{- $s.SetInMap $side .id (index ($s.Get $side) .id | default slice | append (partial "slot-name.html" $e.data.slot | lower) | uniq) -}}
+      {{- end -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
