@@ -10,7 +10,7 @@
 > We balance the earth in a pair of scales of our own devising."\
 > — Amy Lowell, *The Congressional Library* (1922)
 
-Inspired by the poem, Knowledge Trust Ladder (KTL) keeps any repository's scattered knowledge as a **collection**: catalogued, authenticated and explained, with the trust in every claim left visible. An agent derives each claim, deterministic tools check it, and a named person vouches for it.
+Inspired by the poem, and [lokf](https://w3id.org/lokf/), the Knowledge Trust Ladder (KTL) keeps any repository's scattered knowledge as a **collection**: catalogued, authenticated and explained, with the trust in every claim left visible. An agent derives each claim, deterministic tools check it, and a named person vouches for it.
 
 Documentation is at [w3id.org/ktl](https://w3id.org/ktl/). Readers aged 13 to 18 get [a shorter version](https://w3id.org/ktl/simple/).
 
