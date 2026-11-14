@@ -181,10 +181,10 @@ pre:hover .copy, .copy:focus-visible { opacity: 1; }
 .pager .muted { display: block; }
 .prose details > summary { color: var(--muted); cursor: pointer; }
 
-/* The home page's lead when the repository holds a schema: the schema on exhibit, with a plaque for each of its first classes. */
+/* The home page's lead when the repository holds a schema: the schema on exhibit, with a plaque for each of its first classes. Its title takes the walnut of the case, so it never reads as the page's own heading below it. */
 .hero { margin: 0 0 2.2rem; padding: 1.3rem 1.5rem 1.5rem; border: 1px solid var(--line); border-top: 4px solid var(--brand); border-radius: 10px; background: var(--card); box-shadow: 0 6px 18px -12px #0006; }
 .hero__title { margin: 0; font: 600 1.9rem/1.2 var(--serif); text-wrap: balance; }
-.hero__title a { color: var(--fg); text-decoration: none; }
+.hero__title a { color: var(--brand); text-decoration: none; }
 .hero__lead { margin: .5rem 0 0; color: var(--muted); font-size: 1.05rem; }
 .hero__counts { display: flex; flex-wrap: wrap; gap: .2rem 1.8rem; margin: 1rem 0 .8rem; padding: 0; list-style: none; color: var(--muted); }
 .hero__counts b { margin-right: .35rem; color: var(--fg); font: 600 1.5rem var(--serif); }
