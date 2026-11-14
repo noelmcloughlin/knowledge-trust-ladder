@@ -1196,6 +1196,12 @@ rm -rf "${unseen_dir:?}"
 # 22. Parser parity, which holds the gate's event reader to a YAML parser on
 #     every layout a person might write, is tested in tests/test_provenance.py.
 
+# 23. The GitHub settings catalogues, references/repository-settings.json in
+#     ktl-sidecar and ktl-website and .github/repository-settings.json, are
+#     held to the templates, to automation.md's table of switches and
+#     secrets, to the pages they link to and to the changelog's retired
+#     names in tests/test_gh.py.
+
 say ""
 if [[ "$fail" -eq 0 ]]; then
   say "Repository contract: PASS"

@@ -4,6 +4,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Added
+
+- **`ktl gh` sets the GitHub settings a repository's workflows need**, from the catalogue each skill carries in `references/repository-settings.json`. `plan` and `check` say what is missing and why, `apply` creates the Environments, branch rules and values without loosening anything, `secrets` asks for each secret without an echo, `enable` turns a switch on once what it needs holds, and `prune` removes retired names such as `KNOWLEDGE_LIBRARIAN_CMD`.
+
 ## [0.64.0] - 2026-11-14
 
 ### Added

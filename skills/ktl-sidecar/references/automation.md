@@ -44,6 +44,7 @@ Every variable below is a **repository variable**: Settings, Secrets and variabl
 | `KNOWLEDGE_INGEST_ENABLED` | variable | `knowledge-ingest.yaml` | `true` turns the ingest on; unset or anything else, the workflow does nothing ([below](#knowledge-ingestyaml-knowledge-outside-the-repository)) |
 | `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` | variable | `knowledge-sync.yaml` | optional: the Environment whose reviewers approve the workflow changes a release brings, so the workflow pushes them ([below](#workflow-changes-wait-for-a-person)) |
 | `KNOWLEDGE_INGEST_*` | secrets, in `knowledge-ingest` | `knowledge-ingest.yaml` | the credentials `.lokf/ingest.yaml` names, one secret per name; the workflow hands these names over and no other secret |
+| `KNOWLEDGE_CURATION_ENVIRONMENT` | variable | `knowledge-registrar.yaml` | optional: the Environment whose required reviewers may attest a curation no signature backs ([gate.md](gate.md#if-you-cannot-sign-the-attestation-job)) |
 
 The librarian also needs one repository setting: Settings, Actions, General, Workflow permissions, *Allow GitHub Actions to create and approve pull requests* ([below](#before-turning-on-the-schedule)).
 
