@@ -30,7 +30,7 @@ The release note is `CHANGELOG.md`'s `## [Unreleased]` section, written as you g
 
 | Repository | Tag | Then |
 | --- | --- | --- |
-| `knowledge-trust-ladder` | None from this workflow. `gh skill publish` is the one tag creator, so a maintainer runs `publish.yml` by hand with the version to release, typed with its `v` (`v0.16.0`); the workflow cross-checks it against the promoted changelog first. Tags carry the `v`, changelog headings never do. | The six skills publish to the registry under that one tag. `publish.yml` then dispatches `knowledge-release.yaml`, which attaches the bundle to the release as `knowledge-vX.Y.Z-knowledge-trust-ladder.zip` when it changed since the last release that carries one. |
+| `knowledge-trust-ladder` | None from this workflow. `gh skill publish` is the one tag creator, so a maintainer runs `publish.yml` by hand with the version to release, typed with its `v` (`v0.16.0`); the workflow cross-checks it against the promoted changelog first. Tags carry the `v`, changelog headings never do. | The six skills publish to the registry under that one tag. `publish.yml` then dispatches `knowledge-release.yaml`, which attaches the bundle to the release as `knowledge-vX.Y.Z-knowledge-trust-ladder.zip` when it changed since the last release that carries one, and `pypi.yml`, which builds the `ktl` package from the tag and uploads it to PyPI as version X.Y.Z. |
 | KTL Registrar, KTL Curator | Bare `X.Y.Z`, Obsidian's convention, after `package.json`, `manifest.json` and `versions.json` are bumped as `npm version` would. | `release.yml` builds, attests provenance and opens a **draft** release carrying `main.js`, `manifest.json` and `styles.css`; a maintainer reviews and publishes it. A hand-pushed tag takes the same path. Publishing the draft is a person's event, not the token's, so it starts `knowledge-release.yaml` once `KNOWLEDGE_RELEASE_ENABLED` is `true` there; no dispatch is needed. |
 
 Everything from step 3 on runs behind the `release` GitHub Environment. **Configure required reviewers on it once, in each repository's Settings → Environments**, or a qualifying merge is released unattended. Creating the environment does not do that for you.
@@ -50,6 +50,18 @@ Each sibling keeps itself current. Its `knowledge-sync.yaml` reads the pin and t
 A new template goes in the manifest and in ktl-sidecar's Step 5 table, and nowhere else: the preflight and contract check 11 read the manifest.
 
 To open the pull requests yourself on the day of a release, run `scripts/sync-sidecar.sh --pr <tag> <sibling>...` from this repository once the tag is on origin. It runs each sibling's own copy of `knowledge-sync.sh`, or the tag's in a sibling that has none, on a branch of its own, `sync-<tag>`, from origin's default branch. A sibling with uncommitted changes is skipped. Without `--pr`, `--push` or `--commit` it leaves the sync uncommitted on the branch, with the commit command printed, and the diff is the review. Once the pull requests are merged, `scripts/sync-sidecar.sh --finish <tag> <sibling>...` puts each sibling back on its default branch, brings it up to date and removes the branch. A release that touched neither the templates nor the librarian skill needs no sync, and the workflow and the script both say so.
+
+## The ktl package on PyPI
+
+`pypi.yml` builds the package from the tag, checks that its files carry the tag's version, installs the wheel with no index and installs the skills from it. It uploads only when the repository variable `PYPI_RELEASE_ENABLED` says where: `testpypi` for TestPyPI, `true` for PyPI. Unset, a release builds and checks the package and uploads nothing.
+
+Before the first upload to each index, a maintainer does three things once:
+
+1. Creates the Environment the upload names, `testpypi` or `pypi`, limited to tags matching `v*`.
+2. Adds a pending publisher for the project `ktl` on that index, naming owner `noelmcloughlin`, repository `knowledge-trust-ladder`, workflow `pypi.yml` and that Environment.
+3. Sets `PYPI_RELEASE_ENABLED`, `testpypi` first, and `true` once a TestPyPI release installs.
+
+If an upload fails after the tag exists, run the workflow again on the tag: `gh workflow run pypi.yml --ref vX.Y.Z -f tag=vX.Y.Z`. A bad file on PyPI is yanked with a reason, never deleted, since PyPI never takes the same file name twice.
 
 ## What the repository settings mean for you
 
