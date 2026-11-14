@@ -58,8 +58,10 @@ To open the pull requests yourself on the day of a release, run `scripts/sync-si
 Before the first upload to each index, a maintainer does three things once:
 
 1. Creates the Environment the upload names, `testpypi` or `pypi`, limited to tags matching `v*`.
-2. Adds a pending publisher on that index for each of the projects `ktl` and `knowledge-trust-ladder`, naming owner `noelmcloughlin`, repository `knowledge-trust-ladder`, workflow `pypi.yml` and that Environment.
+2. Adds a pending publisher on that index for the project `ktl`, naming owner `noelmcloughlin`, repository `knowledge-trust-ladder`, workflow `pypi.yml` and that Environment.
 3. Sets `PYPI_RELEASE_ENABLED`, `testpypi` first, and `true` once a TestPyPI release installs.
+
+An index holds only one pending publisher for those details at a time, so the first upload creates `ktl` and then fails at `knowledge-trust-ladder`. The maintainer then adds a pending publisher for `knowledge-trust-ladder` with the same details and runs the failed job again.
 
 If an upload fails after the tag exists, run the workflow again on the tag: `gh workflow run pypi.yml --ref vX.Y.Z -f tag=vX.Y.Z`. A file the index already holds is skipped, so a repeated run finishes a partial upload. A bad file on PyPI is yanked with a reason, never deleted, since PyPI never takes the same file name twice.
 
