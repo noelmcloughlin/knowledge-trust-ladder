@@ -2,6 +2,7 @@
 
 ## 2026-11-14
 
+* **Prose**: reworded 1 concept body in plain English, the ktl-website skill. No link, number or frontmatter changed.
 * **Changed**: dropped the KTL release numbers that dated a fact in passing, since versions in user-facing prose are unnecessary detail; no fact changed. `explanation/skillwiki.md`, `policies/versioning.md` and `policies/security.md` were edited since a person confirmed them; each label says so until the curator looks again.
 * **Rewrite**: the ktl-website skill builds a Hugo site with uv and no Node.js, finds each input with no setting, takes four required values in `site.toml`, and installs into `ktl-website/` when `website/` is another site's, as its `SKILL.md` and references now say. The Astro steps, options and dated history are gone.
 * **Rewrite**: the website playbook describes the Hugo site from `website/README.md`: what the build finds by itself, the preview through `scripts/build.sh`, the two files to edit, the raw-HTML cleaning and the workflow's jobs. The Astro files it named and `website/NOTICE` are gone. Edited since a person confirmed it; the label says so until the curator looks again.
