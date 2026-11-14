@@ -4,10 +4,6 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
-### Added
-
-- **The website serves `badge.json`, a KTL badge of how many concepts a person confirmed**, for a README to show.
-
 ## [0.65.0] - 2026-11-14
 
 ### Added
@@ -15,6 +11,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **`ktl gh check --strict` asks a public repository for a Scorecard workflow**, through the catalogue's new `workflow` kind.
 - **`ktl gh apply` turns back on a catalogued workflow that GitHub turned off for inactivity.**
 - **`scorecard.yml` publishes this repository's OpenSSF Scorecard**, which the README's badge shows.
+- **The website serves `badge.json`, a KTL badge of how many concepts a person confirmed**, for a README to show.
 
 ### Changed
 
