@@ -74,3 +74,7 @@ The same ladder serves both ends of a range: [a school or a youth group](https:/
 
 - [KTL Federation](https://w3id.org/ktl/federation/knowledge/): the domain that federates member bundles into one workspace, as [a context layer](docs/context-layer.md).
 - todo
+
+## Feedback and contributing
+
+Report a bug or ask for a change in [the issue tracker](https://github.com/noelmcloughlin/knowledge-trust-ladder/issues). [CONTRIBUTING.md](CONTRIBUTING.md) lists what a pull request needs, and [SECURITY.md](SECURITY.md) says how to report a vulnerability privately.

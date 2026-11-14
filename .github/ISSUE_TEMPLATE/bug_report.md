@@ -1,23 +1,23 @@
 ---
 name: Bug report
-about: One of the six KTL skills behaves incorrectly
+about: One of the six KTL skills, or the ktl command, behaves incorrectly
 title: ''
 labels: bug
 assignees: ''
 ---
 
-**Which skill?**
-ktl-sidecar / ktl-librarian / ktl-curator / ktl-docent / ktl-prose / ktl-website
+**Which skill or command?**
+ktl-sidecar / ktl-librarian / ktl-curator / ktl-docent / ktl-prose / ktl-website / `ktl`
 
 **Installed via**
-`gh skill install` / `npx skills add` / manual copy, and which version or tag
+`gh skill install` / `uvx ktl skills install` / `npx skills add` / manual copy, and which version or tag
 
 **What happened**
 A clear description of the incorrect behavior, including the agent's actual
 output where relevant.
 
 **What you expected**
-What the skill should have done instead.
+What the skill or command should have done instead.
 
 **Repository context**
 Anything about the host repository that might matter: presence/absence of

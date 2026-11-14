@@ -6,7 +6,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ### Changed
 
-- **The README links the `ktl` package's page on PyPI.**
+- **The README links the `ktl` package's page on PyPI, and says where to report a bug and how to contribute.** The issue templates name the `ktl` command and its PyPI install.
 
 ## [0.64.0] - 2026-11-14
 
