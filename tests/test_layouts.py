@@ -63,7 +63,7 @@ import sys
 import pytest
 import yaml
 
-from conftest import SCRIPTS, TEMPLATES, WORKFLOWS, has_line, have, matches, read, run, write
+from conftest import REPO, SCRIPTS, TEMPLATES, WORKFLOWS, has_line, have, matches, read, run, write
 
 WRAPPER = SCRIPTS / "knowledge-librarian.sh"
 LIBRARIAN_YAML = WORKFLOWS / "knowledge-librarian.yaml"
@@ -1169,62 +1169,58 @@ def test_the_earlier_step_with_no_pull_requests_has_nothing_open_and_nothing_dec
 
 @pytest.fixture
 def install_step(tmp_path):
-    """The install step, extracted from the template, and a stand-in for the skills repository with the reviewed skill tagged."""
+    """The install step, extracted from the template, and a stand-in for the locked ktl package: this repository's command, carrying the reviewed skill."""
     step = write(
         tmp_path / "install-step.sh",
         step_body(LIBRARIAN_YAML, "Install the pinned ktl-librarian skill", r"^      [#-]"),
     )
-    assert "TRUST_LADDER_SKILLS_SHA" in read(step) and run(["bash", "-n", step]).rc == 0, (
-        "could not extract the install step from knowledge-librarian.yaml, or it no longer reads TRUST_LADDER_SKILLS_SHA"
+    assert "skills install --dest .agents/skills --skill ktl-librarian" in read(step) and run(["bash", "-n", step]).rc == 0, (
+        "could not extract the install step from knowledge-librarian.yaml, or it no longer installs from the ktl package"
     )
-    skills_repo = tmp_path / "skills-repo"
-    write(skills_repo / "skills" / "ktl-librarian" / "SKILL.md", "# the skill as it was reviewed\n")
-    write(skills_repo / "skills" / "ktl-librarian" / "references" / "guide.md", "# a reference\n")
-    run(["git", "init", "-q", "-b", "main", "."], cwd=skills_repo)
-    git(skills_repo, "config", "user.email", "layout-test@example.invalid")
-    git(skills_repo, "config", "user.name", "layout test")
-    git(skills_repo, "add", "-A")
-    git(skills_repo, "commit", "-q", "-m", "the reviewed skill")
-    git(skills_repo, "-c", "tag.gpgSign=false", "tag", "v9.9.9")
-    return step, skills_repo, git(skills_repo, "rev-parse", "HEAD"), tmp_path
+    package = tmp_path / "package"
+    shutil.copytree(REPO / "src" / "ktl", package / "ktl", ignore=shutil.ignore_patterns("__pycache__"))
+    write(package / "ktl" / "skills" / "ktl-librarian" / "SKILL.md", "# the skill as it was reviewed\n")
+    write(package / "ktl" / "skills" / "ktl-librarian" / "references" / "guide.md", "# a reference\n")
+    return step, package, tmp_path
 
 
-def install_run(step, skills_repo, pinned, into, gitignore=".agents/\n", committed=None):
+def install_run(step, package, into, gitignore=".agents/\n", committed=None):
     """Run the step as Actions does, in a checkout whose root .gitignore holds gitignore, or none when it is None.
 
-    committed, when given, is a SKILL.md the host commits under .agents/skills/ktl-librarian/.
+    package, when given, is the ktl package that .lokf/.venv holds. committed, when given, is a SKILL.md the
+    host commits under .agents/skills/ktl-librarian/.
     """
     into.mkdir(parents=True, exist_ok=True)
     run(["git", "init", "-q", "-b", "main", "."], cwd=into)
+    write(into / ".git" / "info" / "exclude", "/.lokf/\n")
     if gitignore is not None:
         write(into / ".gitignore", gitignore)
     if committed is not None:
         write(into / ".agents" / "skills" / "ktl-librarian" / "SKILL.md", committed)
         git(into, "add", "-f", ".agents")
-    return run(
-        ["bash", step],
-        cwd=into,
-        env={
-            "TRUST_LADDER_SKILLS_REPO": f"file://{skills_repo}",
-            "TRUST_LADDER_SKILLS_REF": "v9.9.9",
-            "TRUST_LADDER_SKILLS_SHA": pinned,
-        },
-    )
+    if package is not None:
+        shim = write(
+            into / ".lokf" / ".venv" / "bin" / "ktl",
+            "#!/bin/sh\nexec python3 -c 'import sys; sys.path.insert(0, sys.argv.pop(1)); from ktl.cli import main; sys.exit(main())'"
+            f' "{package}" "$@"\n',
+        )
+        shim.chmod(0o755)
+    return run(["bash", step], cwd=into)
 
 
-def test_the_skill_is_installed_from_the_pinned_tag_while_it_names_the_pinned_commit(install_step):
-    step, skills_repo, pinned, work = install_step
-    result = install_run(step, skills_repo, pinned, work / "install-ok")
-    installed = work / "install-ok" / ".agents" / "skills" / "ktl-librarian" / "SKILL.md"
-    assert result.rc == 0 and installed.is_file() and "as it was reviewed" in read(installed), (
-        f"install: exit {result.rc} with the tag and the commit in agreement: {result.out}"
+def test_the_skill_is_installed_from_the_locked_package(install_step):
+    step, package, work = install_step
+    result = install_run(step, package, work / "install-ok")
+    installed = work / "install-ok" / ".agents" / "skills" / "ktl-librarian"
+    assert result.rc == 0 and "as it was reviewed" in read(installed / "SKILL.md") and (installed / "references" / "guide.md").is_file(), (
+        f"install: exit {result.rc} from the locked package: {result.out}"
     )
 
 
 def test_a_host_whose_gitignore_leaves_agents_out_gets_a_local_exclude(install_step):
-    step, skills_repo, pinned, work = install_step
+    step, package, work = install_step
     into = work / "install-local"
-    result = install_run(step, skills_repo, pinned, into, gitignore=None)
+    result = install_run(step, package, into, gitignore=None)
     exclude = into / ".git" / "info" / "exclude"
     assert (
         result.rc == 0
@@ -1236,41 +1232,38 @@ def test_a_host_whose_gitignore_leaves_agents_out_gets_a_local_exclude(install_s
 
 def test_a_host_that_ignores_only_skill_md_gets_a_local_exclude_for_the_rest(install_step):
     """Checking SKILL.md alone would pass here, and the write-scope check would then fail on the skill's other files."""
-    step, skills_repo, pinned, work = install_step
+    step, package, work = install_step
     into = work / "install-partial"
-    result = install_run(step, skills_repo, pinned, into, gitignore="/.agents/skills/ktl-librarian/SKILL.md\n")
+    result = install_run(step, package, into, gitignore="/.agents/skills/ktl-librarian/SKILL.md\n")
     assert result.rc == 0 and git(into, "status", "--porcelain", "--untracked-files=all", "--", ".agents") == "", (
         f"install: exit {result.rc}, or git still sees the skill, where the host ignores only SKILL.md: {result.out}"
     )
 
 
 def test_an_install_over_a_copy_the_host_commits_stops_and_names_the_commit(install_step):
-    step, skills_repo, pinned, work = install_step
-    result = install_run(step, skills_repo, pinned, work / "install-committed", committed="# an older copy\n")
+    step, package, work = install_step
+    result = install_run(step, package, work / "install-committed", committed="# an older copy\n")
     assert result.rc == 1 and "The host commits .agents/skills/ktl-librarian/" in result.out, (
         f"install: exit {result.rc} where the host commits an older copy of the skill: {result.out}"
     )
 
 
 def test_an_install_a_host_rule_brings_back_stops_before_any_agent_runs(install_step):
-    step, skills_repo, pinned, work = install_step
-    result = install_run(step, skills_repo, pinned, work / "install-seen", gitignore="!/.agents/skills/ktl-librarian/\n")
+    step, package, work = install_step
+    result = install_run(step, package, work / "install-seen", gitignore="!/.agents/skills/ktl-librarian/\n")
     assert result.rc == 1 and "makes git see .agents/skills/ktl-librarian/" in result.out, (
         f"install: exit {result.rc} where the host's .gitignore brings .agents/ back: {result.out}"
     )
 
 
-def test_a_tag_that_names_another_commit_installs_nothing(install_step):
-    step, skills_repo, pinned, work = install_step
-    write(skills_repo / "skills" / "ktl-librarian" / "SKILL.md", "# other instructions\n")
-    git(skills_repo, "commit", "-q", "-am", "the tag is moved to this")
-    git(skills_repo, "-c", "tag.gpgSign=false", "tag", "-f", "v9.9.9")
-    result = install_run(step, skills_repo, pinned, work / "install-moved")
+def test_a_host_with_no_ktl_installs_nothing_and_says_how_to_pin_it(install_step):
+    step, _, work = install_step
+    result = install_run(step, None, work / "install-none")
     assert (
         result.rc == 1
-        and not (work / "install-moved" / ".agents" / "skills" / "ktl-librarian").exists()
-        and "nothing was installed" in result.out
-    ), f"install: exit {result.rc} after the tag moved: {result.out}"
+        and not (work / "install-none" / ".agents" / "skills" / "ktl-librarian").exists()
+        and 'uv add --project .lokf "ktl==X.Y.Z"' in result.out
+    ), f"install: exit {result.rc} with no ktl in .lokf/.venv: {result.out}"
 
 
 @pytest.mark.parametrize("shape", SHAPES)

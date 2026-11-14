@@ -16,6 +16,9 @@ dependencies = [
     # The recipe runner the workflows use, pinned here so uv.lock checks it
     # by hash; keep the version in step with the workflows' uvx fallback.
     "rust-just==1.47.0",
+    # The skills: the librarian workflow installs ktl-librarian from this
+    # package, and the weekly sync moves the pin to each release.
+    "ktl==0.64.0",
 ]
 
 [tool.uv]

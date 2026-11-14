@@ -14,6 +14,13 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **The docent eval installs Claude Code from a lockfile, checked by hash.**
 - **The KTL badge reads `n of m`**, without the word "confirmed".
 - **A release carries the Microsoft 365 Copilot skill zip only once `KNOWLEDGE_M365_ENABLED` is `true`**, which is unset by default while that skill is unfinished.
+- **Hosts pin `ktl` in `.lokf/pyproject.toml`, and the librarian installs its skill from that locked package.** A host adds the pin once, with `uv add --project .lokf "ktl==X.Y.Z"`.
+- **The sync moves the `ktl` pin, relocks, and reads the release's templates from the package at the lock's hash**, asking the host's own index for the newest release.
+- **The preflight compares a host's copies with the templates of the `ktl` in `.lokf/.venv`.**
+
+### Removed
+
+- **`TRUST_LADDER_SKILLS_REF`, `TRUST_LADDER_SKILLS_SHA`, `TRUST_LADDER_SKILLS_REPO` and `KNOWLEDGE_SKILLS_TOKEN`**: a private index's credential is `UV_INDEX_KNOWLEDGE_USERNAME` and `UV_INDEX_KNOWLEDGE_PASSWORD`.
 
 ## [0.65.0] - 2026-11-14
 

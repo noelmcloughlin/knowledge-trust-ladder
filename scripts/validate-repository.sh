@@ -429,10 +429,7 @@ done
 
 # 11. This repository runs its own sidecar from the templates, so each copy
 #     under .github/ and .lokf/scripts/ must stay byte-identical to its
-#     template. knowledge-librarian.yaml may differ only in the values of
-#     TRUST_LADDER_SKILLS_REF and TRUST_LADDER_SKILLS_SHA: the release commit
-#     moves the pin in the template but may not touch .github/workflows/, and
-#     the install step that reads the pin is skipped in this repository.
+#     template.
 #
 #     The sidecar's knowledge-sync.manifest is the one list of copies that the
 #     sync script, the preflight and this check read, so it is checked first.
@@ -474,8 +471,6 @@ done
 
 say ""
 say "Checking the sidecar templates are the copies CI lints..."
-# The skills pin is each repository's to move, so it is not drift.
-unpin() { sed -E -e 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/' -e 's/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/\1COMMIT/' "$1"; }
 # Three sets of copies may be absent here. The federation templates are for
 # a domain host only (ktl-sidecar Step 5), and this bundle is not a domain.
 # The sync templates bring a host up to a release of this repository, which
@@ -494,7 +489,7 @@ while read -r rule template copy _; do
           *" $template "*) ok "$dst is not installed here (a domain host's file, or a host's sync); its template is checked directly" ;;
           *) err "$dst is missing, but $src is a template every host carries - copy the template over" ;;
         esac
-      elif cmp -s <(unpin "$src") <(unpin "$dst"); then
+      elif cmp -s "$src" "$dst"; then
         ok "$dst matches its template"
       else
         err "$dst differs from $src - this repository dogfoods its own sidecar, so the two must match: copy the template over the workflow after editing the template, or the workflow over the template after a Dependabot action bump, which only ever edits .github/workflows/"
@@ -821,114 +816,49 @@ else
   say "node not installed locally - CI runs check 14; skipping here"
 fi
 
-# 15. The librarian template's TRUST_LADDER_SKILLS_REF pins the release of
-#     this repository that a host installs the skill from. Nothing fails when
-#     the pin falls behind: the host keeps running an old librarian.
-#
-#     The pin must name a release that a host can clone, so it is held to one
-#     of the two newest released headings in CHANGELOG.md. The newest heading
-#     exists before its tag: semantic-release.yml promotes it on merge to
-#     main, and publish.yml runs this contract before it creates the tag.
-#     Two headings cover that window and still catch a stale pin, which falls
-#     many versions behind, not one.
+# 15. The sidecar's pyproject template pins ktl, the package a host installs
+#     the librarian from, at one of the two newest released headings in
+#     CHANGELOG.md. The release step moves the pin to the newest tag, which
+#     trails the newest heading by one between semantic-release.yml's
+#     promotion and publish.yml's tag. The pinned tag, where this clone has
+#     it, must carry the librarian and the sync manifest a host reads from
+#     the package.
 say ""
-say "Checking the librarian template's skills pin is a current release..."
-pin="$(grep -oE 'TRUST_LADDER_SKILLS_REF: v[0-9]+\.[0-9]+\.[0-9]+' \
-         skills/ktl-sidecar/templates/github/knowledge-librarian.yaml | head -1 | sed 's/.*: //')"
-pin_sha="$(grep -oE 'TRUST_LADDER_SKILLS_SHA: [0-9a-f]{40}' \
-             skills/ktl-sidecar/templates/github/knowledge-librarian.yaml | head -1 | sed 's/.*: //')"
+say "Checking the sidecar template's ktl pin is a current release..."
+pin_file="$templates/pyproject.toml"
+pin="$(sed -nE 's/^[[:space:]]*"ktl==([0-9]+\.[0-9]+\.[0-9]+)".*/v\1/p' "$pin_file" | head -n 1)"
 mapfile -t recent < <(grep -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md \
                         | head -2 | tr -d '#[] ' | sed 's/^/v/')
 if [[ -z "$pin" ]]; then
-  err "no TRUST_LADDER_SKILLS_REF pin found in the librarian template - check 15 cannot read what a host would install"
+  err "no \"ktl==X.Y.Z\" pin in $pin_file - a host scaffolded from it has no librarian to install"
 elif [[ "${#recent[@]}" -eq 0 ]]; then
   err "CHANGELOG.md has no released version heading, so check 15 cannot tell whether $pin is current"
 elif printf '%s\n' "${recent[@]}" | grep -qxF -- "$pin"; then
-  ok "the librarian template pins $pin, one of this repository's two newest releases"
+  ok "$pin_file pins ktl at $pin, one of this repository's two newest releases"
 else
-  err "the librarian template pins TRUST_LADDER_SKILLS_REF: $pin but this repository's two newest releases are ${recent[*]} - a host scaffolded from this template installs a librarian that old; bump the pin in the template and in each sibling's own copy of the workflow"
+  err "$pin_file pins ktl at $pin but this repository's two newest releases are ${recent[*]} - a host scaffolded from it installs a librarian that old; the release step moves the pin"
 fi
-# The install step clones the pinned tag and copies one skills/ path out of
-# it, so the tag must hold that path. After a rename, a current release and a
-# real path can disagree with neither looking wrong, and every scheduled run
-# on the host fails. CI checks out one commit without tags, and the newest
-# heading is tagged after this contract runs, so the tag is often not here.
-# The commit recorded beside the pin is an ancestor of this checkout, so the
-# path is read from the commit the tag names where the clone has the tag,
-# and otherwise from the recorded commit. The half skips only when the clone
-# has neither.
-# shellcheck disable=SC2016 # $tmp is the template's own literal, not ours
-skill_path="$(grep -oE '\$tmp/skills/[A-Za-z0-9._-]+' \
-                skills/ktl-sidecar/templates/github/knowledge-librarian.yaml \
-                | head -1 | sed 's|^\$tmp/||')"
-if [[ -z "$pin" ]]; then
-  : # already reported above
-elif [[ -z "$skill_path" ]]; then
-  err "the librarian template's install step copies no skills/ path that check 15 can read - it cannot tell whether $pin carries the skill a host would install"
-elif pin_commit="$(git rev-parse -q --verify "refs/tags/$pin^{commit}" 2>/dev/null)" \
-     || { [[ -n "$pin_sha" ]] && pin_commit="$(git rev-parse -q --verify "$pin_sha^{commit}" 2>/dev/null)"; }; then
-  if git ls-tree --name-only "$pin_commit" -- "$skill_path" | grep -qxF -- "$skill_path"; then
-    ok "the commit $pin names (${pin_commit:0:12}) carries $skill_path, the path the install step copies out of it"
-  else
-    err "the librarian template pins $pin, whose commit ${pin_commit:0:12} has no $skill_path - the install step clones that tag and copies that path, so every scheduled run on a host scaffolded from this template fails there; this is what a rename does to a pin that still names a current release"
-  fi
+if [[ -n "$pin" ]] && git rev-parse -q --verify "refs/tags/$pin^{commit}" >/dev/null; then
+  for path in skills/ktl-librarian/SKILL.md "$templates/knowledge-sync.manifest"; do
+    if git cat-file -e "$pin:$path" 2>/dev/null; then
+      ok "$pin carries $path"
+    else
+      err "$pin has no $path, which a host pinned to it reads from the package"
+    fi
+  done
+elif [[ -n "$pin" ]]; then
+  say "skipping the pinned release's contents: $pin is not a tag on this clone"
+fi
+if grep -qF 's/("ktl==)' .github/workflows/semantic-release.yml; then
+  ok "the release step moves the template's ktl pin"
 else
-  say "skipping the pinned tag's contents: neither $pin nor its commit ${pin_sha:0:12} is on this clone"
+  err ".github/workflows/semantic-release.yml no longer moves the ktl pin in $pin_file"
 fi
-# The pin is a tag and the commit that tag names, since a tag can be moved and
-# what it names is the instructions an agent follows unattended. The install
-# step refuses a tag that names another commit, so the template's commit must
-# be the one its tag names, and whatever moves the tag must move the commit
-# too: the release step and the sync into a sibling. A shallow or tag-less
-# checkout has no tag to compare, so this half skips there, and says whether
-# the recorded commit is at least a real object here.
-if [[ -z "$pin_sha" ]]; then
-  err "no TRUST_LADDER_SKILLS_SHA beside the pin in the librarian template - a host would install whatever commit the tag names on the day"
-elif [[ -z "$pin" ]] || ! git rev-parse -q --verify "refs/tags/$pin" >/dev/null; then
-  if git rev-parse -q --verify "$pin_sha^{commit}" >/dev/null; then
-    say "skipping the tag/commit agreement: ${pin:-the pin} is not a tag on this clone (its commit ${pin_sha:0:12} is a real object here)"
-  else
-    say "skipping the tag/commit agreement: neither ${pin:-the pin} nor its commit ${pin_sha:0:12} is on this clone"
-  fi
-elif [[ "$(git rev-parse "refs/tags/$pin^{commit}")" == "$pin_sha" ]]; then
-  ok "the librarian template pins the commit $pin names (${pin_sha:0:12})"
+if grep -qF 'skills install --dest .agents/skills --skill ktl-librarian' "$templates/github/knowledge-librarian.yaml"; then
+  ok "the librarian template installs the skill from the locked ktl package"
 else
-  err "the librarian template pins $pin with commit $pin_sha, but $pin names $(git rev-parse "refs/tags/$pin^{commit}") - the install step refuses that on every host, so move the two together"
+  err "the librarian template's install step no longer installs ktl-librarian from the locked ktl package"
 fi
-# shellcheck disable=SC2016 # the template's own $ expressions, matched as text
-if grep -qF '"$TRUST_LADDER_SKILLS_SHA"' skills/ktl-sidecar/templates/github/knowledge-librarian.yaml \
-   && grep -qF 'got="$(git -C "$tmp" rev-parse HEAD)"' skills/ktl-sidecar/templates/github/knowledge-librarian.yaml; then
-  ok "the install step compares the commit it cloned with the pinned one"
-else
-  err "the librarian template's install step no longer compares the cloned commit with TRUST_LADDER_SKILLS_SHA"
-fi
-for mover in .github/workflows/semantic-release.yml skills/ktl-sidecar/templates/scripts/knowledge-sync.sh; do
-  if grep -qF 's/(TRUST_LADDER_SKILLS_REF: )' "$mover" && grep -qF 's/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/' "$mover"; then
-    ok "$mover moves the pinned commit with the pinned tag"
-  else
-    err "$mover moves TRUST_LADDER_SKILLS_REF without TRUST_LADDER_SKILLS_SHA, so the install step would refuse the next pin it writes"
-  fi
-done
-# Stage a commit that carries the skill path, with no tag for it, and confirm
-# that the content half resolves the recorded commit and reads the path, as
-# it must on a scheduled, tag-less checkout.
-p15="$(mktemp -d)"
-p15_git=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "$p15"
-  -c init.defaultBranch=main -c user.name=contract -c user.email=contract@example.invalid -c commit.gpgsign=false)
-"${p15_git[@]}" init -q
-mkdir -p "$p15/skills/ktl-librarian"
-printf 'name: ktl-librarian\n' > "$p15/skills/ktl-librarian/SKILL.md"
-"${p15_git[@]}" add -A && "${p15_git[@]}" commit -q -m 'a release commit, left untagged'
-p15_sha="$("${p15_git[@]}" rev-parse HEAD)"
-if ! "${p15_git[@]}" rev-parse -q --verify "refs/tags/v9.9.9^{commit}" >/dev/null 2>&1 \
-   && p15_commit="$("${p15_git[@]}" rev-parse -q --verify "refs/tags/v9.9.9^{commit}" 2>/dev/null || "${p15_git[@]}" rev-parse -q --verify "$p15_sha^{commit}" 2>/dev/null)" \
-   && [[ "$p15_commit" == "$p15_sha" ]] \
-   && "${p15_git[@]}" ls-tree --name-only "$p15_commit" -- skills/ktl-librarian | grep -qxF -- skills/ktl-librarian; then
-  ok "check 15's content half resolves the recorded commit and reads the skill path when the tag ref is absent"
-else
-  err "check 15's content half could not read the skill path from the recorded commit without the tag"
-fi
-rm -rf "$p15"
 
 # 16. The repository's old name, lokf-agent-skills, stays gone from every
 #     file that speaks in the present tense. A branch written before the

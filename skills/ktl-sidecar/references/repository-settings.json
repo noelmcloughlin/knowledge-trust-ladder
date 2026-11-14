@@ -333,10 +333,18 @@
     },
     {
       "kind": "secret",
-      "name": "KNOWLEDGE_SKILLS_TOKEN",
+      "name": "UV_INDEX_KNOWLEDGE_USERNAME",
       "workflows": ["knowledge-sync.yaml", "knowledge-librarian.yaml"],
       "level": "optional",
-      "why": "A read token for a private copy of the skills repository. The sync's earlier and sync jobs run in no Environment, so it is a repository secret.",
+      "why": "The user name for a private package index that .lokf/pyproject.toml names knowledge. Set it in the knowledge-sync and knowledge-librarian Environments.",
+      "docs": "automation.md#in-a-locked-down-organisation"
+    },
+    {
+      "kind": "secret",
+      "name": "UV_INDEX_KNOWLEDGE_PASSWORD",
+      "workflows": ["knowledge-sync.yaml", "knowledge-librarian.yaml"],
+      "level": "optional",
+      "why": "The password or token for a private package index that .lokf/pyproject.toml names knowledge. Set it in the knowledge-sync and knowledge-librarian Environments.",
       "docs": "automation.md#in-a-locked-down-organisation"
     },
     {
@@ -471,6 +479,13 @@
       "replaced_by": "AGENT_CLI",
       "changelog": "0.11.0",
       "why": "The librarian workflow runs the reviewed wrapper, not a command a secret names. A command that must embed a credential is the AGENT_CLI secret."
+    },
+    {
+      "kind": "secret",
+      "name": "KNOWLEDGE_SKILLS_TOKEN",
+      "replaced_by": "UV_INDEX_KNOWLEDGE_PASSWORD",
+      "changelog": "0.65.0",
+      "why": "Hosts install the skills from the ktl package that .lokf/pyproject.toml pins, not from a clone. A private index's credential is UV_INDEX_KNOWLEDGE_USERNAME and UV_INDEX_KNOWLEDGE_PASSWORD."
     }
   ]
 }

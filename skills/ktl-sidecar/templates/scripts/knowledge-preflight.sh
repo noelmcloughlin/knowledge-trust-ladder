@@ -369,11 +369,13 @@ for dir in .claude/skills .github/skills .agents/skills skills; do
   done
   [ -n "$here" ] && found="${found}${found:+; }$dir:$here"
 done
-# The templates to compare host copies against: bare skills/ first (a
-# repository that publishes the skills is its own canonical copy), then the
-# wrapper's install locations in its order.
-for dir in skills .claude/skills .github/skills .agents/skills; do
-  [ -z "$templates" ] && [ -d "$root/$dir/ktl-sidecar/templates" ] && templates="$root/$dir/ktl-sidecar/templates"
+# The templates to compare host copies against: bare skills/ first (the
+# repository that publishes the skills), then the ktl package that
+# .lokf/pyproject.toml pins, in .lokf/.venv, then the wrapper's install
+# locations in its order.
+for dir in "$root/skills" "$root"/.lokf/.venv/lib/python3*/site-packages/ktl/skills "$root/.lokf/.venv/Lib/site-packages/ktl/skills" \
+           "$root/.claude/skills" "$root/.github/skills" "$root/.agents/skills"; do
+  [ -z "$templates" ] && [ -d "$dir/ktl-sidecar/templates" ] && templates="$dir/ktl-sidecar/templates"
 done
 if [ -n "$found" ]; then
   ok skills "$found"
@@ -422,14 +424,11 @@ fi
 if [ -d "$bundle" ] && [ ! -f "$root/.lokf/scripts/knowledge-report.sh" ]; then
   script_gaps="${script_gaps}${script_gaps:+, }.lokf/scripts/knowledge-report.sh missing, so ktl-curator and an earlier ktl-docent must work each trust label out by hand"
 fi
-# A host moves TRUST_LADDER_SKILLS_REF and the commit beside it on its own
-# schedule, so a different pin is not drift, and any other difference is.
-# The copies compared are the `copy` lines of the installed sidecar's
+# The copies compared are the `copy` lines of the templates' own
 # knowledge-sync.manifest, which knowledge-sync.sh holds at the release's
 # bytes.
-unpin() { sed -E -e 's/(TRUST_LADDER_SKILLS_REF: )v[0-9]+\.[0-9]+\.[0-9]+/\1vX.Y.Z/' -e 's/(TRUST_LADDER_SKILLS_SHA: )[0-9a-f]{40}/\1COMMIT/' "$1"; }
 if [ -n "$templates" ] && [ -d "$root/.lokf" ] && [ ! -f "$templates/knowledge-sync.manifest" ]; then
-  warn copies "${templates#"$root"/} has no knowledge-sync.manifest, so the installed sidecar predates it and the host's copies were not compared; reinstall the sidecar at the release the librarian workflow pins"
+  warn copies "${templates#"$root"/} has no knowledge-sync.manifest, so the installed sidecar predates it and the host's copies were not compared; reinstall the sidecar at the release .lokf/pyproject.toml pins"
 elif [ -n "$templates" ] && [ -d "$root/.lokf" ]; then
   drift="$script_gaps"
   while read -r rule template copy _; do
@@ -437,7 +436,7 @@ elif [ -n "$templates" ] && [ -d "$root/.lokf" ]; then
     src="$templates/$template"; dst="$root/$copy"
     [ -f "$dst" ] || continue
     [ -f "$src" ] || { drift="${drift}${drift:+, }$copy (the installed sidecar lists it and lacks it)"; continue; }
-    cmp -s <(unpin "$src") <(unpin "$dst") || drift="${drift}${drift:+, }$copy"
+    cmp -s "$src" "$dst" || drift="${drift}${drift:+, }$copy"
   done < <(sed 's/#.*//' "$templates/knowledge-sync.manifest")
   if [ -z "$drift" ]; then
     ok copies "host copies match the installed sidecar's templates (${templates#"$root"/})"

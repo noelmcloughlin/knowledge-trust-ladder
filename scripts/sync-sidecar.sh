@@ -20,7 +20,8 @@
 #   --pr       --push, then open the pull request with gh, from the
 #              sibling's .github/PULL_REQUEST_TEMPLATE/knowledge-sync.md
 #   --no-checks  skip the sidecar's checks in each sibling
-#   --source <dir>  read the tag from another clone of this repository
+#   --source <dir>  read the tag's sync script from another clone of this
+#                   repository; each sibling reads the release from its index
 #   --finish   after the pull requests are merged: in each sibling, go back
 #              to the default branch, bring it up to date, and delete the
 #              sync-<tag> branch. A branch whose remote branch still exists,
@@ -107,8 +108,9 @@ if [[ "$finish" -eq 1 ]]; then
   exit "$status"
 fi
 
-# The tag must exist on the remote, not only here: a sibling's librarian
-# clones it from GitHub, and a local tag nobody pushed installs nothing there.
+# The tag must exist on the remote, not only here: publish.yml releases the
+# ktl package from it, and each sibling's sync reads that package from its
+# own index.
 source="$(cd "$source" 2>/dev/null && pwd)" || { echo "sync-sidecar: no such directory: $source" >&2; exit 2; }
 git -C "$source" fetch --quiet --tags origin 2>/dev/null || true
 if ! git -C "$source" rev-parse -q --verify "refs/tags/$tag^{commit}" >/dev/null; then
@@ -116,11 +118,11 @@ if ! git -C "$source" rev-parse -q --verify "refs/tags/$tag^{commit}" >/dev/null
   exit 2
 fi
 if ! git -C "$source" ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
-  echo "sync-sidecar: tag $tag is not on origin: a sibling's scheduled librarian clones from there and would fail to install" >&2
+  echo "sync-sidecar: tag $tag is not on origin, so no ktl package of it is on any index yet" >&2
   exit 2
 fi
 if ! git -C "$source" cat-file -e "$tag:skills/ktl-librarian/SKILL.md" 2>/dev/null; then
-  echo "sync-sidecar: $tag has no skills/ktl-librarian/SKILL.md: the install step copies that path, so a sibling pinned to it fails every scheduled run" >&2
+  echo "sync-sidecar: $tag has no skills/ktl-librarian/SKILL.md: the librarian installs that skill from the release's package, so a sibling pinned to it fails every scheduled run" >&2
   exit 2
 fi
 for needed in "$sync_template" "$manifest_template"; do
@@ -149,7 +151,7 @@ for sibling in "${siblings[@]}"; do
     echo "   running  $tag's knowledge-sync.sh, since the sibling has no copy yet"
   fi
   rc=0
-  bash "$script" --source "$source" --host "$sibling" --branch ${flags[@]+"${flags[@]}"} "$tag" || rc=$?
+  bash "$script" --host "$sibling" --branch ${flags[@]+"${flags[@]}"} "$tag" || rc=$?
   # The tag was checked above, so an exit 2 here is the sibling's, such as a
   # missing path. It is reported, and the other siblings go ahead.
   [[ "$rc" -eq 0 ]] || status=1
