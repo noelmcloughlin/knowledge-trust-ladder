@@ -4,6 +4,8 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+## [0.65.0] - 2026-11-14
+
 ### Added
 
 - **`ktl gh check --strict` asks a public repository for a Scorecard workflow**, through the catalogue's new `workflow` kind.
