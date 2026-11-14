@@ -5,6 +5,11 @@
 
 # Knowledge Trust Ladder (KTL)
 
+[![PyPI](https://img.shields.io/pypi/v/ktl?label=PyPI)](https://pypi.org/project/ktl/)
+[![Validate](https://github.com/noelmcloughlin/knowledge-trust-ladder/actions/workflows/validate.yml/badge.svg)](https://github.com/noelmcloughlin/knowledge-trust-ladder/actions/workflows/validate.yml)
+[![Licence](https://img.shields.io/github/license/noelmcloughlin/knowledge-trust-ladder?label=licence)](LICENSE)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/noelmcloughlin/knowledge-trust-ladder/badge)](https://scorecard.dev/viewer/?uri=github.com/noelmcloughlin/knowledge-trust-ladder)
+
 > "We lasso the world with networks of silver-coloured Italian hemp,\
 > We bind down the world into some sort of order;\
 > We balance the earth in a pair of scales of our own devising."\
@@ -12,7 +17,7 @@
 
 Inspired by the poem, and [lokf](https://w3id.org/lokf/), the Knowledge Trust Ladder (KTL) keeps any repository's scattered knowledge as a portable **collection**: catalogued, authenticated and explained, with trust in every claim left visible. An agent derives each claim, deterministic tools check it, and a named person vouches for it.
 
-Documentation is at [w3id.org/ktl](https://w3id.org/ktl/). Young eaders get [a shorter version](https://w3id.org/ktl/simple/).
+Documentation is at [w3id.org/ktl](https://w3id.org/ktl/). Young readers get [a shorter version](https://w3id.org/ktl/simple/).
 
 ## Get started
 
