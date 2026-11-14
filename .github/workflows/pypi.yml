@@ -1,0 +1,222 @@
+name: PyPI
+
+# Publishes the `ktl` package, the six skills and the command that installs
+# them, to PyPI by trusted publishing, so a machine that reaches a package
+# index and no git host can install the skills (docs/install.md). Beside it
+# goes `knowledge-trust-ladder`, which holds no code and installs ktl at the
+# same version under the repository's name (alias/). It runs no LLM or
+# agent, and it never commits or pushes.
+#
+# publish.yml dispatches it once `gh skill publish` has made the tag, because
+# GitHub starts no workflow for a release made with the default GITHUB_TOKEN.
+# A maintainer can run it by hand too, naming the tag, to retry an upload.
+# Either way it must run on the tag itself: `--ref "$TAG"`.
+#
+# The PYPI_RELEASE_ENABLED repository variable decides where the files go:
+#
+#   unset or "false"   nowhere: the run builds and checks the packages only
+#   "testpypi"         TestPyPI, through the `testpypi` environment
+#   "true"             PyPI, through the `pypi` environment
+#
+# PyPI's trusted publisher names this workflow file and the environment, not
+# the ref, so the environment is the guard: limit `pypi` and `testpypi` to
+# tags matching v*, under Settings, Environments, Deployment branches and
+# tags, and register a publisher once on each index for each of the two
+# projects, with owner noelmcloughlin, repository knowledge-trust-ladder,
+# workflow pypi.yml and that environment's name.
+#
+# Three jobs, for least privilege. `build` runs the build backend
+# (third-party packages, installed at the hashes .github/pypi/requirements.txt
+# holds) under a read-only token. `upload` holds the OIDC token, runs no
+# build and no repository code, and uploads only the files `build` made. The
+# publish action attaches a PEP 740 attestation to each file. `attach` holds
+# the write token, runs only gh and sha256sum, and adds each file's checksum
+# to the GitHub release, where anyone can compare a file from PyPI, or one
+# they rebuild from the tag, against it.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "The release tag to publish, e.g. v0.64.0; run the workflow on that tag"
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: pypi-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and check the packages (read-only)
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      TAG: ${{ inputs.tag }}
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      # The version is read from the tag, so the run must stand on it, and
+      # the tag must be a release tag.
+      - name: Check the run stands on the release tag
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'$TAG' is not vMAJOR.MINOR.PATCH."
+            exit 1
+          fi
+          if [ "$REF" != "refs/tags/$TAG" ]; then
+            echo "::error::This run is on $REF. Run it on the tag: gh workflow run pypi.yml --ref $TAG -f tag=$TAG"
+            exit 1
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      # No cache: this job makes the files that are published, and a cache
+      # another workflow can write is an input they should not have.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: false
+
+      # The build backend comes at the hashes .github/pypi/requirements.txt
+      # holds, and runs on one named Python, so that anyone who rebuilds a
+      # release from its tag with the same command gets the same bytes.
+      - name: Build the source distributions and the wheels
+        run: |
+          build=(uv build --python 3.12 --build-constraints .github/pypi/requirements.txt --require-hashes)
+          "${build[@]}" --out-dir dist/ktl
+          "${build[@]}" --out-dir dist/alias alias
+
+      # A version that is not the tag's would publish under the wrong name,
+      # and PyPI never takes a file name twice. uv writes a .gitignore into
+      # each folder it builds into, which is no package, so hidden files are
+      # left out of the count.
+      - name: Check the files carry the tag's version
+        run: |
+          version="${TAG#v}"
+          expected="$(printf '%s\n' \
+            "alias/knowledge_trust_ladder-$version-py3-none-any.whl" "alias/knowledge_trust_ladder-$version.tar.gz" \
+            "ktl/ktl-$version-py3-none-any.whl" "ktl/ktl-$version.tar.gz")"
+          actual="$(cd dist && find . -type f ! -name '.*' | sed 's|^\./||' | LC_ALL=C sort)"
+          if [ "$actual" != "$expected" ]; then
+            printf '::error::dist/ should hold the two packages at %s, and holds:\n%s\n' "$version" "$actual"
+            exit 1
+          fi
+
+      # The promise that anyone can rebuild a release and compare it with
+      # PyPI's file holds only if a build makes the same bytes every time.
+      - name: Check a second build makes the same bytes
+        run: |
+          build=(uv build --python 3.12 --build-constraints .github/pypi/requirements.txt --require-hashes)
+          "${build[@]}" --out-dir "$RUNNER_TEMP/again/ktl"
+          "${build[@]}" --out-dir "$RUNNER_TEMP/again/alias" alias
+          for file in dist/ktl/* dist/alias/*; do
+            cmp "$file" "$RUNNER_TEMP/again/${file#dist/}" || { echo "::error::$file came out different from a second build."; exit 1; }
+          done
+
+      # The wheels have no dependency outside dist/, so they install with no
+      # index at all.
+      - name: Install the wheels and install the skills from them
+        run: |
+          uv venv -q --python 3.9 "$RUNNER_TEMP/try"
+          uv pip install -q --no-index --python "$RUNNER_TEMP/try/bin/python" dist/ktl/*.whl dist/alias/*.whl
+          "$RUNNER_TEMP/try/bin/ktl" --version
+          "$RUNNER_TEMP/try/bin/knowledge-trust-ladder" --version
+          "$RUNNER_TEMP/try/bin/ktl" skills install --dest "$RUNNER_TEMP/skills"
+          diff -r skills "$RUNNER_TEMP/skills"
+          "$RUNNER_TEMP/try/bin/ktl" skills status --dest "$RUNNER_TEMP/skills"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  upload:
+    name: Upload to ${{ vars.PYPI_RELEASE_ENABLED == 'true' && 'PyPI' || 'TestPyPI' }}
+    needs: build
+    if: vars.PYPI_RELEASE_ENABLED == 'true' || vars.PYPI_RELEASE_ENABLED == 'testpypi'
+    # A GitHub-hosted runner, whatever KNOWLEDGE_RUNNER names: the publish
+    # action is a Docker action that runs only on Linux, and a runner that
+    # outlives its jobs carries state the upload should not depend on.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: ${{ vars.PYPI_RELEASE_ENABLED == 'true' && 'pypi' || 'testpypi' }}
+      url: ${{ vars.PYPI_RELEASE_ENABLED == 'true' && 'https://pypi.org/project/ktl/' || 'https://test.pypi.org/project/ktl/' }}
+    permissions:
+      id-token: write # the OIDC token for trusted publishing
+    env:
+      INDEX: ${{ vars.PYPI_RELEASE_ENABLED == 'true' && 'https://upload.pypi.org/legacy/' || 'https://test.pypi.org/legacy/' }}
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist/
+
+      # ktl first, so that a missing publisher for the alias never holds the
+      # skills back. A file the index already holds is skipped, so a run
+      # repeated after a partial upload finishes the job; the builds are
+      # reproducible, so the file it skips is the one it would have sent.
+      - name: Upload ktl
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+        with:
+          repository-url: ${{ env.INDEX }}
+          packages-dir: dist/ktl/
+          skip-existing: true
+          attestations: true
+
+      - name: Upload knowledge-trust-ladder
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+        with:
+          repository-url: ${{ env.INDEX }}
+          packages-dir: dist/alias/
+          skip-existing: true
+          attestations: true
+
+  attach:
+    name: Attach the checksums to the release
+    needs: upload
+    if: vars.PYPI_RELEASE_ENABLED == 'true'
+    runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 10
+    permissions:
+      contents: write # gh release upload, and nothing else
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist/
+
+      - name: Write and attach a .sha256 file for each package file
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          mkdir sums
+          for file in dist/ktl/* dist/alias/*; do
+            (cd "$(dirname "$file")" && sha256sum "$(basename "$file")") > "sums/$(basename "$file").sha256"
+          done
+          cat sums/*.sha256
+          gh release upload "$TAG" sums/*.sha256 --clobber --repo "$GITHUB_REPOSITORY"

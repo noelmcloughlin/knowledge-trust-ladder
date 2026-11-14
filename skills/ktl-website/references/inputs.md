@@ -18,7 +18,7 @@ A file the repository lacks is passed over without a setting: its mount finds no
 
 - `README.md`, as written, its `#` title included. Its frontmatter is read as data, so no key in it can move or hide the page. Its Markdown is served at `/index.md`, as a docs page's is. With no README, the page opens with the site's title, its description and the bundle's own introduction.
 - A repository with a LinkML schema of its own leads with it: the schema's title and description, how many classes, slots, enumerations and types it has, and its first six classes.
-- Five buttons, the same on every site and in the same order. Each is looked for among the site's pages, and one that is not found keeps its place, greyed, with the reason on hover:
+- Five buttons, the same on every site and in the same order. Quick start is the filled one, or, on a site without a quick start, the first button found. Each is looked for among the site's pages, and one that is not found keeps its place, greyed, with the reason on hover:
 
 | Button | Found when |
 | --- | --- |

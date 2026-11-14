@@ -1,0 +1,7 @@
+# The build backend of the ktl and knowledge-trust-ladder packages, within
+# the bounds both pyproject.toml files set. requirements.txt is compiled from
+# this file with every package it pulls in and every hash, by the command in
+# its header; pypi.yml and the package tests build with --require-hashes, so
+# a release is built from exactly these files.
+hatchling>=1.27,<2
+uv-dynamic-versioning>=0.8,<1

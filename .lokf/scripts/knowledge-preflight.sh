@@ -324,6 +324,43 @@ if [ -f "$root/.lokf/uv.lock" ]; then
 fi
 
 # ---- installed skills, and drift between copies -----------------------------
+# gh skill install rewrites a SKILL.md as it installs it: the frontmatter keys
+# come out sorted, a quoted value can come out plain, a metadata block names
+# the source, and the blank line after the frontmatter goes. These print the
+# frontmatter with each value unquoted, sorted and without that block, and
+# the body without its leading blank lines, so two copies of one release
+# compare the same however each was installed.
+skill_md_head() {
+  awk -v q="'" '
+    NR == 1 { if ($0 != "---") exit; next }
+    $0 == "---" { exit }
+    /^metadata:/ { block = 1; next }
+    block && /^[ \t]/ { next }
+    { block = 0 }
+    /^[ \t]/ { print; next }
+    {
+      key = $0; sub(/:.*/, "", key)
+      value = $0; sub(/^[^:]*:[ \t]*/, "", value); sub(/[ \t]+$/, "", value)
+      n = length(value)
+      if (n >= 2 && substr(value, 1, 1) == q && substr(value, n, 1) == q) { value = substr(value, 2, n - 2); gsub(q q, q, value) }
+      else if (n >= 2 && substr(value, 1, 1) == "\"" && substr(value, n, 1) == "\"") value = substr(value, 2, n - 2)
+      print key ": " value
+    }' "$1" | LC_ALL=C sort
+}
+skill_md_body() {
+  awk 'NR == 1 && $0 == "---" { head = 1; next }
+       head { if ($0 == "---") { head = 0; lead = 1 }; next }
+       lead && $0 == "" { next }
+       { lead = 0; print }' "$1"
+}
+# Two copies of a skill hold one release when every file matches, the
+# SKILL.md compared through skill_md_head and skill_md_body.
+same_skill() {
+  local differ
+  differ="$(diff -rq "$1" "$2" 2>&1)" && return 0
+  [ "$differ" = "Files $1/SKILL.md and $2/SKILL.md differ" ] || return 1
+  cmp -s <(skill_md_head "$1/SKILL.md") <(skill_md_head "$2/SKILL.md") && cmp -s <(skill_md_body "$1/SKILL.md") <(skill_md_body "$2/SKILL.md")
+}
 found=""; templates=""
 for dir in .claude/skills .github/skills .agents/skills skills; do
   here=""
@@ -345,7 +382,7 @@ if [ -n "$found" ]; then
     for dir in .claude/skills .github/skills .agents/skills skills; do
       [ -d "$root/$dir/$s" ] || continue
       if [ -z "$first" ]; then first="$root/$dir/$s"
-      elif [ "$(cd "$first" && pwd -P)" != "$(cd "$root/$dir/$s" && pwd -P)" ] && ! diff -rq "$first" "$root/$dir/$s" >/dev/null 2>&1; then
+      elif [ "$(cd "$first" && pwd -P)" != "$(cd "$root/$dir/$s" && pwd -P)" ] && ! same_skill "$first" "$root/$dir/$s"; then
         warn skills "two copies of $s differ: ${first#"$root"/} and $dir/$s - one is stale; reinstall or remove it"
       fi
     done

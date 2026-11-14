@@ -35,6 +35,9 @@ exclude = [
   # The whole host is excluded, since any of its pages can be next. Drop
   # this line if CI reaches it again.
   '^https://docs\.snowflake\.com/',
+  # The ktl package's PyPI page answers 404 until pypi.yml first uploads
+  # it. Drop this line once https://pypi.org/project/ktl/ answers.
+  '^https://pypi\.org/project/ktl/',
   # A GitHub issue or pull request page answered a CI runner with 500 past
   # every retry, while the issue was open and the page served 200 elsewhere
   # (checked 2026-10-14). The next step in validate.yml checks each such

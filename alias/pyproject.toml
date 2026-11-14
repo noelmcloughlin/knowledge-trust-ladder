@@ -1,0 +1,60 @@
+# The `knowledge-trust-ladder` package on PyPI: the repository's own name,
+# held so that it installs ktl rather than whatever someone else might
+# upload under it. It carries no code. Each release depends on ktl at
+# exactly its own version, and its command is ktl's under the long name:
+#
+#   uvx knowledge-trust-ladder skills install --scope user
+#
+# pypi.yml builds it beside ktl from each release tag, with the same build
+# backend at the same hashes.
+[project]
+name = "knowledge-trust-ladder"
+dynamic = ["version", "dependencies"]
+description = "Knowledge Trust Ladder (KTL) under the repository's name: installs ktl, the package that carries the six agent skills."
+readme = "README.md"
+license = "Apache-2.0"
+authors = [{ name = "Noel McLoughlin" }]
+requires-python = ">=3.9"
+keywords = ["agent-skills", "okf", "lokf", "linkml", "knowledge-graph", "provenance", "human-review", "trust-ladder"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Documentation",
+    "Topic :: Software Development :: Documentation",
+]
+
+[project.urls]
+Homepage = "https://w3id.org/ktl/"
+Documentation = "https://w3id.org/ktl/docs/install/"
+Repository = "https://github.com/noelmcloughlin/knowledge-trust-ladder"
+Changelog = "https://github.com/noelmcloughlin/knowledge-trust-ladder/blob/main/CHANGELOG.md"
+
+[project.scripts]
+knowledge-trust-ladder = "ktl.cli:main"
+
+[build-system]
+requires = ["hatchling>=1.27,<2", "uv-dynamic-versioning>=0.8,<1"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+# ktl at exactly this package's version, so the two names install the same
+# skills.
+[tool.hatch.metadata.hooks.uv-dynamic-versioning]
+dependencies = ["ktl=={{ version }}"]
+
+[tool.uv-dynamic-versioning]
+vcs = "git"
+style = "pep440"
+fallback-version = "0.0.0"
+
+# No code: the wheel holds its metadata alone.
+[tool.hatch.build.targets.wheel]
+bypass-selection = true
+
+[tool.hatch.build.targets.sdist]
+only-include = ["pyproject.toml", "README.md"]
