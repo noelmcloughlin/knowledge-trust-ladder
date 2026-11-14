@@ -166,14 +166,19 @@ pre:hover .copy, .copy:focus-visible { opacity: 1; }
 .button--secondary { background: none; color: var(--brand); }
 .button--missing { border-style: dashed; border-color: var(--rule); background: none; color: var(--muted); font-weight: 400; cursor: not-allowed; }
 .actions > .muted { align-self: center; }
-/* A figure at full size, over the dimmed page. It takes the window, and a click, Escape or Close puts it away. */
+/* A figure or a diagram at full size, over the dimmed page. It takes the window, and Escape or Close puts it away. */
 .figure { cursor: zoom-in; }
 .zoom { width: 96vw; height: 94vh; max-width: none; max-height: none; padding: 3rem 1rem 1rem; border: 1px solid var(--rule); border-radius: 10px; background: var(--bg); color: var(--fg); cursor: zoom-out; }
 .zoom[open] { display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); place-items: center; }
 .zoom::backdrop { background: var(--scrim); }
 .zoom img { max-width: 100%; max-height: 100%; }
 .zoom__drawing { width: 100%; height: 100%; object-fit: contain; }
-.zoom button { position: absolute; top: .6rem; right: .8rem; padding: .3rem .8rem; border: 1px solid var(--rule); border-radius: 6px; background: var(--card); font-size: .9rem; }
+/* A diagram fills the window too, and the wheel, a drag or the tools above it zoom and move it. A figure has Close alone. */
+.zoom__diagram { width: 100%; height: 100%; touch-action: none; user-select: none; cursor: grab; }
+.zoom__diagram:active { cursor: grabbing; }
+.zoom__tools { position: absolute; top: .6rem; right: .8rem; display: flex; gap: .4rem; margin: 0; }
+.zoom:not(.zoom--diagram) [data-do]:not([data-do="close"]) { display: none; }
+.zoom button { min-width: 2.2rem; padding: .3rem .8rem; border: 1px solid var(--rule); border-radius: 6px; background: var(--card); color: var(--fg); font-size: .9rem; cursor: pointer; }
 .edit { margin-top: 3rem; font-size: .9rem; }
 .pager { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-width: 46rem; margin-top: 2rem; }
 .pager a { padding: .6rem .9rem; border: 1px solid var(--line); border-radius: 8px; background: var(--card); text-decoration: none; }
@@ -225,26 +230,52 @@ a[data-preview]:is(:hover, :focus-visible)::after { content: attr(data-preview) 
 .card__also { color: var(--edited-fg); }
 .card__definition { font: italic 1.05rem/1.5 var(--serif); }
 .card__more summary { cursor: pointer; color: var(--muted); }
-.card dl, .facts { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: .3rem 1rem; }
+.card dl { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: .3rem 1rem; }
 .card > dl { margin: .8rem 0 0; }
-.card dt, .facts dt { color: var(--muted); }
-.card dd, .facts dd { margin: 0; }
+.card dt { color: var(--muted); }
+.card dd { margin: 0; overflow-wrap: anywhere; }
 .card ul { margin: 0; padding-left: 0; list-style: none; }
-.card__files a { margin-right: .8rem; }
+.card__files a { margin: 0 .3rem .3rem 0; color: var(--fg); text-decoration: none; }
+.card__files a:is(:hover, :focus-visible) { border-color: var(--rule); background: var(--raise); }
+.card__files code { padding: 0; background: none; }
+/* The full record: a rule above its toggle, and a faint one between its rows. */
+.card__more { margin-top: .4rem; padding-top: .5rem; border-top: 1px solid var(--line); }
+.card__more > dl { gap: 0 1rem; }
+.card__more > dl > :is(dt, dd) { padding: .4rem 0; border-top: 1px dotted var(--line); }
+.card__more > dl > :is(dt, dd):nth-child(-n + 2) { border-top: 0; }
+.card__checks li { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: .25rem; }
+/* The bundle's own card: the ladder as one bar, then the health figures as tiles. */
+.card--bundle { border-left-color: var(--brand); }
+.card--bundle .card__call { overflow-wrap: anywhere; }
+.card__caption { display: flex; justify-content: space-between; margin: .8rem 0 .35rem; color: var(--muted); font-size: .85rem; }
+.ladder { display: flex; gap: 2px; height: .7rem; margin: 0 0 .8rem; border-radius: 999px; overflow: hidden; }
+.ladder__part { min-width: 4px; background: var(--tone); }
+.ladder__part.tone--retired { background: repeating-linear-gradient(135deg, var(--tone) 0 3px, transparent 3px 6px); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.tiles a { display: flex; flex-direction: column-reverse; justify-content: flex-end; height: 100%; padding: .45rem .7rem; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); text-decoration: none; }
+.tiles a:is(:hover, :focus-visible) { border-color: var(--rule); background: var(--raise); }
+.tiles__n { font: 600 1.35rem/1.2 var(--serif); font-variant-numeric: tabular-nums; }
+.tiles__words { color: var(--muted); font-size: .82rem; line-height: 1.3; }
+
 .excerpt { margin: .2rem 0 .5rem; font-size: .9em; }
 .mirror { margin: .2rem 0 .4rem; color: var(--muted); font-size: .9em; }
 .concept-list, .releases { padding-left: 0; list-style: none; }
 .concept-list li { margin-bottom: .7rem; }
-.tone--person { accent-color: var(--chart-person); }
-.tone--edited { accent-color: var(--chart-edited); }
-.tone--automation { accent-color: var(--chart-automation); }
-.tone--nobody, .tone--retired { accent-color: var(--chart-nobody); }
+.tone--person { --tone: var(--chart-person); }
+.tone--edited { --tone: var(--chart-edited); }
+.tone--automation { --tone: var(--chart-automation); }
+.tone--nobody, .tone--retired { --tone: var(--chart-nobody); }
 
-/* The health page's bars. */
-.bars { display: grid; gap: .3rem; margin: 1.5rem 0; }
-.bar { display: grid; grid-template-columns: 17rem 1fr 2.5rem; gap: .8rem; align-items: center; color: var(--fg); text-decoration: none; }
-.bar__track { width: 100%; height: .9rem; }
-.bar__n { text-align: right; font-variant-numeric: tabular-nums; }
+/* The health page's bars, one per state of the ladder, inside its card. */
+.bars { display: grid; gap: .15rem; margin: .8rem 0 .4rem; }
+.bar { display: grid; grid-template-columns: 17rem 1fr 2.5rem; gap: .8rem; align-items: center; margin: 0 -.5rem; padding: .3rem .5rem; border-radius: 6px; color: var(--fg); }
+.bar:has(a):hover { background: var(--panel); }
+.bar__words { display: flex; align-items: center; }
+.bar__track { appearance: none; width: 100%; height: .7rem; border: 0; border-radius: 999px; background: var(--panel); overflow: hidden; }
+.bar__track::-webkit-progress-bar { background: var(--panel); }
+.bar__track::-webkit-progress-value { border-radius: 999px; background: var(--tone); }
+.bar__track::-moz-progress-bar { border-radius: 999px; background: var(--tone); }
+.bar__n { text-align: right; font: 600 1.05rem var(--serif); font-variant-numeric: tabular-nums; }
 .mermaid { border: 0 !important; background: none !important; }
 
 /*
@@ -311,7 +342,7 @@ a[data-preview]:is(:hover, :focus-visible)::after { content: attr(data-preview) 
   .sidebar:target { display: block; position: fixed; inset: 0; z-index: 15; align-self: stretch; max-height: none; padding: 1rem; background: var(--bg); }
   .sidebar:target .sidebar__close { display: block; margin-bottom: .8rem; }
   .bar { grid-template-columns: 1fr 2.5rem; } .bar__track { grid-column: 1 / -1; grid-row: 2; }
-  .card dl, .facts { grid-template-columns: 1fr; }
+  .card dl { grid-template-columns: minmax(0, 1fr); } .card__more > dl > dd { padding-top: 0; border-top: 0; }
   .hero { padding: 1rem; }
   .graph__body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); height: auto; }
   .graph__filters { max-height: 32vh; }

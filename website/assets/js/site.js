@@ -67,9 +67,41 @@ addEventListener("DOMContentLoaded", () => {
     pre.append(button);
   }
 
-  // A figure opens over the page as large as the window allows, by mouse or keyboard. A click, Escape or
-  // Close puts it away, so the reader never leaves the page. The link still names the file, for a new tab.
-  let zoom;
+  // A figure or a diagram opens over the page as large as the window allows, by mouse or keyboard. Escape or
+  // Close puts it away, so the reader never leaves the page, and so does a click on a figure. A figure's link
+  // still names the file, for a new tab.
+  let zoom, view, shown;
+  const enlarge = (content, label, tools = null) => {
+    if (!zoom) {
+      zoom = Object.assign(document.createElement("dialog"), { className: "zoom" });
+      zoom.innerHTML = '<p class="zoom__tools"><button type="button" data-do="out" aria-label="Zoom out">−</button>'
+        + '<button type="button" data-do="in" aria-label="Zoom in">+</button><button type="button" data-do="fit">Fit</button>'
+        + '<button type="button" data-do="close">Close</button></p>';
+      zoom.addEventListener("click", (event) => {
+        const what = event.target.closest("[data-do]")?.dataset.do;
+        if (what === "close") zoom.close();
+        else if (what) view?.[what]();
+        else if (!view || (event.target === zoom && !view.dragged())) zoom.close();
+      });
+      zoom.addEventListener("keydown", (event) => {
+        const what = { "+": "in", "=": "in", "-": "out", 0: "fit" }[event.key];
+        if (what && view) (event.preventDefault(), view[what]());
+      });
+      zoom.addEventListener("close", () => {
+        if (view) view.put();
+        else shown.remove();
+        view = shown = null;
+      });
+      document.body.append(zoom);
+    }
+    view = tools;
+    shown = content;
+    zoom.ariaLabel = label;
+    zoom.classList.toggle("zoom--diagram", !!tools);
+    zoom.append(content);
+    zoom.showModal();
+  };
+
   for (const img of document.querySelectorAll(".prose picture > img, .prose p > img")) {
     if (img.closest("a") || img.width < 200) continue;
     const link = Object.assign(document.createElement("a"), { href: img.currentSrc || img.src, className: "figure", title: "Show the figure at full size" });
@@ -78,20 +110,90 @@ addEventListener("DOMContentLoaded", () => {
     link.addEventListener("click", (event) => {
       if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
-      if (!zoom) {
-        zoom = Object.assign(document.createElement("dialog"), { className: "zoom", ariaLabel: "The figure at full size" });
-        zoom.innerHTML = '<button type="button">Close</button><img alt="">';
-        zoom.addEventListener("click", () => zoom.close());
-        document.body.append(zoom);
-      }
-      const big = zoom.querySelector("img");
       const src = img.currentSrc || img.src;
       // A drawing grows to fill the window. A photograph stops at its own size, where it is still sharp.
       const drawing = /\.svg([?#]|$)/i.test(src);
-      Object.assign(big, { src, alt: img.alt, className: drawing ? "zoom__drawing" : "" });
+      const big = Object.assign(document.createElement("img"), { src, alt: img.alt, className: drawing ? "zoom__drawing" : "" });
       big.style.maxWidth = drawing ? "" : `min(100%, ${img.naturalWidth}px)`;
-      zoom.showModal();
+      enlarge(big, "The figure at full size");
     });
+  }
+
+  // A Mermaid diagram moves into the same window, where the wheel or the buttons zoom it and a drag moves it.
+  // Mermaid draws it after the page loads, so the drawing is looked for on each click, not now.
+  for (const pre of document.querySelectorAll(".prose .mermaid")) {
+    Object.assign(pre, { tabIndex: 0, title: "Show the diagram at full size" });
+    pre.setAttribute("role", "button");
+    pre.classList.add("figure");
+    const open = () => {
+      const svg = pre.querySelector("svg");
+      if (svg?.viewBox.baseVal?.width) enlarge(svg, "The diagram at full size", diagramView(svg, pre));
+    };
+    pre.addEventListener("click", open);
+    pre.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") (event.preventDefault(), open());
+    });
+  }
+
+  // The zoom and the drag change the drawing's viewBox, so it stays sharp at any size. put() returns it to the page as it was.
+  function diagramView(svg, home) {
+    const style = svg.getAttribute("style");
+    const first = svg.getAttribute("viewBox");
+    const whole = svg.viewBox.baseVal;
+    let box = { x: whole.x, y: whole.y, w: whole.width, h: whole.height };
+    const fitted = { ...box };
+    let drag = null, moved = 0;
+    const draw = () => svg.setAttribute("viewBox", `${box.x} ${box.y} ${box.w} ${box.h}`);
+    // Zoom by a factor about a point in the window, the middle of the drawing when none is given.
+    const scale = (by, x, y) => {
+      const w = Math.min(Math.max(box.w / by, fitted.w / 40), fitted.w * 2);
+      const r = svg.getBoundingClientRect();
+      const p = new DOMPoint(x ?? r.left + r.width / 2, y ?? r.top + r.height / 2).matrixTransform(svg.getScreenCTM().inverse());
+      const k = w / box.w;
+      box = { x: p.x - (p.x - box.x) * k, y: p.y - (p.y - box.y) * k, w, h: box.h * k };
+      draw();
+    };
+    const wheel = (event) => (event.preventDefault(), scale(Math.exp(-event.deltaY * 0.002), event.clientX, event.clientY));
+    const down = (event) => {
+      event.preventDefault();
+      drag = { x: event.clientX, y: event.clientY };
+      moved = 0;
+      svg.setPointerCapture(event.pointerId);
+    };
+    const move = (event) => {
+      if (!drag) return;
+      const k = svg.getScreenCTM().a;
+      box.x -= (event.clientX - drag.x) / k;
+      box.y -= (event.clientY - drag.y) / k;
+      moved += Math.abs(event.clientX - drag.x) + Math.abs(event.clientY - drag.y);
+      drag = { x: event.clientX, y: event.clientY };
+      draw();
+    };
+    const up = () => (drag = null);
+    svg.removeAttribute("style");
+    svg.classList.add("zoom__diagram");
+    svg.addEventListener("wheel", wheel, { passive: false });
+    svg.addEventListener("pointerdown", down);
+    svg.addEventListener("pointermove", move);
+    svg.addEventListener("pointerup", up);
+    svg.addEventListener("pointercancel", up);
+    return {
+      in: () => scale(1.3),
+      out: () => scale(1 / 1.3),
+      fit: () => ((box = { ...fitted }), draw()),
+      dragged: () => moved > 4,
+      put: () => {
+        svg.removeEventListener("wheel", wheel);
+        svg.removeEventListener("pointerdown", down);
+        svg.removeEventListener("pointermove", move);
+        svg.removeEventListener("pointerup", up);
+        svg.removeEventListener("pointercancel", up);
+        svg.classList.remove("zoom__diagram");
+        if (style) svg.setAttribute("style", style);
+        svg.setAttribute("viewBox", first);
+        home.append(svg);
+      },
+    };
   }
 
   // Search, once a build has written its index. The preview server has none.

@@ -18,12 +18,12 @@
   address of each class, slot, enumeration and type, whatever its kind, goes
   to its page, and the bare old folder to the schema's overview. "schema/*"
   itself keeps the addresses of a site that had every element in one folder.
-  A site with a schema has "elements/*" with no setting: it is the address
-  mkdocs gave each element, and the one a schema's persistent identifiers
-  resolve to.
+  A site with a schema of its own has "elements/*" with no setting: it is
+  the address mkdocs gave each element, and the one a schema's persistent
+  identifiers resolve to. LOKF core's identifiers resolve elsewhere.
 */ -}}
 {{- $redirects := site.Params.redirects | default dict -}}
-{{- if resources.Get "gendoc/_index.md" }}{{ $redirects = merge (dict "elements/*" "schema/*") $redirects }}{{ end -}}
+{{- if and (resources.Get "gendoc/_index.md") (not (resources.Get "gendoc/core.txt")) }}{{ $redirects = merge (dict "elements/*" "schema/*") $redirects }}{{ end -}}
 {{- range $from, $to := $redirects -}}
   {{- $moved := dict "kind" "page" "title" "This page has moved" "layout" "redirect" "sitemap" (dict "disable" true) -}}
   {{- if hasSuffix $from "/*" -}}

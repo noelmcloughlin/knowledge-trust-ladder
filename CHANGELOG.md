@@ -4,6 +4,20 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Added
+
+- **A ktl-website Mermaid diagram opens over the page with a click**, as a figure does, where the wheel or buttons zoom it and a drag moves it.
+- **The bundle page and the health page show their figures on a card**: a bar of the ladder's states and a tile per health figure, each linking to its list.
+- **A concept card names a Creative Commons licence by its short name**, shows each check's person or automation dot, offers its files as chips, rules its record's rows, and shows a genre that repeats the type only once.
+
+### Changed
+
+- **A ktl-website site with no LinkML schema of its own shows LOKF core in its Schema part**, from `.lokf/schema/lokf.yaml` or the `lokf` package, so the home page's schema button is never greyed. The home page still leads only with a repository's own schema.
+
+### Fixed
+
+- **A concept page no longer scrolls sideways on a phone**: a long path or address in its record wraps.
+
 ## [0.64.0] - 2026-11-14
 
 ### Added

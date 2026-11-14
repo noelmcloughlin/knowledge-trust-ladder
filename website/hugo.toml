@@ -119,8 +119,8 @@ target = "assets/ingest/ingest.lock.yaml"
 # What the site shows only when the repository has it. A mount whose source
 # is missing mounts nothing, so neither needs a setting, and nor do the
 # README, the docs, the changelog and the figures above and below. The first is the
-# folder of pages prepare.sh has gen-doc write when it finds a LinkML schema:
-# the site then shows the schema, and leads with it. The second is the
+# folder of pages prepare.sh has gen-doc write for a LinkML schema, or for
+# LOKF core when the repository holds none. The second is the
 # workflow of a domain host, whose graph page offers the workspace that
 # workflow serves at workspace/.
 [[module.mounts]]

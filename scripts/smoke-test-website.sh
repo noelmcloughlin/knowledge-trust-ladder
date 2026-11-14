@@ -310,10 +310,12 @@ echo "Step 4 again: the bare shape, with a bundle and nothing else, and site.tom
 build
 assert "the link check passed" "grep -q 'check-links: .* 0 broken link' \"$test_root/build.log\""
 assert "the home page is there, from the bundle's own introduction" "[[ -f \"$dist/index.html\" ]] && grep -q '<h1>Acme Platform</h1>' \"$dist/index.html\""
-assert "no docs pages, no release pages, no schema pages and their old addresses, and no data" "[[ ! -d \"$dist/docs\" && ! -d \"$dist/changelog\" && ! -d \"$dist/schema\" && ! -d \"$dist/elements\" && ! -d \"$dist/browse\" && ! -e \"$dist/index.md\" ]]"
-assert "the home page keeps its five buttons, with the bundle's a link and the schema's, the architecture page's and the quick start's greyed" \
-  "[[ \$(grep -o 'button--missing' \"$dist/index.html\" | wc -l) -ge 3 ]] && grep -q 'This repository holds no LinkML schema' \"$dist/index.html\" && grep -q 'This repository has no docs/architecture.md' \"$dist/index.html\" && ! grep -q 'On exhibit' \"$dist/index.html\""
-assert "the navigation has no Schema part and no changelog" "! grep -q '>Schema</summary>' \"$dist/index.html\" && ! grep -q 'changelog/' \"$dist/index.html\""
+assert "no docs pages, no release pages, no element addresses, and no data" "[[ ! -d \"$dist/docs\" && ! -d \"$dist/changelog\" && ! -d \"$dist/elements\" && ! -d \"$dist/browse\" && ! -e \"$dist/index.md\" ]]"
+assert "the schema pages show LOKF core from the lokf package, served beside them" \
+  "grep -q 'Linked Open Knowledge Format' \"$dist/schema/index.html\" && grep -q 'pypi.org/project/lokf/' \"$dist/schema/index.html\" && [[ -f \"$dist/schema/lokf.yaml\" && -f \"$dist/schema/classes/Concept/index.html\" ]]"
+assert "the home page keeps its five buttons, with the schema's and the bundle's links and the architecture page's and the quick start's greyed, and does not lead with LOKF core" \
+  "grep -q 'href=\"\\?/acme-platform/schema/\"\\?>The schema' \"$dist/index.html\" && [[ \$(grep -o 'button--missing' \"$dist/index.html\" | wc -l) -ge 2 ]] && grep -q 'This repository has no docs/architecture.md' \"$dist/index.html\" && ! grep -q 'On exhibit' \"$dist/index.html\""
+assert "the navigation has a Schema part and no changelog" "grep -q 'Schema</summary>' \"$dist/index.html\" && ! grep -q 'changelog/' \"$dist/index.html\""
 assert "the graph page greys the workspace" "grep -q 'aria-disabled=\"\\?true\"\\?[^>]*>The workspace' \"$dist/graph/index.html\" && ! grep -q 'graph=workspace' \"$dist/graph/index.html\""
 assert "the bundle's pages, the health page and the graph are still there" \
   "[[ -f \"$dist/knowledge/index.html\" && -f \"$dist/health/index.html\" && -f \"$dist/graph/index.html\" ]]"
