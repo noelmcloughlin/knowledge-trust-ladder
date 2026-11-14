@@ -5,11 +5,10 @@ This page is the shared threat model for the repositories listed below. Every on
 The page covers:
 
 - **Every repository in the [lmodel](https://github.com/lmodel) organisation.** Most hold a LinkML domain schema of a published standard or vocabulary.
-- **These seven repositories of the [noelmcloughlin](https://github.com/noelmcloughlin) account, and no others :**
+- **These six repositories of the [noelmcloughlin](https://github.com/noelmcloughlin) account, and no others :**
   - [`ktl-federation`](https://github.com/noelmcloughlin/ktl-federation), a  queryable workspace from other repositories' released knowledge bundles;
   - [`linkmo`](https://github.com/noelmcloughlin/linkmo), a Copier template that builds a command line and an HTTP API from a LinkML schema;
   - [`ai-linkmo`](https://github.com/noelmcloughlin/ai-linkmo), an AI-governance demo application;
-  - [`linkml-sidecar`](https://github.com/noelmcloughlin/linkml-sidecar),  publishes Agent Skills that add a LinkML schema project to a repository;
   - the Knowledge Trust Ladder (KTL) repositories: [`knowledge-trust-ladder`](https://github.com/noelmcloughlin/knowledge-trust-ladder), publishes Agent Skills, and [KTL Registrar](https://github.com/noelmcloughlin/obsidian-ktl-registrar) and [KTL Curator](https://github.com/noelmcloughlin/obsidian-ktl-curator), which publish Obsidian plugins.
 
 The repositories share how they are built and released. [Repository hardening](#repository-hardening) and [Schema builds and releases](#schema-builds-and-releases) cover that. Most repositories also carry a knowledge bundle under `.lokf/`, kept by workflows copied from KTL's `ktl-sidecar` templates. [Knowledge bundles and skills](#knowledge-bundles-and-skills) covers those workflows and skills that work on a bundle, where an agent runs.
