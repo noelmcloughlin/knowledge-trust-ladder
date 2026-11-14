@@ -91,7 +91,7 @@ A file the repository lacks is passed over without a setting: its mount finds no
 
 ## `badge.json`
 
-- `/badge.json` says how many of the bundle's concepts a person confirmed, retired ones aside, beside the mark of the Knowledge Trust Ladder (KTL), in the form a shields.io endpoint badge reads. A README shows the image `https://img.shields.io/endpoint?url=<site>/badge.json` and links it to `<site>/health/`, where `<site>` is the site's address.
+- `/badge.json` says how many of the bundle's concepts a person confirmed, as `n of m`, retired ones aside, beside the mark of the Knowledge Trust Ladder (KTL), in the form a shields.io endpoint badge reads. A README shows the image `https://img.shields.io/endpoint?url=<site>/badge.json` and links it to `<site>/health/`, where `<site>` is the site's address.
 
 ## What search leaves out
 

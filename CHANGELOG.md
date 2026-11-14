@@ -12,6 +12,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 ### Changed
 
 - **The docent eval installs Claude Code from a lockfile, checked by hash.**
+- **The KTL badge reads `n of m`**, without the word "confirmed".
 
 ## [0.65.0] - 2026-11-14
 
