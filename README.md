@@ -9,7 +9,7 @@
 [![Validate](https://github.com/noelmcloughlin/knowledge-trust-ladder/actions/workflows/validate.yml/badge.svg)](https://github.com/noelmcloughlin/knowledge-trust-ladder/actions/workflows/validate.yml)
 [![Licence](https://img.shields.io/github/license/noelmcloughlin/knowledge-trust-ladder?label=licence)](LICENSE)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/noelmcloughlin/knowledge-trust-ladder/badge)](https://scorecard.dev/viewer/?uri=github.com/noelmcloughlin/knowledge-trust-ladder)
-[![Knowledge Trust Ladder](https://img.shields.io/endpoint?url=https://noelmcloughlin.github.io/knowledge-trust-ladder/badge.json)](https://w3id.org/ktl/health/)
+[![KTL scorecard](https://img.shields.io/endpoint?url=https://noelmcloughlin.github.io/knowledge-trust-ladder/badge.json)](https://w3id.org/ktl/health/)
 
 > "We lasso the world with networks of silver-coloured Italian hemp,\
 > We bind down the world into some sort of order;\

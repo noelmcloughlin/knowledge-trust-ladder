@@ -18,13 +18,20 @@
   address of each class, slot, enumeration and type, whatever its kind, goes
   to its page, and the bare old folder to the schema's overview. "schema/*"
   itself keeps the addresses of a site that had every element in one folder.
-  A site with a schema of its own has "elements/*" with no setting: it is
-  the address mkdocs gave each element, and the one a schema's persistent
-  identifiers resolve to. LOKF core's identifiers resolve elsewhere.
+  Hugo lowercases a table's keys, so an old address with capitals goes in
+  the list form, [[params.redirects]] with `from` and `to`, which keeps its
+  case. A site with a schema of its own has "elements/*" with no setting: it
+  is the address mkdocs gave each element, and the one a schema's
+  persistent identifiers resolve to. LOKF core's identifiers resolve
+  elsewhere.
 */ -}}
-{{- $redirects := site.Params.redirects | default dict -}}
-{{- if and (resources.Get "gendoc/_index.md") (not (resources.Get "gendoc/core.txt")) }}{{ $redirects = merge (dict "elements/*" "schema/*") $redirects }}{{ end -}}
-{{- range $from, $to := $redirects -}}
+{{- $redirects := slice -}}
+{{- with site.Params.redirects -}}
+  {{- if reflect.IsMap . }}{{ range $k, $v := . }}{{ $redirects = $redirects | append (dict "from" $k "to" $v) }}{{ end }}{{ else }}{{ $redirects = . }}{{ end -}}
+{{- end -}}
+{{- if and (resources.Get "gendoc/_index.md") (not (resources.Get "gendoc/core.txt")) (not (where $redirects "from" "elements/*")) }}{{ $redirects = $redirects | append (dict "from" "elements/*" "to" "schema/*") }}{{ end -}}
+{{- range $redirects -}}
+  {{- $from := .from -}}{{- $to := .to -}}
   {{- $moved := dict "kind" "page" "title" "This page has moved" "layout" "redirect" "sitemap" (dict "disable" true) -}}
   {{- if hasSuffix $from "/*" -}}
     {{- $old := strings.TrimSuffix "/*" $from -}}
@@ -36,6 +43,6 @@
       {{- end -}}
     {{- end -}}
   {{- else -}}
-    {{- $.AddPage (merge $moved (dict "path" $from "params" (dict "to" $to))) -}}
+    {{- $.AddPage (merge $moved (dict "path" $from "url" (printf "/%s/" (strings.Trim $from "/")) "params" (dict "to" $to))) -}}
   {{- end -}}
 {{- end -}}

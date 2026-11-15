@@ -9,6 +9,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **The KTL badge is labelled `KTL scorecard`.**
 - **The pen, the conventions check and the ingest carry no `exclude-newer` date**, since many company indexes serve no upload times.
 
+### Fixed
+
+- **An old address with capitals keeps its case when `site.toml` lists it as `[[params.redirects]]` with `from` and `to`**, since Hugo lowercases a table's keys.
+
 ## [0.65.0] - 2026-11-15
 
 ### Added
