@@ -37,7 +37,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T18:33:42Z"
+  at: "2026-11-14T22:54:18Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -46,7 +46,7 @@ verified:
 
 # Overview
 
-ktl-website installs a website for the knowledge bundle in the repository it is invoked from: a Hugo site under `website/`, built from the bundle and from whatever else the repository holds. The site shows a page per concept with the trust label `knowledge-report.sh` gives it, a health page, a knowledge graph, and search that filters by trust and type. It serves the four files `lokf export` writes under `/knowledge/`. The architecture page names it the sixth skill, optional like `ktl-prose`, and links this repository's own site, at `https://w3id.org/ktl/`, as the template's first copy.
+ktl-website installs a website for the knowledge bundle in the repository it is invoked from: a Hugo site under `website/`, built from the bundle and from whatever else the repository holds. The site shows a page per concept with the trust label `knowledge-report.sh` gives it, a health page, a knowledge graph, and search that filters by trust and type. It serves the four files `lokf export` writes under `/knowledge/`, and `/badge.json`, which says how many of the bundle's concepts a person confirmed, as `n of m`, retired ones aside, in the form a shields.io endpoint badge reads, for a README to show. The architecture page names it the sixth skill, optional like `ktl-prose`, and links this repository's own site, at `https://w3id.org/ktl/`, as the template's first copy.
 
 It runs once, to install the site, or again to repair or update it. It writes nothing into the bundle, the README, the docs or the changelog. ktl-sidecar runs first, since the site builds from the sidecar's scripts and toolkit. ktl-librarian and ktl-curator change what the pages say. Every file is copied from the skill's `templates/`, never retyped. The build needs uv, git and a POSIX shell, and no Node.js.
 
@@ -59,12 +59,13 @@ No setting names what the site shows. The build looks for each input and shows w
 - `docs/**.md`: the Guide part, a page per file, each also served as Markdown at `/docs/<name>.md` with every address made full.
 - `docs/<page>.<language>-simple.md`: a retelling, which `docs/<page>.md` offers above its title. A concept that names its readers in `audience` or in a tag such as `audience-13-18` retells the one concept it is `derivedFrom`.
 - `src/<name>/schema/<name>.yaml`, at the root or under `.linkml/`: the Schema part, written by LinkML's `gen-doc` with the LinkML that `.lokf/uv.lock` already pins. Each element also answers at `/elements/<Name>/`, the address mkdocs gave it and the one a schema's w3id rules point at, and the home page leads with the schema.
+- `.lokf/schema/lokf.yaml`, or the copy in the `lokf` package: with no schema of the repository's own, the Schema part shows LOKF core, and the home page does not lead with it.
 - `CHANGELOG.md`: a page per release.
 - `.assets/`: the figures.
 - `.lokf/ingest.lock.yaml`: a mirrored source's origin, version and day of fetching, on its concept's card.
 - `.github/workflows/knowledge-federation.yaml`: the workspace, on the graph page.
 
-The home page has five buttons on every site: the schema, the bundle, the architecture page, the glossary and the quick start.[^skill.md] A button whose page is not there keeps its place, greyed, with the reason on hover.[^inputs.md] One part is set, never found: the data. `browse` in `site.toml` names a folder of SQLite databases, because the databases go on the public site. The site serves them under `/browse/`, with a page that opens each in Datasette Lite.
+The home page has five buttons on every site: the schema, the bundle, the architecture page, the glossary and the quick start.[^skill.md] A button whose page is not there keeps its place, greyed, with the reason on hover.[^inputs.md] Quick start is the filled one, or, on a site without a quick start, the first button found. One part is set, never found: the data. `browse` in `site.toml` names a folder of SQLite databases, because the databases go on the public site. The site serves them under `/browse/`, with a page that opens each in Datasette Lite.
 
 `references/inputs.md` gives the rule for each input. It also says that raw HTML in any Markdown the site renders is cleaned after the build, by `scripts/clean-html.py`, to the tags GitHub allows in a README, with a Content-Security-Policy in every page as a second guard. An SVG that holds a script, an event handler or a `javascript:` address stops the build. After the build, `scripts/check-links.py` fails it on a link between the site's own pages that does not resolve.
 

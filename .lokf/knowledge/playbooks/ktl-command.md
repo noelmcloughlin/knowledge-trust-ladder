@@ -29,7 +29,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T20:00:48Z"
+  at: "2026-11-14T22:54:18Z"
 status: draft
 ---
 
@@ -50,7 +50,7 @@ status: draft
 The workflows the skills install read repository variables, secrets kept in Environments, and a few repository settings. `ktl gh` compares what each catalogue asks for with a repository's settings, and sets what is missing. It calls the GitHub CLI with the user's own login, so it needs `gh auth login` and admin rights on the repository. On another forge, a person sets the same intent by hand.
 
 - `plan` lists each missing or different item with the verb that deals with it and the reason. It changes nothing.
-- `apply` creates each Environment the workflows name, limited to the refs the catalogue gives. It adds a missing branch rule, required reviewer, ruleset rule or setting. It never loosens a setting and never turns a switch on.[^repository-settings.md] `--recommended` also makes the hardening changes.
+- `apply` creates each Environment the workflows name, limited to the refs the catalogue gives. It adds a missing branch rule, required reviewer, ruleset rule or setting. It never loosens a setting and never turns a switch on. It turns on again a workflow a catalogue describes that GitHub turned off, which GitHub does to a scheduled workflow in a public repository after 60 days with no activity there.[^repository-settings.md] `--recommended` also makes the hardening changes.
 - `secrets` asks for each missing secret without an echo. It hands each value to `gh secret set` on standard input, never in an argument.
 - `enable <switch>` turns one switch on once everything it needs is in place, and `--run` starts the workflow's first run.
 - `prune` removes a variable or secret a release retired, such as `KNOWLEDGE_LIBRARIAN_CMD`. It also removes a switch set on an Environment, and a repository copy of a secret its Environment now holds.
@@ -60,9 +60,9 @@ Each verb that changes something prints the changes and asks first, unless `--ye
 
 # The catalogues
 
-A catalogue is a JSON file. It lists each variable, secret, Environment, setting and ruleset a set of workflows needs, with the reason. ktl-sidecar and ktl-website each carry one as `references/repository-settings.json`, and this repository describes its own workflows in `.github/repository-settings.json`. Each entry is `required`, `recommended` or `optional`.
+A catalogue is a JSON file. It lists each variable, secret, Environment, setting and ruleset a set of workflows needs, with the reason. A `workflow` entry names an action that a workflow under `.github/workflows/` must use, since `ktl gh` writes no workflow itself. ktl-sidecar and ktl-website each carry one as `references/repository-settings.json`, and this repository describes its own workflows in `.github/repository-settings.json`. Each entry is `required`, `recommended` or `optional`.
 
-The sidecar's catalogue marks the hardening `recommended`: rulesets on the default branch and on `v*` tags, a read-only default workflow token, secret scanning and push protection, and a required reviewer on a `release` Environment. In this repository, required reviewers on `release` wait until releases have downstream users.[^docs-releasing.md] `tests/test_gh.py` holds the catalogues to the templates, to the table of switches and secrets in `automation.md`, and to the retired names the changelog gives.
+The sidecar's catalogue marks the hardening `recommended`: rulesets on the default branch and on `v*` tags, a read-only default workflow token, secret scanning and push protection, a required reviewer on a `release` Environment, and, on a public repository, a workflow that publishes an OpenSSF Scorecard result. `plan` leaves that workflow to the person, and `check --strict` names a public repository without one. In this repository, required reviewers on `release` wait until releases have downstream users.[^docs-releasing.md] Its catalogue requires its Scorecard and CodeQL workflows. `tests/test_gh.py` holds the catalogues to the templates, to the table of switches and secrets in `automation.md`, and to the retired names the changelog gives.
 
 [^ktl-readme.md]: src/ktl/README.md, the paragraph after the title
 [^repository-settings.md]: skills/ktl-sidecar/references/repository-settings.md, What each verb does, `apply`

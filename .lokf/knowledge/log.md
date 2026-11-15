@@ -2,6 +2,16 @@
 
 ## 2026-11-14
 
+* **Changed**: Obsidian says it is a desktop and mobile app for writing and linking Markdown notes, as `docs/obsidian.md` now says in its opening sentence.
+* **Resolved**: `docs/obsidian.md` now says what Obsidian is, so the concept carries it.
+* **Changed**: Three lines of defence links What KTL is for, which lists the other uses, and Young readers, the page's counterpart at the other end of the range, as `docs/three-lines.md` now does. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Collection quotes the README's opening, which now calls the collection portable, and says the architecture page leaves that word out.
+* **Changed**: The ktl command says `apply` turns on again a catalogued workflow that GitHub turned off after 60 days without activity, and that a catalogue's `workflow` entry asks for a Scorecard workflow on a public repository, which `check --strict` names, as `repository-settings.md` and the catalogues now say. This repository's catalogue requires its Scorecard and CodeQL workflows.
+* **Changed**: ktl-website skill says the site serves `badge.json`, the count of concepts a person confirmed, shows LOKF core in its Schema part when the repository has no schema of its own, and fills the Quick start button, as `SKILL.md` and `references/inputs.md` now say.
+* **Changed**: Build, preview and edit the website says the site serves `badge.json` for a README's badge, shows LOKF core as its schema when the repository has none, and fills the Quick start button, as `website/README.md` and the site's templates now say. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Knowledge sources maps the `ktl` package (`pyproject.toml`, `src/ktl/`, `alias/`, `pypi.yml`, `.github/pypi/`) and the catalogues `ktl gh` reads with this repository's Scorecard and CodeQL workflows, as `docs/repository-layout.md` lists them. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: dropped the KTL release numbers that dated a fact in passing, since versions in user-facing prose are unnecessary detail; no fact changed. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: dropped the KTL release numbers that dated a fact in passing, since versions in user-facing prose are unnecessary detail; no fact changed.
 * **Changed**: Releasing says a maintainer opens a sibling's sync pull request early by starting its `knowledge-sync.yaml` by hand or running its `knowledge-sync.sh --pr <tag>`, as `docs/releasing.md` now says, and no longer cites `scripts/sync-sidecar.sh`, which was removed.
 * **Changed**: Contributing says a sibling's sync pull request is opened sooner from that sibling's own workflow or sync script, as `CONTRIBUTING.md` now does.
 * **Changed**: Repository validation's `test_sync.py` line drops the fan-out test, which went with `scripts/sync-sidecar.sh`.
