@@ -8,6 +8,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 - **The KTL badge is labelled `KTL scorecard`.**
 - **The pen, the conventions check and the ingest carry no `exclude-newer` date**, since many company indexes serve no upload times.
+- **The threat model names the Scorecard, CodeQL, SHA-pinning and release-tag measures that each repository with a bundle carries.**
 
 ### Fixed
 
