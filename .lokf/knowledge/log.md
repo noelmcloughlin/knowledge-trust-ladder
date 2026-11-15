@@ -6,6 +6,13 @@
 * **Changed**: Build, preview and edit the website says `site.toml`'s `schema` can name the schema file, and that with no schema of the repository's own the Schema part shows the bundle's domain vocabulary before LOKF core, as `website/README.md` now says. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: Repository validation says the website smoke test builds a third host, with a domain vocabulary alone, and that the empty host's home page links the schema's button as well as the bundle's, as `scripts/smoke-test-website.sh` now does.
 * **Changed**: sources and text follow the move of `.github/release`, `.github/pypi` to `.release`, `.pypi`. `playbooks/knowledge-sources.md` and `policies/versioning.md` were edited since a person confirmed them; each label says so until the curator looks again.
+* **Changed**: ktl-prose skill says what holds now, without the dates on which each part arrived.
+* **Changed**: LOKF toolkit (lokf on PyPI) says what holds now, without the dates on which each part arrived.
+* **Changed**: Releasing says what holds now, without the dates on which each part arrived.
+* **Changed**: Repository validation says what holds now, without the dates on which each part arrived.
+* **Changed**: Threat model says what holds now, without the dates on which each part arrived. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: ktl-sidecar skill says what holds now, without the dates on which each part arrived. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Knowledge sources says what holds now, without the dates on which each part arrived, and no longer lists the lifecycle diagram, which `.assets/` no longer holds. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Added**: Host, the word the docs use for the repository or folder a bundle sits in, and for the setting the skills run in there.
 * **Added**: Portability: what works on each platform, the part of Hosts and doorways that the sidecar's `references/portability.md` sources.
 * **Changed**: Why the bundle is in a hidden folder, until now Hosts and doorways, keeps the sidecar, the doorway, the four arrangements and why the bundle is never a visible folder in a vault, says them as they stand, and names Obsidian where it means it. What works on each platform moved to Portability. Edited since a person confirmed it; the label says so until the curator looks again.

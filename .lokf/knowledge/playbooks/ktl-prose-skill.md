@@ -27,7 +27,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T12:46:18Z"
+  at: "2026-11-15T20:59:49Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -105,7 +105,7 @@ The script reads a script too. Given a `.sh`, `.bash`, `.py`, `.yaml`, `.yml` or
 
 A text for a younger reader is a retelling, not a rewording. It leaves detail out and explains terms, so it is a new file and the original stays as it is. In the bundle, ktl-librarian writes it and this skill checks it. Outside the bundle, this skill writes it beside a file a person names, such as `README.en-simple.md` beside `README.md`. It adds one sentence to the original that points to it.
 
-A pass for dyslexic readers is a rewording at tighter limits. `references/young-readers.md` gives the two bands of age, 8 to 12 and 13 to 18, and the pass for dyslexic readers, with the limits of each (since 2026-10-11). The script supports the work:
+A pass for dyslexic readers is a rewording at tighter limits. `references/young-readers.md` gives the two bands of age, 8 to 12 and 13 to 18, and the pass for dyslexic readers, with the limits of each. The script supports the work:
 
 - `prose-check.py --audience 8-12`, `13-18` or `dyslexia` sets the band's limits, counts the sentences in each paragraph, and notes the page's Automated Readability Index. A page that opens "This page is for readers aged 13 to 18." is held to that band with no flag.
 - Under a band, the script reports `i.e.`, `vs`, `cf.`, `etc.` and `via`. It also notes the words a page uses that the VOA Learning English word book does not hold. The word book is in the public domain and sits in the skill's `assets/` folder with its credit.
