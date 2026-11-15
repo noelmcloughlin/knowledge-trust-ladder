@@ -4,6 +4,8 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+## [0.66.0] - 2026-11-15
+
 ### Changed
 
 - **The KTL badge is labelled `KTL scorecard`.**
