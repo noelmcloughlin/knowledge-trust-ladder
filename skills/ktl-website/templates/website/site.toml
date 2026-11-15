@@ -35,6 +35,11 @@ repo = "https://github.com/<REPO_OWNER>/<REPO_NAME>"
 # The folder of a LinkML project whose src/<name>/schema/ the site shows,
 # when it is neither the root nor .linkml/.
 # linkml = "my-project"
+# Or the schema file itself, when no src/<name>/schema/ holds it: a path
+# from the root, or pkg:<package>/<path> for one inside a Python package
+# that the environment of the uv project schemaProject names holds.
+# schema = "pkg:my_package/schema/my_schema.yaml"
+# schemaProject = "my-project"
 
 # The data: a folder of SQLite databases and their Datasette metadata, from
 # the repository's root, served under browse/ with a page that opens each in

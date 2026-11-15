@@ -9,7 +9,7 @@
 #
 # This file builds the package and nothing else. alias/pyproject.toml builds
 # knowledge-trust-ladder beside it, and pypi.yml builds both from the build
-# backend at the hashes .github/pypi/requirements.txt holds. The sidecar's
+# backend at the hashes .pypi/requirements.txt holds. The sidecar's
 # own Python project is .lokf/pyproject.toml, the site's is
 # website/pyproject.toml, and the tests install from tests/requirements.txt.
 [project]

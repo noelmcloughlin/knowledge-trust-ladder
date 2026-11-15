@@ -125,7 +125,7 @@ target = "assets/ingest/ingest.lock.yaml"
 # is missing mounts nothing, so neither needs a setting, and nor do the
 # README, the docs, the changelog and the figures above and below. The first is the
 # folder of pages prepare.sh has gen-doc write for a LinkML schema, or for
-# LOKF core when the repository holds none. The second is the
+# the bundle's domain vocabulary or LOKF core when the repository holds none. The second is the
 # workflow of a domain host, whose graph page offers the workspace that
 # workflow serves at workspace/.
 [[module.mounts]]

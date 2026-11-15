@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-11-15T19:13:22Z"
+  at: "2026-11-15T21:31:28Z"
 status: draft
 references:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
@@ -139,7 +139,7 @@ Every subprocess runs under an isolated git config, so a global `commit.gpgsign=
 - `lint-scripts` runs ShellCheck on the whole tree.
 - `lint-workflows` runs `actionlint`, pointed by path at this repository's workflows and at the workflow templates that get copied into other repositories: the sidecar's `knowledge-librarian.yaml`, `knowledge-registrar.yaml`, `knowledge-release.yaml`, `knowledge-federation.yaml`, `knowledge-sync.yaml` and `knowledge-ingest.yaml`, and ktl-website's `knowledge-website.yaml`. It would otherwise look only under `.github/workflows/`. It ignores the `copilot-requests` permission, which actionlint 1.7.12 predates. The job also checks that every `uses:` in this repository's workflows and those templates names a commit SHA or image digest rather than a floating tag or branch.
 - `smoke-test` installs the skills from the checkout into a throwaway consumer repository through `scripts/smoke-test-install.sh`. It checks that ktl-docent's two scripts come with the install. It also checks that, run from where the installer put them, they label a concept and record a gap in a reader's repository.
-- `smoke-test-website` builds the ktl-website template on a host made from the sidecar's dummy skeleton through `scripts/smoke-test-website.sh`, twice. One build has a README, docs pages, a changelog, figures, a LinkML schema, retellings, the federation workflow, a mirrored source and data. The other has none of them, since the site finds each with no setting. The fuller build's home page lights four of its five buttons, and the other's keeps all five with only the bundle's a link.[^smoke-test-website.sh] This repository's own site, which `knowledge-website.yaml` builds, proves a fuller `site.toml`.
+- `smoke-test-website` builds the ktl-website template on a host made from the sidecar's dummy skeleton through `scripts/smoke-test-website.sh`, three times. One build has a README, docs pages, a changelog, figures, a LinkML schema, retellings, the federation workflow, a mirrored source and data. Another has none of them, since the site finds each with no setting, and the third has a domain vocabulary alone. The fuller build's home page lights four of its five buttons, and the empty build's keeps all five, with the schema's and the bundle's links.[^smoke-test-website.sh] This repository's own site, which `knowledge-website.yaml` builds, proves a fuller `site.toml`.
 - `validate-markdown` runs markdownlint, lychee, and codespell. Since 2026-10-30 a failed lychee pass waits a minute and checks every link again, since lychee itself retries a timeout or a 429 but never a failed connection, and only the second pass fails the job.[^lychee.toml] Codespell skips `knowledge_bundle`, the link to `.lokf/knowledge`, which it already checks at its real path.
 
 The schedule runs weekly because otherwise link rot, an upstream `gh skill` change or drift in the install path would show up only on the next pull request that happens to run.

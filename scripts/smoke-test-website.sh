@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Copies the ktl-website templates into a throwaway host built from the
 # sidecar's dummy skeleton, as the skill's Steps 1 to 4 would. It builds
-# the site twice: once with a README, docs pages, a changelog, figures, a
-# LinkML schema, retellings, the federation workflow, a mirrored source and
-# data, and once with none of them. No setting names any of those: the site
-# must find each, and show none of what is not there. This repository's own
+# the site three times: once with a README, docs pages, a changelog,
+# figures, a LinkML schema, retellings, the federation workflow, a mirrored
+# source and data, once with none of them, and once with a domain
+# vocabulary alone. No setting names any of those: the site must find each,
+# and show none of what is not there. This repository's own
 # site proves a fuller site.toml, and this test proves a bundle that is not
 # this repository's.
 #
@@ -328,6 +329,22 @@ assert "the navigation has a Schema part and no changelog" "grep -q 'Schema</sum
 assert "the graph page greys the workspace" "grep -q 'aria-disabled=\"\\?true\"\\?[^>]*>The workspace' \"$dist/graph/index.html\" && ! grep -q 'graph=workspace' \"$dist/graph/index.html\""
 assert "the bundle's pages, the health page and the graph are still there" \
   "[[ -f \"$dist/knowledge/index.html\" && -f \"$dist/health/index.html\" && -f \"$dist/graph/index.html\" ]]"
+
+echo ""
+echo "Step 4 a third time: a domain host's vocabulary, and still no schema of the repository's own"
+(
+  cd "$host"
+  mkdir -p .lokf/schema
+  cp "$sidecar/domain.yaml" .lokf/schema/domain.yaml
+  cp "$(uv run --project .lokf --frozen --quiet python -c 'import lokf, pathlib; print(next(pathlib.Path(lokf.__file__).parent.rglob("lokf.yaml")))')" .lokf/schema/lokf.yaml
+  git add .lokf/schema
+  git commit -q -m "a domain vocabulary"
+)
+build
+assert "the link check passed" "grep -q 'check-links: .* 0 broken link' \"$test_root/build.log\""
+assert "the schema pages show the domain vocabulary from .lokf/schema/, served beside them, and say it adds to LOKF core" \
+  "grep -q 'Domain vocabulary' \"$dist/schema/index.html\" && grep -q 'the domain vocabulary its knowledge bundle is written in, which adds to LOKF' \"$dist/schema/index.html\" && grep -q 'blob/[^ >]*/\\.lokf/schema/domain\\.yaml' \"$dist/schema/index.html\" && [[ -f \"$dist/schema/domain.yaml\" && -f \"$dist/schema/lokf.yaml\" && -f \"$dist/schema/classes/MemberBundle/index.html\" ]]"
+assert "the home page does not lead with it, and its elements have no old addresses" "! grep -q 'On exhibit' \"$dist/index.html\" && [[ ! -d \"$dist/elements\" ]]"
 
 echo ""
 if [[ "$fail" -eq 0 ]]; then

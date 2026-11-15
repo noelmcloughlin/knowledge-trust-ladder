@@ -15,6 +15,7 @@ The site finds what it shows, so `site.toml` is short: four values every site ne
 | `params.logo`, `params.logoDark` | a logo of the repository's own, each a file under `.assets/` | the Knowledge Trust Ladder logo |
 | `params.source` | the folder the README, `docs/`, the changelog and `.assets/` come from, such as a fork's `.linkml/`; `prepare.sh` writes `generated/source.toml` with the mounts moved there, which `build.sh` reads last | the repository's root |
 | `params.linkml` | the folder of a LinkML project whose `src/<name>/schema/` the site shows | the root, then `.linkml/` |
+| `params.schema`, `params.schemaProject` | the schema file itself, when no `src/<name>/schema/` holds it: a path from the repository's root, or `pkg:<package>/<path>` for one inside a Python package, found without importing it in the environment of the uv project `schemaProject` names | the schema the site finds, as below; for `schemaProject`, the repository's root |
 | `params.docsExclude` | folders under `docs/` that are not pages | `templates-linkml` and `elements`, which LinkML's `gen-doc` keeps there |
 | `params.docsGroups` | the docs pages in groups: a list of `label` and `pages`, each page by its path under `docs/` without `.md` | the pages at the top of `docs/` in one group, Guides, by title, and each folder a group named by its `index.md` or by the folder |
 | `params.redirects` | old addresses, each sent on to the page built from a repository file: `"about" = "docs/about.md"`. `"schema/*" = "schema/*"` stands for every page of the schema. Hugo lowercases a table's keys, so an address with capitals takes the list form, `[[params.redirects]]` with `from` and `to` | none; a site with a schema has `"elements/*" = "schema/*"` with no setting |
@@ -31,7 +32,7 @@ These are found, never set. To change one, change the repository:
 
 - **The home page** is the README. Its five buttons are the same on every site, and one is greyed until its page exists: add `docs/architecture.md`, a `glossary` group in the bundle or `docs/glossary.md`, or a docs page or heading named Quick start.
 - **A retelling** is a docs file named `<page>.<language>-simple.md` beside `<page>.md`. A sentence in it such as "This page is for readers aged 13 to 18." words its button.
-- **The schema** is `src/<name>/schema/<name>.yaml`, at the root first, then under `.linkml/`.
+- **The schema** is `src/<name>/schema/<name>.yaml`, at the root first, then under `.linkml/`. With none, the site shows the bundle's domain vocabulary, `.lokf/schema/domain.yaml`, or else LOKF core. `linkml` and `schema` above are for a schema kept somewhere else.
 - **The workspace** appears on the graph page of a repository that has `.github/workflows/knowledge-federation.yaml`.
 
 ## The look

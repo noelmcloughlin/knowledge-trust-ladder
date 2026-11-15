@@ -31,9 +31,12 @@ updates:
     commit-message:
       prefix: "chore(actions)"
 
-  # The release tools semantic-release.yml installs with npm ci.
+  # The release tools semantic-release.yml installs with npm ci. They sit in
+  # .release/, as the build backend sits in .pypi/, because Dependabot may
+  # change nothing under .github/ but workflows: its pull request for a
+  # folder there is refused (dependabot/dependabot-core#15237).
   - package-ecosystem: "npm"
-    directory: "/.github/release"
+    directory: "/.release"
     schedule:
       interval: "weekly"
     commit-message:
@@ -69,11 +72,11 @@ updates:
         patterns: ["*"]
 
   # The build backend of the two PyPI packages, pinned by hash in
-  # .github/pypi/requirements.txt, which is compiled from requirements.in
+  # .pypi/requirements.txt, which is compiled from requirements.in
   # beside it; its header says how. A bump changes how a release is built,
   # not what it carries.
   - package-ecosystem: "pip"
-    directory: "/.github/pypi"
+    directory: "/.pypi"
     schedule:
       interval: "weekly"
     commit-message:

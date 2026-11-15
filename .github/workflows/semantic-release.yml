@@ -60,13 +60,13 @@ jobs:
         with:
           node-version: 24
 
-      # .github/release/package-lock.json pins every package, each checked
+      # .release/package-lock.json pins every package, each checked
       # by its hash, so a company registry can be given the exact list. The
       # link lets the release tool and its preset load from the root.
       - name: Install semantic-release from its lockfile
         run: |
-          npm ci --prefix .github/release --no-audit --no-fund --ignore-scripts
-          ln -s .github/release/node_modules node_modules
+          npm ci --prefix .release --no-audit --no-fund --ignore-scripts
+          ln -s .release/node_modules node_modules
 
       # Would these commits release? The types are .releaserc.json's: the
       # Conventional Commits preset's feat/fix plus this repository's
@@ -154,13 +154,13 @@ jobs:
         with:
           node-version: 24
 
-      # .github/release/package-lock.json pins every package, each checked
+      # .release/package-lock.json pins every package, each checked
       # by its hash, so a company registry can be given the exact list. The
       # link lets the release tool and its preset load from the root.
       - name: Install semantic-release from its lockfile
         run: |
-          npm ci --prefix .github/release --no-audit --no-fund --ignore-scripts
-          ln -s .github/release/node_modules node_modules
+          npm ci --prefix .release --no-audit --no-fund --ignore-scripts
+          ln -s .release/node_modules node_modules
 
       # Always --dry-run: semantic-release computes the next version and
       # this repository's Unreleased notes but writes nothing and creates no

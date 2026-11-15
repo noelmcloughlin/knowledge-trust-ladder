@@ -16,7 +16,7 @@
 {{ with partialCached "schema-file.html" "schema-file" -}}
 ## The schema
 
-- [{{ (site.GetPage "/schema").Title }}]({{ .file.Permalink }}): {{ if .core }}LOKF core, the LinkML schema the knowledge bundle is written in{{ else }}the LinkML schema as the repository holds it{{ end }}. Its classes, enumerations, slots and types have a page each under {{ "schema/" | absURL }}
+- [{{ (site.GetPage "/schema").Title }}]({{ .file.Permalink }}): {{ if .domain }}the domain vocabulary the knowledge bundle is written in, which adds to LOKF core{{ else if .core }}LOKF core, the LinkML schema the knowledge bundle is written in{{ else if .package }}the LinkML schema as the {{ .package }} package holds it{{ else }}the LinkML schema as the repository holds it{{ end }}. Its classes, enumerations, slots and types have a page each under {{ "schema/" | absURL }}
 
 {{ end -}}
 ## Docs

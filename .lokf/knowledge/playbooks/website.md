@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/trust-label
 generated:
   by: process:ktl-librarian
-  at: "2026-11-15T19:13:22Z"
+  at: "2026-11-15T21:31:28Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:04:01Z"
@@ -38,7 +38,7 @@ The folder `website/` builds the project's site with Hugo. The Knowledge website
 
 # What each page comes from
 
-No setting names any of these, though `site.toml`'s `source` can move where the README, the docs, the changelog and the figures come from, and `linkml` can move the LinkML project whose schema the site shows. The build otherwise looks for each and shows what it finds:
+No setting names any of these, though `site.toml`'s `source` can move where the README, the docs, the changelog and the figures come from, `linkml` can move the LinkML project whose schema the site shows, and `schema` can name the schema file itself. The build otherwise looks for each and shows what it finds:
 
 - Each concept in `.lokf/knowledge/` becomes a page under `knowledge/`, with its trust label from `knowledge-report.sh`, its sources and its relations both ways. The bundle also gives the health page, the graph, the four files `lokf export` writes, each concept's Markdown and JSON-LD, the bundle log as an Atom feed, `knowledge/log.xml`, and `badge.json`, labelled `KTL scorecard`: how many of the bundle's concepts a person confirmed, as `n of m`, retired ones aside, in the form a shields.io endpoint badge reads. A README shows it as a badge that links to the health page.
 - The README becomes the home page, and its Markdown is served at `index.md`. With no README, the home page opens with the bundle's own introduction.
@@ -49,7 +49,7 @@ No setting names any of these, though `site.toml`'s `source` can move where the 
 - `.assets/` gives the figures, under `assets/`.
 - `.lokf/ingest.lock.yaml` says where each source the ingest mirrored came from, on its concept's card.
 - A LinkML schema at `src/<name>/schema/<name>.yaml`, or the same under `.linkml/`, gives the Schema part: a page per class, slot, enumeration and type, written by LinkML's `gen-doc`, each also at `elements/<Name>/`, where a schema's w3id rules point. The home page then leads with the schema.
-- With no schema of the repository's own, the Schema part shows LOKF core, the schema the bundle is written in, from `.lokf/schema/lokf.yaml` or the copy in the `lokf` package, with no `elements/` addresses. The home page does not lead with it.
+- With no schema of the repository's own, the Schema part shows the schema the bundle is written in: its domain vocabulary, from `.lokf/schema/domain.yaml`, or else LOKF core, from `.lokf/schema/lokf.yaml` or the copy in the `lokf` package. Neither has `elements/` addresses, and the home page does not lead with either.
 - `.github/workflows/knowledge-federation.yaml` adds, on the graph page, the workspace a domain host's federation serves.
 
 One part is set, never found: the data. `browse` in `site.toml` names a folder of SQLite databases, which the site serves under `browse/` with a page that opens each in Datasette Lite.

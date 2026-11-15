@@ -56,6 +56,11 @@
 #   `checksum: {algorithm: sha256, checksum_value: <64 hex digits>}`.
 id: https://w3id.org/ktl/schema/domain
 name: domain
+title: Domain vocabulary
+description: >-
+  What a bundle that federates other bundles needs beyond LOKF core: the
+  Domain it catalogues, each MemberBundle or MemberDomain it pins, and the
+  checksum each pinned release carries.
 imports:
   - linkml:types
   - lokf

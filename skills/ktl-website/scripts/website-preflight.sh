@@ -266,18 +266,20 @@ else
   info assets "no .assets/ folder - the site serves no figures, and shows the Knowledge Trust Ladder logo"
 fi
 
-# The schema, as the site's scripts/prepare.sh finds it: a LinkML project's
-# src/<name>/schema/<name>.yaml, at the root first, then in the .linkml/
-# sidecar.
-schema=""
+# The schema, as the site's scripts/prepare.sh finds it: the file site.toml's
+# schema names, or else a LinkML project's src/<name>/schema/<name>.yaml, at
+# the root first, then in the .linkml/ sidecar.
+schema="$(sed -n 's/^schema = "\(.*\)"$/\1/p' "$root/$site/site.toml" 2>/dev/null || true)"
 for f in "$root"/src/*/schema/*.yaml "$root"/.linkml/src/*/schema/*.yaml; do
-  [ -f "$f" ] || continue
+  [ -z "$schema" ] && [ -f "$f" ] || continue
   name="$(basename "$f" .yaml)"
   [ "$(basename "${f%/schema/*}")" = "$name" ] || continue
   schema="${f#"$root"/}"; break
 done
 if [ -n "$schema" ]; then
   ok schema "$schema: the Schema part, a page per class, slot, enumeration and type, and the home page leads with it"
+elif [ -f "$root/.lokf/schema/domain.yaml" ]; then
+  info schema "no src/<name>/schema/<name>.yaml at the root or under .linkml/ - the Schema part shows .lokf/schema/domain.yaml, the domain vocabulary the bundle is written in, and the home page does not lead with it"
 else
   info schema "no src/<name>/schema/<name>.yaml at the root or under .linkml/ - the Schema part shows LOKF core, the schema the bundle is written in, and the home page does not lead with it"
 fi

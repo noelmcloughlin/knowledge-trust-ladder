@@ -4,7 +4,7 @@
 // The reader's choices in the Display menu, kept in this browser. They are
 // applied before the page is drawn, so a dark page never flashes light.
 const root = document.documentElement;
-const defaults = { theme: "auto", size: "large" };
+const defaults = { theme: "auto", size: "medium" };
 const prefs = { ...defaults };
 try {
   Object.assign(prefs, JSON.parse(localStorage.getItem("ktl-display") || "{}"));
