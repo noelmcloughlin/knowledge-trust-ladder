@@ -19,10 +19,16 @@ repo_url=$(sed -n 's/^repo = "\(.*\)"$/\1/p' "$here/site.toml")
 # The commit of the build, or the branch where the folder is not under git.
 branch=$(sed -n 's/^branch = "\(.*\)"$/\1/p' "$here/site.toml")
 ref=$(git -C "$root" rev-parse HEAD 2>/dev/null || echo "${branch:-main}")
+# site.toml's source: the folder the README, docs/, the changelog and
+# .assets/ come from, by the mounts in generated/source.toml. Its linkml: the
+# folder whose src/<name>/schema/ holds the schema.
+source=$(sed -n 's/^source = "\(.*\)"$/\1/p' "$here/site.toml"); source=${source%/}
+linkml=$(sed -n 's/^linkml = "\(.*\)"$/\1/p' "$here/site.toml"); linkml=${linkml%/}
+src_root="$root${source:+/$source}"
 
 # An SVG is served as a page of its own, so one that holds a script, an event
 # handler or a javascript: address would run on the site's address.
-if active=$(grep -rlEi --include='*.svg' '<script|<foreignObject|[[:space:]]on[a-z]+[[:space:]]*=|javascript:' "$root/.assets" "$root/docs" "$root/.lokf/knowledge" "$here/static" 2>/dev/null); then
+if active=$(grep -rlEi --include='*.svg' '<script|<foreignObject|[[:space:]]on[a-z]+[[:space:]]*=|javascript:' "$src_root/.assets" "$src_root/docs" "$root/.lokf/knowledge" "$here/static" 2>/dev/null); then
   echo "prepare.sh: these SVG files hold a script, an event handler or a javascript: address, and the site would serve them:" >&2
   echo "$active" >&2
   exit 1
@@ -30,6 +36,18 @@ fi
 
 rm -rf "$out"
 mkdir -p "$out/knowledge"
+
+# hugo.toml's mounts with the README, docs/, the changelog and .assets/ read
+# from the source folder. build.sh reads this file last, and Hugo then takes
+# its mounts in place of hugo.toml's.
+if [ -n "$source" ]; then
+  [ -d "$src_root" ] || { echo "prepare.sh: site.toml's source names $source, which is no folder" >&2; exit 1; }
+  sed -n '/^\[\[module\.mounts\]\]/,$p' "$here/hugo.toml" | sed \
+    -e "s#^source = \"\.\./README\.md\"#source = \"../$source/README.md\"#" \
+    -e "s#^source = \"\.\./docs\"#source = \"../$source/docs\"#" \
+    -e "s#^source = \"\.\./CHANGELOG\.md\"#source = \"../$source/CHANGELOG.md\"#" \
+    -e "s#^source = \"\.\./\.assets\"#source = \"../$source/.assets\"#" >"$out/source.toml"
+fi
 
 # The bundle's own tools: lokf, and the LinkML it is built on.
 lokf=(uv run --project "$root/.lokf" --frozen --quiet)
@@ -41,8 +59,8 @@ schema=$(sed -n 's/^schema := "\(.*\)"$/\1/p' "$root/.lokf/justfile" 2>/dev/null
   --out-dir "$out/knowledge" \
   --source-base "$repo_url/blob/$ref/.lokf/knowledge"
 
-# A LinkML project's schema: src/<name>/schema/<name>.yaml, at the root first,
-# then in the .linkml/ sidecar. gen-doc writes a page per class, slot,
+# A LinkML project's schema: src/<name>/schema/<name>.yaml, in site.toml's
+# linkml folder first, then at the root, then in the .linkml/ sidecar. gen-doc writes a page per class, slot,
 # enumeration and type, each kind in a folder of its own, and gen-erdiagram
 # writes the diagram the overview shows. The schema file is copied beside
 # them, with its path in the repository.
@@ -52,7 +70,7 @@ gendoc() {
   "${lokf[@]}" gen-erdiagram --format mermaid "$1" >"$out/schema/diagram.mmd"
   cp "$1" "$out/schema/"
 }
-for model in "$root"/src/*/schema/*.yaml "$root"/.linkml/src/*/schema/*.yaml; do
+for model in ${linkml:+"$root/$linkml"/src/*/schema/*.yaml} "$root"/src/*/schema/*.yaml "$root"/.linkml/src/*/schema/*.yaml; do
   name=$(basename "$model" .yaml)
   [ -f "$model" ] && [ "$(basename "${model%/schema/*}")" = "$name" ] || continue
   gendoc "$model"

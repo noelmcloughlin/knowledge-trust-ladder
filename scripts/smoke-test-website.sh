@@ -266,7 +266,7 @@ assert "a release page links the repository, the docs and the bundle at the rele
 assert "llms.txt offers llms-full.txt, the docs pages as Markdown and the schema" \
   "grep -q '/llms-full.txt)' \"$dist/llms.txt\" && grep -q '(https://acme.github.io/acme-platform/docs/guide.md)' \"$dist/llms.txt\" && grep -q '/schema/acme_platform.yaml)' \"$dist/llms.txt\""
 assert "badge.json is a shields.io endpoint badge with KTL's mark and the count of confirmed concepts" \
-  "python3 -I -c 'import json, re, sys; d = json.load(open(sys.argv[1])); assert d[\"schemaVersion\"] == 1 and d[\"label\"] == \"KTL\" and re.fullmatch(r\"[0-9]+ of [0-9]+\", d[\"message\"]) and d[\"logoSvg\"].startswith(\"<svg\")' \"$dist/badge.json\""
+  "python3 -I -c 'import json, re, sys; d = json.load(open(sys.argv[1])); assert d[\"schemaVersion\"] == 1 and d[\"label\"] == \"KTL scorecard\" and re.fullmatch(r\"[0-9]+ of [0-9]+\", d[\"message\"]) and d[\"logoSvg\"].startswith(\"<svg\")' \"$dist/badge.json\""
 assert "the log feed is well-formed" "python3 -c 'import sys, xml.dom.minidom; xml.dom.minidom.parse(sys.argv[1])' \"$dist/knowledge/log.xml\""
 assert "every page names the log feed" "grep -q 'application/atom+xml[^>]*knowledge/log.xml' \"$dist/index.html\""
 assert "every page carries the policy that stops raw HTML running a script" "grep -q \"Content-Security-Policy.*script-src https://acme.github.io/acme-platform/js/\" \"$dist/docs/guide/index.html\""

@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import re
 import shutil
+import subprocess
 import sys
 import tomllib
 
@@ -148,7 +149,23 @@ def test_the_site_finds_each_input_through_a_mount_and_takes_no_setting_for_it()
     assert 'resources.Match "docs/**.md"' in read(SITE_TEMPLATES / "content" / "docs" / "_content.gotmpl")
     assert 'resources.Get "host/knowledge-federation.yaml"' in read(SITE_TEMPLATES / "layouts" / "graph.html")
     prepare = read(SITE_TEMPLATES / "scripts" / "prepare.sh")
-    assert 'for model in "$root"/src/*/schema/*.yaml "$root"/.linkml/src/*/schema/*.yaml; do' in prepare, "the schema is looked for at the root first, then in the .linkml/ sidecar"
+    assert 'for model in ${linkml:+"$root/$linkml"/src/*/schema/*.yaml} "$root"/src/*/schema/*.yaml "$root"/.linkml/src/*/schema/*.yaml; do' in prepare, "the schema is looked for in site.toml's linkml folder, at the root, then in the .linkml/ sidecar"
+
+
+def test_a_source_folder_moves_the_four_root_mounts_and_build_reads_it_last(tmp_path):
+    """site.toml's source moves the README, docs/, the changelog and .assets/ mounts, and no other; Hugo takes the last file's mounts whole."""
+    prepare = read(SITE_TEMPLATES / "scripts" / "prepare.sh")
+    block = prepare[prepare.index('  sed -n \'/^\\[\\[module'):prepare.index('>"$out/source.toml"')]
+    hugo = tmp_path / "hugo.toml"
+    hugo.write_text(read(SITE_TEMPLATES / "hugo.toml"), encoding="utf-8")
+    script = f'source=.linkml; here={tmp_path}\n{block.strip()}'
+    out = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=True).stdout
+    moved = {m["source"] for m in tomllib.loads(out)["module"]["mounts"]}
+    before = {m["source"] for m in tomllib.loads(read(SITE_TEMPLATES / "hugo.toml"))["module"]["mounts"]}
+    four = {"../README.md", "../docs", "../CHANGELOG.md", "../.assets"}
+    assert moved == (before - four) | {s.replace("../", "../.linkml/", 1) for s in four}, moved ^ before
+    build = read(SITE_TEMPLATES / "scripts" / "build.sh")
+    assert build.index("scripts/prepare.sh") < build.index("config=$config,generated/source.toml") < build.index('hugo=("${tool[@]}" hugo --config "$config")')
 
 
 def test_the_home_page_has_five_buttons_and_greys_the_one_it_cannot_find():

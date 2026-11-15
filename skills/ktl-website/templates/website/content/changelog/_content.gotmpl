@@ -24,7 +24,7 @@
           "path" (printf "version/%s" (replace $version "." "-"))
           "title" $version
           "dates" (dict "date" (time.AsTime (index . 0 2)))
-          "params" (dict "repoPath" "CHANGELOG.md" "release" true "tag" (cond (in $tags $tag) $tag "") "anchor" (anchorize (printf "[%s" $head)))
+          "params" (dict "repoPath" (path.Join (strings.Trim (site.Params.source | default "") "/") "CHANGELOG.md") "release" true "tag" (cond (in $tags $tag) $tag "") "anchor" (anchorize (printf "[%s" $head)))
           "content" (dict "value" (partial "literal.html" $body))) -}}
     {{- else -}}
       {{- $unreleased = $body -}}
@@ -35,6 +35,6 @@
       "kind" "section"
       "path" "."
       "title" "Changelog"
-      "params" (dict "repoPath" "CHANGELOG.md")
+      "params" (dict "repoPath" (path.Join (strings.Trim (site.Params.source | default "") "/") "CHANGELOG.md"))
       "content" (dict "value" (partial "literal.html" $intro))) -}}
 {{- end -}}

@@ -2,8 +2,6 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = ["pyyaml==6.0.3", "pypdf==7.0.1"]
-# [tool.uv]
-# exclude-newer = "2026-11-11T00:00:00Z"
 # ///
 # The ingest reads .lokf/ingest.yaml, fetches each source it names, converts
 # it to Markdown and writes it under .lokf/mirror/<entry id>/, one file per
@@ -76,10 +74,9 @@
 # manifest or an argument before any write; 2 a tool is missing.
 #
 # The dependency block pins pypdf, which reads PDFs from outside the
-# repository, and `exclude-newer` takes no file uploaded after its date.
-# Behind a mirror with no upload times, the shell half lifts the date only
-# for a pinned package. When a release fixes a flaw in pypdf, move the pins
-# and the date together.
+# repository. Where uv applies an `exclude-newer` date and the index serves
+# no upload times, the shell half lifts the date only for a pinned package.
+# When a release fixes a flaw in pypdf, move the pin.
 """The ingest: knowledge outside the repository, mirrored into it."""
 
 from __future__ import annotations

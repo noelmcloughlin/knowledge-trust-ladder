@@ -2,8 +2,6 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = ["pyyaml==6.0.3"]
-# [tool.uv]
-# exclude-newer = "2025-10-01T00:00:00Z"
 # ///
 # The parser's half of knowledge-conventions.sh: rules 2, 3, 4, 7, 9, 10, 12,
 # 13, 14, 15, 16, 17 and 18. That script's header lists the rules, and the
@@ -25,11 +23,11 @@
 # .venv, or through `uv run`, which installs what the dependency block above
 # names. Run directly, it needs python3 3.11 or later and pyyaml.
 #
-# That block names one PyYAML release, and `exclude-newer` takes no file
-# uploaded after its date. A registry never replaces a file, so every run
-# installs the files a person reviewed when the pin was set. Behind a mirror
-# with no upload times, the shell half lifts the date but keeps the version.
-# The .venv holds what uv.lock pins, by hash, which a person reviewed too.
+# That block names one PyYAML release. A registry never replaces a file, so
+# every run installs the files a person reviewed when the pin was set. Where
+# uv applies an `exclude-newer` date and the index serves no upload times,
+# the shell half lifts the date but keeps the version. The .venv holds what
+# uv.lock pins, by hash, which a person reviewed too.
 # Move the version and the date together, here and in knowledge-apply.py:
 # the skills repository's contract holds the two equal.
 
