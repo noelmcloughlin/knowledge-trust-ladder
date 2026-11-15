@@ -23,7 +23,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/policies/threat-model
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T10:18:02Z"
+  at: "2026-11-15T19:13:22Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -70,7 +70,7 @@ A confidential entry's records go to `.lokf/.cache/ingest.lock.yaml`, beside its
 4. Set the repository variable `KNOWLEDGE_INGEST_ENABLED` to `true`, and allow GitHub Actions to create and approve pull requests.
 5. Start one run from the Actions tab and read its summary.
 
-The workflow runs on Sundays and keeps one pull request open on the branch `knowledge-ingest`, refreshed until a person merges it. A pull request closed without merging is a no: a scheduled run proposes the mirror again only once the manifest has changed. By hand, `bash .lokf/scripts/knowledge-ingest.sh` takes `--dry-run`, `--visibility private`, `--only <entry>`, `--prune` and `--patch`. A run starts no more work after 25 minutes, so it ends inside the workflow's 30, and the next run takes up what it did not reach.[^docs-ingest.md] `--time-limit 0` lifts the limit for a long first run by hand.
+The workflow runs on Sundays and keeps one pull request open on the branch `knowledge-ingest`, refreshed until a person merges it. A pull request closed without merging is a no: a scheduled run proposes the mirror again only once the manifest has changed. By hand, `bash .lokf/scripts/knowledge-ingest.sh` takes `--dry-run`, `--visibility private`, `--only <entry>`, `--prune`, `--patch` and `--status`. A run starts no more work after 25 minutes, so it ends inside the workflow's 30, and the next run takes up what it did not reach.[^docs-ingest.md] `--time-limit 0` lifts the limit for a long first run by hand.
 
 # What the librarian does
 

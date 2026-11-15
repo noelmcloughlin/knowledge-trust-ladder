@@ -7,7 +7,7 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T22:54:18Z"
+  at: "2026-11-15T19:13:22Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-09-10T00:00:00Z"
@@ -69,6 +69,10 @@ sources:
   - resource: .github/release/package-lock.json
   - resource: .github/docent-eval/package.json
   - resource: .github/docent-eval/package-lock.json
+  - resource: docs/cast
+  - resource: docs/uses.md
+  - resource: docs/young-readers.md
+  - resource: docs/first-bundle.md
 ---
 
 # Sources swept for this bootstrap discovery pass
@@ -111,6 +115,7 @@ sources:
 | `.assets/*.svg`, `.assets/companions/`, `scripts/companion-diagrams.mjs` | the social-preview card, which `docs/architecture.md` shows since the README left it on 2026-10-13, the project's logo mark, the diagrams `docs/` pages embed, and the lifecycle diagram, which the README showed until `ktl-architecture.svg` replaced it. Since 2026-10-19 `.assets/companions/` holds the Archify flow diagrams that some figures link beside them, each a light and a dark SVG drawn from its `.archify.json`, and `scripts/companion-diagrams.mjs` draws them again when a maintainer runs it by hand, as `docs/repository-layout.md` says | consciously excluded as concepts: the card and the mark carry no knowledge, and each diagram, a companion too, draws what the page that embeds or links it says; re-check only that each diagram still matches that page |
 | `.markdownlint-cli2.jsonc`, `lychee.toml` | the Markdown lint and link-check configuration that `validate.yml`'s `validate-markdown` job reads | consciously excluded as concepts; re-check that `playbooks/repository-validation.md` still names the job that runs them |
 | `LICENSE`, `llms.txt`, `.gitignore`, `docs/examples/first-bundle.md`, `docent.md`, `curator.md`, `docent-after-curation.md` and `prose.md` | licensing boilerplate, the agent-facing pointer file, the repository's ignore rules, and captured skill transcripts (a first run of the four roles on a small repository, the docent's answers, a ktl-curator review session on this bundle and the docent's answers after it, and ktl-prose's runs for younger readers) | consciously excluded as concepts: `LICENSE` is the licence's standard text, `llms.txt` restates the README's note for agents, `.gitignore` is configuration, and the examples are captured output, not facts about the repository; re-check that `llms.txt` still matches what the "Agents:" callout in `README.md` tells agents, and that `docs/examples/docent.md`'s trust-label claims still match `glossary/trust-label.md` |
+| `docs/cast/*.md`, `docs/uses.md`, `docs/young-readers.md`, `docs/first-bundle.md` | the role pages the architecture page links to since 2026-11-13, carried by the glossary terms for each role (`glossary/librarian.md`, `glossary/curator.md`, `glossary/docent.md`, `glossary/desk.md`) and `explanation/why-four-roles.md`; what KTL is for and is not, carried by `explanation/intended-uses.md`; the retelling use for younger readers, carried by `explanation/young-readers.md`; and a first run's walkthrough, carried by `tutorials/first-bundle.md` | diff each role page against its glossary term and `explanation/why-four-roles.md`; diff `docs/uses.md` against `explanation/intended-uses.md`; diff `docs/young-readers.md` against `explanation/young-readers.md`; diff `docs/first-bundle.md` against `tutorials/first-bundle.md` |
 
 # Notes for the next run
 
