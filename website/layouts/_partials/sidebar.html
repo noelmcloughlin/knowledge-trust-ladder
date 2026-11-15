@@ -57,7 +57,7 @@
   <ul>
     <li><a href="{{ .RelPermalink }}">About the bundle</a></li>
     <li><a href="{{ "health/" | relURL }}">Bundle health</a></li>
-    <li><a href="{{ "graph/" | relURL }}">Knowledge graph</a></li>
+    <li class="nav-graph"><a href="{{ "graph/" | relURL }}">{{ partial "icon.html" "graph" }}Knowledge graph</a></li>
     <li><a href="{{ "knowledge/log/" | relURL }}">Bundle log</a></li>
   </ul>
   {{- $all := partialCached "concepts.html" "concepts" }}
