@@ -4,6 +4,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Fixed
+
+- **`knowledge-federate.py members` names a release's schema only when it is `schema-<tag>-<name>.yaml`, with the zip's `<tag>-<name>`.** A schema file another workflow attaches, such as gist's copy for other projects to import, no longer fails a member's move on its attestation.
+
 ## [0.65.0] - 2026-11-14
 
 ### Added

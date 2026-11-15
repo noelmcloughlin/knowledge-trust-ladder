@@ -2815,12 +2815,16 @@ def further_distribution(release: dict, prefix: str, suffixes: tuple[str, ...], 
 def release_distributions(release: dict, zip_asset: dict, sum_asset: dict, what: str, domain: bool = False) -> list[dict]:
     """A member's distribution list for a release: the zip, then the schema released beside it, and for a domain its workspace, each when there is one.
 
-    knowledge-release.yaml attaches the schema-<tag>-<name>.yaml, and a
-    domain host's knowledge-federation.yaml attaches the workspace-<tag>.zip.
+    knowledge-release.yaml attaches the schema-<tag>-<name>.yaml, with the
+    <tag>-<name> of knowledge-<tag>-<name>.zip, and a domain host's
+    knowledge-federation.yaml attaches the workspace-<tag>.zip. A schema-
+    file under another name is some other workflow's, such as a copy of a
+    schema adapted for other projects to import, and is not the bundle's.
     """
     dists = [{"name": zip_asset["name"], "access_url": zip_asset["browser_download_url"], "media_type": "application/zip",
               "checksum": sha256_checksum(digest_of(sum_asset, what))}]
-    schema = further_distribution(release, "schema-", (".yaml", ".yml"), "application/yaml", what)
+    stem = zip_asset["name"][len("knowledge-"):-len(".zip")]
+    schema = further_distribution(release, f"schema-{stem}.", ("yaml", "yml"), "application/yaml", what)
     workspace = further_distribution(release, "workspace-", (".zip",), "application/zip", what) if domain else None
     return dists + [d for d in (schema, workspace) if d]
 
