@@ -65,18 +65,16 @@ The same ladder serves both ends of a range: [a school or a youth group](https:/
 
 ## Exhibitions
 
-### Knowledge Bundles
-
-`ktl-website` built a site for each of these knowledge bundles:
+Knowledge bundles exist anywhere skills run:
 
 - [KTL](https://w3id.org/ktl/knowledge/): this repository's own bundle, the knowledge behind the skills.
 - [Obsidian KTL Curator](https://w3id.org/ktl/curator/knowledge/): the Obsidian plugin that helps a person judge what a bundle claims.
 - [Obsidian KTL Registrar](https://w3id.org/ktl/registrar/knowledge/): the Obsidian plugin that keeps a bundle well-formed as a person edits it.
-- [AI-LinkMO](https://noelmcloughlin.github.io/ai-linkmo/knowledge/): a reference implementation of operational AI governance over open AI-risk data.
+- [lmodel catalog](https://github.com/lmodel): has dozens of knowledge bundles.
 
 ### Federation of Bundles (Context Layer)
 
-- [KTL Federation](https://w3id.org/ktl/federation/knowledge/): the domain that federates member bundles into one workspace, as [a context layer](docs/context-layer.md).
+- [KTL federation](https://w3id.org/ktl/federation/knowledge/): the domain that federates member bundles into one workspace, as [a context layer](docs/context-layer.md).
 
 ## Feedback and contributing
 
