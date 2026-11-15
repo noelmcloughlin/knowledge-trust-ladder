@@ -343,7 +343,7 @@ echo "Step 4 a third time: a domain host's vocabulary, and still no schema of th
 build
 assert "the link check passed" "grep -q 'check-links: .* 0 broken link' \"$test_root/build.log\""
 assert "the schema pages show the domain vocabulary from .lokf/schema/, served beside them, and say it adds to LOKF core" \
-  "grep -q 'Domain vocabulary' \"$dist/schema/index.html\" && grep -q 'the domain vocabulary its knowledge bundle is written in, which adds to LOKF' \"$dist/schema/index.html\" && grep -q 'blob/[^ >]*/\\.lokf/schema/domain\\.yaml' \"$dist/schema/index.html\" && [[ -f \"$dist/schema/domain.yaml\" && -f \"$dist/schema/classes/MemberBundle/index.html\" ]]"
+  "grep -q 'Domain vocabulary' \"$dist/schema/index.html\" && grep -q 'the domain vocabulary its knowledge bundle is written in, which adds to LOKF' \"$dist/schema/index.html\" && grep -q 'blob/[^ >]*/\\.lokf/schema/domain\\.yaml' \"$dist/schema/index.html\" && [[ -f \"$dist/schema/domain.yaml\" && -f \"$dist/schema/lokf.yaml\" && -f \"$dist/schema/classes/MemberBundle/index.html\" ]]"
 assert "the home page does not lead with it, and its elements have no old addresses" "! grep -q 'On exhibit' \"$dist/index.html\" && [[ ! -d \"$dist/elements\" ]]"
 
 echo ""
