@@ -4,21 +4,18 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
-### Changed
-
-- **The website template requires Python 3.11 or later**, as the sidecar does.
-
 ## [0.66.0] - 2026-11-15
+
+### Added
+
+- **`site.toml`'s `source` names the folder the README, the docs, the changelog and the figures come from**, such as a fork's `.linkml/`, and **`linkml` names the folder of a LinkML project whose schema the site shows.**
 
 ### Changed
 
 - **The KTL badge is labelled `KTL scorecard`.**
 - **The pen, the conventions check and the ingest carry no `exclude-newer` date**, since many company indexes serve no upload times.
 - **The threat model names the Scorecard, CodeQL, SHA-pinning and release-tag measures that each repository with a bundle carries.**
-
-### Added
-
-- **`site.toml`'s `source` names the folder the README, the docs, the changelog and the figures come from**, such as a fork's `.linkml/`, and **`linkml` names the folder of a LinkML project whose schema the site shows.**
+- **The website template requires Python 3.11 or later**, as the sidecar does.
 
 ### Fixed
 
