@@ -759,7 +759,7 @@ def test_the_header_pins_the_pypdf_the_tests_install(checks):
     header = re.search(r'"pypdf==([^"]+)"', read(INGEST_PY))
     tests = re.search(r"^pypdf==([^\s\\]+)", read(REPO / "tests" / "requirements.txt"), re.M)
     checks.ok(header and tests and header.group(1) == tests.group(1),
-              "the script's header pins the pypdf the tests run; move exclude-newer past its upload with it",
+              "the script's header pins the pypdf the tests run",
               f"header {header and header.group(1)}, tests {tests and tests.group(1)}")
 
 

@@ -2,8 +2,6 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = ["pyyaml==6.0.3"]
-# [tool.uv]
-# exclude-newer = "2025-10-01T00:00:00Z"
 # ///
 # The pen, the librarian's only way to write the bundle. ktl-librarian
 # describes each change as an operation in .lokf/patch.yaml, and this script,
@@ -46,11 +44,11 @@
 # bundle. The script prints them, and `--handoff <file>` writes them to the
 # file that the scheduled wrapper passes to the pull request.
 #
-# The dependency block above names one PyYAML release, and `exclude-newer`
-# takes no file uploaded after its date. Move the two together, here and in
-# knowledge-conventions.py. Behind a mirror with no upload times,
-# knowledge-apply.sh lifts the date but keeps the version. The sidecar's
-# .venv, which it tries first, holds what uv.lock pins instead.
+# The dependency block above names one PyYAML release. Move it here and in
+# knowledge-conventions.py together. Where uv applies an `exclude-newer` date
+# and the index serves no upload times, knowledge-apply.sh lifts the date but
+# keeps the version. The sidecar's .venv, which it tries first, holds what
+# uv.lock pins instead.
 #
 # Operations (each a mapping under `ops:` with `op:` and `path:`):
 #   create    frontmatter + body for a concept that does not exist yet

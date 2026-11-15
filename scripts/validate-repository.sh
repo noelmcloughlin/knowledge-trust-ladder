@@ -562,15 +562,14 @@ for f in "${host_owned[@]}"; do
 done
 
 # The two Python halves install PyYAML through `uv run`, from a dependency
-# block that names one release and takes no file uploaded after a date, so a
-# gate never runs a parser nobody reviewed. Both must name the same release
-# and date.
-pyyaml_pins="$(grep -hE '^# (dependencies = \["pyyaml==[0-9]+(\.[0-9]+)+"\]|exclude-newer = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]+Z")$' \
+# block that names one release, so a gate never runs a parser nobody
+# reviewed. Both must name the same release.
+pyyaml_pins="$(grep -hE '^# dependencies = \["pyyaml==[0-9]+(\.[0-9]+)+"\]$' \
                  "$templates/scripts/knowledge-apply.py" "$templates/scripts/knowledge-conventions.py" | sort | uniq -c | awk '{ print $1 }' | tr '\n' ' ')"
-if [[ "$pyyaml_pins" == "2 2 " ]]; then
-  ok "knowledge-apply.py and knowledge-conventions.py pin the same PyYAML release and the same cut-off date"
+if [[ "$pyyaml_pins" == "2 " ]]; then
+  ok "knowledge-apply.py and knowledge-conventions.py pin the same PyYAML release"
 else
-  err "knowledge-apply.py and knowledge-conventions.py must each carry 'dependencies = [\"pyyaml==<version>\"]' and an 'exclude-newer' date, the same in both - one is missing, unpinned or different"
+  err "knowledge-apply.py and knowledge-conventions.py must each carry 'dependencies = [\"pyyaml==<version>\"]', the same in both - one is missing, unpinned or different"
 fi
 # The three shell halves that run a Python half through uv carry one
 # uv_ready function, which knowledge-apply.sh explains, and the preflight

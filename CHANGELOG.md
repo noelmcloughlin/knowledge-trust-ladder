@@ -4,6 +4,11 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Changed
+
+- **The KTL badge is labelled `KTL scorecard`.**
+- **The pen, the conventions check and the ingest carry no `exclude-newer` date**, since many company indexes serve no upload times.
+
 ## [0.65.0] - 2026-11-15
 
 ### Added

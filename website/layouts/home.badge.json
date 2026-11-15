@@ -12,4 +12,4 @@
 {{- $person := $n.Get "person" | default 0 -}}
 {{- $message := cond (eq $all 0) "no concepts yet" (printf "%d of %d" $person $all) -}}
 {{- $mark := os.ReadFile "static/brand/knowledge-trust-ladder-logo.svg" | replaceRE `(?s)<!--.*?-->` "" | replaceRE `\s+` " " | strings.TrimSpace -}}
-{{- dict "schemaVersion" 1 "label" "KTL" "message" $message "color" (cond (gt $person 0) "0c447c" "5f5e5a") "logoSvg" $mark | jsonify -}}
+{{- dict "schemaVersion" 1 "label" "KTL scorecard" "message" $message "color" (cond (gt $person 0) "0c447c" "5f5e5a") "logoSvg" $mark | jsonify -}}
