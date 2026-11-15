@@ -4,11 +4,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
-### Fixed
-
-- **`knowledge-federate.py members` names a release's schema only when it is `schema-<tag>-<name>.yaml`, with the zip's `<tag>-<name>`.** A schema file another workflow attaches, such as gist's copy for other projects to import, no longer fails a member's move on its attestation.
-
-## [0.65.0] - 2026-11-14
+## [0.65.0] - 2026-11-15
 
 ### Added
 
@@ -36,6 +32,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 - **`scripts/sync-sidecar.sh`**: each host's `knowledge-sync.yaml` opens its own pull request, and `.lokf/scripts/knowledge-sync.sh --pr <tag>` opens one by hand.
 - **`TRUST_LADDER_SKILLS_REF`, `TRUST_LADDER_SKILLS_SHA`, `TRUST_LADDER_SKILLS_REPO` and `KNOWLEDGE_SKILLS_TOKEN`**: a private index's credential is `UV_INDEX_KNOWLEDGE_USERNAME` and `UV_INDEX_KNOWLEDGE_PASSWORD`.
+
+### Fixed
+
+- **`knowledge-federate.py members` names a release's schema only when it is `schema-<tag>-<name>.yaml`, with the zip's `<tag>-<name>`.** A schema file another workflow attaches, such as gist's copy for other projects to import, no longer fails a member's move on its attestation.
 
 ## [0.64.0] - 2026-11-14
 
