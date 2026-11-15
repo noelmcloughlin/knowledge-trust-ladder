@@ -21,7 +21,6 @@ tool=(uv run --project "$here" --frozen --quiet)
 # hugo.toml is the same on every site, and site.toml holds this repository's
 # own values, read second so that they win.
 # shellcheck disable=SC2054 # one --config value: Hugo takes the files as a comma-separated list
-hugo=("${tool[@]}" hugo --config hugo.toml,site.toml)
 port=${PORT:-1313}
 
 if grep -qE '<(REPO|PROJ)_[A-Z]+>' site.toml; then
@@ -30,6 +29,10 @@ if grep -qE '<(REPO|PROJ)_[A-Z]+>' site.toml; then
 fi
 
 scripts/prepare.sh
+config=hugo.toml,site.toml
+# The mounts of a source folder, which prepare.sh writes when site.toml names one.
+[ -f generated/source.toml ] && config=$config,generated/source.toml
+hugo=("${tool[@]}" hugo --config "$config")
 # Links to repository files name the commit the site was built from, or the
 # branch where there is no git.
 if ref=$(git -C "$here/.." rev-parse HEAD 2>/dev/null); then export HUGO_PARAMS_REF=$ref; fi

@@ -29,6 +29,13 @@ repo = "https://github.com/<REPO_OWNER>/<REPO_NAME>"
 # logo = ".assets/logo.svg"
 # logoDark = ".assets/logo-dark.svg"
 
+# The folder the README, docs/, the changelog and .assets/ come from, when it
+# is not the repository's root, such as a fork's .linkml/ sidecar.
+# source = ".linkml"
+# The folder of a LinkML project whose src/<name>/schema/ the site shows,
+# when it is neither the root nor .linkml/.
+# linkml = "my-project"
+
 # The data: a folder of SQLite databases and their Datasette metadata, from
 # the repository's root, served under browse/ with a page that opens each in
 # Datasette Lite, and the command that writes the folder when it holds no

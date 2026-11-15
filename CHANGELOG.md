@@ -10,6 +10,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **The pen, the conventions check and the ingest carry no `exclude-newer` date**, since many company indexes serve no upload times.
 - **The threat model names the Scorecard, CodeQL, SHA-pinning and release-tag measures that each repository with a bundle carries.**
 
+### Added
+
+- **`site.toml`'s `source` names the folder the README, the docs, the changelog and the figures come from**, such as a fork's `.linkml/`, and **`linkml` names the folder of a LinkML project whose schema the site shows.**
+
 ### Fixed
 
 - **An old address with capitals keeps its case when `site.toml` lists it as `[[params.redirects]]` with `from` and `to`**, since Hugo lowercases a table's keys.

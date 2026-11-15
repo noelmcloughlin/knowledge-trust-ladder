@@ -40,7 +40,7 @@
     {{- end -}}
     {{- $.AddPage (merge $page (dict
         "title" (or $title (path.Base $name | humanize))
-        "params" (dict "docName" $name "repoPath" (printf "docs/%s" $rel) "shift" $shift "description" (or $fm.description "" | string))
+        "params" (dict "docName" $name "repoPath" (path.Join (strings.Trim (site.Params.source | default "") "/") "docs" $rel) "shift" $shift "description" (or $fm.description "" | string))
         "content" (dict "value" (partial "literal.html" $body)))) -}}
   {{- end -}}
 {{- end -}}

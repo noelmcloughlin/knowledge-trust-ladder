@@ -9,7 +9,8 @@
 {{- $out := false -}}
 {{- $from := partial "repo-path.html" . -}}
 {{- $at := "" -}}
-{{- if and (hasPrefix $from "docs/") (hasSuffix $from ".md") }}{{ $at = $from }}{{ else if and .IsHome (eq $from "README.md") }}{{ $at = "index.md" }}{{ end -}}
+{{- $rel := partial "site-path.html" $from -}}
+{{- if and (hasPrefix $rel "docs/") (hasSuffix $rel ".md") }}{{ $at = $rel }}{{ else if and .IsHome (eq $rel "README.md") }}{{ $at = "index.md" }}{{ end -}}
 {{- with $at -}}
   {{- $text := $.RawContent -}}
   {{- if $.Params.shift -}}

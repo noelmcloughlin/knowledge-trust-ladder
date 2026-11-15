@@ -8,7 +8,7 @@
   {{- $title := "" -}}
   {{- with findRESubmatch `(?m)^# +(.+?)\s*$` $body 1 }}{{ $title = index . 0 1 | replaceRE "[*_`]" "" | replaceRE `\[([^\]]+)\]\([^)]*\)` "$1" }}{{ end -}}
   {{- $.AddPage (dict "kind" "home" "path" "/" "title" $title
-      "params" (dict "repoPath" "README.md")
+      "params" (dict "repoPath" (path.Join (strings.Trim (site.Params.source | default "") "/") "README.md"))
       "content" (dict "value" (partial "literal.html" $body))) -}}
 {{- end -}}
 {{- /*
