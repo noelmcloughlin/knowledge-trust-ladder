@@ -5,7 +5,7 @@
 name = "knowledge-website"
 version = "0.0.0"
 description = "The tools that build the knowledge website."
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = ["hugo==0.169.0", "pagefind[extended]==1.6.0"]
 
 [tool.uv]

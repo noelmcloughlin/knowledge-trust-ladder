@@ -4,6 +4,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Changed
+
+- **The website template requires Python 3.11 or later**, as the sidecar does.
+
 ## [0.66.0] - 2026-11-15
 
 ### Changed
