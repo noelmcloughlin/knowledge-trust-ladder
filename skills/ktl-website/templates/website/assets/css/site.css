@@ -35,8 +35,8 @@
 }
 :root[data-theme="light"] { color-scheme: light; }
 :root[data-theme="dark"] { color-scheme: dark; }
-:root { font-size: 112.5%; }
-:root[data-size="medium"] { font-size: 100%; }
+:root { font-size: 100%; }
+:root[data-size="large"] { font-size: 112.5%; }
 :root[data-size="larger"] { font-size: 125%; }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 1rem/1.6 var(--sans); overflow-wrap: break-word; }
