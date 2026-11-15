@@ -1,4 +1,4 @@
-# Knowledge Trust Ladder for younger readers
+# For younger readers
 
 > [!NOTE]
 > This page is for a teacher, a youth leader, or anyone who wants knowledge that adults wrote retold for readers aged 8 to 18.

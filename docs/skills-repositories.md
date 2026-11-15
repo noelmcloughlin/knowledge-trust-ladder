@@ -1,4 +1,4 @@
-# Knowledge Trust Ladder in a skills repository
+# A skills repository
 
 > [!NOTE]
 > This page is for anyone deciding whether to install Knowledge Trust Ladder (KTL) in a repository whose content is Agent Skills.
