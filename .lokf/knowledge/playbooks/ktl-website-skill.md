@@ -22,7 +22,7 @@ sources:
   - resource: .github/workflows/validate.yml
   - resource: scripts/smoke-test-website.sh
     id: smoke-test-website.sh
-    excerpt: LinkML schema, retellings, the federation workflow, a mirrored source and
+    excerpt: "the site three times: once with a README, docs pages, a changelog, ... source and data, once with none of them, and once with a domain"
   - resource: docs/architecture.md
   - resource: docs/cast/website.md
   - resource: CHANGELOG.md
@@ -37,7 +37,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-11-15T19:13:22Z"
+  at: "2026-11-15T21:31:28Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -52,14 +52,14 @@ It runs once, to install the site, or again to repair or update it. It writes no
 
 # What the site finds by itself
 
-No setting names what the site shows, though `site.toml`'s `source` can move where the README, the docs, the changelog and the figures come from, and `linkml` can move the LinkML project whose schema the site shows. The build otherwise looks for each input and shows what it finds:
+No setting names what the site shows, though `site.toml`'s `source` can move where the README, the docs, the changelog and the figures come from, `linkml` can move the LinkML project whose schema the site shows, and `schema` can name the schema file itself, in the repository or inside a Python package. The build otherwise looks for each input and shows what it finds:
 
 - `.lokf/knowledge/`: the bundle's pages, the health page and the graph. The build needs it.
 - `README.md`: the home page. Without one, the home page opens with the bundle's own introduction.
 - `docs/**.md`: the Guide part, a page per file, each also served as Markdown at `/docs/<name>.md` with every address made full.
 - `docs/<page>.<language>-simple.md`: a retelling, which `docs/<page>.md` offers above its title. A concept that names its readers in `audience` or in a tag such as `audience-13-18` retells the one concept it is `derivedFrom`.
 - `src/<name>/schema/<name>.yaml`, at the root or under `.linkml/`: the Schema part, written by LinkML's `gen-doc` with the LinkML that `.lokf/uv.lock` already pins. Each element also answers at `/elements/<Name>/`, the address mkdocs gave it and the one a schema's w3id rules point at, and the home page leads with the schema.
-- `.lokf/schema/lokf.yaml`, or the copy in the `lokf` package: with no schema of the repository's own, the Schema part shows LOKF core, and the home page does not lead with it.
+- `.lokf/schema/domain.yaml`, else LOKF core, `.lokf/schema/lokf.yaml` or the copy in the `lokf` package: with no schema of the repository's own, the Schema part shows the bundle's domain vocabulary or LOKF core, and the home page does not lead with it.
 - `CHANGELOG.md`: a page per release.
 - `.assets/`: the figures.
 - `.lokf/ingest.lock.yaml`: a mirrored source's origin, version and day of fetching, on its concept's card.
@@ -94,7 +94,7 @@ It has eight steps, 0 to 6 with a 5b:
 - **Step 5b.** When the preflight's `mkdocs` line found `mkdocs.yml`, give the maintainer the retirement list in `references/deploy.md`, and run none of its Pages or branch steps. In order, the list says to remove both publishers, remove what only mkdocs used, switch Pages to Actions, check the kept addresses, and delete the `gh-pages` branch last. With the maintainer's agreement, put the list's file changes on the site's branch, and say once that the pull request preview is lost.
 - **Step 6.** Hand off: the site's folder, the guessed values, the build's result, which parts the site found and which home buttons are greyed, what was left alone, the preflight's last line, and the site's `/knowledge/` address as a candidate `base_iri`.
 
-`references/customising.md` describes the values in `site.toml`. Four are required: `baseURL`, `title`, `params.description` and `params.repo`. The others are optional: the branch, the release tag, a logo, `source`, `linkml`, `docsExclude`, `docsGroups`, `redirects`, `browse` and `browseBuild`, and a mirror's address for Cytoscape and Mermaid. `hugo.toml` beside it holds what is the same on every site, and a value in `site.toml` wins. `references/prerequisites.md` gives each preflight line in plain words, and the contract's check 12w holds that page to every line the preflight can print as missing or a warning.
+`references/customising.md` describes the values in `site.toml`. Four are required: `baseURL`, `title`, `params.description` and `params.repo`. The others are optional: the branch, the release tag, a logo, `source`, `linkml`, `schema` and `schemaProject`, `docsExclude`, `docsGroups`, `redirects`, `browse` and `browseBuild`, and a mirror's address for Cytoscape and Mermaid. `hugo.toml` beside it holds what is the same on every site, and a value in `site.toml` wins. `references/prerequisites.md` gives each preflight line in plain words, and the contract's check 12w holds that page to every line the preflight can print as missing or a warning.
 
 # Deployment
 
@@ -110,7 +110,7 @@ On another forge, the same `bash website/scripts/build.sh` runs in that forge's 
 
 # In this repository
 
-This repository's own `website/` is the template's first copy, and `.github/workflows/knowledge-website.yaml` is the workflow's. The contract's check 11w holds every template byte-identical to its copy, apart from the three files the repository owns, and fails a tracked file under `website/` that has no template. The `smoke-test-website` job builds the template twice, on a host made from the sidecar's dummy skeleton. The first build has a README, docs pages, a changelog, figures, a LinkML schema, retellings, the federation workflow, a mirrored source and data. The second has none of them.[^smoke-test-website.sh]
+This repository's own `website/` is the template's first copy, and `.github/workflows/knowledge-website.yaml` is the workflow's. The contract's check 11w holds every template byte-identical to its copy, apart from the three files the repository owns, and fails a tracked file under `website/` that has no template. The `smoke-test-website` job builds the template three times, on a host made from the sidecar's dummy skeleton. The first build has a README, docs pages, a changelog, figures, a LinkML schema, retellings, the federation workflow, a mirrored source and data. The second has none of them, and the third has a domain vocabulary alone.[^smoke-test-website.sh]
 
 [^skill.md]: skills/ktl-website/SKILL.md, *What the site finds by itself*
 [^inputs.md]: skills/ktl-website/references/inputs.md, *The home page*
