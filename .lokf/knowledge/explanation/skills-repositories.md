@@ -1,7 +1,7 @@
 ---
 type: Explanation
 id: https://w3id.org/ktl/knowledge/explanation/skills-repositories
-title: Knowledge Trust Ladder in a skills repository
+title: A skills repository
 description: "Whether to install Knowledge Trust Ladder (KTL) in a repository whose content is Agent Skills, as `docs/skills-repositories.md` answers: what it adds (the knowledge around the skills), what it leaves to evaluations (whether a skill works), what it costs when skills change weekly, this repository's six skills and a run on anthropics/skills, how the librarian maps skills, and what remains to do."
 genre: explanation
 resource: docs/skills-repositories.md
@@ -19,7 +19,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-11-13T14:41:35Z"
+  at: "2026-11-15T20:43:54Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:02:36Z"

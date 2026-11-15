@@ -15,7 +15,7 @@ sources:
   - resource: https://obsidian.md/help/symlinks
 generated:
   by: process:ktl-librarian
-  at: "2026-10-12T16:08:20Z"
+  at: "2026-11-15T20:43:54Z"
 status: draft
 isPartOf:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
@@ -60,4 +60,4 @@ Obsidian 1.13.7's file reconciler (`reconcileSymbolicLinkCreation`) resolves a l
 
 Obsidian indexes a real folder inside a vault like any other, so the exhibition's concepts appear in the workshop's link suggestions, quick switcher, graph and search. *Settings → Files and links → Excluded files* hides an excluded folder from search, graph view and unlinked mentions. But it only makes it "less noticeable" in the quick switcher and link suggestions, in the words of [Obsidian's settings help](https://obsidian.md/help/settings).
 
-`ktl-sidecar` installed the bundle that way for a vault host for one day (2026-09-12) and retired it the next. The two-vault workflow above is the one the skills and the plugins assume. A shared folder that is *not* a vault may still be rearranged that way by hand, for a synced visible name: the sidecar's `references/portability.md` says how and what it costs. [Hosts and doorways](../explanation/hosts-and-doorways.md) gives the attempt, its cost and what the reversal kept.
+The skills and the plugins assume the two-vault workflow above. A shared folder that is *not* a vault may still be rearranged that way by hand, for a synced visible name: the sidecar's `references/portability.md` says how and what it costs. [Why the bundle is in a hidden folder](../explanation/hosts-and-doorways.md) says what still works in a folder rearranged that way.
