@@ -2219,6 +2219,13 @@ def released(tmp_path):
         releases = [github_release(slug, *NEW), github_release(slug, *OLD)]
         if slug == "b":
             with_schema(releases[0])
+        if slug == "c":
+            # Another workflow's schema- file, such as a schema adapted for
+            # other projects to import, which is not the bundle's.
+            base = releases[0]["assets"][0]["browser_download_url"].rsplit("/", 1)[0] + "/"
+            name = f"schema-{releases[0]['tag_name']}-c-lokf.yaml"
+            releases[0]["assets"] += [{"name": name, "browser_download_url": base + name}, {"name": name + ".sha256", "browser_download_url": base + name + ".sha256"}]
+            served[base + name], served[base + name + ".sha256"] = str(schema), str(schema_sums)
         listing = write(tmp_path / "api" / f"{slug}.json", json.dumps(releases))
         served[f"https://api.github.com/repos/acme/{slug}/releases?per_page=100"] = str(listing)
         asset, checksum = releases[0]["assets"][:2]
@@ -2320,6 +2327,8 @@ def test_members_moves_the_text_with_the_version_in_a_patch_the_pen_applies(rele
     b = yaml.safe_load(read(host / ".lokf" / "knowledge" / "members" / "b.md").split("---\n")[1])
     assert [d["name"] for d in b["distribution"]] == ["knowledge-v1.1.0-b.zip", "schema-v1.1.0-b.yaml"], "a schema released beside the zip is named as a second distribution"
     assert b["distribution"][1]["media_type"] == "application/yaml" and b["distribution"][1]["checksum"] == checksum(hashlib.sha256(SCHEMA.encode()).hexdigest())
+    c = yaml.safe_load(read(host / ".lokf" / "knowledge" / "members" / "c.md").split("---\n")[1])
+    assert [d["name"] for d in c["distribution"]] == ["knowledge-v1.1.0-c.zip"], "a schema- file not named after the zip is not the bundle's"
     person = read(host / ".lokf" / "knowledge" / "members" / "d.md")
     assert "version: v1.0.0" in person and "The d bundle as released at v1.0.0 on 2026-10-15." in person, "a concept a person wrote keeps its text"
     assert "A person wrote this concept, so this patch leaves its text and frontmatter as they are." in person, person
