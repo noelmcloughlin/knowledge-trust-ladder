@@ -19,7 +19,7 @@ have:
   copy `gh skill install` rewrote as the same release;
 - the standard library alone, on Python 3.9, the oldest Python the package
   claims;
-- a build from the hashes .github/pypi/requirements.txt holds that makes the
+- a build from the hashes .pypi/requirements.txt holds that makes the
   same bytes twice, into a folder holding the two files pypi.yml expects.
 
 The command tests run the command from this checkout, where it finds the
@@ -46,7 +46,7 @@ from conftest import REPO
 
 SRC = REPO / "src"
 SKILLS = sorted(p.parent.name for p in (REPO / "skills").glob("*/SKILL.md"))
-CONSTRAINTS = REPO / ".github" / "pypi" / "requirements.txt"
+CONSTRAINTS = REPO / ".pypi" / "requirements.txt"
 
 
 def ktl(*args: str, cwd: Path | None = None, home: Path | None = None, python: list[str] | None = None):
@@ -334,7 +334,7 @@ needs_uv = pytest.mark.skipif(uv is None, reason="uv is not installed")
 
 
 def build(out: Path, source: Path) -> None:
-    """Build as pypi.yml does, from the build backend at the hashes .github/pypi/requirements.txt holds."""
+    """Build as pypi.yml does, from the build backend at the hashes .pypi/requirements.txt holds."""
     subprocess.run(
         [uv, "build", "--quiet", "--build-constraints", str(CONSTRAINTS), "--require-hashes", "--out-dir", str(out), str(source)],
         check=True,

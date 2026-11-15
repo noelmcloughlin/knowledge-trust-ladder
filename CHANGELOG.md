@@ -7,6 +7,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 ### Changed
 
 - **The website's text size is Medium by default**, and a reader can still choose Large or Larger from the Display menu.
+- **The release tools are in `.release/` and the PyPI build backend in `.pypi/`**, outside `.github/`, where Dependabot's pull requests for them were refused.
 
 ## [0.66.0] - 2026-11-15
 

@@ -2,6 +2,7 @@
 
 ## 2026-11-15
 
+* **Changed**: sources and text follow the move of `.github/release`, `.github/pypi` to `.release`, `.pypi`. `playbooks/knowledge-sources.md` and `policies/versioning.md` were edited since a person confirmed them; each label says so until the curator looks again.
 * **Changed**: Exhibition follows the README's current Exhibitions section: no claim that a given skill built each site, the lmodel catalog added, and AI-LinkMO dropped, since README.md no longer lists it there.
 * **Changed**: What KTL is for adds the lmodel catalog, which README.md's Exhibitions section now lists as indexing bundles kept in other repositories, alongside the three kinds already named.
 * **Changed**: ktl-librarian skill adds the retrieval score: when `KNOWLEDGE_RETRIEVAL` is `true`, a scheduled run that changes the bundle makes one more agent call to score the index against readers' questions, as `references/automation.md` and `knowledge-report.sh` now say. Edited since a person confirmed it; the label says so until the curator looks again.

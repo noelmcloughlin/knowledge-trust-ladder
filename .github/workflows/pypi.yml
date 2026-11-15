@@ -28,7 +28,7 @@ name: PyPI
 # register its publisher with the same details, then run the job again.
 #
 # Three jobs, for least privilege. `build` runs the build backend
-# (third-party packages, installed at the hashes .github/pypi/requirements.txt
+# (third-party packages, installed at the hashes .pypi/requirements.txt
 # holds) under a read-only token. `upload` holds the OIDC token, runs no
 # build and no repository code, and uploads only the files `build` made. The
 # publish action attaches a PEP 740 attestation to each file. `attach` holds
@@ -93,12 +93,12 @@ jobs:
         with:
           enable-cache: false
 
-      # The build backend comes at the hashes .github/pypi/requirements.txt
+      # The build backend comes at the hashes .pypi/requirements.txt
       # holds, and runs on one named Python, so that anyone who rebuilds a
       # release from its tag with the same command gets the same bytes.
       - name: Build the source distributions and the wheels
         run: |
-          build=(uv build --python 3.12 --build-constraints .github/pypi/requirements.txt --require-hashes)
+          build=(uv build --python 3.12 --build-constraints .pypi/requirements.txt --require-hashes)
           "${build[@]}" --out-dir dist/ktl
           "${build[@]}" --out-dir dist/alias alias
 
@@ -122,7 +122,7 @@ jobs:
       # PyPI's file holds only if a build makes the same bytes every time.
       - name: Check a second build makes the same bytes
         run: |
-          build=(uv build --python 3.12 --build-constraints .github/pypi/requirements.txt --require-hashes)
+          build=(uv build --python 3.12 --build-constraints .pypi/requirements.txt --require-hashes)
           "${build[@]}" --out-dir "$RUNNER_TEMP/again/ktl"
           "${build[@]}" --out-dir "$RUNNER_TEMP/again/alias" alias
           for file in dist/ktl/* dist/alias/*; do
