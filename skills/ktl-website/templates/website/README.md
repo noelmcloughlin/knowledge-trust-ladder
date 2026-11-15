@@ -32,8 +32,8 @@ No setting names any of these. The build looks for each and shows what it finds.
 | `CHANGELOG.md` | a page per release under `changelog/`, which search leaves out |
 | `.assets/` | the figures, under `assets/` |
 | `.lokf/ingest.lock.yaml` | where each source the ingest mirrored came from, on its concept's card |
-| `src/<name>/schema/<name>.yaml`, or the same under `.linkml/` | the Schema part: a page per class, slot, enumeration and type, written by LinkML's `gen-doc`, each also at `elements/<Name>/`, where a schema's w3id rules point. The home page then leads with the schema |
-| `.lokf/schema/lokf.yaml`, or the copy in the `lokf` package | with no schema of the repository's own, the Schema part shows LOKF core, the schema the bundle is written in, with no `elements/` addresses. The home page does not lead with it |
+| `src/<name>/schema/<name>.yaml`, or the same under `.linkml/`, or the file `site.toml`'s `schema` names | the Schema part: a page per class, slot, enumeration and type, written by LinkML's `gen-doc`, each also at `elements/<Name>/`, where a schema's w3id rules point. The home page then leads with the schema |
+| `.lokf/schema/domain.yaml`, else `.lokf/schema/lokf.yaml` or the copy in the `lokf` package | with no schema of the repository's own, the Schema part shows the schema the bundle is written in: its domain vocabulary, or else LOKF core. Neither has `elements/` addresses, and the home page does not lead with either |
 | `.github/workflows/knowledge-federation.yaml` | on the graph page, the workspace a domain host's federation serves |
 
 One part is set, never found: the data. `browse` in `site.toml` names a folder of SQLite databases, which the site serves under `browse/` with a page that opens each in Datasette Lite.

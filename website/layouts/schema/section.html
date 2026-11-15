@@ -15,12 +15,15 @@
   <h1>{{ .Title }}</h1>
   {{- with .Params.description }}<p class="lead">{{ partial "inline.html" . }}</p>{{ end }}
   {{- with partialCached "schema-file.html" "schema-file" }}
-  {{- if .core }}
+  {{- if .domain }}
+  <p data-pagefind-ignore>This repository holds no LinkML schema of its own, so the site shows the domain vocabulary its knowledge bundle is written in, which adds to LOKF {{ .core }}.</p>
+  {{- else if .core }}
   <p data-pagefind-ignore>This repository holds no LinkML schema of its own, so the site shows the one its knowledge bundle is written in, LOKF {{ .core }}.</p>
   {{- end }}
   <p data-pagefind-ignore>Schema file: <a href="{{ .file.RelPermalink }}"><code>{{ path.Base .file.RelPermalink }}</code></a>, from
   {{- if .path }} <a href="{{ printf "%s/blob/%s/%s" site.Params.repo (site.Params.ref | default site.Params.branch) .path }}"><code>{{ .path }}</code></a>
-  {{- else }} the <a href="https://pypi.org/project/lokf/{{ .core }}/"><code>lokf</code> {{ .core }}</a> package the sidecar installs
+  {{- else if eq .package "lokf" }} the <a href="https://pypi.org/project/lokf/{{ .core }}/"><code>lokf</code> {{ .core }}</a> package the sidecar installs
+  {{- else }} the <code>{{ .package }}</code> package
   {{- end }}</p>
   {{- end }}
   {{ partial "content.html" . }}

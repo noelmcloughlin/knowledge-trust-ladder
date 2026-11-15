@@ -4,8 +4,13 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Added
+
+- **`site.toml`'s `schema` names the schema file the site shows**: a path, or `pkg:<package>/<path>` for one inside a package that the environment of `schemaProject` holds.
+
 ### Changed
 
+- **With no LinkML schema of its own, the site shows the bundle's domain vocabulary**, `.lokf/schema/domain.yaml`, before LOKF core, and the vocabulary has a title and a description.
 - **The website's text size is Medium by default**, and a reader can still choose Large or Larger from the Display menu.
 - **The release tools are in `.release/` and the PyPI build backend in `.pypi/`**, outside `.github/`, where Dependabot's pull requests for them were refused.
 

@@ -59,39 +59,68 @@ schema=$(sed -n 's/^schema := "\(.*\)"$/\1/p' "$root/.lokf/justfile" 2>/dev/null
   --out-dir "$out/knowledge" \
   --source-base "$repo_url/blob/$ref/.lokf/knowledge"
 
-# A LinkML project's schema: src/<name>/schema/<name>.yaml, in site.toml's
-# linkml folder first, then at the root, then in the .linkml/ sidecar. gen-doc writes a page per class, slot,
-# enumeration and type, each kind in a folder of its own, and gen-erdiagram
-# writes the diagram the overview shows. The schema file is copied beside
-# them, with its path in the repository.
+# The schema: the file site.toml's schema names, or else a LinkML project's
+# src/<name>/schema/<name>.yaml, in site.toml's linkml folder first, then at
+# the root, then in the .linkml/ sidecar. gen-doc writes a page per class,
+# slot, enumeration and type, each kind in a folder of its own, and
+# gen-erdiagram writes the diagram the overview shows. The schema file is
+# copied beside them, and source.txt holds its path in the repository, or
+# the pkg: name of one inside a package.
 gendoc() {
   # gen-doc prints a stray "None" when it ends.
   "${lokf[@]}" gen-doc --subfolder-type-separation --index-name _index -d "$out/schema" "$1" >/dev/null
   "${lokf[@]}" gen-erdiagram --format mermaid "$1" >"$out/schema/diagram.mmd"
   cp "$1" "$out/schema/"
 }
+# site.toml's schema is a path from the root, or pkg:<package>/<path> for a
+# schema inside a package that the environment of the uv project
+# schemaProject names holds. The package is found, never imported.
+named=$(sed -n 's/^schema = "\(.*\)"$/\1/p' "$here/site.toml")
+if [ -n "$named" ]; then
+  case "$named" in
+    pkg:*)
+      project=$(sed -n 's/^schemaProject = "\(.*\)"$/\1/p' "$here/site.toml")
+      model=$(uv run --project "$root/${project:-.}" --frozen --quiet python -I -c '
+import importlib.util, pathlib, sys
+package, _, inner = sys.argv[1][4:].partition("/")
+spec = importlib.util.find_spec(package)
+if spec is None or not spec.submodule_search_locations:
+    sys.exit(f"prepare.sh: site.toml names the schema {sys.argv[1]}, and the environment of {sys.argv[2]} holds no package {package}")
+print(pathlib.Path(list(spec.submodule_search_locations)[0], inner))' "$named" "${project:-the root}") ;;
+    *) model="$root/$named" ;;
+  esac
+  [ -f "$model" ] || { echo "prepare.sh: site.toml names the schema $named, which is no file" >&2; exit 1; }
+  gendoc "$model"
+  echo "$named" >"$out/schema/source.txt"
+fi
 for model in ${linkml:+"$root/$linkml"/src/*/schema/*.yaml} "$root"/src/*/schema/*.yaml "$root"/.linkml/src/*/schema/*.yaml; do
+  [ ! -d "$out/schema" ] || break
   name=$(basename "$model" .yaml)
   [ -f "$model" ] && [ "$(basename "${model%/schema/*}")" = "$name" ] || continue
   gendoc "$model"
   echo "${model#"$root/"}" >"$out/schema/source.txt"
-  break
 done
 
 # With no schema of its own, the repository still has the one its bundle is
-# written in: LOKF core, the copy in .lokf/schema/ that a domain vocabulary
-# imports, or else the one in the lokf package the sidecar installs.
-# core.txt holds its version, and source.txt the copy's path, when the
-# repository has one.
+# written in: the domain vocabulary in .lokf/schema/domain.yaml, on a host
+# whose bundle federates others, or else LOKF core, the copy in .lokf/schema/
+# that a domain vocabulary imports, or else the one in the lokf package the
+# sidecar installs. core.txt holds LOKF core's version, and source.txt the
+# path of the file shown, when the repository has it.
 if [ ! -d "$out/schema" ]; then
   core="$root/.lokf/schema/lokf.yaml"
+  for model in "$root/.lokf/schema/domain.yaml" "$core"; do
+    [ -f "$model" ] || continue
+    gendoc "$model"
+    echo "${model#"$root/"}" >"$out/schema/source.txt"
+    break
+  done
+  if [ ! -d "$out/schema" ]; then
+    gendoc "$("${lokf[@]}" python -c 'import lokf, pathlib; print(next(pathlib.Path(lokf.__file__).parent.rglob("lokf.yaml")))')"
+  fi
   if [ -f "$core" ]; then
-    gendoc "$core"
-    echo ".lokf/schema/lokf.yaml" >"$out/schema/source.txt"
     sed -n 's/^version: *"\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' "$core" | head -1 >"$out/schema/core.txt"
   else
-    core=$("${lokf[@]}" python -c 'import lokf, pathlib; print(next(pathlib.Path(lokf.__file__).parent.rglob("lokf.yaml")))')
-    gendoc "$core"
     "${lokf[@]}" python -c 'import importlib.metadata; print(importlib.metadata.version("lokf"))' >"$out/schema/core.txt"
   fi
 fi

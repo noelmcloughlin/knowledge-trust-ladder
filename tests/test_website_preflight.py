@@ -137,6 +137,19 @@ def test_finds_a_schema_at_the_root_first_then_in_the_linkml_sidecar(tmp_path):
     assert result and matches(result.out, r"^ok      schema +src/platform/schema/platform\.yaml"), f"the root's schema does not come first: {result.out}"
 
 
+def test_names_the_schema_site_toml_sets_and_else_the_domain_vocabulary(tmp_path):
+    skeleton(tmp_path)
+    write(tmp_path / ".lokf" / "schema" / "domain.yaml", read(TEMPLATES / "domain.yaml"))
+    result = preflight(tmp_path)
+    assert result and matches(result.out, r"^info    schema +no src/<name>/schema/<name>\.yaml .* shows \.lokf/schema/domain\.yaml, the domain vocabulary"), (
+        f"preflight did not offer a domain host's vocabulary: {result.out}"
+    )
+    write(tmp_path / "website" / "hugo.toml", "")
+    write(tmp_path / "website" / "site.toml", 'schema = "pkg:acme/schema/acme.yaml"\n')
+    result = preflight(tmp_path)
+    assert result and matches(result.out, r"^ok      schema +pkg:acme/schema/acme\.yaml: the Schema part"), f"preflight passed over site.toml's schema: {result.out}"
+
+
 def test_names_a_domain_host_by_its_federation_workflow(tmp_path):
     skeleton(tmp_path)
     result = preflight(tmp_path)
