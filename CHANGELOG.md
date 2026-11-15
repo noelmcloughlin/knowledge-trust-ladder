@@ -4,6 +4,8 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+## [0.67.0] - 2026-11-15
+
 ### Added
 
 - **`site.toml`'s `schema` names the schema file the site shows**: a path, or `pkg:<package>/<path>` for one inside a package that the environment of `schemaProject` holds.
