@@ -16,9 +16,9 @@
 > We balance the earth in a pair of scales of our own devising."\
 > — Amy Lowell, *The Congressional Library* (1922)
 
-Inspired by the poem, and [lokf](https://w3id.org/lokf/), the Knowledge Trust Ladder (KTL) keeps any repository's scattered knowledge as a portable **collection**: catalogued, authenticated and explained, with trust in every claim left visible. An agent derives each claim, deterministic tools check it, and a named person vouches for it.
+Inspired by the poem, the Knowledge Trust Ladder (KTL) keeps any repository's scattered knowledge as a portable **collection**: catalogued, authenticated and explained, with trust in every claim left visible. An agent derives each claim, deterministic tools check it, and a named person vouches for it.
 
-Documentation is at [w3id.org/ktl](https://w3id.org/ktl/). Young readers get [a shorter version](https://w3id.org/ktl/simple/).
+Documentation is at [w3id.org/ktl](https://w3id.org/ktl/). Young readers get [a shorter version](https://w3id.org/ktl/simple/). Built on [lokf](https://w3id.org/lokf/).
 
 ## Get started
 
@@ -36,15 +36,13 @@ uvx ktl skills install --scope user
 
 Then open your agent in a repository and say, in turn:
 
-1. "Add a LOKF knowledge bundle to this repository."
-2. "Fill the knowledge bundle from this repository."
-3. "What in the bundle needs my confirmation?"
-4. Any question about the project.
+1. "ktl-sidecar, Add a LOKF knowledge bundle to this repository."
+2. "ktl-librarian, Fill the knowledge bundle from this repository."
+3. "ktl-curator, What in the bundle needs my confirmation?"
+4. "ktl-docent, I have questions about the project.
 
-[Your first bundle](https://w3id.org/ktl/docs/first-bundle/) walks through those steps. On GitHub, `uvx ktl gh plan` then lists the settings the bundle's workflows still need, and `uvx ktl gh apply` sets them. [The install page](https://w3id.org/ktl/docs/install/#quick-start) gives the other ways to install, and names the agents.
+[Your first bundle](https://w3id.org/ktl/docs/first-bundle/) guides you. On GitHub, `uvx ktl gh plan` lists the settings your bundle's workflows need, and `uvx ktl gh apply` sets them. [The install page](https://w3id.org/ktl/docs/install/#quick-start) shows other ways to install, and names the agents.
 
-> **Only want to ask?** Install `ktl-docent` into any agent you use, by a route from [the install page](https://w3id.org/ktl/docs/install/), and ask it about this project. It answers from the bundle and says how far each answer has been checked.
->
 > **Agents:** if `.lokf/knowledge/index.md` exists, read it first. `llms.txt` says how to weigh it.
 
 ## The cast
@@ -79,7 +77,6 @@ The same ladder serves both ends of a range: [a school or a youth group](https:/
 ### Federation of Bundles (Context Layer)
 
 - [KTL Federation](https://w3id.org/ktl/federation/knowledge/): the domain that federates member bundles into one workspace, as [a context layer](docs/context-layer.md).
-- todo
 
 ## Feedback and contributing
 
