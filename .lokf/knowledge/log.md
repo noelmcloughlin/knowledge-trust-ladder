@@ -1,5 +1,17 @@
 # Change Log
 
+## 2026-11-15
+
+* **Changed**: Exhibition follows the README's current Exhibitions section: no claim that a given skill built each site, the lmodel catalog added, and AI-LinkMO dropped, since README.md no longer lists it there.
+* **Changed**: What KTL is for adds the lmodel catalog, which README.md's Exhibitions section now lists as indexing bundles kept in other repositories, alongside the three kinds already named.
+* **Changed**: ktl-librarian skill adds the retrieval score: when `KNOWLEDGE_RETRIEVAL` is `true`, a scheduled run that changes the bundle makes one more agent call to score the index against readers' questions, as `references/automation.md` and `knowledge-report.sh` now say. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: ktl-website skill says `site.toml`'s `source` and `linkml` settings can move where the README, the docs, the changelog, the figures and a LinkML schema come from, and that `/badge.json` is labelled `KTL scorecard`, as `CHANGELOG.md` and `references/inputs.md` now say.
+* **Changed**: Build, preview and edit the website says `site.toml`'s `source` and `linkml` settings can move where pages come from, and that `badge.json` is labelled `KTL scorecard`, as `CHANGELOG.md` now says. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Repository validation adds check 23, the GitHub settings catalogues held to the templates and `automation.md`'s table, and names `test_website_template.py`'s new test of `site.toml`'s `source` setting, as `scripts/validate-repository.sh` and the test file now show.
+* **Changed**: Knowledge outside the repository adds `--status`, which counts mirror files edited by hand, to the ingest script's flags, as `docs/ingest-reference.md` and the script now list it.
+* **Changed**: Knowledge sources adds a row, and the matching entries in its own `sources`, for the role pages under `docs/cast/`, `docs/uses.md`, `docs/young-readers.md` and `docs/first-bundle.md`, each already carried by its own concept but missing from this map. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: ktl-sidecar skill says the scripts carry no `exclude-newer` date of their own, that a person's own uv settings are what the shell halves lift behind a mirror, and that every script needs Python 3.11 or later, as `references/portability.md` and `references/automation.md` now say, dropping the stale floor of 3.9. Edited since a person confirmed it; the label says so until the curator looks again.
+
 ## 2026-11-14
 
 * **Changed**: Obsidian says it is a desktop and mobile app for writing and linking Markdown notes, as `docs/obsidian.md` now says in its opening sentence.

@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/trust-label
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T22:54:18Z"
+  at: "2026-11-15T19:13:22Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:04:01Z"
@@ -38,9 +38,9 @@ The folder `website/` builds the project's site with Hugo. The Knowledge website
 
 # What each page comes from
 
-No setting names any of these. The build looks for each and shows what it finds:
+No setting names any of these, though `site.toml`'s `source` can move where the README, the docs, the changelog and the figures come from, and `linkml` can move the LinkML project whose schema the site shows. The build otherwise looks for each and shows what it finds:
 
-- Each concept in `.lokf/knowledge/` becomes a page under `knowledge/`, with its trust label from `knowledge-report.sh`, its sources and its relations both ways. The bundle also gives the health page, the graph, the four files `lokf export` writes, each concept's Markdown and JSON-LD, the bundle log as an Atom feed, `knowledge/log.xml`, and `badge.json`: how many of the bundle's concepts a person confirmed, as `n of m`, retired ones aside, in the form a shields.io endpoint badge reads. A README shows it as a badge that links to the health page.
+- Each concept in `.lokf/knowledge/` becomes a page under `knowledge/`, with its trust label from `knowledge-report.sh`, its sources and its relations both ways. The bundle also gives the health page, the graph, the four files `lokf export` writes, each concept's Markdown and JSON-LD, the bundle log as an Atom feed, `knowledge/log.xml`, and `badge.json`, labelled `KTL scorecard`: how many of the bundle's concepts a person confirmed, as `n of m`, retired ones aside, in the form a shields.io endpoint badge reads. A README shows it as a badge that links to the health page.
 - The README becomes the home page, and its Markdown is served at `index.md`. With no README, the home page opens with the bundle's own introduction.
 - Each page under `docs/` becomes a page under `docs/`, and its Markdown is served at `docs/<name>.md`, with every address made full.
 - `docs/<page>.<language>-simple.md` is a retelling of `docs/<page>.md`. Both pages offer each other above their titles, and the retelling has no line in the navigation. A concept tagged `audience-13-18` retells the one concept it is `derivedFrom` in the same way.
@@ -77,7 +77,7 @@ Hugo and Pagefind come from PyPI, at the versions `pyproject.toml` names and the
 # What to edit
 
 - **A page's words:** edit the file it comes from: the README, a page under `docs/`, the schema, or a concept, through the librarian and the curator like any other change to the bundle.
-- **The site's own values:** edit `site.toml`: its address, title and description, the repository, and optionally a logo, the docs pages' groups, more docs folders to leave out, old addresses to redirect, and the data to publish. A comment above each says what it takes.
+- **The site's own values:** edit `site.toml`: its address, title and description, the repository, and optionally a logo, the folder the README, the docs, the changelog and the figures come from, a LinkML project's folder, the docs pages' groups, more docs folders to leave out, old addresses to redirect, and the data to publish. A comment above each says what it takes.
 - **Its look:** edit `assets/css/custom.css`, which is loaded last and is this repository's own. The colours and the trust tones are custom properties at the top of `assets/css/site.css`.
 
 Those two files and the folder's `README.md` are the repository's own. Every other file in `website/` is a copy of the ktl-website skill's template, and the skill's repair replaces it, so change one of those in the skill's templates.

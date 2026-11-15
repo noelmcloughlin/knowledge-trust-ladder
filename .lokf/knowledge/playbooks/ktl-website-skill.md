@@ -37,7 +37,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T22:54:18Z"
+  at: "2026-11-15T19:13:22Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -46,13 +46,13 @@ verified:
 
 # Overview
 
-ktl-website installs a website for the knowledge bundle in the repository it is invoked from: a Hugo site under `website/`, built from the bundle and from whatever else the repository holds. The site shows a page per concept with the trust label `knowledge-report.sh` gives it, a health page, a knowledge graph, and search that filters by trust and type. It serves the four files `lokf export` writes under `/knowledge/`, and `/badge.json`, which says how many of the bundle's concepts a person confirmed, as `n of m`, retired ones aside, in the form a shields.io endpoint badge reads, for a README to show. The architecture page names it the sixth skill, optional like `ktl-prose`, and links this repository's own site, at `https://w3id.org/ktl/`, as the template's first copy.
+ktl-website installs a website for the knowledge bundle in the repository it is invoked from: a Hugo site under `website/`, built from the bundle and from whatever else the repository holds. The site shows a page per concept with the trust label `knowledge-report.sh` gives it, a health page, a knowledge graph, and search that filters by trust and type. It serves the four files `lokf export` writes under `/knowledge/`, and `/badge.json`, labelled `KTL scorecard`, which says how many of the bundle's concepts a person confirmed, as `n of m`, retired ones aside, in the form a shields.io endpoint badge reads, for a README to show. The architecture page names it the sixth skill, optional like `ktl-prose`, and links this repository's own site, at `https://w3id.org/ktl/`, as the template's first copy.
 
 It runs once, to install the site, or again to repair or update it. It writes nothing into the bundle, the README, the docs or the changelog. ktl-sidecar runs first, since the site builds from the sidecar's scripts and toolkit. ktl-librarian and ktl-curator change what the pages say. Every file is copied from the skill's `templates/`, never retyped. The build needs uv, git and a POSIX shell, and no Node.js.
 
 # What the site finds by itself
 
-No setting names what the site shows. The build looks for each input and shows what it finds:
+No setting names what the site shows, though `site.toml`'s `source` can move where the README, the docs, the changelog and the figures come from, and `linkml` can move the LinkML project whose schema the site shows. The build otherwise looks for each input and shows what it finds:
 
 - `.lokf/knowledge/`: the bundle's pages, the health page and the graph. The build needs it.
 - `README.md`: the home page. Without one, the home page opens with the bundle's own introduction.
@@ -94,7 +94,7 @@ It has eight steps, 0 to 6 with a 5b:
 - **Step 5b.** When the preflight's `mkdocs` line found `mkdocs.yml`, give the maintainer the retirement list in `references/deploy.md`, and run none of its Pages or branch steps. In order, the list says to remove both publishers, remove what only mkdocs used, switch Pages to Actions, check the kept addresses, and delete the `gh-pages` branch last. With the maintainer's agreement, put the list's file changes on the site's branch, and say once that the pull request preview is lost.
 - **Step 6.** Hand off: the site's folder, the guessed values, the build's result, which parts the site found and which home buttons are greyed, what was left alone, the preflight's last line, and the site's `/knowledge/` address as a candidate `base_iri`.
 
-`references/customising.md` describes the values in `site.toml`. Four are required: `baseURL`, `title`, `params.description` and `params.repo`. The others are optional: the branch, the release tag, a logo, `docsExclude`, `docsGroups`, `redirects`, `browse` and `browseBuild`, and a mirror's address for Cytoscape and Mermaid. `hugo.toml` beside it holds what is the same on every site, and a value in `site.toml` wins. `references/prerequisites.md` gives each preflight line in plain words, and the contract's check 12w holds that page to every line the preflight can print as missing or a warning.
+`references/customising.md` describes the values in `site.toml`. Four are required: `baseURL`, `title`, `params.description` and `params.repo`. The others are optional: the branch, the release tag, a logo, `source`, `linkml`, `docsExclude`, `docsGroups`, `redirects`, `browse` and `browseBuild`, and a mirror's address for Cytoscape and Mermaid. `hugo.toml` beside it holds what is the same on every site, and a value in `site.toml` wins. `references/prerequisites.md` gives each preflight line in plain words, and the contract's check 12w holds that page to every line the preflight can print as missing or a warning.
 
 # Deployment
 

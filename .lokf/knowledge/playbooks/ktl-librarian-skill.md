@@ -34,7 +34,7 @@ sources:
   - resource: .lokf/justfile
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T22:28:53Z"
+  at: "2026-11-15T19:13:22Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
 about:
@@ -106,6 +106,8 @@ In the agent's step the wrapper sets `KNOWLEDGE_PEN_DRY_RUN_ONLY`, so the pen th
 The `apply` job validates with `just lokf-check-refs`, which runs `lokf validate --check-refs --check-excerpts`, as the registrar gate does, through the `just` that `.lokf/uv.lock` pins where the sidecar's `pyproject.toml` names `rust-just`, else the same version fetched by name. It runs `knowledge-conventions.sh --strict` the same way, which fails when the script could not check a rule. Both steps continue on error, so a dangling relation target or a convention finding is reported in the pull request body rather than stopping the pull request. The `publish` job opens that pull request with the job's own token, which GitHub refuses while the repository setting *Allow GitHub Actions to create and approve pull requests* is off.
 
 A scheduled week with nothing waiting runs no agent. `knowledge-report.sh quiet` finds no moved source, no note a person left since the librarian's last stamp, no concept without a stamp and no reader feedback. A moved source does not count once an open question of the librarian's that names it was committed no earlier than the source's last change. A scheduled run in a month's first seven days, and a run a person starts, always go ahead. The one exception is a scheduled run while a pull request the workflow opened is still open: it stops before the agent. On a scheduled run, the quiet check counts none of what a person declined by closing one of those pull requests without merging, and the librarian proposes none of it again until it changes.
+
+When the repository variable `KNOWLEDGE_RETRIEVAL` is `true`, a scheduled run that changes the bundle makes one more agent call after the librarian's own: `knowledge-report.sh retrieval --prompt` builds a prompt from the root index and the questions readers asked in `.lokf/questions.md`, and `knowledge-report.sh retrieval <reply-file>` scores the reply by program, counting a question only when a concept the ledger names for it is among the first three paths the reply gives. The pull request then carries that score beside the health line. Unset, nothing is scored.
 
 ## Guards around the agent
 

@@ -25,7 +25,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/hosts-and-doorways
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-14T22:54:18Z"
+    at: "2026-11-15T19:13:22Z"
 ---
 
 # Overview
