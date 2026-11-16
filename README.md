@@ -16,9 +16,7 @@
 > We balance the earth in a pair of scales of our own devising."\
 > — Amy Lowell, *The Congressional Library* (1922)
 
-Inspired by the poem, the Knowledge Trust Ladder (KTL) keeps any repository's scattered knowledge as a portable **collection**: catalogued, authenticated and explained, with trust in every claim left visible. An agent derives each claim, deterministic tools check it, and a named person vouches for it.
-
-Documentation is at [w3id.org/ktl](https://w3id.org/ktl/). Young readers get [a shorter version](https://w3id.org/ktl/simple/). Built on [lokf](https://w3id.org/lokf/).
+Inspired by the poem, the Knowledge Trust Ladder (KTL) keeps any repository's scattered knowledge as a portable **collection**: catalogued, authenticated and explained, with trust in every claim left visible. An agent derives each claim, deterministic tools check it, and a named person vouches for it. Documentation is at [w3id.org/ktl](https://w3id.org/ktl/).
 
 ## Get started
 
@@ -62,20 +60,5 @@ Two optional skills work beside them. [`ktl-prose`](https://w3id.org/ktl/docs/ca
 [The architecture](https://w3id.org/ktl/docs/architecture/) says how the roles fit together and what checks their work.
 
 The same ladder serves both ends of a range: [a school or a youth group](https://w3id.org/ktl/docs/young-readers/) that retells adult knowledge for younger readers, and [a regulated team](https://w3id.org/ktl/docs/three-lines/) that must show who vouched for each claim.
-
-## Exhibitions
-
-Knowledge bundles exist anywhere skills run:
-
-- [KTL](https://w3id.org/ktl/knowledge/): this repository's own bundle, the knowledge behind the skills.
-- [Obsidian KTL Curator](https://w3id.org/ktl/curator/knowledge/): the Obsidian plugin that helps a person judge what a bundle claims.
-- [Obsidian KTL Registrar](https://w3id.org/ktl/registrar/knowledge/): the Obsidian plugin that keeps a bundle well-formed as a person edits it.
-- [lmodel catalog](https://github.com/lmodel): has dozens of knowledge bundles.
-
-### Federation of Bundles (Context Layer)
-
-- [KTL federation](https://w3id.org/ktl/federation/knowledge/): the domain that federates member bundles into one workspace, as [a context layer](docs/context-layer.md).
-
-## Feedback and contributing
 
 Report a bug or ask for a change in [the issue tracker](https://github.com/noelmcloughlin/knowledge-trust-ladder/issues). [CONTRIBUTING.md](CONTRIBUTING.md) lists what a pull request needs, and [SECURITY.md](SECURITY.md) says how to report a vulnerability privately.
