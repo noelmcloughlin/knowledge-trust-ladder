@@ -4,6 +4,21 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Added
+
+- **`scripts/vendor.sh` writes the site's copies of Cytoscape and Mermaid, `assets/vendor/`, from an npm registry**: it reads each package and version from the address `hugo.toml` names, fetches it with `npm pack` from the registry npm reads, and keeps a file only at the hash `hugo.toml` holds.
+- **A domain host's workspace builds behind a package mirror**: where `UV_DEFAULT_INDEX`, `UV_INDEX_URL` or `UV_INDEX` names an index, both jobs of `knowledge-federation.yaml` install the toolkit through the site's `scripts/uv-env.sh`, and the later steps run uv with no sync.
+- **A runner that holds uv keeps its own**: each job of every workflow looks for uv before `setup-uv`, which fetches uv from github.com, so a locked-down runner with uv on its image runs.
+
+### Fixed
+
+- **A root `diataxis.md` is no node of the graph**: the website's build and the federation build run `lokf export` with that file read as no concept, where the toolkit, which reserves `index.md` and `log.md` alone, wrote KTL Registrar's map into `graph.json`, `graph.nt` and `concepts.jsonld`.
+- **The workflows read `site.toml` as TOML**: `knowledge-website.yaml` and `knowledge-federation.yaml` find `browseBuild` through `scripts/site-values.py`, and `knowledge-federate.py` reads `baseURL` with a TOML parser, in any letter case and either quote, where each matched one spelling of the line.
+
+### Security
+
+- **A description cannot add a key to the bundle's `index.md`**: ktl-sidecar's Step 1 writes each free-text value into frontmatter and `pyproject.toml` as an escaped, double-quoted string, checks a slug, a date and the base IRI by their form, and stops before it writes a file on an empty value, a line break or a character that does not print. It fills `llms.txt` the same way. A description with a colon broke the frontmatter, and one of several lines could set `license` or `publisher`.
+
 ## [0.67.0] - 2026-11-17
 
 ### Added

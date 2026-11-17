@@ -64,7 +64,7 @@ import sys
 import pytest
 import yaml
 
-from conftest import REPO, SCRIPTS, TEMPLATES, WORKFLOWS, has_line, have, matches, read, run, write
+from conftest import REPO, SCRIPTS, TEMPLATES, WEBSITE_TEMPLATES, WORKFLOWS, has_line, have, matches, read, run, write
 
 WRAPPER = SCRIPTS / "knowledge-librarian.sh"
 LIBRARIAN_YAML = WORKFLOWS / "knowledge-librarian.yaml"
@@ -1485,9 +1485,39 @@ def test_the_agent_s_job_saves_no_npm_cache():
 @pytest.mark.parametrize("yaml_path", [REGISTRAR_YAML, LIBRARIAN_YAML, RELEASE_YAML, FEDERATION_YAML], ids=lambda p: p.name)
 def test_each_template_installs_the_sidecar_from_its_lock(yaml_path):
     text = read(yaml_path)
-    assert has_line(text, "        run: uv sync --locked") and not matches(text, r"^ *run: uv sync *$"), (
+    locked = has_line(text, "        run: uv sync --locked") or has_line(text, "            cd .lokf && uv sync --locked")
+    assert locked and not matches(text, r"^ *run: uv sync *$") and "uv sync --frozen" not in text, (
         f"{yaml_path.name} installs the sidecar without --locked, so it takes whatever resolves on the day"
     )
+
+
+def test_the_federation_installs_the_toolkit_from_a_mirror_through_the_site_s_uv_env():
+    """uv fetches a locked file from the address the lock holds, so behind a mirror both jobs install the lock's pins from the index uv reads, and later steps sync nothing."""
+    text = read(FEDERATION_YAML)
+    route = (
+        '          if [ -n "${UV_DEFAULT_INDEX:-}${UV_INDEX_URL:-}${UV_INDEX:-}" ] && [ -f "$site/scripts/uv-env.sh" ]; then\n'
+        '            mode="$(bash "$site/scripts/uv-env.sh" .lokf)"\n'
+        '            if [ "$mode" = --no-sync ]; then echo "UV_NO_SYNC=1" >> "$GITHUB_ENV"; fi\n'
+        "          else\n"
+        "            cd .lokf && uv sync --locked\n"
+    )
+    assert text.count(route) == 2, "the check and the build each take the mirror route"
+    assert "uv lock" not in text and "UV_INSECURE_HOST" not in text, "no step writes a lock or turns a certificate check off"
+
+
+def test_a_runner_that_holds_uv_keeps_its_own():
+    """setup-uv fetches uv from github.com, which a locked-down runner cannot reach, so each job looks for uv first."""
+    for path in [*sorted(WORKFLOWS.glob("*.yaml")), WEBSITE_TEMPLATES / "github" / "knowledge-website.yaml"]:
+        for name, job in yaml.safe_load(read(path))["jobs"].items():
+            steps = job["steps"]
+            for n, step in enumerate(steps):
+                if "astral-sh/setup-uv" not in str(step.get("uses", "")):
+                    continue
+                find = steps[n - 1]
+                assert find.get("id") == "uv" and find.get("run") == 'if command -v uv >/dev/null 2>&1; then echo "found=true" >> "$GITHUB_OUTPUT"; fi', f"{path.name}'s {name} sets up uv unasked"
+                assert str(step.get("if", "")).endswith("steps.uv.outputs.found != 'true'"), f"{path.name}'s {name} sets up uv over the runner's own"
+                if "if" in find:
+                    assert step["if"] == f"{find['if']} && steps.uv.outputs.found != 'true'", f"{path.name}'s {name}"
 
 
 def test_the_registrar_triggers_on_and_diffs_both_names():

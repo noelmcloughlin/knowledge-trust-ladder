@@ -1543,21 +1543,56 @@ def label_blank_nodes_fast() -> bool:
     return True
 
 
+def leave_out_root_map() -> bool:
+    """Have lokf read no concept from the diataxis.md at a bundle's root.
+
+    KTL Registrar keeps its map there, and the conventions, the report and
+    the pen read it as no concept. The toolkit reserves index.md and log.md
+    alone, so `lokf export` would write the map as a node. Each lokf command
+    looks `lokf.model.load_bundle` up by name when it runs, so wrapping the
+    function here is enough. A diataxis.md in a folder stays a concept.
+    """
+    import lokf.model
+
+    stock = lokf.model.load_bundle
+    if getattr(stock, "leaves_out_root_map", False):
+        return False
+
+    def load_bundle(path):
+        bundle = stock(path)
+        bundle.concepts = [c for c in bundle.concepts if c.concept_id != "diataxis"]
+        return bundle
+
+    load_bundle.leaves_out_root_map = True
+    lokf.model.load_bundle = load_bundle
+    return True
+
+
 def public_url(root: pathlib.Path, given: str | None) -> str:
     """Where the snapshot is served: --public-url, else the website's address + /workspace, else nothing.
 
     The address is `baseURL` in the site.toml of website/, or of ktl-website/
-    where website/ was another site's. A site not yet moved from Astro has
-    it as SITE and BASE in website/site.config.mjs.
+    where website/ was another site's, read as TOML and in any letter case,
+    as Hugo reads it. A site not yet moved from Astro has it as SITE and BASE
+    in website/site.config.mjs.
     """
+    import tomllib
+
     if given is not None:
         return given.rstrip("/")
     for folder in ("website", "ktl-website"):
         cfg = root / folder / "site.toml"
-        if cfg.is_file():
-            address = re.search(r'^baseURL = "([^"]*)"', cfg.read_text(encoding="utf-8"), re.M)
-            if address:
-                return f"{address.group(1).rstrip('/')}/workspace"
+        if not cfg.is_file():
+            continue
+        try:
+            site = tomllib.loads(cfg.read_text(encoding="utf-8"))
+        except (tomllib.TOMLDecodeError, UnicodeDecodeError) as e:
+            raise Failed(f"{folder}/site.toml cannot be read as TOML, so the workspace has no address: {e}") from e
+        address = [value for key, value in site.items() if key.lower() == "baseurl"]
+        if len(address) > 1 or (address and not isinstance(address[0], str)):
+            raise Failed(f"{folder}/site.toml sets baseURL twice, or to a value that is not a string")
+        if address and address[0]:
+            return f"{address[0].rstrip('/')}/workspace"
     cfg = root / "website" / "site.config.mjs"
     if cfg.is_file():
         text = cfg.read_text(encoding="utf-8")
@@ -2217,6 +2252,7 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
     # 2. Register and export each bundle, the domain's among them, in base_iri order.
     if label_blank_nodes_fast():
         say("blank nodes in each export are labelled by pyoxigraph's RDFC-1.0, not by the toolkit's slower rdflib canonicaliser")
+    leave_out_root_map()
     export_root = new / "export"
     export_root.mkdir()
     public = public_url(root, args.public_url)

@@ -112,15 +112,30 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
+      # A runner that holds uv keeps its own; setup-uv fetches one from github.com.
+      - name: Find uv on the runner
+        id: uv
+        run: if command -v uv >/dev/null 2>&1; then echo "found=true" >> "$GITHUB_OUTPUT"; fi
       - name: Set up uv
+        if: steps.uv.outputs.found != 'true'
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
           cache-dependency-glob: .lokf/uv.lock
 
+      # Where UV_DEFAULT_INDEX, UV_INDEX_URL or UV_INDEX names a package
+      # mirror and the host has a site, the site's uv-env.sh installs what
+      # uv.lock pins from that index, each file checked against the lock's
+      # hash, and the steps below run uv with no sync.
       - name: Install the lokf toolkit the sidecar pins
-        run: uv sync --locked
-        working-directory: .lokf
+        run: |
+          if [ -f ktl-website/site.toml ]; then site=ktl-website; else site=website; fi
+          if [ -n "${UV_DEFAULT_INDEX:-}${UV_INDEX_URL:-}${UV_INDEX:-}" ] && [ -f "$site/scripts/uv-env.sh" ]; then
+            mode="$(bash "$site/scripts/uv-env.sh" .lokf)"
+            if [ "$mode" = --no-sync ]; then echo "UV_NO_SYNC=1" >> "$GITHUB_ENV"; fi
+          else
+            cd .lokf && uv sync --locked
+          fi
 
       # The workspace the next release build will hold a member at, when
       # that member's confirmed release cannot be fetched: the newest one
@@ -240,7 +255,12 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
+      # A runner that holds uv keeps its own; setup-uv fetches one from github.com.
+      - name: Find uv on the runner
+        id: uv
+        run: if command -v uv >/dev/null 2>&1; then echo "found=true" >> "$GITHUB_OUTPUT"; fi
       - name: Set up uv
+        if: steps.uv.outputs.found != 'true'
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
@@ -250,9 +270,19 @@ jobs:
             ktl-website/uv.lock
           prune-cache: true
 
+      # Where UV_DEFAULT_INDEX, UV_INDEX_URL or UV_INDEX names a package
+      # mirror and the host has a site, the site's uv-env.sh installs what
+      # uv.lock pins from that index, each file checked against the lock's
+      # hash, and the steps below run uv with no sync.
       - name: Install the lokf toolkit the sidecar pins
-        run: uv sync --locked
-        working-directory: .lokf
+        run: |
+          if [ -f ktl-website/site.toml ]; then site=ktl-website; else site=website; fi
+          if [ -n "${UV_DEFAULT_INDEX:-}${UV_INDEX_URL:-}${UV_INDEX:-}" ] && [ -f "$site/scripts/uv-env.sh" ]; then
+            mode="$(bash "$site/scripts/uv-env.sh" .lokf)"
+            if [ "$mode" = --no-sync ]; then echo "UV_NO_SYNC=1" >> "$GITHUB_ENV"; fi
+          else
+            cd .lokf && uv sync --locked
+          fi
 
       # As in the website workflow: a data folder site.toml names is written
       # by its own command, which prepare.sh runs when the folder holds no
@@ -261,19 +291,27 @@ jobs:
       # .lokf/uv.lock pins rust-just, the step links the copy the toolkit
       # step above installed, checked by hash, alone, so the toolkit's other
       # commands stay off PATH; else it installs the same version by name.
+      # The site's site-values.py reads site.toml as TOML. A site from
+      # before 0.67.0 has no such script, and its prepare.sh reads the line.
       - name: Install just, when the host's site builds its data with it
         if: hashFiles('website/site.toml', 'ktl-website/site.toml') != ''
         run: |
           if [ -f ktl-website/site.toml ]; then site=ktl-website; else site=website; fi
-          if grep -q '^browseBuild = "just ' "$site/site.toml"; then
-            mkdir -p "$HOME/.local/bin"
-            if grep -qx 'name = "rust-just"' .lokf/uv.lock; then
-              ln -sf "$PWD/.lokf/.venv/bin/just" "$HOME/.local/bin/just"
-            else
-              uv tool install rust-just==1.47.0
-            fi
-            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          if [ -f "$site/scripts/site-values.py" ]; then
+            build="$(python3 -I "$site/scripts/site-values.py" "$site/site.toml" | sed -n 's/^browseBuild=//p')"
+          else
+            build="$(sed -n 's/^browseBuild = "\(.*\)"$/\1/p' "$site/site.toml")"
           fi
+          case "$build" in
+            "just "*)
+              mkdir -p "$HOME/.local/bin"
+              if grep -qx 'name = "rust-just"' .lokf/uv.lock; then
+                ln -sf "$PWD/.lokf/.venv/bin/just" "$HOME/.local/bin/just"
+              else
+                uv tool install rust-just==1.47.0
+              fi
+              echo "$HOME/.local/bin" >> "$GITHUB_PATH" ;;
+          esac
 
       # The same build the website workflow runs; this workflow deploys in
       # its place on a domain host. The site is in website/, or in

@@ -21,10 +21,13 @@ import os
 import re
 import shutil
 import sys
+import tomllib
+from pathlib import Path
 
 import pytest
+import yaml
 
-from conftest import BOM, SCRIPTS, Git, bash, count_lines, have, matches, mawk_path, mirror_uv, read, stopping_awk, write
+from conftest import BOM, SCRIPTS, Git, bash, count_lines, have, matches, mawk_path, mirror_uv, read, run, stopping_awk, write
 
 CONVENTIONS = SCRIPTS / "knowledge-conventions.sh"
 
@@ -562,26 +565,85 @@ def test_the_sidecar_venv_runs_the_parser_half_before_uv(good, tmp_path):
     assert result and "not checked" not in result.out, f"conventions script did not run its parser's half from the sidecar's .venv: {result.out}"
 
 
+SKELETON = {
+    "PROJ_NAME": "Acme",
+    "PROJ_DESC": "The Acme project.",
+    "PROJ_SLUG": "acme",
+    "BASE_IRI": "https://acme.example/knowledge/",
+    "OWNER_NAME": "Ada",
+    "OWNER_SLUG": "ada",
+    "TODAY": "2026-09-14",
+}
+
+
+def step_one(host, **values):
+    """The block ktl-sidecar's SKILL.md gives for the placeholders, run in the host as written, less its mkdir."""
+    found = re.search(r"```bash\nmkdir -p \.lokf/knowledge/services\n(.*?)```", read(SCRIPTS.parent.parent / "SKILL.md"), re.S)
+    assert found, "SKILL.md's Step 1 still gives the block that fills the placeholders"
+    path = f"{Path(sys.executable).parent}{os.pathsep}{os.environ['PATH']}"
+    return run(["bash", "-c", found.group(1).replace("<skill>", str(SCRIPTS.parent.parent))], cwd=host, env={**SKELETON, **values, "PATH": path})
+
+
+def skeleton(host):
+    """The files of Step 1 that carry a placeholder, and Step 2's llms.txt, copied and not yet filled."""
+    templates = SCRIPTS.parent
+    shutil.copytree(templates / "knowledge", host / ".lokf" / "knowledge")
+    for name in ("pyproject.toml", "justfile", "README.md", "queries.http"):
+        shutil.copy(templates / name, host / ".lokf" / name)
+    shutil.copy(templates / "llms.txt", host / "llms.txt")
+    return host / ".lokf" / "knowledge"
+
+
 def test_the_installed_skeleton_keeps_every_convention(tmp_path):
     """The bundle ktl-sidecar installs, with its placeholders filled, passes the gate before anyone edits it."""
-    k = tmp_path / ".lokf" / "knowledge"
-    shutil.copytree(SCRIPTS.parent / "knowledge", k)
-    values = {
-        "PROJ_NAME": "Acme",
-        "PROJ_DESC": "The Acme project.",
-        "PROJ_SLUG": "acme",
-        "BASE_IRI": "https://acme.example/knowledge/",
-        "OWNER_NAME": "Ada",
-        "OWNER_SLUG": "ada",
-        "TODAY": "2026-09-14",
-    }
-    for path in k.rglob("*.md"):
-        text = path.read_text(encoding="utf-8")
-        for token, value in values.items():
-            text = text.replace(f"<{token}>", value)
-        path.write_text(text, encoding="utf-8")
+    k = skeleton(tmp_path)
+    filled = step_one(tmp_path)
+    assert filled, filled.out
+    left = [p for p in [*tmp_path.rglob("*.md"), *tmp_path.rglob("*.toml"), tmp_path / "llms.txt"] if re.search(r"<(PROJ|OWNER)_[A-Z]+>|<BASE_IRI>|<TODAY>", read(p))]
+    assert not left, f"Step 1 left a placeholder in {left}"
     result = bash(CONVENTIONS, k)
     assert result, f"the sidecar's skeleton breaks its own conventions: {result.out}"
+
+
+def test_step_one_writes_a_value_as_a_quoted_string_and_refuses_what_is_not_one_line(tmp_path):
+    """The description comes from a manifest or a README, so a colon, a quote or a # in it stays text, and a line break adds no key."""
+    spoken = 'Acme: the "platform" # with C:\\tools and <BASE_IRI>.'
+    host = tmp_path / "quoted"
+    k = skeleton(host)
+    filled = step_one(host, PROJ_NAME='The "Acme": Platform', PROJ_DESC=spoken, OWNER_NAME="Ada: #1")
+    assert filled, filled.out
+    index = yaml.safe_load(read(k / "index.md").split("\n---\n")[0].removeprefix("---\n"))
+    assert index["title"] == 'The "Acme": Platform Knowledge Bundle' and index["description"] == spoken and index["publisher"]["name"] == "Ada: #1", index
+    service = yaml.safe_load(read(k / "services" / "example-service-a.md").split("\n---\n")[0].removeprefix("---\n"))
+    assert service["description"].endswith('of The "Acme": Platform.'), service
+    assert tomllib.loads(read(host / ".lokf" / "pyproject.toml"))["project"]["description"] == 'LOKF knowledge-bundle tooling for The "Acme": Platform.'
+    assert f"> {spoken}\n" in read(host / "llms.txt") and '# The "Acme": Platform Knowledge Bundle\n' in read(k / "index.md"), "a body takes the value as it is"
+
+    for token, value, said in (
+        ("PROJ_DESC", "The platform.\nlicense: none", "PROJ_DESC: empty, or a line break or unprintable character"),
+        ("OWNER_NAME", "Ada" + chr(0x200B), "OWNER_NAME: empty, or a line break or unprintable character"),
+        ("PROJ_NAME", " ", "PROJ_NAME: empty"),
+        ("BASE_IRI", "https://acme.example/knowledge", "BASE_IRI: not of the form"),
+        ("PROJ_SLUG", "acme platform", "PROJ_SLUG: not of the form"),
+        ("TODAY", "today", "TODAY: not of the form"),
+    ):
+        host = tmp_path / f"refused-{token}"
+        k = skeleton(host)
+        before = read(k / "index.md")
+        refused = step_one(host, **{token: value})
+        assert not refused and said in refused.out, f"Step 1 took {token}={value!r}: {refused.out}"
+        assert read(k / "index.md") == before and "<PROJ_NAME>" in read(host / "llms.txt"), "it wrote no file"
+
+
+def test_every_free_text_placeholder_in_frontmatter_sits_in_a_quoted_string():
+    """Step 1 escapes a value for a double-quoted string there, so a bare placeholder would take a colon as a key."""
+    for path in sorted((SCRIPTS.parent / "knowledge").rglob("*.md")):
+        text = read(path)
+        if not text.startswith("---\n"):
+            continue
+        for line in text.split("\n---\n")[0].splitlines():
+            if re.search(r"<(PROJ_NAME|PROJ_DESC|OWNER_NAME)>", line):
+                assert re.fullmatch(r'\s*[a-z_]+: "[^"]*"', line), f"{path.name}: {line}"
 
 
 def test_reads_a_bundle_reached_through_a_link(good):

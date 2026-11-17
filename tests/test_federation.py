@@ -196,10 +196,11 @@ from pathlib import Path
 import pytest
 import yaml
 
-from conftest import REPO, SCRIPTS, TEMPLATES, Git, have, read, run, today_utc, write
+from conftest import REPO, SCRIPTS, TEMPLATES, WEBSITE_TEMPLATES, Git, have, read, run, today_utc, write
 
 SCRIPT = SCRIPTS / "knowledge-federate.py"
 APPLY = SCRIPTS / "knowledge-apply.sh"
+SITE_SCRIPTS = WEBSITE_TEMPLATES / "website" / "scripts"
 needs_uv = pytest.mark.skipif(not have("uv"), reason="uv is not installed - the federation build runs in the sidecar's environment")
 pytestmark = needs_uv
 
@@ -396,6 +397,23 @@ def test_the_export_labels_blank_nodes_by_rdfc_while_the_toolkit_uses_rdflib(tmp
     assert r.rc == 0, r.out
     for line in ("ISO True", "C14N True", "SAME True", "SWAP True True", "TWICE False", "FIXED False True"):
         assert line in r.out.splitlines(), (line, r.out)
+
+
+def test_the_export_leaves_out_the_map_at_the_root_and_keeps_one_in_a_folder(tmp_path):
+    """KTL Registrar's diataxis.md at the root is no concept to the report or the pages, and the toolkit would export it as a node."""
+    k = tmp_path / "knowledge"
+    write(k / "index.md", '---\nlokf_version: "0.2"\nbase_iri: https://acme.example/knowledge/\ntitle: T\n---\n# T\n')
+    for name in ("diataxis", "x/diataxis", "x/a"):
+        write(k / f"{name}.md", f"---\ntype: Document\ntitle: {name}\ndescription: d\n---\n# body\n")
+    result = run(["uv", "run", "--project", str(REPO / ".lokf"), "--quiet", "python", "-I", str(SITE_SCRIPTS / "lokf-export.py"), str(k), "--out-dir", str(tmp_path / "out")])
+    assert result, result.out
+    nodes = sorted(n["data"]["id"] for n in json.loads(read(tmp_path / "out" / "graph.json"))["nodes"])
+    assert nodes == ["https://acme.example/knowledge/x/a", "https://acme.example/knowledge/x/diataxis"], nodes
+    assert len(json.loads(read(tmp_path / "out" / "concepts.jsonld"))["@graph"]) == 2
+    assert "<https://acme.example/knowledge/diataxis>" not in read(tmp_path / "out" / "graph.nt")
+    assert 'python -I "$here/scripts/lokf-export.py"' in read(SITE_SCRIPTS / "prepare.sh") and '" lokf export ' not in read(SITE_SCRIPTS / "prepare.sh")
+    federate = read(SCRIPT)
+    assert federate.index("    leave_out_root_map()\n") < federate.index('done = run_lokf(["export", str(kdir)'), "the federation build leaves the map out before it exports a bundle"
 
 
 def test_a_cross_bundle_target_no_member_owns_fails_or_is_reported(federation, tmp_path):
@@ -935,7 +953,10 @@ def test_a_build_reads_each_bundle_once_itself(federation, tmp_path):
         "counts = collections.Counter()\n"
         "real = lokf.model.load_bundle\n"
         "def counting(path, *args, **kwargs):\n"
-        "    if sys._getframe(1).f_code.co_filename == script:\n"
+        "    caller = sys._getframe(1)\n"
+        "    if caller.f_code.co_name == 'load_bundle':  # the script's wrapper that leaves the root map out\n"
+        "        caller = caller.f_back\n"
+        "    if caller.f_code.co_filename == script:\n"
         "        counts[pathlib.Path(path).resolve().parent.parent.name] += 1\n"
         "    return real(path, *args, **kwargs)\n"
         "lokf.model.load_bundle = counting\n"
