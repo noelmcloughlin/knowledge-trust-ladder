@@ -49,7 +49,7 @@ sources:
     excerpt: retried here; validate.yml checks the links a second time instead.
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-14T12:32:59Z"
+    at: "2026-11-17T21:23:32Z"
 ---
 
 # Overview

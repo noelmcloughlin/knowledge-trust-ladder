@@ -7,7 +7,7 @@ genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-17T21:14:13Z"
+  at: "2026-11-17T21:23:32Z"
 verified:
   - by: process:ktl-librarian
     at: "2026-11-15T19:13:22Z"
@@ -20,6 +20,12 @@ sources:
   - resource: docs/threat-model.md
     id: docs-threat-model.md
     excerpt: Every one of them has a `SECURITY.md`, which says how to report a vulnerability, what that repository owns, and which measures on this page it carries.
+  - resource: skills/ktl-sidecar/references/automation.md
+  - resource: skills/ktl-sidecar/references/gate.md
+  - resource: skills/ktl-librarian/references/patch.md
+  - resource: docs/releasing.md
+  - resource: .github/workflows/pypi.yml
+  - resource: SECURITY.md
   - resource: CHANGELOG.md
   - resource: scripts/validate-repository.sh
   - resource: skills/ktl-sidecar/templates/scripts/knowledge-conventions.sh

@@ -2,6 +2,7 @@
 
 ## 2026-11-17
 
+* **Changed**: Threat model cites the sidecar's `automation.md` and `gate.md`, the librarian's `patch.md`, `docs/releasing.md`, `pypi.yml` and `SECURITY.md`, since `docs/threat-model.md` now links them for the detail of the secrets, the pins, the pen, the librarian's jobs, the PyPI jobs and the provenance gate. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: Three lines of defence cites `skills/ktl-sidecar/references/gate.md` for the rule that an approval backs a confirmation only while each changed concept is byte for byte what the approved commit held, since `CHANGELOG.md` no longer states that detail. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: lokf toolkit cites the website's `lokf-export.py` and the federation's `knowledge-federate.py` for why both builds read a root `diataxis.md` as no concept, since `CHANGELOG.md` no longer says the toolkit reserves `index.md` and `log.md` alone.
 * **Changed**: repository validation says check 11 holds the pen and the conventions script to the same PyYAML release alone, as `scripts/validate-repository.sh` does, and no longer names a cut-off date the scripts do not carry.
