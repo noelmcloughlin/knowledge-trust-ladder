@@ -730,6 +730,7 @@ done < <(grep -oE '\b(miss|warn) [a-z]+' skills/ktl-website/scripts/website-pref
 #     semantic-release.yml promotes on every push to main, but only
 #     publish.yml tags. The first part reads the file and always runs; the
 #     second tests the fold in a throwaway repository and needs node.
+#     tests/test_changelog_release.py tests each of the script's commands.
 say ""
 say "Checking CHANGELOG.md for a version promoted twice..."
 mapfile -t headings < <(grep -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md)
@@ -968,6 +969,8 @@ fi
 #     SKILL.md, every instructions file's trust labels stay word for word the
 #     docent's, this repository's bundle builds inside Copilot's limits, and
 #     one input gives one zip, since the release workflow attaches it.
+#     tests/test_m365.py tests the build, its refusals and each limit on a
+#     small bundle.
 say ""
 say "Checking the Microsoft 365 Copilot skills build..."
 m365="$templates/m365"

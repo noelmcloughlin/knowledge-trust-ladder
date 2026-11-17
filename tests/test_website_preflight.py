@@ -13,7 +13,8 @@ no site, where every section has to cope with absence rather than fail. It:
   federation workflow;
 - settles the site's folder: website/, or ktl-website/ where website/ is
   another site's, on a first run and on a rerun, and names the earlier Astro
-  site as one to move.
+  site as one to move. The skill's page gives the same rule, in the order
+  the preflight tries its cases.
 
 Run under sh it stops on one line that names bash.
 
@@ -23,9 +24,10 @@ script, check 12w: that is a fact about this repository's own pages.
 
 from __future__ import annotations
 
+import re
 import shutil
 
-from conftest import REPO, SCRIPTS, TEMPLATES, WEBSITE_PREFLIGHT, WEBSITE_TEMPLATES, Git, bash, matches, read, run, write
+from conftest import REPO, SCRIPTS, TEMPLATES, WEBSITE, WEBSITE_PREFLIGHT, WEBSITE_TEMPLATES, Git, bash, matches, read, run, write
 
 
 def preflight(*args, cwd=None):
@@ -226,6 +228,27 @@ def test_names_the_earlier_astro_site_as_one_to_move_and_two_foreign_folders_as_
     (tmp_path / "ktl-website").mkdir()
     result = preflight(tmp_path)
     assert result and matches(result.out, r"^missing website +ktl-website/ exists and is not this skill's") and "Step 1 and every step after it" in result.out, result.out
+
+
+def test_the_skill_s_page_gives_the_preflight_s_rule_for_the_site_s_folder(tmp_path):
+    """A folder is this skill's when it holds site.toml and hugo.toml, and the page lists the cases in the order the preflight tries them."""
+    skill = read(WEBSITE / "SKILL.md")
+    assert "A folder is this skill's when it holds `site.toml` and `hugo.toml`." in skill
+    section = skill[skill.index("## The site's folder"):skill.index("## Step 0")]
+    assert re.findall(r"^- ([^:]+):", section, re.M) == [
+        "`website/` is this skill's",
+        "`ktl-website/` is this skill's",
+        "`website/site.config.mjs` exists",
+        "`website/` exists",
+        "Neither folder exists",
+    ], "the earlier Astro site is told apart before another site's folder, which it would also match"
+    skeleton(tmp_path)
+    write(tmp_path / "website" / "site.toml", 'title = "Another site"\n')
+    result = preflight(tmp_path)
+    assert result and matches(result.out, r"^info    website +website/ exists and is not this skill's \(no hugo\.toml\).*ktl-website/"), f"site.toml alone made the folder this skill's: {result.out}"
+    write(tmp_path / "website" / "site.config.mjs", 'export const TITLE = "Acme";\n')
+    result = preflight(tmp_path)
+    assert result and matches(result.out, r"^warn    website +website/ is this skill's earlier Astro site"), result.out
 
 
 def test_names_the_report_script_the_sidecar_must_lay_down(tmp_path):

@@ -131,6 +131,10 @@ tags:
 
 Example Service A, in fewer words.
 MD
+  # The map the KTL Registrar plugin writes at the bundle's root, and a
+  # group's own log. Neither is a concept, so the report prints no label for it.
+  printf -- '---\ntitle: Diataxis map\n---\n\n# Diataxis map\n\nThe bundle by kind of page.\n' > .lokf/knowledge/diataxis.md
+  printf '# Services log\n\n## 2026-01-01\n\n* **Added**: a service.\n' > .lokf/knowledge/services/log.md
   # A source the ingest mirrored, as its committed lock records it.
   mkdir -p .lokf/mirror/vendor
   printf -- '---\norigin: https://vendor.example/page\n---\n\nThe vendor page.\n' > .lokf/mirror/vendor/page.md
@@ -271,6 +275,10 @@ assert "llms.txt offers llms-full.txt, the docs pages as Markdown and the schema
   "grep -q '/llms-full.txt)' \"$dist/llms.txt\" && grep -q '(https://acme.github.io/acme-platform/docs/guide.md)' \"$dist/llms.txt\" && grep -q '/schema/acme_platform.yaml)' \"$dist/llms.txt\""
 assert "badge.json is a shields.io endpoint badge with KTL's mark and the count of confirmed concepts" \
   "python3 -I -c 'import json, re, sys; d = json.load(open(sys.argv[1])); assert d[\"schemaVersion\"] == 1 and d[\"label\"] == \"KTL scorecard\" and re.fullmatch(r\"[0-9]+ of [0-9]+\", d[\"message\"]) and d[\"logoSvg\"].startswith(\"<svg\")' \"$dist/badge.json\""
+assert "the badge counts the bundle's concepts as the health line does" \
+  "python3 -I -c 'import json, sys; assert open(sys.argv[2], encoding=\"utf-8\").read().startswith(\"Confirmed by a person: \" + json.load(open(sys.argv[1]))[\"message\"] + \" \")' \"$dist/badge.json\" \"$host/website/generated/health.txt\""
+assert "the root's diataxis.md and a group's log.md are no concepts: each is served as Markdown and has no page" \
+  "[[ -f \"$dist/knowledge/diataxis.md\" && ! -e \"$dist/knowledge/diataxis\" && -f \"$dist/knowledge/services/log.md\" && ! -e \"$dist/knowledge/services/log\" ]]"
 assert "the log feed is well-formed" "python3 -c 'import sys, xml.dom.minidom; xml.dom.minidom.parse(sys.argv[1])' \"$dist/knowledge/log.xml\""
 assert "every page names the log feed" "grep -q 'application/atom+xml[^>]*knowledge/log.xml' \"$dist/index.html\""
 assert "every page carries the policy that stops raw HTML running a script" "grep -q \"Content-Security-Policy.*script-src https://acme.github.io/acme-platform/js/\" \"$dist/docs/guide/index.html\""

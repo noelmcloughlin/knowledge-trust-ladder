@@ -17,7 +17,7 @@
 - [ ] If a file the sibling repositories deep-link moved (check 9 lists them), their links change too, and this side merges first
 - [ ] A changed template is copied over this repository's own copy (check 11)
 - [ ] `CHANGELOG.md` has a line or two under `[Unreleased]` if this changes skill behavior
-- [ ] If the commits would release, this pull request's title carries `feat:`, `fix:` or `security:` too
+- [ ] If the commits would release, this pull request's title carries `feat:`, `fix:`, `perf:` or `security:` too, or is a revert's `Revert "..."`
 - [ ] For a curation pull request (confirmations under `.lokf/knowledge/`), the approver opened the sources named by every confirmation they approve
 
 ## AI Assistance

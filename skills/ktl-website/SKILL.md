@@ -40,12 +40,12 @@ The home page has five buttons on every site: the schema, the bundle, the archit
 
 ## The site's folder
 
-The site's folder is `website/`. A folder is this skill's when it holds `site.toml`. The preflight's `website` line settles which folder this run uses, and every step below means that folder where it says `website/`:
+The site's folder is `website/`. A folder is this skill's when it holds `site.toml` and `hugo.toml`. The preflight's `website` line settles which folder this run uses, and every step below means that folder where it says `website/`. The first line that holds decides:
 
-- `website/site.toml` exists: the site is there. Repair or update it.
-- `ktl-website/site.toml` exists: the site is there, since `website/` was another site's when the skill first ran. Repair or update it, and leave `website/` alone.
-- `website/` exists with no `site.toml`: it is another site's. Install into `ktl-website/`.
+- `website/` is this skill's: the site is there. Repair or update it.
+- `ktl-website/` is this skill's: the site is there, since `website/` was another site's when the skill first ran. Repair or update it, and leave `website/` alone.
 - `website/site.config.mjs` exists: it is this skill's earlier Astro site. Move it to Hugo in place, as Step 1 says.
+- `website/` exists: it is another site's. Install into `ktl-website/`.
 - Neither folder exists: install into `website/`.
 
 The workflow and the sidecar's sync look in both folders, so neither needs to be told.

@@ -15,7 +15,7 @@ It runs weekly (Mondays, 05:00 UTC) and on demand (`workflow_dispatch`). A sched
 
 The guardrails: the agent runs in a `contents: read` job with no persisted credentials, and only the `publish` job, which runs no agent code, holds `contents: write` and `pull-requests: write`. The workflow never pushes to the default branch, never auto-merges, and opens no pull request when nothing changed.
 
-Five things this skill must keep true for it:
+Six things this skill must keep true for it:
 
 - A no-change run must leave the bundle byte-for-byte untouched, `log.md` included (section 1's log policy).
 - What a reviewer must know about the bundle goes in the bundle, as a `log` line or an open question. What a reviewer must know that is no change to the bundle goes in the patch file's `handoff`, in your own words and never a reader's. That is the same send-back twice, a source that did not answer, or entries left for the next run. The rest of the pull request body is the workflow's: the `publish` job computes the bundle's health line and what the change does to the record with `knowledge-report.sh`, on its own checkout. It shows the hand-off under *From the librarian*, in a code block, as your words and nothing more. Your final reply is read in the job's log and nowhere else.

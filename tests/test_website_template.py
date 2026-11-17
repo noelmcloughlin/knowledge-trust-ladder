@@ -16,8 +16,9 @@ another site's, and the workflows and the sync look in both.
 
 The site's plain Python is tested here: the link check, the cleaning of raw
 HTML, the SVG check and the reading of site.toml. prepare.sh runs as far as
-`lokf export`, under a uv that runs each command as it is. The build itself
-is scripts/smoke-test-website.sh, which needs the network.
+`lokf export`, under a uv that runs each command as it is, and uv-env.sh
+under one that records each call. The build itself is
+scripts/smoke-test-website.sh, which needs the network.
 """
 
 from __future__ import annotations
@@ -27,10 +28,13 @@ import re
 import shutil
 import subprocess
 import sys
+import json
 import tomllib
 from pathlib import Path
 
-from conftest import REPO, TEMPLATES, WEBSITE, WEBSITE_TEMPLATES, bash, read, run, write
+import pytest
+
+from conftest import REPO, TEMPLATES, WEBSITE, WEBSITE_TEMPLATES, bash, have, read, run, write
 
 SITE_TEMPLATES = WEBSITE_TEMPLATES / "website"
 PLACEHOLDERS = {
@@ -232,12 +236,26 @@ def test_the_svg_check_reads_each_file_as_a_browser_does(tmp_path):
     assert own, f"one of this repository's own figures is named: {own.out}"
 
 
+UV_STUB = """#!/usr/bin/env bash
+# Writes each call to $CALLS. `sync` exits $SYNC, `pip` exits $PIP, and `run`
+# runs python as this test's and names any other command, with status 7.
+printf '%s\\n' "$*" >> "$CALLS"
+case "$1" in
+  sync) [ "${SYNC:-0}" -eq 0 ] || echo "stub: files.pythonhosted.org is blocked" >&2; exit "${SYNC:-0}" ;;
+  export) while [ $# -gt 0 ]; do if [ "$1" = --output-file ]; then echo "hugo==1 --hash=sha256:0" > "$2"; fi; shift; done ;;
+  venv) mkdir -p .venv && : > .venv/pyvenv.cfg ;;
+  pip) [ "${PIP:-0}" -eq 0 ] || echo "stub: the index has no such file" >&2; exit "${PIP:-0}" ;;
+  run) shift 5; if [ "$1" = python ]; then shift; exec "$PYTHON" "$@"; fi; echo "stub: $*"; exit 7 ;;
+esac
+"""
+
+
 def prepare(host, tmp_path):
     """prepare.sh under a uv that runs each command as it is: python as this test's, and any other as a line that names it, with status 7."""
-    stub = write(tmp_path / "bin" / "uv", '#!/usr/bin/env bash\n# uv run --project <folder> --frozen --quiet <command>\nshift 5\n'
-                 'if [ "$1" = python ]; then shift; exec "$PYTHON" "$@"; fi\necho "stub: $*"\nexit 7\n')
+    stub = write(tmp_path / "bin" / "uv", UV_STUB)
     stub.chmod(0o755)
-    return bash(host / "website" / "scripts" / "prepare.sh", env={"PATH": f"{stub.parent}{os.pathsep}{os.environ['PATH']}", "PYTHON": sys.executable})
+    env = {"PATH": f"{stub.parent}{os.pathsep}{os.environ['PATH']}", "PYTHON": sys.executable, "CALLS": os.devnull, "UV_DEFAULT_INDEX": "", "UV_INDEX_URL": "", "UV_INDEX": ""}
+    return bash(host / "website" / "scripts" / "prepare.sh", env=env)
 
 
 def test_prepare_stops_on_an_svg_that_could_run_and_on_a_site_toml_it_cannot_read(tmp_path):
@@ -245,6 +263,10 @@ def test_prepare_stops_on_an_svg_that_could_run_and_on_a_site_toml_it_cannot_rea
     write(host / ".lokf" / "knowledge" / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
     write(host / ".assets" / "figure.svg", CLEAN_SVG)
     site = lay_down(host)
+    result = prepare(host, tmp_path)
+    assert result.rc == 1 and ".lokf holds no uv.lock; run uv lock in that folder and commit the file" in result.out, f"prepare.sh went on with no lock for the toolkit: {result.out}"
+    shutil.rmtree(site / "generated")
+    write(host / ".lokf" / "uv.lock", "version = 1\n")
     result = prepare(host, tmp_path)
     assert result.rc == 7 and "stub: lokf export" in result.out and "check-svg" not in result.out, f"both checks pass, and prepare.sh goes on to the export: {result.out}"
     shutil.rmtree(site / "generated")
@@ -257,6 +279,78 @@ def test_prepare_stops_on_an_svg_that_could_run_and_on_a_site_toml_it_cannot_rea
     result = prepare(host, tmp_path)
     assert result.rc == 1 and "site-values:" in result.out and "cannot be read as TOML" in result.out and "stub:" not in result.out, f"prepare.sh read a site.toml that is not TOML: {result.out}"
     assert not (host / "pwned").exists() and not (site / "generated").exists(), "it stopped before it wrote or ran anything"
+
+
+def uv_env(tmp_path, project, **env):
+    """uv-env.sh on a project, under a uv that records each call: its result, and the calls."""
+    stub = write(tmp_path / "bin" / "uv", UV_STUB)
+    stub.chmod(0o755)
+    calls = tmp_path / "calls"
+    calls.write_text("")
+    result = bash(SITE_TEMPLATES / "scripts" / "uv-env.sh", project,
+                  env={"PATH": f"{stub.parent}{os.pathsep}{os.environ['PATH']}", "CALLS": str(calls), "TMPDIR": str(tmp_path),
+                       "UV_DEFAULT_INDEX": "", "UV_INDEX_URL": "", "UV_INDEX": "", **env})
+    return result, calls.read_text().splitlines()
+
+
+def test_the_build_installs_its_tools_from_the_index_uv_reads_and_leaves_the_lock_alone(tmp_path):
+    """Behind a mirror, the lock's pins and hashes are installed from the mirror, with no relock."""
+    project = tmp_path / "site"
+    lock = write(project / "uv.lock", read(SITE_TEMPLATES / "uv.lock"))
+    for name in ("UV_DEFAULT_INDEX", "UV_INDEX_URL", "UV_INDEX"):
+        shutil.rmtree(project / ".venv", ignore_errors=True)
+        result, calls = uv_env(tmp_path, project, **{name: "https://mirror.example/simple"})
+        assert result and result.out.strip() == "--no-sync", f"{name}: {result.out}"
+        assert [c.split()[0] for c in calls] == ["export", "venv", "pip"], f"{name}: {calls}"
+        assert "--frozen" in calls[0] and "--no-emit-project" in calls[0], f"the pins come from the lock as it is: {calls[0]}"
+        assert calls[2].startswith(f"pip install --quiet --require-hashes --python {project}/.venv "), f"each file is checked against the lock's hash: {calls[2]}"
+    result, calls = uv_env(tmp_path, project, UV_DEFAULT_INDEX="https://mirror.example/simple")
+    assert [c.split()[0] for c in calls] == ["export", "pip"], f"an environment that exists is kept: {calls}"
+    assert read(lock) == read(SITE_TEMPLATES / "uv.lock") and not any(c.startswith("lock") for c in calls), "uv.lock is not written again"
+    assert not list(tmp_path.glob("uv-env.*")), "the exported pins are removed"
+    result, calls = uv_env(tmp_path, project, UV_DEFAULT_INDEX="https://mirror.example/simple", PIP="1")
+    assert result.rc == 1 and "the index has no such file" in result.out and "did not give the files" in result.out and "--no-sync" not in result.out, result.out
+
+
+def test_the_build_takes_the_lock_s_own_addresses_first_where_no_index_is_named(tmp_path):
+    project = tmp_path / "site"
+    write(project / "uv.lock", read(SITE_TEMPLATES / "uv.lock"))
+    result, calls = uv_env(tmp_path, project)
+    assert result and result.out.strip() == "--frozen" and calls == [f"sync --project {project} --frozen --inexact --quiet"], (result.out, calls)
+    # A uv.toml names the mirror, so no variable does: the lock's addresses fail, and the index serves.
+    result, calls = uv_env(tmp_path, project, SYNC="2")
+    assert result and result.out.strip() == "--no-sync" and [c.split()[0] for c in calls] == ["sync", "export", "venv", "pip"], (result.out, calls)
+    result, calls = uv_env(tmp_path, project, SYNC="2", PIP="1")
+    assert result.rc == 1 and "files.pythonhosted.org is blocked" in result.out and "neither from the addresses in its uv.lock nor from the index" in result.out, result.out
+    result, _ = uv_env(tmp_path, tmp_path / "none")
+    assert result.rc == 1 and "holds no uv.lock" in result.out, result.out
+
+
+def test_every_tool_of_the_build_runs_as_uv_env_says_and_no_template_turns_a_certificate_check_off():
+    build = read(SITE_TEMPLATES / "scripts" / "build.sh")
+    prepare_sh = read(SITE_TEMPLATES / "scripts" / "prepare.sh")
+    assert 'mode=$(scripts/uv-env.sh "$here")\ntool=(uv run --project "$here" "$mode" --quiet)' in build
+    assert 'mode=$("$here/scripts/uv-env.sh" "$here")\ntool=(uv run --project "$here" "$mode" --quiet)' in prepare_sh
+    assert 'mode=$("$here/scripts/uv-env.sh" "$root/.lokf")\nlokf=(uv run --project "$root/.lokf" "$mode" --quiet)' in prepare_sh
+    assert "--frozen" not in build and prepare_sh.count("--frozen") == 1, "only the schemaProject, the repository's own project, runs from its lock's addresses"
+    assert "uv lock" not in build and "uv lock" not in prepare_sh, "no step of the build writes a lock"
+    workflow = read(WEBSITE_TEMPLATES / "github" / "knowledge-website.yaml")
+    assert 'bash "$SITE_DIR/scripts/uv-env.sh" .lokf > /dev/null' in workflow and "uv lock" not in workflow
+    for path in [*text_files(), WEBSITE_TEMPLATES / "github" / "knowledge-website.yaml"]:
+        text = read(path)
+        assert "UV_INSECURE_HOST" not in text and "--allow-insecure-host" not in text, path.name
+
+
+def test_a_library_is_taken_from_the_site_s_own_copy_before_the_cdn_and_checked_alike():
+    """Where the CDN is blocked, assets/vendor/<name>.js serves, and the one hash check covers both sources."""
+    partial = read(SITE_TEMPLATES / "layouts" / "_partials" / "vendor.html")
+    local, remote, check = partial.index('resources.Get (printf "vendor/%s.js" .)'), partial.index("resources.GetRemote $v.url"), partial.index("crypto.SHA256 .Content")
+    assert local < remote < check and partial.count("crypto.SHA256") == 1 and partial.count("ne $got $v.sha256") == 1, "the copy is read first, and one check follows both"
+    assert "{{- if not $file -}}" in partial and "resources.Copy" in partial[check:], "the address is fetched only with no copy, and nothing is published before the check"
+    mounts = tomllib.loads(read(SITE_TEMPLATES / "hugo.toml"))["module"]["mounts"]
+    assert [m["source"] for m in mounts if m["target"] == "assets"] == ["assets"], "assets/vendor/ is the site's folder alone"
+    assert not [m for m in mounts if m["target"].startswith("assets/vendor")], "no repository folder is mounted there"
+    assert not (SITE_TEMPLATES / "assets" / "vendor").exists(), "the templates hold no copy: a host adds one"
 
 
 def test_the_site_finds_each_input_through_a_mount_and_takes_no_setting_for_it():
@@ -569,3 +663,137 @@ def test_the_raw_html_cleaner_stops_on_a_mark_with_no_end_and_on_a_build_with_no
     write(site / "index.html", "<body><p>No mark.</p></body>")
     result = clean_html(site)
     assert not result and "no page holds the build's mark" in result.out, result.out
+
+
+def test_the_bundle_s_adapter_asks_for_no_label_where_the_report_prints_none():
+    """index.md and log.md in any folder, and diataxis.md at the bundle's root, are not concepts, so a page for one would stop the build at trust.html."""
+    adapter = read(SITE_TEMPLATES / "content" / "knowledge" / "_content.gotmpl")
+    skip = '{{- if or (eq $rel "diataxis.md") (and (eq (path.Base $rel) "log.md") (ne $rel "log.md")) }}{{ continue }}{{ end -}}'
+    assert skip in adapter, "a folder's log.md and the root's diataxis.md get no page, and a folder's diataxis.md is a concept"
+    assert adapter.index(skip) < adapter.index("transform.Unmarshal") < adapter.index("$.AddPage"), "it is passed over before its frontmatter is read"
+    assert '{{- if eq (path.Base $id) "index" -}}' in adapter and '{{- else if eq $id "log" -}}' in adapter, "a folder's index.md is its page, and the root's log.md the bundle log"
+    assert "printed no label for %s.md" in read(SITE_TEMPLATES / "layouts" / "_partials" / "trust.html")
+
+
+def test_the_badge_and_the_health_page_count_the_concepts_the_health_line_counts():
+    """`knowledge-report.sh health` prints "Confirmed by a person: n of m" with a retired concept in m, so the badge and the page do too."""
+    report = read(TEMPLATES / "scripts" / "knowledge-report.sh")
+    counted = report[report.index("health() {"):]
+    assert counted.index("{ n++; r = rung() }") < counted.index('r == "retired" { retired++; next }'), "the health line counts a retired concept in its total"
+    badge = read(SITE_TEMPLATES / "layouts" / "home.badge.json")
+    assert '{{- range (partialCached "concepts.html" "concepts").id }}{{ $n.Add "all" 1 }}{{ $n.Add .trust.tone 1 }}{{ end -}}' in badge and 'ne .trust.tone "retired"' not in badge
+    health = read(SITE_TEMPLATES / "layouts" / "health.html")
+    assert "{{- $total := len $all.id -}}" in health
+
+
+def test_the_health_page_draws_no_bar_for_a_bundle_with_no_concept():
+    """A progress element needs a total above nought."""
+    health = read(SITE_TEMPLATES / "layouts" / "health.html")
+    empty, bars, progress = health.index("{{- if not $total }}"), health.index('<div class="bars">'), health.index('<progress class="bar__track')
+    assert empty < health.index("The bundle holds no concept yet.") < health.index("{{- else }}", empty) < bars < progress < health.index('<p class="card__caption">Also counted</p>')
+
+
+def test_the_stylesheet_names_the_size_a_reader_starts_with_and_the_site_it_is():
+    css = read(SITE_TEMPLATES / "assets" / "css" / "site.css")
+    script = read(SITE_TEMPLATES / "assets" / "js" / "site.js")
+    assert 'const defaults = { theme: "auto", size: "medium" };' in script and ":root { font-size: 100%; }" in css
+    comments = " ".join(" ".join(re.findall(r"/\*.*?\*/", css, re.S)).split())
+    assert "Medium, the browser's own size, is the size a reader gets before choosing one." in comments
+    assert "Medium, the size a reader starts with, has room to spare." in comments
+    assert "Astro" not in css and "Large is the size" not in comments and "Large, the size a reader starts with" not in comments
+
+
+BROWSER = r"""
+// A page as the site's scripts need it, with no browser: an element holds what a script sets, and does nothing.
+const fs = require("fs");
+const vm = require("vm");
+const heard = { window: {}, document: {} };
+const hear = (who) => (type, call) => (heard[who][type] ??= []).push(call);
+const tell = (who, type) => Promise.all((heard[who][type] ?? []).map((call) => call({ type })));
+const settle = () => new Promise((done) => setImmediate(done));
+const element = (extra = {}) => ({
+  dataset: {}, style: {}, attributes: {}, hidden: true, textContent: "",
+  classList: { add() {}, remove() {}, toggle() {} },
+  querySelector: () => null, querySelectorAll: () => [],
+  addEventListener() {}, append() {}, remove() {},
+  setAttribute(name, value) { this.attributes[name] = value; },
+  removeAttribute(name) { delete this.attributes[name]; },
+  ...extra,
+});
+const page = { dark: false };
+const scheme = { matches: false, addEventListener: (type, call) => hear("window")("scheme", call) };
+const diagram = element({ textContent: "graph TD; A-->B;" });
+const note = element();
+const ids = { graph: element({
+  dataset: { src: "graph.json", workspace: "workspace/graph.json", extra: "{}", tones: JSON.stringify({ order: ["person"] }) },
+  querySelector: (selector) => (selector === ".graph__note" ? note : element()),
+}) };
+globalThis.window = globalThis;
+globalThis.document = {
+  documentElement: element(), body: element({ appendChild: (node) => node }), readyState: "complete", title: "Knowledge graph",
+  getElementById: (id) => (ids[id] ??= element()),
+  querySelector: () => element(),
+  querySelectorAll: (selector) => (selector === ".prose .mermaid" ? [diagram] : []),
+  createElement: () => element(),
+  addEventListener: hear("document"),
+  dispatchEvent: (event) => tell("document", event.type),
+};
+globalThis.addEventListener = hear("window");
+globalThis.localStorage = { getItem: () => null, setItem() {} };
+globalThis.location = new URL("https://acme.example/acme-platform/graph/" + (process.env.QUERY ?? ""));
+globalThis.matchMedia = () => scheme;
+globalThis.getComputedStyle = () => ({ color: page.dark ? "rgb(20, 20, 20)" : "rgb(250, 250, 250)", fontFamily: "sans-serif" });
+"""
+
+
+@pytest.mark.skipif(not have("node"), reason="node not installed locally - CI runs the site's script")
+def test_a_diagram_is_drawn_again_when_the_scheme_changes():
+    """Mermaid keeps the colours it was started with, so site.js keeps each diagram's source and draws it again on the Display menu's event and the system's."""
+    script = BROWSER + r"""
+const drawings = [];
+globalThis.mermaid = {
+  initialize(config) { this.config = config; },
+  async run({ nodes }) {
+    for (const node of nodes) {
+      drawings.push({ paper: this.config.themeVariables.background, source: node.textContent, processed: node.attributes["data-processed"] ?? null, onLoad: this.config.startOnLoad });
+      node.textContent = "<svg>";
+      node.attributes["data-processed"] = "true";
+    }
+  },
+};
+(async () => {
+  vm.runInThisContext(fs.readFileSync(process.env.SCRIPT, "utf8"));
+  await tell("window", "DOMContentLoaded");
+  await settle();
+  page.dark = true;
+  document.dispatchEvent(new Event("displaychange"));
+  await settle();
+  // The Text size sends the same event, and changes no colour.
+  document.dispatchEvent(new Event("displaychange"));
+  await settle();
+  page.dark = false;
+  await tell("window", "scheme");
+  await settle();
+  console.log(JSON.stringify(drawings));
+})();
+"""
+    result = run(["node", "-e", script], env={"SCRIPT": SITE_TEMPLATES / "assets" / "js" / "site.js"})
+    assert result, result.out
+    light, dark = "rgb(250, 250, 250)", "rgb(20, 20, 20)"
+    assert json.loads(result.out) == [{"paper": paper, "source": "graph TD; A-->B;", "processed": None, "onLoad": False} for paper in (light, dark, light)], result.out
+
+
+@pytest.mark.skipif(not have("node"), reason="node not installed locally - CI runs the site's script")
+def test_the_graph_page_says_so_when_there_is_no_concept_to_draw():
+    script = BROWSER + r"""
+globalThis.fetch = async () => ({ ok: true, status: 200, json: async () => ({ nodes: [], edges: [], meta: { bundles: [] } }) });
+globalThis.cytoscape = () => { throw new Error("it went on to draw a graph with no concept"); };
+(async () => {
+  vm.runInThisContext(fs.readFileSync(process.env.SCRIPT, "utf8"));
+  await tell("window", "DOMContentLoaded").catch((error) => console.log(error.message));
+  console.log(JSON.stringify({ hidden: note.hidden, words: note.textContent }));
+})();
+"""
+    for query, words in (("", "The bundle holds no concept yet."), ("?graph=workspace", "The workspace holds no concept yet.")):
+        result = run(["node", "-e", script], env={"SCRIPT": SITE_TEMPLATES / "assets" / "js" / "graph.js", "QUERY": query})
+        assert result and json.loads(result.out) == {"hidden": False, "words": words}, (query, result.out)

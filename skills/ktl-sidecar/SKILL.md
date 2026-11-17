@@ -172,7 +172,7 @@ Show the three `git config` lines from [references/gate.md](references/gate.md) 
 
 The wrapper looks for `ktl-librarian/SKILL.md` under `.agents/skills/`, `.claude/skills/`, `.github/skills/`, then bare `skills/` (a repo that publishes the skills it also uses). If this repo uses another directory, add it to the script's `candidate` list now and run the script once; a mismatch otherwise fails at scheduled-run time. [references/automation.md](references/automation.md) says what each file does and needs, and [references/gate.md](references/gate.md) covers the registrar, signing and the forge-free gate. On GitHub, run `uvx ktl gh plan` and show the person what it lists; `ktl gh apply` sets it once they agree ([references/repository-settings.md](references/repository-settings.md)).
 
-Nothing in the host lints these files yet. Check whether the host already runs ShellCheck and `actionlint` over its tree. If it does not, say so and suggest, in one line, coverage for the nine `scripts/*.sh`, `m365/*.sh`, the `scripts/*.py` and the six `.github/workflows/*.yaml`, so a scheduled agent's wrapper is not left unchecked. A full lint and release CI is the host's choice; `lint-and-docs.yaml` in this skill's home repository is one shape, never copied wholesale.
+Nothing in the host lints these files yet. Check whether the host already runs ShellCheck and `actionlint` over its tree. If it does not, say so and suggest, in one line, coverage for the nine `scripts/*.sh`, `m365/*.sh`, the `scripts/*.py` and the six `.github/workflows/*.yaml`, so a scheduled agent's wrapper is not left unchecked. A full lint and release CI is the host's choice; `validate.yml` in this skill's home repository is one shape, never copied wholesale.
 
 ## Step 6: hand off to ktl-librarian
 

@@ -45,6 +45,10 @@ jobs:
     runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     permissions:
       contents: read
+    env:
+      # A subject that releases by its type: feat, fix, perf or security
+      # (and FEAT or FIX, as the analyzer reads them), or any type with `!`.
+      RELEASING_SUBJECT: '^((feat|FEAT|fix|FIX|perf|security)(\(.*\))?!?|[A-Za-z0-9_]*(\(.*\))?!): '
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
@@ -68,27 +72,36 @@ jobs:
           npm ci --prefix .release --no-audit --no-fund --ignore-scripts
           ln -s .release/node_modules node_modules
 
-      # Would these commits release? The types are .releaserc.json's: the
-      # Conventional Commits preset's feat/fix plus this repository's
-      # `security`, and any type marked breaking by a `!` or a BREAKING CHANGE
-      # footer. The preset is named because the default, angular, does not
-      # read the `!`, so it would skip a `feat!:` commit altogether. Both
-      # checks below key off this one answer. Only the pull request's own
-      # commits count: HEAD is GitHub's trial merge with today's main, so on a
-      # branch that main has moved past, "$BASE..HEAD" would read main's
-      # commits too.
+      # Would these commits release, as the pinned commit-analyzer reads them
+      # under .releaserc.json? A releasing subject does, as does a BREAKING
+      # CHANGE footer, or a revert that says "This reverts commit <hash>.", as
+      # `git revert` writes it. Only the pull request's own commits count:
+      # HEAD is GitHub's trial merge with main. A revert of an unreleased
+      # commit releases nothing, but this step still asks for notes.
       - name: Read whether these commits would release
         id: commits
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          if git log --format='%s%n%b' "$(git merge-base "$BASE" "$HEAD_SHA")..$HEAD_SHA" \
-            | grep -qE '^((feat|fix|security)(\([^)]*\))?!?:|[a-z]+(\([^)]*\))?!:|BREAKING CHANGE:)'; then
-            echo "releases=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "releases=false" >> "$GITHUB_OUTPUT"
-            echo "No feat/fix/security or breaking commit here, so this pull request releases nothing."
+          releases=false
+          reverts=false
+          while IFS= read -r commit; do
+            message="$(git log -1 --format=%B "$commit")"
+            subject="${message%%$'\n'*}"
+            if grep -qE "$RELEASING_SUBJECT" <<<"$subject" \
+              || grep -qiE '^[[:space:]|*]*BREAKING[ -]CHANGE[:[:space:]]' <<<"$message"; then
+              releases=true
+            elif grep -qiE '^revert:?[[:space:]]' <<<"$subject" \
+              && grep -qiE 'This reverts commit [[:alnum:]_]*\.' <<<"$message"; then
+              releases=true
+              reverts=true
+            fi
+          done < <(git rev-list "$(git merge-base "$BASE" "$HEAD_SHA")..$HEAD_SHA")
+          echo "releases=$releases" >> "$GITHUB_OUTPUT"
+          echo "reverts=$reverts" >> "$GITHUB_OUTPUT"
+          if [ "$releases" = false ]; then
+            echo "No feat, fix, perf or security commit, no breaking change and no revert here, so this pull request releases nothing."
           fi
 
       # semantic-release detects a pull_request event itself and exits before
@@ -108,19 +121,23 @@ jobs:
       # deps and empty changelog (#46)", which carries no type. That merge
       # reached main and released nothing while its notes waited in
       # "## [Unreleased]". So when the commits would release, the title must
-      # too: then either merge strategy releases. The title is read through
-      # `env:`, never interpolated into the script, since anyone can open a
-      # pull request.
+      # too: then either merge strategy releases. A revert's title passes
+      # only over a commit that says which commit it reverts, a sentence a
+      # squash merge keeps in its body. The title is read through `env:`,
+      # never interpolated into the script, since anyone can open a pull
+      # request.
       - name: Refuse a title that would lose the release on a squash merge
         if: steps.commits.outputs.releases == 'true'
         env:
           TITLE: ${{ github.event.pull_request.title }}
+          REVERTS: ${{ steps.commits.outputs.reverts }}
         run: |
-          if printf '%s\n' "$TITLE" \
-            | grep -qE '^((feat|fix|security)(\([^)]*\))?!?:|[a-z]+(\([^)]*\))?!:)'; then
+          if grep -qE "$RELEASING_SUBJECT" <<<"$TITLE"; then
             echo "Title carries a releasing type, so a squash merge releases too."
+          elif [ "$REVERTS" = true ] && grep -qiE '^revert:?[[:space:]]' <<<"$TITLE"; then
+            echo "Title is a revert's, over a commit that says which commit it reverts, so a squash merge releases too."
           else
-            echo "::error::These commits would release, but the pull request title '$TITLE' has no releasing type (feat:, fix:, security:, or a breaking '!'). A squash merge uses the title as the commit subject and would release nothing - retitle the pull request."
+            echo "::error::These commits would release, but the pull request title '$TITLE' would not: it has no releasing type (feat:, fix:, perf:, security:, or a breaking '!'), and it is not a revert's title ('Revert ...') over a commit that says 'This reverts commit'. A squash merge uses the title as the commit subject and would release nothing - retitle the pull request."
             exit 1
           fi
 
@@ -167,7 +184,7 @@ jobs:
       # tag; see this workflow's header comment for why. The command
       # writes `next_version` to $GITHUB_OUTPUT itself (see
       # changelog-release.mjs's `notes` subcommand) only when a release is
-      # due; a push with no feat/fix/etc. commit since the last tag
+      # due; a push with no commit that releases since the last tag
       # leaves it unset and the step below is skipped. So does a push with
       # nothing new after a promotion, such as a docs merge before
       # publish.yml runs: the version it computes is already promoted.

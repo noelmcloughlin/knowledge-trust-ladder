@@ -46,7 +46,7 @@ npx skills add ./knowledge-trust-ladder --skill ktl-sidecar
 - If a change alters what a skill *does*, not just its wording, add a line or two under `## [Unreleased]` in `CHANGELOG.md`. The reasoning belongs beside the code.
 - Files here are deep-linked from the sibling repositories, whose link checks follow those URLs; check 9 lists the paths. Move one only together with their links, and when a change *there* needs something new *here*, merge this side first.
 - Copy a change under a skill's `templates/` over each of this repository's copies, ktl-docent's included, in the same pull request. Checks 11, 11a and 11w name the pairs and hold each byte-identical.
-- When the commits would release, the pull request title carries the releasing type too (`feat:`, `fix:`, `security:`): a squash merge takes its subject from the title, and the `plan` job refuses a mismatch.
+- When the commits would release, the pull request title must too (`feat:`, `fix:`, `perf:`, `security:` or `Revert`): a squash merge takes its subject from the title, and the `plan` job refuses a mismatch.
 - Dependabot bumps the pinned action SHAs, and CI fails an action that is not pinned to a commit.
 - Sign a pull request that records a `human:` confirmation, with GPG or SSH ([signing your commits](docs/signing-commits.md)). A repository running the forge-free gate also carries your public key under `.lokf/curators/`, added first in a pull request of its own.
 - The pull request template's checklist is the short form of this list.
