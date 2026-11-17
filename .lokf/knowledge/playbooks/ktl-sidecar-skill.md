@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-17T20:29:12Z"
+  at: "2026-11-17T22:28:06Z"
 hasPart:
   - https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
   - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
@@ -100,7 +100,7 @@ Every file the skill writes is copied from `templates/`, never retyped, which ke
 
 The forge-free gate verifies GPG keys with their subkeys and SSH keys alike against `.lokf/curators/<id>.asc` or `.pub`. It asks the person behind a confirmation that a change removes, as it asks the one behind a confirmation it adds. Its `--unattended` form refuses any change to a person's record in an unattended run.
 
-The conventions script's thirteenth convention fails an edit to a confirmed concept that leaves `generated` older than the confirmation. A move of the bundle's `base_iri` is no edit, since an id or relation target that moved with it still says the same. Its fourteenth, given a base commit with `--since`, fails a commit that records a person's confirmation and also changes the concept's claims, unless `generated.by` names that same person. The `validate` job passes the merge-base of the pull request's base and head, the commit the `provenance` job also uses.
+The conventions script's thirteenth convention fails an edit to a confirmed concept that leaves `generated` older than the confirmation. A move of the bundle's `base_iri` is no edit, since an id or relation target that moved with it still says the same. Its fourteenth, given a base commit with `--since`, fails a commit that records a person's confirmation and also changes the concept's claims, unless `generated.by` names that same person. The `validate` job passes the merge-base of the pull request's base and head, the commit the `provenance` job also uses, and the pull request's last commit as `--head`. The job checks out a merge of the pull request into its base, so `--head` keeps the sixth and the fourteenth to the pull request's own commits.
 
 The conventions script checks eighteen conventions.[^gate.md] Every workflow runs it with `--strict`, which fails the step when the script could not check a rule, so a runner without `uv` never passes. The fifteenth asks every concept to name where it came from, as a top-level `resource` or a `sources` entry. The sixteenth joins each footnote in a body to a `sources` entry by its `id`, and holds one `id` to one resource across the bundle. The seventeenth asks that each `**Added**` and `**Deprecation**` bullet in `log.md` names a concept the bundle holds. The sidecar's two example concepts carry a `resource`, so the skeleton keeps the fifteenth before anyone edits it. The eighteenth fails an `exclusions` entry with a blank reason, and a material that is both a source and an exclusion of one concept.[^changelog.md]
 

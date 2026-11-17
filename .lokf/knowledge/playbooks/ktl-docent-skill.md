@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-docent/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-17T20:29:12Z"
+  at: "2026-11-17T22:28:06Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -52,7 +52,7 @@ A `resource` under `.lokf/mirror/` is a copy the ingest keeps of a page or docum
 
 The docent takes each label from its own copy of `knowledge-report.sh`, run from the repository as `labels <path>...`, and quotes the line it prints. Where that copy is missing, it applies the label table by hand. The labels are the words ktl-curator uses:
 
-- *Confirmed by a person*, with the latest date and the event's `revision` where it carries one ("against 3f9c2a1", a commit hash cut to its first seven characters).
+- *Confirmed by a person*, with the latest date and the event's `revision` where it carries one ("against 3f9c2a1", a commit hash cut to its first seven characters, or a `sha256:` digest cut to the seven after `sha256:`).
 - *Edited since a person last confirmed it*, which takes the place of *confirmed by a person*, because the person confirmed an earlier text. The docent gives both dates and treats the concept as unconfirmed.
 - *Checked by automation only*, and *nobody has checked this yet*.
 - *Still a draft*, for a draft no person has confirmed, and *Reopened*, for a draft a person has confirmed. For a reopened concept the docent says the confirmation first, then when it was reopened, by whom and how many questions wait.
