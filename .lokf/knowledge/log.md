@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-11-17
+
+* **Changed**: Exhibition drops the README's Exhibitions section, which `README.md` no longer has since 371d786, and rests on `docs/obsidian.md` alone.
+
 ## 2026-11-15
 
 * **Changed**: ktl-website skill says `site.toml`'s `schema` can name the schema file, that a repository with no schema of its own shows its bundle's domain vocabulary before LOKF core, and that the smoke test builds a third site with that vocabulary alone, as `SKILL.md`, `references/inputs.md` and the smoke test now say.
