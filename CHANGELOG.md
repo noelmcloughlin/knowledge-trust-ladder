@@ -10,6 +10,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **A domain host's workspace builds behind a package mirror**, through the site's `scripts/uv-env.sh`.
 - **A runner that holds uv keeps its own**, so a locked-down runner with uv on its image runs.
 
+### Changed
+
+- **The threat model links the sidecar's automation and gate references** for the detail they already give, and keeps each measure and its reasons.
+
 ### Fixed
 
 - **A root `diataxis.md` is no node of the graph**, in the website's build or the federation build.
