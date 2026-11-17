@@ -15,13 +15,16 @@ script has to earn that trust:
   and only one the bundle holds;
 - not a word of what is already in the file on its own output;
 - a refusal that leaves the file exactly as it was;
-- a bundle told apart from no bundle, a read-only one, and one another run holds.
+- a bundle told apart from no bundle, a read-only one, and one another run holds;
+- no write and no read through a symbolic link the repository holds, at the
+  file, its folder, its lock or the temporary file beside it.
 """
 
 from __future__ import annotations
 
 import os
 import re
+import stat
 from datetime import datetime, timezone
 
 import pytest
@@ -243,3 +246,74 @@ def test_leaves_no_temporary_file_or_lock_behind(with_concept):
     feedback(with_concept, "Question", "x")
     leftover = sorted(p.name for p in (with_concept / ".lokf").iterdir() if p.name not in ("feedback.md", "knowledge"))
     assert not leftover, f"knowledge-feedback.sh left something beside feedback.md: {leftover}"
+
+
+def test_the_file_keeps_the_mode_a_new_file_takes(fb):
+    """mktemp gives its file to the owner alone, and the rewrite moves that file into place, so the script sets the mode a new file takes."""
+    mask = os.umask(0)
+    os.umask(mask)
+    for text in ("one", "two"):
+        assert feedback(fb, "Miss", text)
+        mode = stat.S_IMODE((fb / ".lokf" / "feedback.md").stat().st_mode)
+        assert mode == 0o666 & ~mask, f"knowledge-feedback.sh left feedback.md with mode {mode:o} under umask {mask:o}"
+
+
+# The process number of a script is known before it starts: this shell puts
+# a link where the script's temporary file was once named, then becomes the
+# script, which keeps the number.
+PLANTED = 'ln -s "$1" "$2/.lokf/feedback.md.$$" && exec bash "$3" --root "$2" Miss "a gap SENTINEL"'
+
+
+def test_writes_through_no_link_planted_where_a_temporary_file_was_named(fb, tmp_path_factory):
+    """A repository can commit a link at .lokf/feedback.md.<number>, and a temporary file named by the process number wrote the entries over the file it points at."""
+    victim = write(tmp_path_factory.mktemp("home") / "victim", "the reader's own file\n")
+    assert feedback(fb, "Miss", "the first gap")
+    result = bash("-c", PLANTED, "planted", victim, fb, FEEDBACK)
+    path = fb / ".lokf" / "feedback.md"
+    assert read(victim) == "the reader's own file\n", f"knowledge-feedback.sh wrote through a planted link: {read(victim)}"
+    assert result and path.is_file() and not path.is_symlink() and entries(fb)[0] == "- **Miss** - a gap SENTINEL - docent", (
+        f"knowledge-feedback.sh did not record the entry in a file of its own (exit {result.rc}): {result.out}"
+    )
+
+
+LINKED = [
+    ("the file", "feedback.md", False),
+    ("the file, to nothing", "feedback.md", None),
+    ("the lock", "feedback.md.lock", True),
+    ("the folder", "", True),
+]
+
+
+@pytest.mark.parametrize(("what", "name", "target_is_dir"), LINKED, ids=[w for w, _, _ in LINKED])
+def test_refuses_a_symbolic_link_where_it_writes(tmp_path, tmp_path_factory, what, name, target_is_dir):
+    """A link at .lokf/feedback.md pulls the file it points at into feedback.md, which the librarian reads and a pull request shows."""
+    outside = tmp_path_factory.mktemp("outside")
+    if name:
+        (tmp_path / ".lokf" / "knowledge").mkdir(parents=True)
+        target = outside / "dir" if target_is_dir else outside / ".env"
+        if target_is_dir:
+            target.mkdir()
+        elif target_is_dir is False:
+            write(target, "TOKEN=SECRET-SENTINEL\n")
+        (tmp_path / ".lokf" / name).symlink_to(target)
+    else:
+        (outside / "knowledge").mkdir()
+        (tmp_path / ".lokf").symlink_to(outside)
+    before = sorted(p.name for p in outside.rglob("*"))
+    result = feedback(tmp_path, "Miss", "a gap")
+    assert result.rc == 1 and "is a symbolic link" in result.out and "say the gap out loud" in result.out, (
+        f"knowledge-feedback.sh did not refuse a link at {what} (exit {result.rc}): {result.out}"
+    )
+    assert "SENTINEL" not in result.out and sorted(p.name for p in outside.rglob("*")) == before, (
+        f"knowledge-feedback.sh wrote or read through a link at {what}: {result.out}"
+    )
+    if target_is_dir is False:
+        assert read(outside / ".env") == "TOKEN=SECRET-SENTINEL\n", "knowledge-feedback.sh changed the file a link points at"
+
+
+def test_refuses_a_feedback_file_that_is_no_regular_file(fb):
+    (fb / ".lokf" / "feedback.md").mkdir()
+    result = feedback(fb, "Miss", "a gap")
+    assert result.rc == 1 and "is not a regular file" in result.out and not list((fb / ".lokf" / "feedback.md").iterdir()), (
+        f"knowledge-feedback.sh mishandled a folder at feedback.md (exit {result.rc}): {result.out}"
+    )

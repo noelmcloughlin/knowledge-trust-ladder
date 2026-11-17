@@ -72,8 +72,9 @@ and pin:
     removes or writes a file outside the mirror. A file lost or edited by
     hand, or recorded before the lock kept its digest, is written again;
 16. the mirror cap refuses the item that would pass it;
-17. the workflow's filter hands over the KNOWLEDGE_INGEST_ secrets and no
-    other, and a source not fetched or a run cut short is a warning on the run.
+17. the workflow hands the KNOWLEDGE_INGEST_ secrets and no other to the
+    script alone, so no later step holds one, and a warning names a secret it
+    leaves out. A source not fetched or a run cut short is a warning on the run.
     Its push is leased to the commit it read, and a branch a person
     committed to is left alone;
 18. at its time limit a run starts no more work, and an item or an entry it
@@ -2238,15 +2239,67 @@ def test_the_caps_count_the_markdown_a_page_becomes(tmp_path, server, checks):
 # 17. the workflow's filter
 
 
-def test_the_workflow_hands_over_the_ingest_secrets_and_no_other(checks):
+def step_script(name: str) -> str:
+    """The shell one step of the workflow runs, as bash reads it."""
+    workflow = read(WORKFLOW)
+    step = workflow[workflow.index(f"      - name: {name}\n"):]
+    lines = []
+    for line in step[step.index("        run: |\n") + len("        run: |\n"):].split("\n"):
+        if line.strip() and not line.startswith(" " * 10):
+            break
+        lines.append(line[10:])
+    return "\n".join(lines) + "\n"
+
+
+# Stands in for knowledge-ingest.sh: records the secrets its environment
+# holds and the files beside the summary, and writes the summary.
+FAKE_INGEST = """#!/usr/bin/env bash
+while [ $# -gt 0 ]; do
+  case "$1" in --summary) summary="$2"; shift 2 ;; *) shift ;; esac
+done
+env | grep -E '^(KNOWLEDGE_INGEST_(ATLASSIAN|GITHUB|PASTED|MULTI)|ALL_SECRETS|OTHER_SECRET)' | sort > "$RUNNER_TEMP/script.env"
+ls "$RUNNER_TEMP" > "$RUNNER_TEMP/script.ls"
+echo "- wiki: 1 fetched" > "$summary"
+"""
+
+
+def test_the_workflow_hands_the_ingest_secrets_to_the_script_alone(tmp_path, checks):
+    """Written to the job's environment, the secrets reached every later step, the one that uploads the patch among them.
+
+    A secret that held a line break was left out with no word, so its entry
+    failed for want of a credential. The two steps are run here as the
+    workflow writes them: the first with every secret of the job, the
+    second with a stand-in for the script.
+    """
     if not shutil.which("jq"):
         pytest.skip("jq is not installed")
-    m = re.search(r"jq -r '([^']+)'", read(WORKFLOW))
-    checks.ok(m is not None, "the workflow filters the secrets with one jq expression")
-    secrets = {"github_token": "ghs_x", "KNOWLEDGE_INGEST_ATLASSIAN_TOKEN": "tok=en", "KNOWLEDGE_INGEST_MULTI": "a\nb",
-               "knowledge_ingest_lower": "no", "OTHER_SECRET": "z", "KNOWLEDGE_INGEST_GITHUB_TOKEN": "ghp_y"}
-    done = subprocess.run(["jq", "-r", m.group(1)], input=json.dumps(secrets), capture_output=True, text=True)
-    checks.ok(done.returncode == 0 and done.stdout == "KNOWLEDGE_INGEST_ATLASSIAN_TOKEN=tok=en\nKNOWLEDGE_INGEST_GITHUB_TOKEN=ghp_y\n", "two names, a value with an equals sign kept whole, a multi-line value left out", done.stdout + done.stderr)
+    secrets = {"github_token": "ghs_x", "KNOWLEDGE_INGEST_ATLASSIAN_TOKEN": "tok=en $HOME 'q'", "KNOWLEDGE_INGEST_MULTI": "first-SENTINEL\nsecond",
+               "knowledge_ingest_lower": "no", "OTHER_SECRET": "z", "KNOWLEDGE_INGEST_GITHUB_TOKEN": "ghp_y", "KNOWLEDGE_INGEST_PASTED": "pasted\r\n"}
+    handed = ["KNOWLEDGE_INGEST_ATLASSIAN_TOKEN=tok=en $HOME 'q'", "KNOWLEDGE_INGEST_GITHUB_TOKEN=ghp_y", "KNOWLEDGE_INGEST_PASTED=pasted"]
+    temp = tmp_path / "temp"
+    temp.mkdir()
+    repo = tmp_path / "host"
+    write(repo / ".lokf" / "ingest.yaml", "version: 1\n")
+    write(repo / ".lokf" / "scripts" / "knowledge-ingest.sh", FAKE_INGEST)
+    Git(repo).init()
+    write(tmp_path / "bin" / "gh", "#!/bin/sh\necho private\n").chmod(0o755)
+    job = {"RUNNER_TEMP": temp, "GITHUB_ENV": temp / "github.env", "GITHUB_OUTPUT": temp / "output", "GITHUB_STEP_SUMMARY": temp / "step-summary.md",
+           "GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_REPOSITORY": "acme/host", "PATH": f"{tmp_path / 'bin'}{os.pathsep}{os.environ['PATH']}"}
+    first = run(["bash", write(tmp_path / "hand-over.sh", step_script("Hand over the ingest secrets"))], cwd=repo, env={**job, "ALL_SECRETS": json.dumps(secrets)})
+    file = temp / "ingest-secrets"
+    checks.ok(first.rc == 0 and file.is_file() and sorted(read(file).splitlines()) == handed,
+              "three names, a value kept whole whatever it holds, and a pasted value without the line break it ends with", first.out + (read(file) if file.is_file() else ""))
+    checks.ok(file.is_file() and file.stat().st_mode & 0o777 == 0o600, "the file is its owner's alone")
+    checks.ok(first.out.count("::warning::") == 1 and "::warning::The secret KNOWLEDGE_INGEST_MULTI holds a line break" in first.out and "SENTINEL" not in first.out,
+              "a warning names the secret left out, and not its value", first.out)
+    checks.ok(not (temp / "github.env").exists() or not read(temp / "github.env"), "nothing is written to the job's environment")
+    after = "env | grep -E '^(KNOWLEDGE_INGEST_(ATLASSIAN|GITHUB|PASTED)|ALL_SECRETS)' > \"$RUNNER_TEMP/after.env\" || true\n"
+    second = run(["bash", write(tmp_path / "run.sh", step_script("Run the ingest") + after)], cwd=repo, env={**job, "GH_TOKEN": "x", "ONLY": "", "PRUNE": "false"})
+    checks.ok(second.rc == 0 and "changed=false" in read(temp / "output"), "the step runs the script and reports no change", second.out)
+    seen = read(temp / "script.env").splitlines() if (temp / "script.env").is_file() else []
+    checks.ok(seen == handed, "the script's environment holds the three secrets and no other", seen)
+    checks.ok("ingest-secrets" not in read(temp / "script.ls").split() if (temp / "script.ls").is_file() else False, "the file is removed before the script runs")
+    checks.ok((temp / "after.env").is_file() and not read(temp / "after.env"), "what the step runs after the script holds no secret", read(temp / "after.env") if (temp / "after.env").is_file() else "")
 
 
 def test_the_privileged_job_refuses_a_patch_that_renames_links_or_marks_a_file_to_run(tmp_path, checks):

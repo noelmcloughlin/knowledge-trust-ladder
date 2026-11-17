@@ -96,17 +96,29 @@ jobs:
         working-directory: .lokf
 
       # The secrets whose names start KNOWLEDGE_INGEST_, from the
-      # knowledge-ingest Environment or the repository, and no other, reach
-      # the job's environment. A value that spans lines is left
-      # out, since a token is one line.
+      # knowledge-ingest Environment or the repository, and no other, go to
+      # a file that only this job's user reads. The next step reads the
+      # file, removes it, and gives the secrets to the script alone, so no
+      # later step holds one. The job's environment (GITHUB_ENV) would give
+      # them to every later step, the one that uploads the patch among them.
+      # A line break that ends a value is removed, as a pasted secret often
+      # ends with one. A value that still spans lines is left out, since a
+      # token is one line, and a warning names it.
       - name: Hand over the ingest secrets
         env:
           ALL_SECRETS: ${{ toJSON(secrets) }}
         run: |
           set -euo pipefail
+          umask 077
+          named='to_entries[] | select(.key | test("^KNOWLEDGE_INGEST_[A-Z0-9_]+$")) | .value |= sub("[\r\n]+\\z"; "")'
           printf '%s' "$ALL_SECRETS" \
-            | jq -r 'to_entries[] | select(.key | test("^KNOWLEDGE_INGEST_[A-Z0-9_]+$")) | select(.value | test("\n") | not) | "\(.key)=\(.value)"' \
-            >> "$GITHUB_ENV"
+            | jq -r "$named"' | select(.value | test("[\r\n]") | not) | "\(.key)=\(.value)"' \
+            > "$RUNNER_TEMP/ingest-secrets"
+          printf '%s' "$ALL_SECRETS" \
+            | jq -r "$named"' | select(.value | test("[\r\n]")) | .key' \
+            | while IFS= read -r name; do
+                echo "::warning::The secret $name holds a line break, so the ingest does not receive it, and an entry that names it fails for want of a credential. A token is one line: save the secret again as one."
+              done
 
       # The repository's visibility decides what may be committed; the
       # script refuses what it does not allow and records why.
@@ -118,6 +130,13 @@ jobs:
           PRUNE: ${{ inputs.prune }}
         run: |
           set -euo pipefail
+          # The secrets are read into this shell, which exports none of
+          # them, and the file is removed before anything else runs.
+          secrets=()
+          while IFS= read -r line; do
+            secrets+=("$line")
+          done < "$RUNNER_TEMP/ingest-secrets"
+          rm -f "$RUNNER_TEMP/ingest-secrets"
           script=.lokf/scripts/knowledge-ingest.sh
           if [ ! -f "$script" ]; then
             echo "::error::No $script here. ktl-sidecar's Step 5 installs it beside this workflow."
@@ -143,7 +162,14 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = schedule ] || [ "$PRUNE" = true ]; then
             args+=(--prune)
           fi
-          bash "$script" "${args[@]}"
+          # Only the script's own process holds the secrets: this subshell
+          # exports them and becomes the script.
+          (
+            for line in ${secrets[@]+"${secrets[@]}"}; do
+              export "${line?}"
+            done
+            exec bash "$script" "${args[@]}"
+          )
           cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
           # A source the run could not fetch is a warning on the run, so a
           # green run never hides an expired token, and so is a run its time
