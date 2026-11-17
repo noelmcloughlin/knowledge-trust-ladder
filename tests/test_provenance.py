@@ -922,12 +922,7 @@ def test_the_gate_flags_an_unsigned_human_event_in_crlf_line_endings(parity):
 
 
 def registrar_step(repo, tmp_path, base="HEAD~1", reviews=(), commits=(), gh_fails=False):
-    """Run the provenance job's own check on base..HEAD, with a gh that answers from canned replies.
-
-    The replies are the JSON GitHub lists for the pull request's reviews and
-    commits, and the stub puts each through the job's own `--jq` program, as
-    gh does. With none given, gh finds no approval and no commit.
-    """
+    """Run the provenance job's check on base..HEAD, with a gh stub that applies the job's `--jq` to canned reviews and commits."""
     jobs = yaml.safe_load(read(WORKFLOWS / "knowledge-registrar.yaml"))["jobs"]
     step = next(s for s in jobs["provenance"]["steps"] if s.get("id") == "check")
     bin_dir = tmp_path / "stub-bin"

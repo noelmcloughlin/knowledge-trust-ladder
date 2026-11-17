@@ -138,11 +138,9 @@ readonly_bundle() {
   echo "cannot write $file - if .lokf/ is read-only, say the gap out loud to the reader instead" >&2
   exit 1
 }
-# The script writes one line to .lokf/feedback.md and nothing else. A
-# repository can commit a symbolic link, and a write through one changes a
-# file somewhere else, while a read through one copies that file into
-# feedback.md. So the folder, the file and the lock are each refused as a
-# link, and the file as anything but a regular file.
+# Refuse a symbolic link at the folder, the file or the lock, which a
+# repository can commit: a write through one changes another file, and a
+# read copies it into feedback.md.
 for place in "$dir" "$file" "$lock"; do
   if [ -L "$place" ]; then
     echo "$place is a symbolic link, which this script neither reads nor writes through - say the gap out loud to the reader instead" >&2
@@ -176,10 +174,8 @@ trap 'rmdir "$lock" 2>/dev/null; [ -z "$tmp" ] || rm -f "$tmp"' EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-# mktemp makes a new file under a name nobody can guess, and fails where one
-# exists. A name made from the process number could be a link a repository
-# committed, and the rewrite would follow it. mktemp gives the file to its
-# owner alone, so it takes the mode a new file takes here, as feedback.md had.
+# mktemp picks a name a committed link cannot already hold, unlike $$.
+# Its file is owner-only, so chmod gives it the mode a new file takes here.
 tmp="$(mktemp "$dir/feedback.md.XXXXXX" 2>/dev/null)" || { tmp=""; readonly_bundle; }
 chmod "$(printf '%o' $((0666 & ~$(umask))))" "$tmp" 2>/dev/null || :
 

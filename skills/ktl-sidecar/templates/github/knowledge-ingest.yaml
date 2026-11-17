@@ -95,15 +95,11 @@ jobs:
         run: uv sync --locked
         working-directory: .lokf
 
-      # The secrets whose names start KNOWLEDGE_INGEST_, from the
-      # knowledge-ingest Environment or the repository, and no other, go to
-      # a file that only this job's user reads. The next step reads the
-      # file, removes it, and gives the secrets to the script alone, so no
-      # later step holds one. The job's environment (GITHUB_ENV) would give
-      # them to every later step, the one that uploads the patch among them.
-      # A line break that ends a value is removed, as a pasted secret often
-      # ends with one. A value that still spans lines is left out, since a
-      # token is one line, and a warning names it.
+      # The secrets named KNOWLEDGE_INGEST_*, and no other, go to an
+      # owner-only file that the next step reads, removes, and hands to the
+      # script alone; GITHUB_ENV would hand them to every later step. A
+      # trailing line break is removed; a value that still spans lines is
+      # left out with a warning.
       - name: Hand over the ingest secrets
         env:
           ALL_SECRETS: ${{ toJSON(secrets) }}

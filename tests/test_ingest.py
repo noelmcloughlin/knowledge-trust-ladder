@@ -2264,13 +2264,7 @@ echo "- wiki: 1 fetched" > "$summary"
 
 
 def test_the_workflow_hands_the_ingest_secrets_to_the_script_alone(tmp_path, checks):
-    """Written to the job's environment, the secrets reached every later step, the one that uploads the patch among them.
-
-    A secret that held a line break was left out with no word, so its entry
-    failed for want of a credential. The two steps are run here as the
-    workflow writes them: the first with every secret of the job, the
-    second with a stand-in for the script.
-    """
+    """The two steps run as written: only the script sees the secrets, and a secret with a line break is named in a warning."""
     if not shutil.which("jq"):
         pytest.skip("jq is not installed")
     secrets = {"github_token": "ghs_x", "KNOWLEDGE_INGEST_ATLASSIAN_TOKEN": "tok=en $HOME 'q'", "KNOWLEDGE_INGEST_MULTI": "first-SENTINEL\nsecond",

@@ -476,9 +476,8 @@ function finish() {
   if (!hasgen && vn == 0) print head "\t\t\t\t"
 }'
 
-# An index and a log are no concept in any folder, as the toolkit reads
-# them. diataxis.md, the map KTL Registrar writes, is none at the root of the
-# bundle alone: in a folder below, the toolkit reads it as a concept.
+# An index and a log are no concept in any folder, and KTL Registrar's
+# diataxis.md is none at the bundle's root only.
 facts() {  # every concept in the bundle -> the lines in the table above, V only when `rows` is 1
   # One awk reads them all. A path from find is absolute, so awk never takes
   # it for an assignment. The shell leaves out a folder whose name ends in
@@ -918,10 +917,8 @@ function names(t, p,  n, off, i, at, before, after, beyond) {
   }
   return 0
 }
-# A note counts as left by a person when its actor is one, or is the
-# curator: with no login to name, ktl-curator records the send-back of a
-# person under its own actor, and knowledge-apply.sh keeps that note as it
-# keeps one a person signed.
+# A note counts as left by a person when its actor is human: or the
+# curator, which records the send-back of a person with no login.
 function person(a) { return a ~ /^human:/ || a == "process:ktl-curator" }
 # The commit that first held a question a process asked, or "new".
 function asked_at(p, i) { c = first(p, "- " qd[p, i] ", " qa[p, i] ": " qt[p, i]); return c == "" ? "new" : c }

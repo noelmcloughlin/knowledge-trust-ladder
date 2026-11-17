@@ -14,10 +14,8 @@ fail=0
 say() { printf '%s\n' "$*"; }
 err() { printf 'FAIL: %s\n' "$*" >&2; fail=1; }
 ok() { printf 'OK:   %s\n' "$*"; }
-# no_tool <tool> <the check that needs it>. On a contributor's machine the
-# check is skipped with a notice, since CI runs it. Under CI, where GitHub
-# sets CI=true, a skipped check is one nobody ran, so the contract fails:
-# each job that runs it installs the tool, or runs where the image has it.
+# no_tool <tool> <the check that needs it>: a notice locally, a failure
+# under CI, where a skipped check is one nobody ran.
 no_tool() {
   case "${CI:-}" in
     "" | false | 0) say "$1 is not installed here, so $2 is skipped; CI runs it" ;;

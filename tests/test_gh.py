@@ -1204,9 +1204,7 @@ def test_check_strict_names_a_release_environment_without_a_reviewer(tmp_path, a
 
 
 def test_a_package_environment_without_a_reviewer_fails_only_a_strict_check(tmp_path, at, capsys):
-    """A pushed tag carries its own copy of pypi.yml, so the reviewer on pypi
-    and testpypi is the check a tag cannot drop. KTL's own catalogue asks for
-    one as a recommendation, as it does on release."""
+    """KTL's catalogue recommends a reviewer on pypi and testpypi, as on release."""
     entries = [e for e in load(OWN)["settings"] if e["kind"] == "environment" and e["name"] in ("pypi", "testpypi")]
     assert sorted((e["name"], e.get("reviewers", 0), e.get("level", "required")) for e in entries) == [
         ("pypi", 0, "required"), ("pypi", 1, "recommended"), ("testpypi", 0, "required"), ("testpypi", 1, "recommended"),

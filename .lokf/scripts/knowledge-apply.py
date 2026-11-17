@@ -97,14 +97,12 @@ CURATOR_NOTE_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, *process:ktl-curator:")  # 
 LOOSE_NOTE_RE = re.compile(r"^\s*[-*+]\s+\d{4}-\d{2}-\d{2}\s*,\s*human:")
 # A person's note as knowledge-report.sh lists one, under an open-questions heading outside a code fence.
 SEEN_NOTE_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, human:[^ ]*: ")
-# An actor a patch may name: letters, digits, '.', '_' and '-' after
-# `process:`, as a login is spelt. Anything else could carry Markdown or a
-# colon into every stamp and bullet the patch writes.
+# A patch's actor is `process:` and a login's characters, so no Markdown or
+# colon reaches the stamps and bullets the patch writes.
 ACTOR_RE = re.compile(r"process:[A-Za-z0-9][A-Za-z0-9._-]*")
 # The curator's actor, which stands for a person who could not sign in. A
-# patch under it would write that person's send-back and events. A patch
-# under an actor that only starts with it is refused too: its bullets would
-# read as the curator's to a person and to CURATOR_NOTE_RE.
+# patch under it, or under an actor that starts with it, would write notes
+# that read as that person's.
 CURATOR_ACTOR = "process:ktl-curator"
 # Matched case-insensitively, and including the event-internal keys, so a
 # patch cannot write a top-level `by: human:...` or a `Verified:` that a line
@@ -255,9 +253,8 @@ NOT_LINKS = {
     "endpoint", "documentation", "license", "author", "publisher", "generated", "verified", "status",
     "base_iri", "context", "stale_after", "timestamp", "genre", "definition", "version",
 }
-# The files of a bundle that are no concept: an index and a log in any
-# folder, as the toolkit reads them, and KTL Registrar's map at the root of
-# the bundle alone. The pen writes no file of either name (RESERVED).
+# An index and a log are no concept in any folder, and KTL Registrar's map is
+# none at the bundle's root. The pen writes neither (RESERVED).
 NOT_CONCEPTS = {"index.md", "log.md"}
 ROOT_MAP = "diataxis.md"
 SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:")

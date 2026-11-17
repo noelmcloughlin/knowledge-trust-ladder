@@ -1,27 +1,18 @@
-"""Names each SVG that could run a script on the site's address.
+"""Names each SVG that could run a script on the site's address, and exits 1.
 
     python scripts/check-svg.py <folder> ...
 
-A browser opens an SVG as a page of its own, on an address every project
-site of the owner shares, so a script in one would run with all of them.
-Each file under the folders whose name ends in .svg, in capitals or not, is
-read as XML, as a browser reads it. A prefix, a character reference or white
-space in an address therefore hides nothing. A file is named when it holds:
+Reads each .svg under the folders as XML, as a browser does, and names one
+that holds:
 
 - a script or foreignObject element under any prefix, or an XHTML element;
-- an attribute whose name starts with "on", which is an event handler;
-- an attribute whose value starts with javascript: or another scheme that
-  runs, or with data: and a kind a browser opens as a page, once its white
-  space is taken out. A data: SVG stays in an image element, which runs
-  nothing;
-- a DOCTYPE, which can declare an entity, or an xml-stylesheet instruction,
-  which can name a transform;
+- an on* event handler;
+- a value that starts with javascript: or another scheme that runs, or a
+  data: address a browser opens as a page, except a data: SVG in an image;
+- a DOCTYPE or an xml-stylesheet instruction;
 - text that is not well-formed XML.
 
-A file whose name ends in .svgz is named too: it is compressed, and is not
-read. A folder that is missing is passed over.
-
-Exits 1 when it names a file. Needs only the Python standard library.
+A .svgz is named unread. A missing folder is skipped.
 """
 
 from __future__ import annotations

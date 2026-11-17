@@ -37,7 +37,7 @@
       "tags": [
         "v*"
       ],
-      "why": "PyPI's trusted publisher names this Environment and not a ref, so it admits release tags alone. A pushed tag carries its own copy of pypi.yml, so a required reviewer is the one check on an upload that the copy cannot drop.",
+      "why": "PyPI's trusted publisher names this Environment and not a ref, so it admits release tags alone.",
       "docs": "releasing/#the-ktl-package-on-pypi"
     },
     {
@@ -48,7 +48,7 @@
       ],
       "level": "recommended",
       "reviewers": 1,
-      "why": "A required reviewer on this Environment waits until releases have downstream users, as the one on release does.",
+      "why": "A pushed tag runs its own copy of pypi.yml, so a required reviewer is the one check it cannot drop. It waits until releases have downstream users, as the one on release does.",
       "docs": "threat-model/#repository-hardening"
     },
     {
@@ -60,7 +60,7 @@
       "tags": [
         "v*"
       ],
-      "why": "TestPyPI's trusted publisher names this Environment and not a ref, so it admits release tags alone. A pushed tag carries its own copy of pypi.yml, so a required reviewer is the one check on an upload that the copy cannot drop.",
+      "why": "TestPyPI's trusted publisher names this Environment and not a ref, so it admits release tags alone.",
       "docs": "releasing/#the-ktl-package-on-pypi"
     },
     {
@@ -71,7 +71,7 @@
       ],
       "level": "recommended",
       "reviewers": 1,
-      "why": "A required reviewer on this Environment waits until releases have downstream users, as the one on release does.",
+      "why": "A pushed tag runs its own copy of pypi.yml, so a required reviewer is the one check it cannot drop. It waits until releases have downstream users, as the one on release does.",
       "docs": "threat-model/#repository-hardening"
     },
     {

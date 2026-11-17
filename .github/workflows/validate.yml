@@ -49,17 +49,14 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
-      # Check 14 of the contract runs changelog-release.mjs, so it needs
-      # Node.
+      # Check 14 runs changelog-release.mjs.
       - name: Use Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
 
-      # The contract also runs shellcheck and zip, which the GitHub-hosted
-      # runner image carries. Under CI the contract fails when a tool it
-      # needs is missing, so a runner without one fails here and no check is
-      # skipped.
+      # shellcheck and zip come with the runner image; under CI the
+      # contract fails when a tool it needs is missing.
       - name: Validate repository contract
         run: bash scripts/validate-repository.sh
 

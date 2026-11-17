@@ -7,12 +7,9 @@
 # copies pages into content/. scripts/prepare.sh runs first, for `lokf
 # export`, the trust labels and the pages gen-doc writes for a LinkML schema.
 #
-# A served file the browser would run as a page of the site's origin, which
-# every project site of the owner shares, is never published. The mounts that
-# serve the repository's folders name each kind of file they serve: the
-# bundle's Markdown, and the figures and PDF files of docs/ and .assets/. So
-# no HTML or XML document is served, whatever its name ends in. prepare.sh
-# stops the build on an SVG that could run a script.
+# Every project site of the owner shares the site's origin, so no file a
+# browser runs as a page is served: the mounts below list the kinds they
+# serve, and prepare.sh stops on an SVG that could run a script.
 locale = "en"
 disableKinds = ["taxonomy", "term", "rss"]
 enableRobotsTXT = true
@@ -28,10 +25,8 @@ releaseTag = "v{version}"
 # Folders under docs/ that are not pages of the site: the templates and the
 # pages LinkML's gen-doc keeps there. The schema's pages are built afresh.
 docsExclude = ["templates-linkml", "elements"]
-# The kinds of file the site serves from docs/ and .assets/, by the end of
-# the name: figures and PDF files. route.html sends a link to a file of any
-# other kind to GitHub. The two mounts below that serve those folders name
-# the same kinds, since a mount cannot read this list.
+# The endings served from docs/ and .assets/; route.html sends a link to
+# any other file to GitHub. Their mounts below repeat the list.
 served = ["avif", "gif", "ico", "jpeg", "jpg", "pdf", "png", "svg", "webp"]
 
 # The libraries the graph page and Mermaid diagrams need. Hugo fetches each
@@ -148,12 +143,9 @@ target = "assets/host/knowledge-federation.yaml"
 # export files. A docs page's Markdown is written by markdown-file.html, with
 # full addresses.
 #
-# Each of the three mounts of a repository folder names the kinds of file it
-# serves, by the end of the name in either case, and serves no other. Hugo
-# reads a mount's patterns in order and stops at the first that matches. So
-# the two patterns after `! ` come first, and no file or folder whose name
-# starts with a dot is served. The last pattern matches every folder, so that
-# Hugo looks inside it, and no file.
+# Hugo takes a mount's first matching pattern, so the `! ` patterns that
+# leave out dot files come first, then the endings served, in either case.
+# `**/` matches folders alone, so Hugo looks inside them.
 [[module.mounts]]
 source = "static"
 target = "static"

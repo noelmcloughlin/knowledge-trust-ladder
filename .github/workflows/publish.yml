@@ -7,12 +7,9 @@ name: Publish
 # decision. The `release` environment, once it has required reviewers, adds
 # a maintainer-approval gate in front of the write scope.
 #
-# `gh skill publish --tag` tags the head of `main` at the moment it runs,
-# not the commit this run checked out. So the `publish` job refuses to
-# publish unless `main` is still the commit `verify` checked, and after
-# publishing it checks that the tag names that commit. A merge that reaches
-# `main` during `verify`, or while the run waits for the `release`
-# environment, stops the run: start the workflow again.
+# `gh skill publish --tag` tags the head of `main`, not the commit this run
+# checked out, so `publish` stops unless `main` is still the commit `verify`
+# checked. After a merge during the run, start the workflow again.
 on:
   workflow_dispatch:
     inputs:
@@ -87,26 +84,21 @@ jobs:
         with:
           enable-cache: false
 
-      # Check 14 of the contract runs changelog-release.mjs, and the tests
-      # below run it and the hand-off cleaning, so both need Node. It takes
-      # no npm cache, as the job takes no uv cache.
+      # Check 14 and the tests run changelog-release.mjs. The job restores
+      # no npm cache, as it restores no uv cache.
       - name: Use Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           package-manager-cache: false
 
-      # The contract also runs shellcheck and zip, which the GitHub-hosted
-      # runner image carries. Under CI the contract fails when a tool it
-      # needs is missing, so a runner without one fails here and no check is
-      # skipped.
+      # shellcheck and zip come with the runner image; under CI the
+      # contract fails when a tool it needs is missing.
       - name: Verify repository contract
         run: bash scripts/validate-repository.sh
 
-      # The tests of the lokf-link recipe need `just`, and skip without it.
-      # just comes from .lokf/uv.lock, checked against its hash, and only
-      # its own command goes on PATH. The step runs after the contract, so
-      # the contract reads the checkout as it came.
+      # The lokf-link recipe's tests need `just`, from .lokf/uv.lock. It
+      # installs after the contract, which reads the checkout as it came.
       - name: Install just
         run: |
           uv sync --locked --project .lokf
@@ -118,8 +110,8 @@ jobs:
       # until 2026-10-07; a release still runs them. The test packages come
       # from tests/requirements.txt, each file checked against its hash
       # there: `uv run --with-requirements` checks none, so they go into an
-      # environment of their own first. One worker per CPU, as validate.yml
-      # runs them: a shorter run leaves less time for main to move.
+      # environment of their own first. One worker per CPU, as in
+      # validate.yml.
       - name: Test the sidecar scripts
         run: |
           uv venv -q "$RUNNER_TEMP/tests"
@@ -163,11 +155,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh skill publish --dry-run
 
-      # `gh skill publish --tag` tags the head of main, whatever this run
-      # checked out. A merge that reached main during `verify`, or while the
-      # run waited for the `release` environment, would be tagged and
-      # released with no check run on it. So main must still be the commit
-      # `verify` checked, asked of the remote in the step before the publish.
+      # gh skill publish tags the head of main, so a merge during the run
+      # would be tagged unchecked.
       - name: Check main is still the commit verify checked
         run: |
           head="$(git ls-remote origin refs/heads/main | cut -f1)"
@@ -187,9 +176,8 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: gh skill publish --tag "$VERSION"
 
-      # The check before the publish leaves a moment in which main can still
-      # move, so the tag is read back. A tag on another commit stops the run
-      # before anything is built from it.
+      # The tag is read back, since main can still move between the check
+      # and the publish.
       - name: Check the tag names the commit verify checked
         id: tagged
         env:

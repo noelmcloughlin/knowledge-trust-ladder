@@ -282,12 +282,7 @@ def test_the_site_finds_each_input_through_a_mount_and_takes_no_setting_for_it()
 
 
 def test_a_mount_that_serves_a_repository_folder_names_the_kinds_of_file_it_serves():
-    """A list of what is served, never of what is not: a browser runs an .rdf, an .xsd or an .atom file as a page too, and no list of such names is complete.
-
-    Hugo reads a mount's patterns in order and stops at the first that
-    matches, so the two that leave out dot files come first. The last matches
-    every folder, so Hugo looks inside it, and no file.
-    """
+    """Each mount lists what it serves, since no list of what a browser runs as a page is complete."""
     config = tomllib.loads(read(SITE_TEMPLATES / "hugo.toml"))
     kinds = config["params"]["served"]
     assert kinds == ["avif", "gif", "ico", "jpeg", "jpg", "pdf", "png", "svg", "webp"], "figures and PDF files, and nothing a browser runs as a page"
@@ -474,14 +469,7 @@ def cleaned(tmp_path, *regions):
 
 
 def test_the_raw_html_cleaner_keeps_a_class_or_a_data_attribute_only_where_the_site_wrote_it(tmp_path):
-    """A repository file cannot draw a trust label, name itself in a search filter or word a link's preview.
-
-    An element one of the site's templates wrote names the build's mark in
-    data-site, which no file can know, and keeps its class and the data-*
-    attributes the site reads. Any other element keeps the classes Goldmark
-    and Chroma write, and no other. The list of a page's sections is a region
-    of its own, since Hugo writes a heading's HTML into it.
-    """
+    """A repository file cannot draw a trust label, name itself in a search filter or word a link's preview, in the body or the list of sections."""
     own = 'data-site="0123abcd"'
     body = (
         '<p class="label label--person" data-pagefind-filter="Trust:Confirmed by a person">Confirmed by a person</p>'

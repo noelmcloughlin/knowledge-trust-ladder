@@ -13,11 +13,9 @@ dropped. Every element is closed, so nothing a file writes can reach the
 page around it.
 
 A class or a data-* attribute stays only where the site's own rendering
-wrote it. An element one of the site's templates wrote names the mark in
-data-site, and keeps its class and the data-* attributes the site reads. Any
-other element keeps the classes Goldmark and Chroma write for a footnote and
-for highlighted code, and no other. So a repository file cannot draw a trust
-label, name itself in a search filter or word a link's preview.
+wrote it: on an element whose data-site names the mark (own.html), or as a
+footnote's or highlighted code's class. So a repository file cannot draw a
+trust label, name itself in a search filter or word a link's preview.
 
 The page's Content-Security-Policy stays as a second guard, and the script
 needs only the Python standard library.
@@ -44,8 +42,8 @@ TAGS = set(
 )
 VOID = {"br", "hr", "img", "wbr", "source", "input"}
 # The attributes GitHub keeps on any tag, less a form's, with id and loading.
-# A name stays on a link alone: on an image it would stand in for a property
-# of the document that the site's script calls.
+# `name` stays on a link alone: on an image it would shadow a document
+# property the site's script calls.
 ATTRIBUTES = set(
     "abbr align alt aria-describedby aria-hidden aria-label aria-labelledby axis border cellpadding cellspacing "
     "char charoff checked clear cols colspan color compact coords datetime dir disabled for frame headers height "

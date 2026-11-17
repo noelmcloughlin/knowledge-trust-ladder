@@ -27,15 +27,9 @@ name: PyPI
 # details at a time, so the first upload stops at knowledge-trust-ladder:
 # register its publisher with the same details, then run the job again.
 #
-# A tag carries its own copy of this file. The `release tags` ruleset blocks
-# moving and deleting a v* tag, and not creating one, so anyone who can push
-# can push a v* tag on a commit whose copy drops every check below. Those
-# checks stop a mistake, and not that person. A required reviewer on `pypi`
-# and `testpypi` is the check the copy cannot drop: the upload waits for a
-# maintainer, who reads which commit the tag names before approving. It is
-# recommended, and waits until releases have downstream users, as the
-# reviewer on `release` does. `ktl gh apply --recommended` adds one, and
-# `ktl gh check --strict` names an Environment without one.
+# A pushed v* tag runs its own copy of this file, which can drop every check
+# below. A required reviewer on `pypi` and `testpypi` is the check it cannot
+# drop, and is recommended: see docs/threat-model.md#repository-hardening.
 #
 # Three jobs, for least privilege. `build` runs the build backend
 # (third-party packages, installed at the hashes .pypi/requirements.txt
@@ -77,9 +71,8 @@ jobs:
           egress-policy: audit
 
       # The version is read from the tag, so the run must stand on it, and
-      # the tag must be a release tag. The check runs from the tag's own
-      # copy of this file, so it catches a run started on the wrong ref; the
-      # Environment's rules are the ones a tag cannot rewrite.
+      # the tag must be a release tag. This catches a run on the wrong ref,
+      # not a tag whose copy drops it.
       - name: Check the run stands on the release tag
         env:
           REF: ${{ github.ref }}

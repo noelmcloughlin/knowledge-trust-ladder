@@ -189,16 +189,12 @@ sig_format() {  # commit -> pgp | ssh | none
 # frontmatter only, so an example in a body code fence is no claim. It reads
 # a block list in any key order, a flow-style item, a flow sequence and a
 # bare mapping, and gives whatever else it meets the actor (unreadable). An
-# event is keyed by the `id` of its concept. events_in puts the place of the
-# concept before it, so a renamed concept keeps its events, and a confirmation
-# copied or moved into another concept does not.
+# event is keyed by the `id` of its concept, and events_in adds its place.
 human_events() {  # path -> events, reading the concept on stdin
   awk -v path="$1" '
-  # A value is read as a parser reads it, or as one this reader cannot follow.
-  # One pair of quotes around it is its spelling. A quote left inside it, an
-  # escape, a comment beside it and a leading indicator are each a spelling a
-  # parser reads another way, and two values that differ only there must not
-  # read as the same. `strange` says so to the caller.
+  # Returns the value after the key, less one pair of enclosing quotes, and sets
+  # `strange` on an unclosed or inner quote, a `\` escape, a trailing comment or
+  # a leading indicator, which a parser reads another way.
   function val(s,  q, n) { sub(/^[^:]*:[[:space:]]*/, "", s); sub(/[[:space:]]+$/, "", s); q = substr(s, 1, 1); n = length(s)
     if (q == "\"" || q == "'"'"'") { if (n < 2 || substr(s, n) != q) { strange = 1; return s }
       s = substr(s, 2, n - 2); if (index(s, q) || (q == "\"" && index(s, "\\"))) strange = 1; return s }
@@ -256,9 +252,8 @@ human_events() {  # path -> events, reading the concept on stdin
   # a quoted key, `? key`, `<<:` or a flow mapping, can each hold an event.
   !seen && /[^[:space:]]/ && !/^[[:space:]]*#/ { seen = 1; if (/^[[:space:]]/) unread() }
   /^["'"'"'?{[<!&*:|>]/ || /^(verified|generated)[[:space:]]+:/ { emit(); inv = 0; unread(); next }
-  # The id keys every event of the concept, so one this reader cannot take
-  # whole, and a second `id` line, which parsers settle in different ways,
-  # make the file one it cannot read.
+  # The id keys every event of the concept: a strange id, or a second `id`
+  # line, makes the file unreadable.
   /^id:/ { strange = 0; cid = val($0); if (strange || ++ids > 1) unread() }
   /^(verified|generated):/ { emit(); inv = 1; kind = $0; sub(/:.*/, "", kind); rest = $0; sub(/^(verified|generated):[[:space:]]*/, "", rest); sub(/[[:space:]]+$/, "", rest)
     if (rest ~ /^\{/) { flowseq = 0; flowbuf = rest; inv = 0; if (index(rest, "}")) flushflow(); else inflow = 1 }
@@ -276,13 +271,11 @@ human_events() {  # path -> events, reading the concept on stdin
   inv && /^[[:space:]]+[^[:space:]#]/ { inev = 1; odd = 1; next }
   END { if (plain && dashes >= 2 && path !~ /(^|\/)log\.md$/) unread(); emit(); printf "%s", out; if (bad) { printf "%s\t(unreadable)\t\t", cid ? cid : path; for (i = 1; i <= NR; i++) if (i in raw) printf "%s\001", raw[i]; printf "\tverified\n" } }'
 }
-# Each event is listed with its place: the path of its concept, or `-` when
-# the other side of the comparison holds no file there. A concept that keeps
-# its path matches itself alone, so an event moved or copied between two
-# concepts is one removed and one added, whatever their ids read as. A
-# concept that is new on one side and gone on the other is a rename, and its
-# events match by id. The lists keep each event once per concept that holds
-# it, so a second copy of one counts as an addition.
+# Each event is prefixed with its place: the concept's path, or `-` when the
+# other ref has no file there. An event moved or copied between two concepts
+# is one removal and one addition; a rename has `-` on both sides, so its
+# events match by id. Duplicates are kept, so a second copy is an addition.
+# Matches knowledge-registrar.yaml.
 placed() {  # place, events on stdin -> the events with that place before each
   PLACE="$1" awk '{ print ENVIRON["PLACE"] "\t" $0 }'
 }
@@ -451,12 +444,11 @@ for sha in $commits; do
   fi
   files="$(printf '%s\n' "$listed" | grep '\.md$' || true)"
   [ -n "$files" ] || continue
-  # An event in this commit and in no parent is new or changed, and its actor
-  # must sign: a re-dated `at` or a moved `revision` counts too. So a merge
-  # that brings in a confirmation from one side claims nothing. parent.events
-  # holds each event as often as the parent with most copies of it does, and
-  # every.events holds what every parent holds, so a merge that lacks what
-  # one side never had removes nothing, and a root commit removes nothing.
+  # An event in this commit and in no parent is added, a re-dated `at` or a
+  # moved `revision` included, and its actor must sign. parent.events holds
+  # each event as often as the parent with most copies of it, and
+  # every.events what every parent holds. So a merge claims nothing it took
+  # from one side, and a root commit removes nothing.
   parents=()
   while IFS= read -r p; do [ -z "$p" ] || parents+=("$p"); done < <(git rev-parse "$sha^@" 2>/dev/null)
   : > "$home/every.events"; : > "$home/parent.events"; first=1

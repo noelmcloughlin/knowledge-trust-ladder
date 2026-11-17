@@ -32,9 +32,7 @@ source=$(value source); source=${source%/}
 linkml=$(value linkml); linkml=${linkml%/}
 src_root="$root${source:+/$source}"
 
-# A browser opens an SVG as a page of its own, so one that holds a script, an
-# event handler or a javascript: address would run on the site's address.
-# check-svg.py reads each as XML and names those that do, and the build stops.
+# Stop on an SVG that could run a script on the site's address.
 "${tool[@]}" python -I "$here/scripts/check-svg.py" "$src_root/.assets" "$src_root/docs" "$root/.lokf/knowledge" "$here/static"
 
 rm -rf "$out"

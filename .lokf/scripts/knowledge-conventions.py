@@ -42,10 +42,8 @@ from pathlib import Path
 
 import yaml
 
-# The files of a bundle that are no concept. The toolkit reserves an index
-# and a log in any folder. KTL Registrar writes its map, diataxis.md, at the
-# root of the bundle, and only there is it no concept: in a folder below,
-# the toolkit reads a file of that name as a concept, so every rule reads it.
+# An index and a log are no concept in any folder, as the toolkit reads them,
+# and KTL Registrar's diataxis.md is none at the bundle's root.
 RESERVED = {"index.md", "log.md"}
 ROOT_ONLY = {"diataxis.md"}
 OPEN_QUESTION = re.compile(r"^- \d{4}-\d{2}-\d{2}, (human|process):[^ :]+: ")
@@ -462,11 +460,10 @@ def parsed(text: str | None) -> tuple[dict, str] | None:
 
 
 def before_in(top: Path, parent: str, commit: str, name: str, ident) -> tuple[str, tuple[dict, str] | None]:
-    """A concept as a parent of a commit holds it: its path there, and what it says, or None.
+    """The concept as a parent of a commit holds it: its path there, and what it says, or None.
 
-    The parent holds it under the same path, or, when it holds no file
-    there, under the path of a concept with the same id that the commit
-    removes: a rename, which git records as one file removed and one added.
+    With no file at the same path, a file the commit deletes that has the
+    same id is the concept before a rename.
     """
     text = git(top, "show", f"{parent}:{name}")
     if text is not None:
@@ -486,13 +483,10 @@ def before_in(top: Path, parent: str, commit: str, name: str, ident) -> tuple[st
 def recorded_in(top: Path, name: str, event: tuple[str, str]) -> tuple[str, tuple[dict, str]] | None:
     """The newest commit that put a person's event into a concept's frontmatter, and the concept as that commit holds it.
 
-    `git log -S` names each commit that changes how often the time of the
-    event occurs in the file, and that alone is not the answer: an edit that
-    repeats the time in a comment or in the body is such a commit too. So
-    each one is parsed. It recorded the event when its frontmatter holds the
-    event and no parent's does. A parent that holds the event under another
-    path is the concept before a rename, and the search goes on from there,
-    so a concept renamed and rewritten is compared with what the person saw.
+    `git log -S` also names a commit that repeats the event's time in the
+    body, so each candidate is parsed: the answer is the commit whose
+    frontmatter holds the event and whose parents' do not. The search
+    follows a rename to the concept's earlier path.
     """
     start = "HEAD"
     for _ in range(64):  # one round per rename of the concept

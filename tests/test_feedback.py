@@ -258,14 +258,12 @@ def test_the_file_keeps_the_mode_a_new_file_takes(fb):
         assert mode == 0o666 & ~mask, f"knowledge-feedback.sh left feedback.md with mode {mode:o} under umask {mask:o}"
 
 
-# The process number of a script is known before it starts: this shell puts
-# a link where the script's temporary file was once named, then becomes the
-# script, which keeps the number.
+# Plants a link at feedback.md.$$, then execs the script, which keeps the PID.
 PLANTED = 'ln -s "$1" "$2/.lokf/feedback.md.$$" && exec bash "$3" --root "$2" Miss "a gap SENTINEL"'
 
 
 def test_writes_through_no_link_planted_where_a_temporary_file_was_named(fb, tmp_path_factory):
-    """A repository can commit a link at .lokf/feedback.md.<number>, and a temporary file named by the process number wrote the entries over the file it points at."""
+    """The script writes through no link planted at .lokf/feedback.md.<pid>."""
     victim = write(tmp_path_factory.mktemp("home") / "victim", "the reader's own file\n")
     assert feedback(fb, "Miss", "the first gap")
     result = bash("-c", PLANTED, "planted", victim, fb, FEEDBACK)

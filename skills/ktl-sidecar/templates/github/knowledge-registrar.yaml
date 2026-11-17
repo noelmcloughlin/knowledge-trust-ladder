@@ -238,11 +238,9 @@ jobs:
           # below, never skipped.
           human_events() {
             awk -v path="$1" '
-            # A value is read as a parser reads it, or as one this reader cannot follow.
-            # One pair of quotes around it is its spelling. A quote left inside it, an
-            # escape, a comment beside it and a leading indicator are each a spelling a
-            # parser reads another way, and two values that differ only there must not
-            # read as the same. `strange` says so to the caller.
+            # Returns the value after the key, less one pair of enclosing quotes, and sets
+            # `strange` on an unclosed or inner quote, a `\` escape, a trailing comment or
+            # a leading indicator, which a parser reads another way.
             function val(s,  q, n) { sub(/^[^:]*:[[:space:]]*/, "", s); sub(/[[:space:]]+$/, "", s); q = substr(s, 1, 1); n = length(s)
               if (q == "\"" || q == "'"'"'") { if (n < 2 || substr(s, n) != q) { strange = 1; return s }
                 s = substr(s, 2, n - 2); if (index(s, q) || (q == "\"" && index(s, "\\"))) strange = 1; return s }
@@ -307,9 +305,8 @@ jobs:
             # a quoted key, `? key`, `<<:` or a flow mapping, can each hold an event.
             !seen && /[^[:space:]]/ && !/^[[:space:]]*#/ { seen = 1; if (/^[[:space:]]/) unread() }
             /^["'"'"'?{[<!&*:|>]/ || /^(verified|generated)[[:space:]]+:/ { emit(); inv = 0; unread(); next }
-            # The id keys every event of the concept, so one this reader cannot take
-            # whole, and a second `id` line, which parsers settle in different ways,
-            # make the file one it cannot read.
+            # The id keys every event of the concept: a strange id, or a second `id`
+            # line, makes the file unreadable.
             /^id:/ { strange = 0; cid = val($0); if (strange || ++ids > 1) unread() }
             /^(verified|generated):/ { emit(); inv = 1; kind = $0; sub(/:.*/, "", kind); rest = $0; sub(/^(verified|generated):[[:space:]]*/, "", rest); sub(/[[:space:]]+$/, "", rest)
               if (rest ~ /^\{/) { flowseq = 0; flowbuf = rest; inv = 0; if (index(rest, "}")) flushflow(); else inflow = 1 }
@@ -329,19 +326,15 @@ jobs:
           paths="$work/paths"
           listed="$work/listed"  # every path git named under the bundle, quoted or not
           : > "$listed"
-          # A gate that could not look passes nothing. Each read below ends the
-          # job when git, awk, sort or comm fails, where an empty answer would
-          # read as "no person is named here".
+          # Fail closed: an empty answer from a failed git, awk, sort or comm
+          # would read as no events, so each read below stops the job instead.
           stop() { echo "unreadable: $1"; exit 1; }
 
-          # Each event is listed with its place: the path of its concept, or `-`
-          # when the other side of the comparison holds no file there. A concept
-          # that keeps its path matches itself alone, so an event moved or copied
-          # between two concepts is one removed and one added, whatever their ids
-          # read as. A concept that is new on one side and gone on the other is a
-          # rename, and its events match by id. The lists keep each event once
-          # per concept that holds it, so a second copy of one is an addition.
-          # Matches knowledge-provenance.sh.
+          # Each event is prefixed with its place: the concept's path, or `-`
+          # when the other ref has no file there. An event moved or copied
+          # between two concepts is one removal and one addition; a rename has
+          # `-` on both sides, so its events match by id. Duplicates are kept,
+          # so a second copy is an addition. Matches knowledge-provenance.sh.
           placed() {  # place, events on stdin -> the events with that place before each
             PLACE="$1" awk '{ print ENVIRON["PLACE"] "\t" $0 }'
           }
@@ -375,13 +368,10 @@ jobs:
               BEGIN { while ((getline line < now) > 0) { split(line, f, "\t"); if (f[6] == "generated") kept[f[2]] = 1 } }
               $6 == "verified" || !($2 in kept)'
           }
-          # What a ref adds and removes, read against each ref before it. An
-          # event the ref holds and none before it holds is added: a re-dated
-          # `at`, a moved `revision` and an event in another concept each count.
-          # An event every ref before it holds and the ref lacks is removed. So
-          # a merge that brings in another curator's confirmation claims
-          # nothing, one that adds an event neither side held is read like any
-          # other commit, and a commit with no parent adds all it holds.
+          # An event the ref holds and no earlier ref holds is added; one every
+          # earlier ref holds and the ref lacks is removed. With a merge's
+          # parents as the earlier refs, an event from one side is neither, and
+          # a root commit adds all it holds.
           delta() {  # name, ref, the refs before it... -> $work/<name>.added and $work/<name>.gone, from the concepts in $paths
             local name="$1" ref="$2" p first=1
             shift 2
@@ -451,21 +441,16 @@ jobs:
             echo "unreadable: gh is not installed on this runner, and a person's confirmation is checked against GitHub's reviews and signatures with it."
             exit 1
           fi
-          # Each review that approves, asks for changes or was dismissed, oldest
-          # first, with the commit it was given on. A person's last one is their
-          # word: an approval they followed with a request for changes, or one
-          # that was dismissed, backs nothing.
+          # Lists the reviews that approve, request changes or were dismissed,
+          # oldest first, with their commit. Only a person's last one counts.
           gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews" --paginate \
             --jq '.[] | select(.state == "APPROVED" or .state == "CHANGES_REQUESTED" or .state == "DISMISSED") | [(.user.login // "-"), .state, (.commit_id // "-")] | @tsv' \
             > "$work/reviews" || stop "GitHub did not list the reviews of this pull request."
           approved_at() {  # login -> the commit their approval was given on, when the approval is their last word
             awk -F'\t' -v who="$1" '$1 == who { state = $2; at = $3 } END { if (state == "APPROVED" && at ~ /^[0-9a-f]+$/) print at }' "$work/reviews"
           }
-          # An approval covers what the person saw. So it backs their name only
-          # while each concept that carries it, among those this pull request
-          # changes, is byte for byte what the approved commit held. A commit
-          # pushed after the approval that leaves those concepts alone, such as
-          # a merge of the base branch, takes nothing from it.
+          # An approval backs a person only while each changed concept that
+          # carries their name is byte for byte as the approved commit held it.
           concepts_of() {  # login -> the concepts this pull request changes that hold an event of theirs, before or after
             local f ref
             while IFS= read -r f; do
@@ -485,25 +470,16 @@ jobs:
           # keys registered to an account, which is also what ties the
           # signature to a person, rather than merely proving one exists.
           #
-          # That account is the committer's. The author of a commit is a name
-          # and an address anyone may type, so a commit that names one person
-          # as its author and carries the valid signature of another is still
-          # Verified. The person who signed is therefore read from the
-          # committer. One committer stands for somebody else: `web-flow`, the
-          # account GitHub signs with when a person commits in the browser.
-          # GitHub signs such a commit only when the request named no author of
-          # its own, so there the author is the signed-in person.
+          # The signer is the committer, whose keys GitHub checks: the author is
+          # a name anyone may type. GitHub signs a web-editor commit as
+          # `web-flow`, and there the author is the signed-in person.
           gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/commits" --paginate \
             --jq '.[] | [.sha, (.commit.verification.verified | tostring), (.committer.login // "-"), (.author.login // "-")] | @tsv' \
             > "$work/commits" || stop "GitHub did not list the commits of this pull request."
 
-          # Every commit of the pull request, read against each of its parents:
-          # what it adds and what it removes, one event to a line. Each commit
-          # is read, with no path given to `git rev-list`, since git leaves out
-          # a side of a merge whose paths end up as the other side has them.
-          # --root: a commit with no parent, as a history merged in from
-          # elsewhere starts with, is compared with the empty tree, so what it
-          # adds is read.
+          # Reads what each commit adds and removes against each parent. rev-list
+          # takes no path, since git would leave out a merge side whose paths
+          # end as the other side's. --root reads a parentless commit in full.
           : > "$work/introduced"
           git rev-list "$base..$HEAD_SHA" > "$work/shas" || stop "git could not list the commits of this pull request."
           while IFS= read -r sha; do
@@ -578,9 +554,8 @@ jobs:
                    "verified=${verified:-unknown}, signed by ${signer:-unknown}."
             done
 
-            # Each event of theirs that the pull request adds or removes is also
-            # one of those commits' own. An event no commit accounts for is one
-            # this job could not place, and it backs nothing it could not place.
+            # Each event of theirs the pull request adds or removes must come
+            # from one of those commits; any other is unbacked.
             for way in added gone; do
               awk -F'\t' -v who="$actor" '$3 == who' "$work/pr.$way" | cut -f2- | sort -u > "$work/asked"
               awk -F'\t' -v who="$actor" -v way="$way" '$2 == way && $4 == who' "$work/introduced" | cut -f3- | sort -u > "$work/found"

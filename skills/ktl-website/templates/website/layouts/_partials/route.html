@@ -19,7 +19,7 @@
     {{- $fragment := $u.Fragment -}}
     {{- $rel := partial "site-path.html" $target -}}
     {{- $page := or (index $routes $target) (index $routes (printf "%s/index.md" $target)) (index $routes (printf "%s/README.md" $target)) -}}
-    {{- /* A figure or a PDF file under .assets/ or docs/ is served beside the pages. A file of any other kind is not, so its link goes to GitHub. */ -}}
+    {{- /* Only the kinds hugo.toml's `served` lists are served; a link to any other goes to GitHub. */ -}}
     {{- $served := in site.Params.served (path.Ext $rel | strings.TrimPrefix "." | lower) -}}
     {{- if $page -}}
       {{- $out = $page -}}

@@ -105,23 +105,17 @@ DEFAULT_MAX_BYTES = 200 * 1024 * 1024
 MAX_ENTRIES = 100_000
 # A distribution's name becomes a file name in the workspace, so it is one
 # plain segment: no folder, no leading dot, nothing a shell or a path reads.
-# The workspace's site serves a served member's file under its name, so the
-# name ends as the file's kind does: .jsonld for a served file, .zip for a zip.
+# It ends .jsonld for a served file and .zip for a zip, since the workspace's
+# site serves the file under that name.
 PLAIN_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._+-]*")
-# The files a member's zip may hold, by the ending of each name: a concept
-# in Markdown, and an image a concept's body shows. The release workflow
-# packs the bundle folder, and a bundle holds nothing else. Any other ending
-# is refused, and so is a name with none, for two reasons. The workspace's
-# site serves every file, and a browser runs a page, a script, an SVG image
-# and any file served as XML. The toolkit reads a pyproject.toml in the
-# bundle folder, and loads the schema that file names.
+# A member's zip may hold concepts and the images they show, as the release
+# workflow packs them. Any other file is refused: the workspace's site would
+# serve it, and the toolkit loads the schema a pyproject.toml names.
 BUNDLE_SUFFIXES = (".md", ".gif", ".jpeg", ".jpg", ".png", ".webp")
 NO_BUNDLE_FILE = "is neither Markdown (.md) nor an image (.gif, .jpeg, .jpg, .png, .webp), the files a bundle zip holds"
-# What a member's released schema may import: LOKF core, which the build
-# places beside the schema, and the schemas LinkML itself carries. LinkML
-# resolves a schema's imports on its own, with none of this script's checks:
-# it fetches an import that is an address, reads one that is a path, and
-# expands a prefixed one through the schema's own `prefixes`.
+# A member's schema may import LOKF core, placed beside it, and LinkML's own
+# schemas. LinkML would fetch or read any other import with none of these
+# checks.
 SCHEMA_IMPORT = re.compile(r"lokf|linkml:[A-Za-z][A-Za-z0-9_]*")
 LINKML_PREFIX = "https://w3id.org/linkml/"
 
@@ -297,9 +291,8 @@ class Member:
         # specification). The build writes that file out as the bundle it was
         # exported from, so the rest of the build reads it as a zip's.
         self.served = self.zip_name.endswith(".jsonld") or str(dist.get("media_type") or "") == SERVED_TYPE
-        # The build keeps a served file in the workspace under its name,
-        # where the workspace's site serves it. A name ending .html would
-        # be served as a page, whatever media type the concept gives.
+        # The workspace's site serves the file under this name: x.html would
+        # be a page, whatever the media type says.
         if not self.zip_name.endswith(".jsonld" if self.served else ".zip"):
             raise Failed(f"{concept_path}: distribution.name must end {'.jsonld, as a served file' if self.served else '.zip, as a release zip'} does, not {self.zip_name!r}")
         # Why the build holds the member as the previous workspace held it,
@@ -1355,16 +1348,11 @@ def schema_prefixes(prefixes) -> list[tuple[str, str]] | None:
 def check_member_schema(schema: pathlib.Path, slug: str, name: str) -> None:
     """Refuse a member's released schema whose imports would have LinkML fetch an address or read a file the member chose.
 
-    The file is read as plain YAML, before the toolkit loads it. An import
-    is `lokf` or a `linkml:` name and nothing else, so no address, no path
-    and no CURIE under another prefix reaches LinkML. LinkML expands a
-    prefixed import through the schema's own `prefixes`, where one prefix
-    stands for every spelling of its name in upper or lower case, so a
-    `linkml` prefix names LinkML's namespace or the schema is refused. An
-    import under the default prefix, which `default_prefix` or `id` gives,
-    is no `linkml:` name and is refused with the rest. `source_file` is
-    where LinkML takes a schema to be, and it resolves `lokf` beside that,
-    so the key names one plain file or the schema is refused.
+    Reads the file as plain YAML before the toolkit loads it, and takes
+    `lokf` and `linkml:` imports alone. The `linkml` prefix, in any case,
+    must name LinkML's namespace, since LinkML expands an import through the
+    schema's `prefixes`. `source_file` must be one plain file name, since
+    LinkML resolves `lokf` beside it.
     """
     try:
         doc = yaml.safe_load(schema.read_text(encoding="utf-8"))
@@ -3064,9 +3052,8 @@ def served_add(spec: str, knowledge: pathlib.Path, domain_iri: str, cache: pathl
     if (knowledge / where).exists():
         raise Failed(f"{where} exists already; `members` moves an existing member on its own")
     taken[base] = f"members/{slug}"
-    # A site that serves the bundle's index.md beside the file says what the
-    # bundle is. It is a member's address too, so it is checked as the file's
-    # is, before the request and at the connection.
+    # The index.md beside the file says what the bundle is. Its address is
+    # checked as the file's is, before the request and at the connection.
     meta: dict = {}
     try:
         refuse_private(folder + "/index.md")

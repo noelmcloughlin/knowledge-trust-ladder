@@ -2,16 +2,10 @@
 
     python scripts/site-values.py <site.toml>
 
-Prints a line `name=value` for each [params] key below that the file sets.
-A TOML parser reads the file, as Hugo's does, so a value means the same to
-both, and no line of the file is taken for a key by its look. The build
-stops when the file is not TOML, as a file that writes a key twice is not.
-It stops on two keys that differ only in case, which Hugo reads as one, and
-on a value that is not a string or holds a line break or another control
-character.
-
-Needs Python 3.11 or later, which the site's pyproject.toml requires, and
-only its standard library.
+Prints `name=value` for each [params] key in KEYS that the file sets. Exits
+on a file that is not TOML, two keys that differ only in case (Hugo reads
+them as one), and a value that is not a string or holds a control
+character, a line break among them.
 """
 
 from __future__ import annotations
