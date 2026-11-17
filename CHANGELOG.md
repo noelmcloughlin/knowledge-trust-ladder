@@ -4,6 +4,17 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Changed
+
+- **A `revision` on a file its own branch changed is a `sha256:` digest of the file**, since a squash merge replaces the branch's commits.
+- **The report script compares a `sha256:` pin with the file as committed**, so a file changed after the person was shown it reads as moved.
+
+### Fixed
+
+- **Conventions rule 6 fails a `revision` whose commit the checkout's history does not hold**, in every clone and not only a fresh one.
+- **On a pull request, rule 6 refuses a `revision` that names one of its commits**, which a squash merge would leave naming nothing.
+- **The gate reads the pull request's own commits for rules 6 and 14**, through `--head`, and not those its base gained since.
+
 ## [0.67.0] - 2026-11-17
 
 ### Added

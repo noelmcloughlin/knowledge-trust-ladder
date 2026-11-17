@@ -103,6 +103,7 @@ A `resource` under `.lokf/mirror/` is a copy the ingest keeps of a page or docum
 `revision` is the state of the `resource` you quoted from in the evidence-first step, so a later reader can tell whether the page they see is the one the confirmation rested on. Fill it like this:
 
 - **A committed path in the repository**: the last commit that touched it, `git log -1 --format=%H -- <path>`, as the full hash. An abbreviation can become ambiguous as the repository grows, and the registrar gate resolves the pin against the tree. If the file has uncommitted changes, or the host has no version control, say so and leave the key out.
+- **A committed file this branch changed**: `sha256:` plus the digest of the file as committed, `git show HEAD:<path> | sha256sum` (`shasum -a 256` on macOS). `git log origin/main..HEAD -- <path>` prints a commit when the branch changed the file, with the pull request's base branch in place of `origin/main`. A squash merge or a rebase replaces the commits of a branch, so a pin on one names nothing afterwards, and the gate refuses it (convention 6). The digest names the content, which is the same in whichever commit holds it. For a folder the branch changed, leave the key out.
 - **A URL**: the `ETag` header if the server sends one, else `sha256:` plus the digest of the body you quoted from (`curl -sL <url> | sha256sum`; `shasum -a 256` on macOS). Prefer the ETag: a digest of a page that changes on every fetch cannot later tell "the source moved" from "the page is dynamic".
 - **Several `sources`**: the `resource`'s revision only.
 
@@ -283,7 +284,7 @@ Commit the verdicts in a commit of their own, signed, on top of the commit that 
 bash scripts/knowledge-conventions.sh knowledge --since "$(git merge-base origin/main HEAD)"
 ```
 
-Without `--since`, the script skips rule 14, so a run that passes here can still fail at the gate.
+Without `--since`, the script skips rule 14, and rule 6 does not ask whether a `revision` names a commit of this branch, so a run that passes here can still fail at the gate.
 
 Each named person must have approved the pull request or, when the pull request is their own, have signed its commits, since GitHub will not let authors approve themselves. An approval covers the concepts as they stood when it was given, so one given before a later push to a concept that carries their name is asked for again. Tell the person plainly that the pull request needs their approval or signature before the confirmations they just gave will pass. If they are the repository's only maintainer, tell them that GitHub will not let them approve their own pull request, so signing their commits is the path (ktl-sidecar's `references/gate.md` has the three-line setup). That is the gate working, not a fault in it. It is what makes their confirmation something a later reader can check rather than take on faith.
 
