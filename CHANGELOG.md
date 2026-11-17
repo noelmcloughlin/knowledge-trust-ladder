@@ -4,13 +4,25 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+## [0.67.0] - 2026-11-17
+
+### Added
+
+- **`site.toml`'s `schema` names the schema file the site shows**: a path, or `pkg:<package>/<path>` for one inside a package that the environment of `schemaProject` holds.
+
 ### Changed
 
+- **With no LinkML schema of its own, the site shows the bundle's domain vocabulary**, `.lokf/schema/domain.yaml`, before LOKF core, and the vocabulary has a title and a description.
+- **The navigation's Knowledge graph link has an icon and a tone of its own**, so it stands out in the bundle's part.
+- **The librarian keeps history out of a concept's body**: the day a fact changed, and a rule tried and retired, belong in the log.
+- **The website's text size is Medium by default**, and a reader can still choose Large or Larger from the Display menu.
+- **The release tools are in `.release/` and the PyPI build backend in `.pypi/`**, outside `.github/`, where Dependabot's pull requests for them were refused.
 - **`diataxis.md` is reserved at the bundle's root alone**, where KTL Registrar keeps its map. A file of that name in a folder is a concept to the conventions, the report and the pen. `index.md` and `log.md` stay reserved in every folder.
 - **Without zip, the contract still checks the Microsoft 365 skill's folder** and says the zip check is skipped.
 
 ### Fixed
 
+- **The site serves each local file the schema imports beside it**, so the served schema loads as the repository's does.
 - **`knowledge-report.sh questions` lists each open question with its day, its asker and its text**, the mode the curator's queries page names, which the script lacked.
 
 ### Security
@@ -39,24 +51,6 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **The website's build reads each SVG as XML**, so it stops on a script under a prefix, a `javascript:` address written with a character reference, a file named `.SVG`, a DOCTYPE and a compressed `.svgz`, which the earlier text search missed.
 - **A page of the website sends no referrer**, so a remote image in a concept or the README does not learn which page loaded it.
 - **A description cannot add a key to `site.toml`**: ktl-website's Step 1 writes each value as a TOML string and stops on a line break, and `prepare.sh` reads the file through a TOML parser. A description of several lines could set the `browseBuild` command the build runs.
-
-## [0.67.0] - 2026-11-15
-
-### Added
-
-- **`site.toml`'s `schema` names the schema file the site shows**: a path, or `pkg:<package>/<path>` for one inside a package that the environment of `schemaProject` holds.
-
-### Changed
-
-- **With no LinkML schema of its own, the site shows the bundle's domain vocabulary**, `.lokf/schema/domain.yaml`, before LOKF core, and the vocabulary has a title and a description.
-- **The navigation's Knowledge graph link has an icon and a tone of its own**, so it stands out in the bundle's part.
-- **The librarian keeps history out of a concept's body**: the day a fact changed, and a rule tried and retired, belong in the log.
-- **The website's text size is Medium by default**, and a reader can still choose Large or Larger from the Display menu.
-- **The release tools are in `.release/` and the PyPI build backend in `.pypi/`**, outside `.github/`, where Dependabot's pull requests for them were refused.
-
-### Fixed
-
-- **The site serves each local file the schema imports beside it**, so the served schema loads as the repository's does.
 
 ## [0.66.0] - 2026-11-15
 
