@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
   by: human:noelmcloughlin
-  at: "2026-11-13T14:49:03Z"
+  at: "2026-11-17T20:54:54Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -36,8 +36,10 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-11-13T14:49:03Z"
     revision: "d412ad09085764fa70d26e5eb4fd254602b560f2"
+  - by: human:noelmcloughlin
+    at: "2026-11-17T20:54:54Z"
+    revision: "136d2ee169077b8a31ce0ca4612162330e5c2065"
 stale_after: 2027-11-13
-status: draft
 ---
 
 # Overview
@@ -96,7 +98,7 @@ On a host with no forge, the id is the account the platform's version history sh
 - **Retire**: `status: deprecated`, and the skill asks what replaced the concept. When the person names another concept, the `**Deprecation**` line in `log.md` links it after "replaced by", and `knowledge-report.sh` labels the retired concept *retired, replaced by* that path.
 - **Later**: keep or set `status: draft`, with an optional review date.
 
-There is no "confirm everything". After the session the skill prepends one `**Curation**` line with the counts to `log.md`, and prepares a pull request scoped to `.lokf/` that it opens only when the person says so. It commits the verdicts in a signed commit of their own, on top of the commit that changed the concepts and never amended into it, because conventions rule 14 reads each commit of the pull request and fails one that records a person's confirmation and also changes what the concept says; the squash merge afterwards is fine. Before the push it runs the conventions check as the gate does, with `--since` naming the merge-base with the pull request's base branch, since without `--since` the script skips rule 14 (0.55.1, `references/review-session.md`). Each named person must have approved that pull request or, when the pull request is their own, have signed its commits.
+There is no "confirm everything". After the session the skill prepends one `**Curation**` line with the counts to `log.md`, and prepares a pull request scoped to `.lokf/` that it opens only when the person says so. It commits the verdicts in a signed commit of their own, on top of the commit that changed the concepts and never amended into it, because conventions rule 14 reads each commit of the pull request and fails one that records a person's confirmation and also changes what the concept says; the squash merge afterwards is fine. Before the push it runs the conventions check as the gate does, with `--since` naming the merge-base with the pull request's base branch, since without `--since` the script skips rule 14 (0.55.1, `references/review-session.md`). Each named person must have approved that pull request or, when the pull request is their own, have signed its commits. An approval covers the concepts as they stood when it was given, so one given before a later push to a concept that carries their name is asked for again.
 
 **Revision.** Where the toolkit accepts it, a confirmation event also carries `revision`, the state of the source the person was shown. For a committed path it is the full commit hash of the last commit that touched the file. For a URL it is the ETag, else a `sha256:` digest. The field arrived in lokf 0.9.0, so the skill leaves it out on an older toolkit, when the file has uncommitted changes, and where the host has no version control. When a confirmation carries a `revision` that names a commit the history holds, the report compares each source with that commit, so a source changed while the pull request waited reads as moved (`references/trust-fields.md`).
 
@@ -110,7 +112,7 @@ The skill speaks in plain labels, never RDF, IRI, SPARQL, predicate or tier. *St
 
 ## Step 3: dig deeper
 
-Step 3 is opt-in. It covers the curation policy, a placeholder for something missing, guidance for a domain vocabulary when the vocabulary drifts into a deep or safety-critical domain, and for the linkml-sidecar skills once its classes amount to a model of the domain, a domain schema (`references/domain-vocabularies.md`), and the same labels as SPARQL for `lokf serve` (`references/queries.md`). The policy and a placeholder write `human:<id>`, so they need the same authenticated id as *Confirm*.
+Step 3 is opt-in. It covers the curation policy, a placeholder for something missing, guidance for a domain vocabulary when the vocabulary drifts into a deep or safety-critical domain, and for the linkml-sidecar skills once its classes amount to a model of the domain, a domain schema (`references/domain-vocabularies.md`), and the same labels as SPARQL for `lokf serve` (`references/queries.md`). The policy and a placeholder are drafts whose author is the session, `process:ktl-curator`, so neither needs an authenticated id. The policy carries no `verified` event until the person confirms it.
 
 The skill reads the curation policy's table of review intervals tolerantly. Rows name classes in prose, so the match ignores spaces and plural form: "Glossary terms" is `GlossaryTerm`, and "people" is `Person`. A row naming a class the skill does not know binds nothing. The policy carries four optional switches: `Independent re-check:`, `Automation re-check:`, `Evidence first:` and `Younger readers:`.[^review-session.md] The last names a band of age, 8-12 or 13-18, or both, and ktl-librarian may then write retellings of confirmed concepts for those readers on its scheduled runs. Each retelling is a new concept, which a person confirms against the concept it retells.
 
@@ -126,7 +128,3 @@ Accepting a member's move to a new release is the same confirm again. When the n
 
 [^ktl-curator-skill.md]: skills/ktl-curator/SKILL.md, Step 1, items 7 and 8
 [^review-session.md]: skills/ktl-curator/references/review-session.md, the curation policy template
-
-## Open questions
-
-- 2026-11-17, process:ktl-librarian: Step 3 here says the curation policy and a placeholder write `human:<id>` and need the same authenticated id as Confirm. `skills/ktl-curator/references/review-session.md` now writes both under `process:ktl-curator`, the policy as a draft with no `verified` event until the person confirms it, and adds that an approval covers concepts only as they stood when it was given. A person wrote this text, so the librarian cannot change it: correct it, or release it to the librarian.
