@@ -14,6 +14,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 - **A root `diataxis.md` is no node of the graph**, in the website's build or the federation build.
 - **The workflows read `site.toml` as TOML**, in any letter case and either quote.
+- **ktl-curator's Step 3 follows its reference**: the curation policy and a placeholder are drafts under `process:ktl-curator`, and neither needs an authenticated id.
 
 ### Security
 

@@ -109,7 +109,7 @@ Say "I'll record your answers as `human:<id>` - ok?" before the first write. Nev
 
 ## Step 3: dig deeper (opt-in)
 
-Two of these write `human:<id>` into a concept (the curation policy, and a gap placeholder), so they need the same authenticated id as *Confirm*; see **Who** above. Without one, describe what you would write and stop.
+Two of these write a concept (the curation policy, and a gap placeholder), as a draft whose author is the session, `process:ktl-curator`. Neither needs an authenticated id; the person's *Confirm* of the policy does, as **Who** above says.
 
 - **Curation policy**: create or refresh `policies/knowledge-curation.md` (review cadence per kind of concept, who curates, and the four optional switches `Independent re-check:`, `Automation re-check:`, `Evidence first:` and `Younger readers:`). The template is in [references/review-session.md](references/review-session.md).
 - **Something missing**: record a `draft` placeholder (type, title, one open question) for the librarian to fill, from the same reference. (Gaps that *readers* hit arrive separately, via ktl-docent in `.lokf/feedback.md`; the librarian handles those.)
