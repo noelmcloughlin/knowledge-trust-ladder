@@ -4,10 +4,6 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
-### Security
-
-- **The ingest pins pypdf 7.1.0**, as the tests do after a Dependabot update.
-
 ## [0.67.0] - 2026-11-17
 
 ### Added
@@ -78,6 +74,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **A page of the website sends no referrer**, so a remote image does not learn which page loaded it.
 - **A description cannot add a key to `site.toml`**: ktl-website's Step 1 writes each value as a TOML string and stops on a line break.
 - **A description cannot add a key to the bundle's `index.md`**: ktl-sidecar's Step 1 writes each free-text value as a quoted string, and stops on an empty value, a line break or a character that does not print.
+- **The ingest pins pypdf 7.1.0**, as the tests do after a Dependabot update.
 
 ## [0.66.0] - 2026-11-15
 
