@@ -4,27 +4,6 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
-### Added
-
-- **`scripts/vendor.sh` writes the site's copies of Cytoscape and Mermaid, `assets/vendor/`, from an npm registry**, and keeps a file only at the hash `hugo.toml` holds.
-- **A domain host's workspace builds behind a package mirror**, through the site's `scripts/uv-env.sh`.
-- **A runner that holds uv keeps its own**, so a locked-down runner with uv on its image runs.
-
-### Changed
-
-- **The threat model links the sidecar's automation and gate references** for the detail they already give, and keeps each measure and its reasons.
-
-### Fixed
-
-- **A root `diataxis.md` is no node of the graph**, in the website's build or the federation build.
-- **The workflows read `site.toml` as TOML**, in any letter case and either quote.
-- **ktl-curator's Step 3 follows its reference**: the curation policy and a placeholder are drafts under `process:ktl-curator`, and neither needs an authenticated id.
-- **The threat model, the gate reference and the conventions script's comment name the parser's one PyYAML release alone**, without the upload date the scripts dropped in 0.66.0.
-
-### Security
-
-- **A description cannot add a key to the bundle's `index.md`**: ktl-sidecar's Step 1 writes each free-text value as a quoted string, and stops on an empty value, a line break or a character that does not print.
-
 ## [0.67.0] - 2026-11-17
 
 ### Added
@@ -32,6 +11,9 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **`site.toml`'s `schema` names the schema file the site shows**: a path, or `pkg:<package>/<path>` for one inside a package.
 - **The website builds behind a package mirror, and no lock is written again**: `scripts/uv-env.sh` installs the versions the lock pins from the index uv reads, each checked against the lock's hash.
 - **The website builds where the CDN is blocked**, from a copy of Cytoscape or Mermaid in the site's `assets/vendor/`, checked against the hash in `hugo.toml`.
+- **`scripts/vendor.sh` writes the site's copies of Cytoscape and Mermaid, `assets/vendor/`, from an npm registry**, and keeps a file only at the hash `hugo.toml` holds.
+- **A domain host's workspace builds behind a package mirror**, through the site's `scripts/uv-env.sh`.
+- **A runner that holds uv keeps its own**, so a locked-down runner with uv on its image runs.
 
 ### Changed
 
@@ -42,6 +24,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **The release tools are in `.release/` and the PyPI build backend in `.pypi/`**, outside `.github/`.
 - **`diataxis.md` is reserved at the bundle's root alone**, where KTL Registrar keeps its map. `index.md` and `log.md` stay reserved in every folder.
 - **Without zip, the contract still checks the Microsoft 365 skill's folder.**
+- **The threat model links the sidecar's automation and gate references** for the detail they already give, and keeps each measure and its reasons.
 
 ### Fixed
 
@@ -59,6 +42,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **The KTL scorecard badge counts every concept**, a retired one included.
 - **ktl-website's page gives the preflight's rule for the site's folder**: one that holds `site.toml` and `hugo.toml`.
 - **ktl-website's deploy page says what a locked-down network needs.**
+- **A root `diataxis.md` is no node of the graph**, in the website's build or the federation build.
+- **The workflows read `site.toml` as TOML**, in any letter case and either quote.
+- **ktl-curator's Step 3 follows its reference**: the curation policy and a placeholder are drafts under `process:ktl-curator`, and neither needs an authenticated id.
+- **The threat model, the gate reference and the conventions script's comment name the parser's one PyYAML release alone**, without the upload date the scripts dropped in 0.66.0.
 
 ### Security
 
@@ -86,6 +73,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **The website's build reads each SVG as XML**, and stops on one that could run a script.
 - **A page of the website sends no referrer**, so a remote image does not learn which page loaded it.
 - **A description cannot add a key to `site.toml`**: ktl-website's Step 1 writes each value as a TOML string and stops on a line break.
+- **A description cannot add a key to the bundle's `index.md`**: ktl-sidecar's Step 1 writes each free-text value as a quoted string, and stops on an empty value, a line break or a character that does not print.
 
 ## [0.66.0] - 2026-11-15
 
