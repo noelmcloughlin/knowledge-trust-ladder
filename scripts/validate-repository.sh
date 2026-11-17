@@ -14,6 +14,16 @@ fail=0
 say() { printf '%s\n' "$*"; }
 err() { printf 'FAIL: %s\n' "$*" >&2; fail=1; }
 ok() { printf 'OK:   %s\n' "$*"; }
+# no_tool <tool> <the check that needs it>. On a contributor's machine the
+# check is skipped with a notice, since CI runs it. Under CI, where GitHub
+# sets CI=true, a skipped check is one nobody ran, so the contract fails:
+# each job that runs it installs the tool, or runs where the image has it.
+no_tool() {
+  case "${CI:-}" in
+    "" | false | 0) say "$1 is not installed here, so $2 is skipped; CI runs it" ;;
+    *) err "$1 is not on PATH, so $2 did not run - install $1 in the job that runs this contract" ;;
+  esac
+}
 
 # 1. Exactly the intended published skill directories exist. This list is the
 #    one place their number is written: checks 1 and 4 count it.
@@ -139,7 +149,7 @@ if command -v shellcheck >/dev/null 2>&1; then
     fi
   done
 else
-  say "shellcheck not installed locally - CI runs it; skipping here (${#scripts[@]} script(s) found: ${scripts[*]:-none})"
+  no_tool shellcheck "the lint of ${#scripts[@]} shell script(s) (${scripts[*]:-none})"
 fi
 
 # 7. Two files list the LOKF classes in prose, with no generator behind them.
@@ -812,7 +822,7 @@ EOF
   fi
   rm -rf "$cl"
 else
-  say "node not installed locally - CI runs check 14; skipping here"
+  no_tool node "check 14's test of the fold"
 fi
 
 # 15. The sidecar's pyproject template pins ktl, the package a host installs
@@ -986,18 +996,24 @@ m365_out="$(mktemp -d)"
 m365_epoch="$(git log -1 --format=%ct -- .lokf/knowledge)"
 m365_epoch="${m365_epoch:-1700000000}"
 m365_build() { SOURCE_DATE_EPOCH="$m365_epoch" bash "$m365/knowledge-m365.sh" --repo-url https://github.com/noelmcloughlin/knowledge-trust-ladder --ref test .lokf/knowledge "$1" 2>&1; }
+# Without zip the script builds the folder and says no zip was made, so the
+# folder is checked here either way and the zip only where zip is installed.
 if build_log="$(m365_build "$m365_out/a")" \
-   && [[ -f "$m365_out/a/ktl-docent-m365/SKILL.md" && -f "$m365_out/a/ktl-docent-m365/SNAPSHOT.md" && -f "$m365_out/a/ktl-docent-m365/knowledge/index.md" && -f "$m365_out/a/ktl-docent-m365.zip" ]]; then
+   && [[ -f "$m365_out/a/ktl-docent-m365/SKILL.md" && -f "$m365_out/a/ktl-docent-m365/SNAPSHOT.md" && -f "$m365_out/a/ktl-docent-m365/knowledge/index.md" ]]; then
   ok "knowledge-m365.sh builds ktl-docent-m365 from this repository's bundle ($(printf '%s\n' "$build_log" | grep -m1 '^built' | sed 's/.*: //'))"
 else
   err "knowledge-m365.sh failed on this repository's bundle: $build_log"
 fi
 if command -v zip >/dev/null 2>&1; then
-  if (umask 077 && TZ=Asia/Tokyo m365_build "$m365_out/b" >/dev/null) && cmp -s "$m365_out/a/ktl-docent-m365.zip" "$m365_out/b/ktl-docent-m365.zip"; then
+  if [[ ! -f "$m365_out/a/ktl-docent-m365.zip" ]]; then
+    err "knowledge-m365.sh wrote no ktl-docent-m365.zip, the file a release attaches: $build_log"
+  elif (umask 077 && TZ=Asia/Tokyo m365_build "$m365_out/b" >/dev/null) && cmp -s "$m365_out/a/ktl-docent-m365.zip" "$m365_out/b/ktl-docent-m365.zip"; then
     ok "knowledge-m365.sh gives the same zip bytes under another time zone and umask, as a release asset must"
   else
     err "knowledge-m365.sh gave different zip bytes for one input under another time zone and umask"
   fi
+else
+  no_tool zip "the check of the Microsoft 365 skill's zip and its reproducible bytes"
 fi
 rm -rf "${m365_out:?}"
 

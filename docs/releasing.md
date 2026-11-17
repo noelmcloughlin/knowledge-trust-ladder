@@ -30,7 +30,7 @@ The release note is `CHANGELOG.md`'s `## [Unreleased]` section, written as you g
 
 | Repository | Tag | Then |
 | --- | --- | --- |
-| `knowledge-trust-ladder` | None from this workflow. `gh skill publish` is the one tag creator, so a maintainer runs `publish.yml` by hand with the version to release, typed with its `v` (`v0.16.0`); the workflow cross-checks it against the promoted changelog first. Tags carry the `v`, changelog headings never do. | The six skills publish to the registry under that one tag. `publish.yml` then dispatches `knowledge-release.yaml`, which attaches the bundle to the release as `knowledge-vX.Y.Z-knowledge-trust-ladder.zip` when it changed since the last release that carries one, and `pypi.yml`, which builds the `ktl` package from the tag and uploads it to PyPI as version X.Y.Z. |
+| `knowledge-trust-ladder` | None from this workflow. `gh skill publish` is the one tag creator, so a maintainer runs `publish.yml` by hand on `main` with the version to release, typed with its `v` (`v0.16.0`); the workflow cross-checks it against the promoted changelog first. `gh skill publish` tags the head of `main`, so the workflow publishes only while `main` is still the commit it checked: after a merge during the run, run it again. Tags carry the `v`, changelog headings never do. | The six skills publish to the registry under that one tag. `publish.yml` then dispatches `knowledge-release.yaml`, which attaches the bundle to the release as `knowledge-vX.Y.Z-knowledge-trust-ladder.zip` when it changed since the last release that carries one, and `pypi.yml`, which builds the `ktl` package from the tag and uploads it to PyPI as version X.Y.Z. |
 | KTL Registrar, KTL Curator | Bare `X.Y.Z`, Obsidian's convention, after `package.json`, `manifest.json` and `versions.json` are bumped as `npm version` would. | `release.yml` builds, attests provenance and opens a **draft** release carrying `main.js`, `manifest.json` and `styles.css`; a maintainer reviews and publishes it. A hand-pushed tag takes the same path. Publishing the draft is a person's event, not the token's, so it starts `knowledge-release.yaml` once `KNOWLEDGE_RELEASE_ENABLED` is `true` there; no dispatch is needed. |
 
 Everything from step 3 on runs behind the `release` GitHub Environment. Required reviewers on it wait until releases have downstream users, so until then a qualifying merge is released unattended. Then add them in each repository's Settings → Environments, or with `ktl gh apply --recommended`, which adds you; `ktl gh check --strict` names a repository without one.
@@ -57,7 +57,7 @@ To open a sibling's pull request on the day of a release, once its `ktl` package
 
 Before the first upload to each index, a maintainer does three things once:
 
-1. Creates the Environment the upload names, `testpypi` or `pypi`, limited to tags matching `v*`.
+1. Creates the Environment the upload names, `testpypi` or `pypi`, limited to tags matching `v*`. A required reviewer on it is recommended: [Repository hardening](threat-model.md#repository-hardening) says why. It can wait until releases have downstream users, as the reviewer on `release` does. `ktl gh apply --recommended` adds you once the Environment exists, and `ktl gh check --strict` names one without a reviewer.
 2. Adds a pending publisher on that index for the project `ktl`, naming owner `noelmcloughlin`, repository `knowledge-trust-ladder`, workflow `pypi.yml` and that Environment.
 3. Sets `PYPI_RELEASE_ENABLED`, `testpypi` first, and `true` once a TestPyPI release installs.
 

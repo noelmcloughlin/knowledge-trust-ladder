@@ -1203,6 +1203,33 @@ def test_check_strict_names_a_release_environment_without_a_reviewer(tmp_path, a
     assert "Environment release: add acme as required reviewer" in capsys.readouterr().out
 
 
+def test_a_package_environment_without_a_reviewer_fails_only_a_strict_check(tmp_path, at, capsys):
+    """A pushed tag carries its own copy of pypi.yml, so the reviewer on pypi
+    and testpypi is the check a tag cannot drop. KTL's own catalogue asks for
+    one as a recommendation, as it does on release."""
+    entries = [e for e in load(OWN)["settings"] if e["kind"] == "environment" and e["name"] in ("pypi", "testpypi")]
+    assert sorted((e["name"], e.get("reviewers", 0), e.get("level", "required")) for e in entries) == [
+        ("pypi", 0, "required"), ("pypi", 1, "recommended"), ("testpypi", 0, "required"), ("testpypi", 1, "recommended"),
+    ]
+    pypi = (REPO / ".github" / "workflows" / "pypi.yml").read_text(encoding="utf-8")
+    at(host(tmp_path, extra={"pypi.yml": pypi}, files={".github/repository-settings.json": json.dumps({"format": 1, "settings": entries})}))
+    fake = FakeGitHub()
+    assert ktl(fake, "apply", "--yes") == 0
+    for name in ("pypi", "testpypi"):
+        assert fake.environments[name]["refs"] == [("tag", "v*")] and fake.environments[name]["reviewers"] == [], name
+    assert ktl(fake, "check") == 0, "a reviewer on a package Environment waits until releases have downstream users"
+    capsys.readouterr()
+    assert ktl(fake, "check", "--strict") == 1
+    out = capsys.readouterr().out
+    wanted = ["Environment pypi: add acme as required reviewer", "Environment testpypi: add acme as required reviewer"]
+    assert all(text in out for text in wanted), out
+    assert ktl(fake, "apply", "--yes", "--recommended") == 0
+    for name in ("pypi", "testpypi"):
+        assert fake.environments[name]["reviewers"] == [101], name
+        assert fake.environments[name]["refs"] == [("tag", "v*")], "the reviewer is added beside the tag rule"
+    assert not [text for text in texts(planned(fake)) if text in wanted]
+
+
 @pytest.mark.skipif(shutil.which("uv") is None, reason="uv is not installed")
 def test_the_command_plans_on_python_3_9(tmp_path):
     """The package claims Python 3.9, the python3 RHEL 9 includes."""
