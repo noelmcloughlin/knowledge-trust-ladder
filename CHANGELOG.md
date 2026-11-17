@@ -4,6 +4,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Security
+
+- **The ingest pins pypdf 7.1.0**, as the tests do after a Dependabot update.
+
 ## [0.67.0] - 2026-11-17
 
 ### Added
