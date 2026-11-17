@@ -2,6 +2,8 @@
 
 ## 2026-11-17
 
+* **Changed**: What KTL is for drops the bundles the README listed, because `README.md` lists none since 371d786.
+* **Changed**: Knowledge sources describes the README as it stands since 371d786, with no Exhibitions, no LOKF or LinkML as inspirations and no link to the retelling for readers aged 13 to 18. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: Exhibition drops the README's Exhibitions section, which `README.md` no longer has since 371d786, and rests on `docs/obsidian.md` alone.
 
 ## 2026-11-15

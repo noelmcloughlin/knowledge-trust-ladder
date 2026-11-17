@@ -15,7 +15,7 @@ sources:
   - resource: docs/context-layer.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-15T19:13:22Z"
+  at: "2026-11-17T19:01:39Z"
 status: draft
 relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
@@ -50,8 +50,6 @@ The page lists nine, each with what carries it:
 - the same knowledge retold for a younger reader.
 
 [Young readers](young-readers.md) covers that last use.
-
-The bundles that the README lists come from three kinds of repository, a repository of Agent Skills, an application, and a domain of bundles, plus the lmodel catalog, which indexes dozens of bundles kept in other repositories.
 
 ## The two uses readers asked about
 
