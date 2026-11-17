@@ -14,7 +14,9 @@ here=$(cd "$(dirname "$0")/.." && pwd)
 root=$(cd "$here/.." && pwd)
 out="$here/generated"
 # The site's own tools, as build.sh runs them, for the two checks below.
-tool=(uv run --project "$here" --frozen --quiet)
+# uv-env.sh installs them, from a package mirror where uv reads one.
+mode=$("$here/scripts/uv-env.sh" "$here")
+tool=(uv run --project "$here" "$mode" --quiet)
 # site.toml's values, read by a TOML parser as Hugo reads them, one
 # `name=value` line each. A file the parser refuses stops the build here.
 site=$("${tool[@]}" python -I "$here/scripts/site-values.py" "$here/site.toml")
@@ -50,8 +52,10 @@ if [ -n "$source" ]; then
     -e "s#^source = \"\.\./\.assets\"#source = \"../$source/.assets\"#" >"$out/source.toml"
 fi
 
-# The bundle's own tools: lokf, and the LinkML it is built on.
-lokf=(uv run --project "$root/.lokf" --frozen --quiet)
+# The bundle's own tools: lokf, and the LinkML it is built on, installed as
+# the site's own are.
+mode=$("$here/scripts/uv-env.sh" "$root/.lokf")
+lokf=(uv run --project "$root/.lokf" "$mode" --quiet)
 
 # The domain vocabulary the sidecar's justfile names, so the export carries
 # its classes as `just lokf-convert` does.

@@ -93,6 +93,7 @@ website/                   the website: Hugo, this repository's copy of ktl-webs
   hugo.toml                what every site shares: the mounts that find each input, the output formats
   content/*/_content.gotmpl  the adapters that make the home page and a page per docs file, concept, release and schema element
   scripts/build.sh         prepare, Hugo, the raw-HTML cleaning, Pagefind and the link check; `serve` and `preview` for a local look
+  scripts/uv-env.sh        installs the tools a uv.lock pins, from a package mirror where uv reads one, each checked by its hash
   scripts/prepare.sh       `lokf export`, the trust labels, gen-doc for a LinkML schema and the data site.toml names, into generated/
   scripts/clean-html.py    cleans each page's raw HTML to the tags GitHub allows
   scripts/check-svg.py     stops the build on an SVG that could run a script

@@ -111,7 +111,7 @@ jobs:
       # runner the runner image lacks. Where .lokf/uv.lock pins rust-just,
       # the step links the copy uv checked by hash, alone, so the toolkit's
       # other commands stay off PATH; else it installs the same version by
-      # name.
+      # name. uv-env.sh installs what that lock pins, as the build does.
       - name: Install just, when the site builds its data with it
         env:
           SITE_DIR: ${{ steps.site.outputs.dir }}
@@ -119,7 +119,7 @@ jobs:
           if grep -q '^browseBuild = "just ' "$SITE_DIR/site.toml"; then
             mkdir -p "$HOME/.local/bin"
             if grep -qx 'name = "rust-just"' .lokf/uv.lock; then
-              uv sync --project .lokf --frozen --quiet
+              bash "$SITE_DIR/scripts/uv-env.sh" .lokf > /dev/null
               ln -sf "$PWD/.lokf/.venv/bin/just" "$HOME/.local/bin/just"
             else
               uv tool install rust-just==1.47.0
@@ -130,7 +130,11 @@ jobs:
       # build.sh runs prepare.sh first, which runs `lokf export` and, for a
       # LinkML schema, gen-doc, both from the toolkit .lokf/uv.lock pins. Then
       # Hugo and Pagefind, from the site's own uv.lock, the cleaning of raw
-      # HTML, and the link check.
+      # HTML, and the link check. On a runner whose uv reads a package mirror
+      # (UV_DEFAULT_INDEX, or a uv.toml), scripts/uv-env.sh installs the files
+      # each lock pins from that mirror, checked against the lock's hashes.
+      # So no step writes a lock again, and none turns a certificate check
+      # off. The site folder's README.md says what a blocked CDN needs.
       - name: Build the site and check its links
         env:
           SITE_DIR: ${{ steps.site.outputs.dir }}
