@@ -38,7 +38,7 @@ verified:
     revision: "d412ad09085764fa70d26e5eb4fd254602b560f2"
   - by: human:noelmcloughlin
     at: "2026-11-17T20:54:54Z"
-    revision: "136d2ee169077b8a31ce0ca4612162330e5c2065"
+    revision: "bb4096add2376f3f391cf073f2500667db53d5f9"
 stale_after: 2027-11-13
 ---
 
