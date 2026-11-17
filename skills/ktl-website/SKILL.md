@@ -63,7 +63,7 @@ Resolve every placeholder from real sources before writing anything; never leave
 | `<PROJ_NAME>` | the project's human-readable name, which is the site's title | the bundle's `index.md` `title` without "Knowledge Bundle", the README's `#` title, or a manifest `name` |
 | `<PROJ_DESC>` | one sentence, the site's description | the bundle's `index.md` `description`, the quoted `>` line of `llms.txt`, or the README's first sentence |
 
-`<REPO_OWNER>` and `<REPO_NAME>` come from the remote, never from a person's name: Pages serves the site at `https://<REPO_OWNER>.github.io/<REPO_NAME>/`, and the sidecar's `<OWNER_SLUG>` is a different thing. `<PROJ_NAME>` and `<PROJ_DESC>` go inside double quotes in a TOML file, so write a `"` in either as `\"` and a `\` as `\\`.
+`<REPO_OWNER>` and `<REPO_NAME>` come from the remote, never from a person's name: Pages serves the site at `https://<REPO_OWNER>.github.io/<REPO_NAME>/`, and the sidecar's `<OWNER_SLUG>` is a different thing. Give `<PROJ_NAME>` and `<PROJ_DESC>` as plain text on one line: Step 1 escapes them for TOML.
 
 **When the site replaces an mkdocs site**, which the `mkdocs` line names, read `mkdocs.yml` once, by eye, for the values [references/deploy.md](references/deploy.md#reading-mkdocsyml) lists.
 
@@ -73,18 +73,23 @@ Resolve every placeholder from real sources before writing anything; never leave
 cp -R <this skill>/templates/website website && mv website/gitignore website/.gitignore
 ```
 
-Only two files carry placeholders: `website/site.toml` and `website/README.md`. Substitute them as literal text through Python, as ktl-sidecar does, never through sed:
+Only two files carry placeholders: `website/site.toml` and `website/README.md`. Substitute them through Python, never through sed:
 
 ```bash
 export REPO_OWNER REPO_NAME PROJ_NAME PROJ_DESC
-for f in website/site.toml website/README.md; do python3 -c '
-import os, sys
-path = sys.argv[1]
-text = open(path, encoding="utf-8").read()
-for token in ("REPO_OWNER", "REPO_NAME", "PROJ_NAME", "PROJ_DESC"):
-    text = text.replace("<" + token + ">", os.environ[token])
-open(path, "w", encoding="utf-8").write(text)
-' "$f"; done
+python3 -c '
+import json, os, sys
+for path in sys.argv[1:]:
+    text = open(path, encoding="utf-8").read()
+    for token in ("REPO_OWNER", "REPO_NAME", "PROJ_NAME", "PROJ_DESC"):
+        value = os.environ[token]
+        if not value.isprintable():
+            sys.exit(token + ": line break or unprintable character")
+        if path.endswith(".toml"):
+            value = json.dumps(value, ensure_ascii=False)[1:-1]
+        text = text.replace("<" + token + ">", value)
+    open(path, "w", encoding="utf-8").write(text)
+' website/site.toml website/README.md
 ```
 
 Then edit `website/site.toml` only for what the preflight settled: `branch` when the default branch is not `main`, `baseURL` for a custom domain or a user site, and a logo when the person names one of the repository's own. Set `browse` only when the person asks to publish the data, whose databases become public. When the site replaces an mkdocs site, write the redirects and `docsExclude` entries that Step 0 read. Everything else is found, not set. [references/customising.md](references/customising.md) describes each value.

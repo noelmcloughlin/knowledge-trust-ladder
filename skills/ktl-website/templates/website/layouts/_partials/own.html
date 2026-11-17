@@ -1,0 +1,11 @@
+{{- /*
+  The attribute that says one of the site's own templates wrote an element,
+  within the HTML a repository file renders to. It names the build's mark,
+  which no repository file can know. scripts/clean-html.py keeps the class
+  and the data-* attributes of an element that names it, drops them from
+  every other element, and removes the attribute itself. The preview server
+  has no mark and cleans nothing, so the attribute is empty there.
+*/ -}}
+{{- $out := "" -}}
+{{- with site.Params.rawmark }}{{ $out = printf ` data-site="%s"` . }}{{ end -}}
+{{- return ($out | safeHTMLAttr) -}}

@@ -8,8 +8,11 @@
 # export`, the trust labels and the pages gen-doc writes for a LinkML schema.
 #
 # A served file the browser would run as a page of the site's origin, which
-# every project site of the owner shares, is never published: an HTML or XML
-# document, and an SVG that prepare.sh finds a script in.
+# every project site of the owner shares, is never published. The mounts that
+# serve the repository's folders name each kind of file they serve: the
+# bundle's Markdown, and the figures and PDF files of docs/ and .assets/. So
+# no HTML or XML document is served, whatever its name ends in. prepare.sh
+# stops the build on an SVG that could run a script.
 locale = "en"
 disableKinds = ["taxonomy", "term", "rss"]
 enableRobotsTXT = true
@@ -25,6 +28,11 @@ releaseTag = "v{version}"
 # Folders under docs/ that are not pages of the site: the templates and the
 # pages LinkML's gen-doc keeps there. The schema's pages are built afresh.
 docsExclude = ["templates-linkml", "elements"]
+# The kinds of file the site serves from docs/ and .assets/, by the end of
+# the name: figures and PDF files. route.html sends a link to a file of any
+# other kind to GitHub. The two mounts below that serve those folders name
+# the same kinds, since a mount cannot read this list.
+served = ["avif", "gif", "ico", "jpeg", "jpg", "pdf", "png", "svg", "webp"]
 
 # The libraries the graph page and Mermaid diagrams need. Hugo fetches each
 # once at build time, checks it against its hash and serves it from the site,
@@ -105,7 +113,7 @@ target = "assets/readme/README.md"
 [[module.mounts]]
 source = "../docs"
 target = "assets/docs"
-files = ["! .**", "! **/.**", "! **.{html,htm,xhtml,xht,xml,xsl,xslt,shtml,mht,mhtml}"]
+files = ["! .**", "! **/.**"]
 [[module.mounts]]
 source = "assets"
 target = "assets"
@@ -135,25 +143,32 @@ target = "assets/gendoc"
 source = "../.github/workflows/knowledge-federation.yaml"
 target = "assets/host/knowledge-federation.yaml"
 
-# Served as they are: the figures, each bundle file as raw Markdown beside
-# its page, the other files of the docs folder, and the four export files. A
-# docs page's Markdown is written by markdown-file.html, with full addresses.
-# No file or folder whose name starts with a dot is served.
+# Served as they are: the figures and PDF files of .assets/ and of the docs
+# folder, each bundle file as raw Markdown beside its page, and the four
+# export files. A docs page's Markdown is written by markdown-file.html, with
+# full addresses.
+#
+# Each of the three mounts of a repository folder names the kinds of file it
+# serves, by the end of the name in either case, and serves no other. Hugo
+# reads a mount's patterns in order and stops at the first that matches. So
+# the two patterns after `! ` come first, and no file or folder whose name
+# starts with a dot is served. The last pattern matches every folder, so that
+# Hugo looks inside it, and no file.
 [[module.mounts]]
 source = "static"
 target = "static"
 [[module.mounts]]
 source = "../.assets"
 target = "static/assets"
-files = ["! .**", "! **/.**", "! **.{html,htm,xhtml,xht,xml,xsl,xslt,shtml,mht,mhtml}"]
+files = ["! .**", "! **/.**", "**.{avif,gif,ico,jpeg,jpg,pdf,png,svg,webp}", "**/"]
 [[module.mounts]]
 source = "../.lokf/knowledge"
 target = "static/knowledge"
-files = ["! .**", "! **/.**", "! **.{html,htm,xhtml,xht,xml,xsl,xslt,shtml,mht,mhtml}"]
+files = ["! .**", "! **/.**", "**.md", "**/"]
 [[module.mounts]]
 source = "../docs"
 target = "static/docs"
-files = ["! .**", "! **/.**", "! **.md", "! **.{html,htm,xhtml,xht,xml,xsl,xslt,shtml,mht,mhtml}"]
+files = ["! .**", "! **/.**", "**.{avif,gif,ico,jpeg,jpg,pdf,png,svg,webp}", "**/"]
 [[module.mounts]]
 source = "generated/knowledge"
 target = "static/knowledge"

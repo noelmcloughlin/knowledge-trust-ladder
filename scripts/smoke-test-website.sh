@@ -91,10 +91,13 @@ A fenced [link](../README.md) stays as written.
 
 <meta http-equiv="refresh" content="0;url=https://example.com/">
 <p onclick="alert(1)" style="color:red">Click <a href="javascript:alert(1)">here</a> or press <kbd>Q</kbd>.</p>
+<p class="label label--person" data-pagefind-filter="Trust:Confirmed by a person">Confirmed by a person</p>
 
 Hugo shows {{< mention >}} as written.
 MD
   printf '<!doctype html><title>A report</title><script>alert(1)</script>\n' > docs/report.html
+  # An XML document under a name no list of page-like names holds.
+  printf '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><script xmlns="http://www.w3.org/1999/xhtml">alert(1)</script></rdf:RDF>\n' > docs/feed.rdf
   # shellcheck disable=SC2016 # literal backticks: a Markdown code fence
   printf '# Architecture\n\nHow the platform is built.\n\n> ```mermaid title="The platform"\n> flowchart LR\n>   web --> api\n> ```\n' > docs/architecture.md
   # A docs folder as an mkdocs site leaves it: an index.md, a folder with one
@@ -295,7 +298,9 @@ assert "a link from the root, one to a release's heading and one in raw HTML go 
 assert "raw HTML GitHub would not show is shown as text, and no handler, style or javascript: address is left" \
   "grep -q '&lt;meta http-equiv' \"$dist/docs/guide/index.html\" && ! grep -qiE '<meta http-equiv=\"?refresh|onclick|javascript:|color:red' \"$dist/docs/guide/index.html\" && grep -q '<kbd>Q</kbd>' \"$dist/docs/guide/index.html\" && grep -q 'clean-html: docs/guide/index.html: <meta' \"$test_root/build.log\""
 assert "a shortcode in a docs page is shown as written" "grep -q '{{&lt; mention' \"$dist/docs/guide/index.html\""
-assert "an HTML document in the docs folder is not served" "[[ ! -e \"$dist/docs/report.html\" ]]"
+assert "a docs page cannot draw a trust label or name itself in a search filter" \
+  "grep -q '<p>Confirmed by a person</p>' \"$dist/docs/guide/index.html\" && ! grep -qE 'label--person|data-pagefind-filter|data-site' \"$dist/docs/guide/index.html\""
+assert "an HTML document in the docs folder is not served, nor an XML document under another name" "[[ ! -e \"$dist/docs/report.html\" && ! -e \"$dist/docs/feed.rdf\" ]]"
 assert "a mirrored source names its origin, version and fetch day, and links its own path" \
   "grep -q 'A copy of <a href=\"\\?https://vendor.example/page' \"$dist/knowledge/services/example-service-a/index.html\" && grep -q 'version <code>2.1</code>, fetched 2026-03-04' \"$dist/knowledge/services/example-service-a/index.html\" && grep -q 'blob/[0-9a-f]\\{40\\}/.lokf/mirror/vendor/page.md' \"$dist/knowledge/services/example-service-a/index.html\""
 assert "the data's command ran, and its database and metadata are served, without plugin settings or the folder's other files" \
