@@ -6,6 +6,10 @@ name: Publish
 # create. `workflow_dispatch` keeps release timing an explicit human
 # decision. The `release` environment, once it has required reviewers, adds
 # a maintainer-approval gate in front of the write scope.
+#
+# `gh skill publish --tag` tags the head of `main`, not the commit this run
+# checked out, so `publish` stops unless `main` is still the commit `verify`
+# checked. After a merge during the run, start the workflow again.
 on:
   workflow_dispatch:
     inputs:
@@ -80,19 +84,39 @@ jobs:
         with:
           enable-cache: false
 
+      # Check 14 and the tests run changelog-release.mjs. The job restores
+      # no npm cache, as it restores no uv cache.
+      - name: Use Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      # shellcheck and zip come with the runner image; under CI the
+      # contract fails when a tool it needs is missing.
       - name: Verify repository contract
         run: bash scripts/validate-repository.sh
+
+      # The lokf-link recipe's tests need `just`, from .lokf/uv.lock. It
+      # installs after the contract, which reads the checkout as it came.
+      - name: Install just
+        run: |
+          uv sync --locked --project .lokf
+          mkdir -p "$HOME/.local/bin"
+          ln -sf "$PWD/.lokf/.venv/bin/just" "$HOME/.local/bin/just"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       # The behavioural tests of the sidecar scripts ran inside the contract
       # until 2026-10-07; a release still runs them. The test packages come
       # from tests/requirements.txt, each file checked against its hash
       # there: `uv run --with-requirements` checks none, so they go into an
-      # environment of their own first.
+      # environment of their own first. One worker per CPU, as in
+      # validate.yml.
       - name: Test the sidecar scripts
         run: |
           uv venv -q "$RUNNER_TEMP/tests"
           uv pip install -q --python "$RUNNER_TEMP/tests/bin/python" --require-hashes -r tests/requirements.txt
-          "$RUNNER_TEMP/tests/bin/python" -m pytest
+          "$RUNNER_TEMP/tests/bin/python" -m pytest -n auto
 
   publish:
     name: Publish the skills
@@ -131,6 +155,20 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh skill publish --dry-run
 
+      # gh skill publish tags the head of main, so a merge during the run
+      # would be tagged unchecked.
+      - name: Check main is still the commit verify checked
+        run: |
+          head="$(git ls-remote origin refs/heads/main | cut -f1)"
+          if [ -z "$head" ]; then
+            echo "::error::Could not read where main is on the remote, so nothing was published. Run the Publish workflow again."
+            exit 1
+          fi
+          if [ "$head" != "$GITHUB_SHA" ]; then
+            echo "::error::main is at $head, and this run checked $GITHUB_SHA, so nothing was published. Run the Publish workflow again on main, so that it checks the commit it tags."
+            exit 1
+          fi
+
       - name: Publish
         id: publish
         env:
@@ -138,15 +176,29 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: gh skill publish --tag "$VERSION"
 
+      # The tag is read back, since main can still move between the check
+      # and the publish.
+      - name: Check the tag names the commit verify checked
+        id: tagged
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          git fetch --quiet origin "refs/tags/$VERSION:refs/tags/$VERSION"
+          tagged="$(git rev-parse "refs/tags/$VERSION^{commit}")"
+          if [ "$tagged" != "$GITHUB_SHA" ]; then
+            echo "::error::Tag $VERSION names $tagged, and this run checked $GITHUB_SHA: main moved as the release was made. The release exists, and no bundle zip, ktl package or sync was requested for it. Check the tagged commit, then request each by hand, or remove the release and its tag."
+            exit 1
+          fi
+
       # The release above is made with GITHUB_TOKEN, and GitHub starts no
       # workflow from an event that token causes, so knowledge-release.yaml's
       # release trigger never fires here. A dispatch is the one exception, so
       # this step asks for the bundle zip directly, built from the tag. This
-      # step and the two after it each run once the tag exists, whether or
-      # not the one before them failed: a failed request fails the job and
-      # names itself, and the others still go out.
+      # step and the two after it each run once the tag names the checked
+      # commit, whether or not the one before them failed: a failed request
+      # fails the job and names itself, and the others still go out.
       - name: Attach the knowledge bundle
-        if: ${{ !cancelled() && steps.publish.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.tagged.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
@@ -159,7 +211,7 @@ jobs:
       # and uploads where PYPI_RELEASE_ENABLED says; unset, it builds and
       # checks the package and uploads nothing.
       - name: Publish the ktl package
-        if: ${{ !cancelled() && steps.publish.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.tagged.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
@@ -178,7 +230,7 @@ jobs:
       # and "true" names no host, which the step says. A host that cannot
       # be dispatched is reported and the others go ahead.
       - name: Ask the siblings to sync
-        if: ${{ !cancelled() && steps.publish.outcome == 'success' && vars.KNOWLEDGE_SYNC_HOSTS != '' }}
+        if: ${{ !cancelled() && steps.tagged.outcome == 'success' && vars.KNOWLEDGE_SYNC_HOSTS != '' }}
         env:
           GH_TOKEN: ${{ secrets.KNOWLEDGE_SYNC_DISPATCH_TOKEN }}
           HOSTS: ${{ vars.KNOWLEDGE_SYNC_HOSTS }}

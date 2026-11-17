@@ -4,6 +4,42 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Changed
+
+- **`diataxis.md` is reserved at the bundle's root alone**, where KTL Registrar keeps its map. A file of that name in a folder is a concept to the conventions, the report and the pen. `index.md` and `log.md` stay reserved in every folder.
+- **Without zip, the contract still checks the Microsoft 365 skill's folder** and says the zip check is skipped.
+
+### Fixed
+
+- **`knowledge-report.sh questions` lists each open question with its day, its asker and its text**, the mode the curator's queries page names, which the script lacked.
+
+### Security
+
+- **The registrar's gate reads who signed a commit from its committer**, and from its author only when GitHub's web editor made the commit. A commit that names one person as its author and carries another person's valid signature backs no confirmation by the first.
+- **The gate matches a confirmation by its concept's `id` and its path**, so a confirmation moved or copied from one concept into another is one removed and one added, whatever `id` the two files give, and a second copy of an event counts. A renamed concept keeps its events.
+- **An approving review backs a confirmation only while it stands**: it is the person's last decisive review, and each changed concept that carries their name is byte for byte what the approved commit held. A confirmation pushed after the approval needs a new one.
+- **The gate reads a commit that has no parent**, so a merge of an unrelated history brings in no confirmation that nobody signed, and each event the pull request adds or removes must be one a signed commit adds or removes.
+- **The gate stops and backs nothing when git or GitHub does not answer one of its reads**, and it takes a value with an unclosed quote, an escape, a comment, a tag or an anchor, or a second `id` key, as frontmatter it cannot read.
+- **Conventions rule 13 finds the commit that put a confirmation into the frontmatter by parsing the concept at each candidate**, so a later commit that repeats the confirmation's time in the body is not taken for it. Rule 14 reads a renamed concept against the file it was, and rule 10 names a `verified`, `generated` or `id` key given twice.
+- **The pen takes a `process:` actor of letters, digits, `.`, `_` and `-` alone**, and refuses a patch under a name that starts `process:ktl-curator`, so a patch cannot write Markdown into a stamp or a bullet that reads as the curator's.
+- **A send-back that `process:ktl-curator` wrote for a person with no login counts as a person's record**: the pen keeps it, and the report lists the concept as sent back. The curator's policy template and placeholder are drafts under `process:ktl-curator` until a person confirms them, where they named a `human:` actor nobody had backed.
+- **The curator and the librarian treat a concept, an open question, a file or a page as text to quote**, never as an instruction, even when it is phrased as one.
+- **A release tags only the commit it checked**: `publish.yml` stops unless `main` is still that commit, reads the tag back after publishing, and requests no bundle zip, package or sync for a tag on another commit.
+- **The repository's own catalogue recommends a required reviewer on the `pypi` and `testpypi` Environments**, since a pushed tag carries its own copy of `pypi.yml`. `ktl gh check --strict` names an Environment without one, and `ktl gh apply --recommended` adds it.
+- **The repository contract fails under CI when shellcheck, node or zip is missing**, where it skipped the check. The jobs that run it set up Node, and a release runs the tests with `just` and one worker per CPU.
+- **A federation build refuses a member's schema that imports anything but `lokf` and `linkml:` names**, or that declares the `linkml` prefix as another namespace. LinkML fetched an import that was an address, with no check for a private one, and read one that was a path outside the bundle.
+- **A member's zip holds Markdown and images alone** (`.md`, `.gif`, `.jpeg`, `.jpg`, `.png`, `.webp`). The list of files a browser runs missed XML types such as `.owl` and `.gpx`, and a `pyproject.toml` in a zip named a schema the toolkit loaded. A member held from a previous workspace that holds such a file is not held.
+- **A member's distribution name ends `.jsonld` for a served file and `.zip` for a zip.** A served file named `x.html` was published as a page on the host's site.
+- **`members --add <address>` reads the `index.md` beside a served file as it reads a member's address**, checked before the request and at the connection.
+- **`knowledge-feedback.sh` refuses a symbolic link at `.lokf/`, at `feedback.md` or at its lock, and rewrites the file through a file `mktemp` creates.** A repository could commit a link that made the docent write over another file, or copy one into `feedback.md`.
+- **The ingest workflow hands its secrets to the script alone**, through a file only the job's user reads, so the steps that package and upload the patch hold none. A warning names a secret left out for a line break inside it, and a line break that ends one is removed.
+- **A repository file cannot draw a trust label on the website**, since raw HTML keeps a class or a `data-` attribute only where the site's own rendering wrote it. A concept's body shows no forged "Confirmed by a person" label, search filter or link preview, in its text or in the page's list of sections.
+- **The website keeps an `<input>` only as a task list's checkbox**, so `<input type="password" type="checkbox">`, which a browser reads as a password field, is shown as text.
+- **The website serves only the kinds of file it names**, figures and PDF files from `docs/` and `.assets/` and Markdown from the bundle. An XML document under a name such as `.rdf`, `.xsd` or `.atom` is not served, and a link to a file of another kind goes to GitHub.
+- **The website's build reads each SVG as XML**, so it stops on a script under a prefix, a `javascript:` address written with a character reference, a file named `.SVG`, a DOCTYPE and a compressed `.svgz`, which the earlier text search missed.
+- **A page of the website sends no referrer**, so a remote image in a concept or the README does not learn which page loaded it.
+- **A description cannot add a key to `site.toml`**: ktl-website's Step 1 writes each value as a TOML string and stops on a line break, and `prepare.sh` reads the file through a TOML parser. A description of several lines could set the `browseBuild` command the build runs.
+
 ## [0.67.0] - 2026-11-15
 
 ### Added

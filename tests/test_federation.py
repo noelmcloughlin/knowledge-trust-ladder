@@ -15,8 +15,10 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    - a tampered checksum;
    - a zip whose index.md names another base_iri;
    - a zip holding a symbolic link, a hidden file such as a .git folder or
-     a file a browser runs;
-   - a distribution name that is not one plain file name;
+     any file but Markdown and images, such as a page, an SVG image, an XML
+     file or a pyproject.toml;
+   - a distribution name that is not one plain file name, or that does not
+     end .zip for a zip and .jsonld for a served file;
    - a domain that names a bundle already in the federation;
    - a checksum that is not 64 hex digits;
    - a namespace that nests with another's;
@@ -35,7 +37,9 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
    release or an earlier one. A check does the same, and a workspace of
    another domain is not taken. A release zip that serves other bytes is
    held only at the release a build fetched, a check holds nothing its pull
-   request proposes, and a member no previous workspace held is left out;
+   request proposes, and a member no previous workspace held is left out.
+   A member whose folder in the previous workspace holds a file a zip may
+   not hold is not held;
 
 3. a typed relation whose target no member owns stops the build under
    `unowned_targets: fail` and is reported under `report`. So does one
@@ -97,7 +101,9 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 
 5a. a schema released beside a member's zip, named as a second distribution,
    is what the member's fit is checked against, and a wrong digest for it
-   stops the build;
+   stops the build. So does a schema that imports anything but `lokf` and
+   `linkml:` names, or that declares the `linkml` prefix as another
+   namespace, and the toolkit fetches and reads nothing for it;
 
 5b. `mcp` serves the workspace index as its instructions and answers the
    five tools of the specification's section 11.4, each bounded, a
@@ -161,7 +167,8 @@ toolkit and pyoxigraph it needs are the ones the lock pins. It checks:
 11. `members` moves a member its site serves to the file the site serves
     now, and to its new namespace when the file's @base moved. Once the
     concept names the file, `members` asks with the validators it kept.
-    `members --add <address>` drafts one from a site's concepts.jsonld;
+    `members --add <address>` drafts one from a site's concepts.jsonld,
+    and reads the index.md beside it as it reads a member's address;
 
 12. `members` moves the others when it cannot check one, and asks gh for a
     release list the API refuses as rate limited.
@@ -673,6 +680,10 @@ def test_a_member_whose_release_cannot_be_fetched_is_held_at_its_last_good_state
     lock_file.write_text(lock_file.read_text(encoding="utf-8").replace(f"domain_base_iri: {d_iri}", "domain_base_iri: https://other.example/federation/"), encoding="utf-8")
     r = federate(host, "build", "--no-attestation", "--previous", str(other))
     assert r.rc == 1 and "not a workspace of the domain under" in r.out and "b2.zip: no such file" in r.out, r.out
+    # An older workspace may hold a pyproject.toml naming a schema to load.
+    write(previous / "bundles" / "b" / ".lokf" / "knowledge" / "pyproject.toml", '[tool.lokf]\nschema = "evil.yaml"\n')
+    r = federate(host, "build", "--no-attestation", "--previous", str(previous))
+    assert r.rc == 1 and "the previous workspace holds bundles/b/.lokf/knowledge/pyproject.toml, which is neither Markdown (.md) nor an image" in r.out, r.out
 
 
 def test_a_release_zip_with_other_bytes_is_held_only_at_the_release_a_build_fetched(federation, tmp_path):
@@ -793,7 +804,7 @@ def test_a_checksum_written_before_lokf_0_9_0_is_still_read(federation):
     assert r.rc == 0 and "b: v1.0.0 checksum matches" in r.out, r.out
 
 
-@pytest.mark.parametrize("fault", ["checksum", "namespace", "symlink", "duplicate", "gitdir", "page", "xml-page", "name"])
+@pytest.mark.parametrize("fault", ["checksum", "namespace", "symlink", "duplicate", "gitdir", "page", "name"])
 def test_a_bad_member_stops_the_build_and_keeps_the_snapshot(federation, tmp_path, fault):
     host = federation["host"]
     assert federate(host, "build", "--no-attestation").rc == 0
@@ -823,12 +834,7 @@ def test_a_bad_member_stops_the_build_and_keeps_the_snapshot(federation, tmp_pat
     elif fault == "page":
         sha = zip_bundle(federation["b"], federation["b_zip"], extra={"knowledge/glossary/other.svg": "<svg onload='alert(1)'/>"})
         concept.write_text(text.replace(federation["b_sha"], sha), encoding="utf-8")
-        expect = "a file a browser runs"
-    elif fault == "xml-page":
-        # A site serves .xht under an XML type, in which a browser runs an XHTML script element.
-        sha = zip_bundle(federation["b"], federation["b_zip"], extra={"knowledge/assets/page.xht": '<html xmlns="http://www.w3.org/1999/xhtml"><script>alert(1)</script></html>'})
-        concept.write_text(text.replace(federation["b_sha"], sha), encoding="utf-8")
-        expect = "a file a browser runs"
+        expect = "entry 'knowledge/glossary/other.svg' is neither Markdown (.md) nor an image (.gif, .jpeg, .jpg, .png, .webp), the files a bundle zip holds"
     elif fault == "name":
         concept.write_text(text.replace("name: b.zip", "name: ../../../.lokf/scripts/knowledge-report.sh"), encoding="utf-8")
         expect = "must be one plain file name"
@@ -1520,6 +1526,112 @@ def test_a_schema_released_with_a_bundle_is_what_its_fit_is_checked_against(fede
     concept.write_text(concept.read_text(encoding="utf-8").replace(schema_sha, "1" * 64), encoding="utf-8")
     r = federate(host, "build", "--no-attestation")
     assert r.rc == 1 and "has sha256" in r.out, "a schema whose digest is not the one named stops the build"
+    # An import that is an address stops the build before LinkML fetches it.
+    with serving(write(tmp_path / "site" / "x.yaml", "id: https://x.example/x\nname: x\n").parent, tmp_path / "server") as (url, log):
+        schema.write_text(SCHEMA.replace("  - lokf\n", f"  - lokf\n  - {url}x\n"), encoding="utf-8")
+        fm["distribution"][1]["checksum"] = checksum(hashlib.sha256(schema.read_bytes()).hexdigest())
+        concept.write_text(frontmatter(**fm) + "\n# Overview\n\nb bundle.\n", encoding="utf-8")
+        r = federate(host, "build", "--no-attestation")
+        assert r.rc == 1 and f"b: the schema schema-v1.0.0-b.yaml imports '{url}x'" in r.out, r.out
+        assert not log.exists() or not read(log).strip(), "the toolkit fetched the import: " + read(log)
+
+
+def load_script(name: str):
+    """The script as a module, for a test of one of its functions."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(name, SCRIPT)
+    kf = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(kf)
+    return kf
+
+
+CANONICAL = "  linkml: https://w3id.org/linkml/\n"
+
+
+@pytest.mark.parametrize(("old", "new", "refused"), [
+    ("", "", ""),
+    ("imports:\n  - linkml:types\n  - lokf\n", "", ""),
+    ("  - lokf\n", '  - lokf\n  - "http://127.0.0.1:18765/latest/meta-data/iam?x="\n', "imports 'http://127.0.0.1:18765/latest/meta-data/iam?x='"),
+    ("  - lokf\n", "  - lokf\n  - ../../secret\n", "imports '../../secret'"),
+    ("  - lokf\n", "  - lokf\n  - /etc/secret\n", "imports '/etc/secret'"),
+    ("  - lokf\n", "  - lokf\n  - sibling\n", "imports 'sibling'"),
+    # LinkML joins what follows `linkml:` to the folder that holds its own schemas.
+    ("  - linkml:types\n", "  - linkml:../../../secret\n", "imports 'linkml:../../../secret'"),
+    # A CURIE under another prefix, or under the default one, expands to whatever the schema says.
+    ("  - linkml:types\n", "  - bschema:types\n", "imports 'bschema:types'"),
+    ("  - linkml:types\n", "  - ':types'\n", "imports ':types'"),
+    ("imports:\n  - linkml:types\n  - lokf\n", "imports: http://127.0.0.1:18765/one\n", "imports 'http://127.0.0.1:18765/one'"),
+    (CANONICAL, "  linkml: http://127.0.0.1:18765/meta/\n", "declares the prefix 'linkml' as 'http://127.0.0.1:18765/meta/'"),
+    # LinkML reads a prefix whatever its case, so this one stands for linkml too.
+    (CANONICAL, CANONICAL + "  LinkML: http://127.0.0.1:18765/meta/\n", "declares the prefix 'LinkML' as 'http://127.0.0.1:18765/meta/'"),
+    (CANONICAL, "  linkml:\n    prefix_reference: ../../\n", "declares the prefix 'linkml' as '../../'"),
+    ("prefixes:\n  bschema: https://b.example/schema/\n" + CANONICAL + "  lokf: https://w3id.org/lokf/\n",
+     "prefixes:\n  - prefix_prefix: linkml\n    prefix_reference: http://127.0.0.1:18765/meta/\n", "declares the prefix 'linkml' as 'http://127.0.0.1:18765/meta/'"),
+    ("prefixes:\n  bschema: https://b.example/schema/\n" + CANONICAL + "  lokf: https://w3id.org/lokf/\n", "prefixes: linkml\n", "gives `prefixes` as neither a mapping nor a list"),
+    ("name: bschema\n", "name: bschema\nsource_file: http://127.0.0.1:18765/x/schema.yaml\n", "sets source_file to 'http://127.0.0.1:18765/x/schema.yaml'"),
+    ("name: bschema\n", "name: bschema\nsource_file: ../../schema.yaml\n", "sets source_file to '../../schema.yaml'"),
+    ("name: bschema\n", "name: bschema\nsource_file: schema.yaml\n", ""),
+    ("id: https://b.example/schema\n", "- a list\n- of two\n---\n", "is not YAML"),
+    ("classes:\n  Widget:\n    is_a: Concept\n", "", ""),
+], ids=["as-released", "no-imports", "address", "path-above", "absolute-path", "file-beside", "path-after-linkml", "other-prefix", "default-prefix", "one-address",
+        "linkml-prefix", "linkml-prefix-in-capitals", "linkml-prefix-as-mapping", "linkml-prefix-in-a-list", "prefixes-as-text", "source-file-address", "source-file-above",
+        "source-file-plain", "not-yaml", "no-classes"])
+def test_a_member_schema_imports_lokf_and_linkml_names_alone(tmp_path, old, new, refused):
+    """A member's schema imports `lokf` and `linkml:` names alone, with `linkml` as LinkML's own prefix, since LinkML fetches or reads any other import unchecked."""
+    kf = load_script("knowledge_federate_schema")
+    assert old in SCHEMA
+    schema = write(tmp_path / "cached.yaml", SCHEMA.replace(old, new) if old else SCHEMA)
+    if refused:
+        with pytest.raises(kf.Failed, match=re.escape(refused)) as caught:
+            kf.check_member_schema(schema, "b", "schema-v1.0.0-b.yaml")
+        assert str(caught.value).startswith("b: the schema schema-v1.0.0-b.yaml "), caught.value
+    else:
+        kf.check_member_schema(schema, "b", "schema-v1.0.0-b.yaml")
+
+
+@pytest.mark.parametrize(("entry", "taken"), [
+    ("knowledge/glossary/figure.png", True), ("knowledge/glossary/Photo.JPG", True), ("knowledge/glossary/", True),
+    ("knowledge/assets/page.xht", False), ("knowledge/assets/page.html", False), ("knowledge/assets/figure.svg", False),
+    # XML types a browser runs.
+    ("knowledge/assets/ontology.owl", False), ("knowledge/assets/track.gpx", False), ("knowledge/assets/list.xspf", False),
+    # The toolkit loads the schema a pyproject.toml names.
+    ("knowledge/pyproject.toml", False), ("knowledge/domain.yaml", False),
+    ("knowledge/README", False), ("knowledge/glossary/page.html.", False),
+])
+def test_a_zip_holds_markdown_and_images_alone(tmp_path, entry, taken):
+    """A member's zip holds Markdown and images; any other file is refused by its name."""
+    kf = load_script("knowledge_federate_entries")
+    zip_path = tmp_path / "m.zip"
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        zf.writestr("knowledge/index.md", "---\nbase_iri: https://m.example/knowledge/\n---\n")
+        zf.writestr(entry, "" if entry.endswith("/") else "content")
+    if taken:
+        kf.check_zip(zip_path, 1_000_000)
+    else:
+        with pytest.raises(kf.Failed, match=re.escape(f"m.zip: entry {entry!r} is neither Markdown (.md) nor an image (.gif, .jpeg, .jpg, .png, .webp), the files a bundle zip holds")):
+            kf.check_zip(zip_path, 1_000_000)
+
+
+@pytest.mark.parametrize(("name", "media_type", "refused"), [
+    ("concepts.jsonld", "application/ld+json", ""), ("concepts.jsonld", None, ""), ("a.zip", "application/zip", ""), ("a.zip", None, ""),
+    # The workspace's site serves the file under this name.
+    ("x.html", "application/ld+json", "must end .jsonld, as a served file does, not 'x.html'"),
+    ("concepts.json", "application/ld+json", "must end .jsonld, as a served file does, not 'concepts.json'"),
+    ("a.html", "application/zip", "must end .zip, as a release zip does, not 'a.html'"),
+    ("a", None, "must end .zip, as a release zip does, not 'a'"),
+])
+def test_a_distribution_name_ends_as_its_file_does(tmp_path, name, media_type, refused):
+    """A served member's file is published as bundles/<slug>/.lokf/<name>, so the name ends .jsonld, and a zip's ends .zip."""
+    kf = load_script("knowledge_federate_names")
+    dist = {"name": name, "access_url": "https://m.example/files/" + name, "checksum": checksum("0" * 64), **({"media_type": media_type} if media_type else {})}
+    data = {"type": "MemberBundle", "title": "m", "base_iri": "https://m.example/knowledge/", "version": "v1.0.0", "distribution": [dist]}
+    path, top = tmp_path / "members" / "m.md", "https://d.example/federation/domains/federation"
+    if refused:
+        with pytest.raises(kf.Failed, match=re.escape("distribution.name " + refused)):
+            kf.Member(path, data, top, 1)
+    else:
+        assert kf.Member(path, data, top, 1).served is name.endswith(".jsonld")
 
 
 # Drives the server over stdio with the SDK's own client: initialize, list
@@ -2056,7 +2168,8 @@ def test_a_member_s_text_licence_and_an_explicit_id_outside_its_namespace_read_a
 # ---------------------------------------------------------------------------
 # Loads the script as a module, answers its HTTP requests from the files a
 # JSON map names, and runs its main(); any other address fails as an
-# unreachable one would.
+# unreachable one would. The log names each address the script checked
+# before a request, and each it asked for as a member's address.
 RUNNER = """\
 import importlib.util, json, os, pathlib, sys, urllib.error
 script, served, *argv = sys.argv[1:]
@@ -2065,6 +2178,8 @@ federate = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(federate)
 urls = json.loads(pathlib.Path(served).read_text(encoding="utf-8"))
 def http_fetch(url, accept=None, headers=None, max_bytes=None, timeout=60, member=False):
+    if member:
+        log.append("member " + url)
     if url not in urls:
         raise urllib.error.URLError(url + " is not served by this test")
     entry = urls[url]
@@ -2077,8 +2192,13 @@ def http_fetch(url, accept=None, headers=None, max_bytes=None, timeout=60, membe
         return 304, dict(sent), b""
     log.append(url + " 200")
     return 200, dict(sent), pathlib.Path(path).read_bytes()
+refuse_private = federate.refuse_private
+def checked(url):
+    log.append("checked " + url)
+    refuse_private(url)
 log = []
 federate.http_fetch = http_fetch
+federate.refuse_private = checked
 try:
     sys.exit(federate.main(argv))
 finally:
@@ -2731,8 +2851,12 @@ def test_members_moves_a_served_member_to_the_file_its_site_serves_now(tmp_path)
     log = tmp_path / "requests.log"
     r = members_run(released, "--dry-run", stdout_only=True, env={"RUNNER_LOG": str(log)})
     assert r.rc == 0 and yaml.safe_load(r.out) == patch and f"{url} 200" in log.read_text(encoding="utf-8"), r.out
-    r = members_run(released, "--dry-run", "--add", t_iri, stdout_only=True)
+    r = members_run(released, "--dry-run", "--add", t_iri, stdout_only=True, env={"RUNNER_LOG": str(log)})
     assert r.rc == 0, r.out
+    # The index.md beside the file is checked as the file is.
+    asked = log.read_text(encoding="utf-8").splitlines()
+    for address in (t_iri + "concepts.jsonld", t_iri + "index.md"):
+        assert f"checked {address}" in asked and f"member {address}" in asked, (address, asked)
     created = ops_for(yaml.safe_load(r.out), "ktl")["create"]
     fm = created["frontmatter"]
     assert fm["type"] == "MemberBundle" and fm["base_iri"] == t_iri and fm["title"] == "T" and fm["version"] == today_utc(), fm

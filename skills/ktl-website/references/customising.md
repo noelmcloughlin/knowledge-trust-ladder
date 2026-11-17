@@ -26,6 +26,10 @@ With `docsGroups`, the build stops when a group names a page that is not there o
 
 A redirect whose file has no page stops the build.
 
+Step 1 writes each of its four values into `site.toml` as an escaped TOML string, and into the README as it is. It writes neither file when a value holds a line break or a character that does not print: a value from the bundle or the README may be a model's text, and a second line could set `browseBuild`, whose command the build runs.
+
+`scripts/prepare.sh` reads `site.toml` through a TOML parser, as Hugo does, so both read the same values. The build stops when the file is not TOML, when it writes a key twice or in two cases, and when a value `prepare.sh` reads is not a string on one line.
+
 ## What has no value
 
 These are found, never set. To change one, change the repository:

@@ -33,6 +33,7 @@ endings, which a bare-"---" first-line reader skipped.
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 
@@ -920,19 +921,33 @@ def test_the_gate_flags_an_unsigned_human_event_in_crlf_line_endings(parity):
     assert result.rc != 0, f"the gate missed an unsigned human event in CRLF line endings: {result.out}"
 
 
-def registrar_step(repo, tmp_path):
-    """Run the provenance job's own check on HEAD~1..HEAD, with a gh that finds no approval and no commits."""
+def registrar_step(repo, tmp_path, base="HEAD~1", reviews=(), commits=(), gh_fails=False):
+    """Run the provenance job's check on base..HEAD, with a gh stub that applies the job's `--jq` to canned reviews and commits."""
     jobs = yaml.safe_load(read(WORKFLOWS / "knowledge-registrar.yaml"))["jobs"]
     step = next(s for s in jobs["provenance"]["steps"] if s.get("id") == "check")
     bin_dir = tmp_path / "stub-bin"
-    write(bin_dir / "gh", "#!/bin/sh\nexit 0\n")
+    write(bin_dir / "reviews.json", json.dumps(list(reviews)))
+    write(bin_dir / "commits.json", json.dumps(list(commits)))
+    write(
+        bin_dir / "gh",
+        "#!/bin/sh\n"
+        "# gh api <path> --paginate --jq <program>\n"
+        f"here='{bin_dir}'\n"
+        + ("exit 1\n" if gh_fails else "")
+        + 'command -v jq >/dev/null 2>&1 || exit 0\n'
+        'case "$2" in\n'
+        '  */reviews) jq -r "$5" "$here/reviews.json" ;;\n'
+        '  */commits) jq -r "$5" "$here/commits.json" ;;\n'
+        "  *) exit 1 ;;\n"
+        "esac\n",
+    )
     (bin_dir / "gh").chmod(0o755)
     script = write(tmp_path / "step.sh", "set -euo pipefail\n" + step["run"])
     output = tmp_path / "github-output"
     git = Git(repo)
     env = {
         "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-        "BASE_SHA": git("rev-parse", "HEAD~1").strip(),
+        "BASE_SHA": git("rev-parse", base).strip(),
         "HEAD_SHA": git("rev-parse", "HEAD").strip(),
         "PR_NUMBER": "1",
         "ATTEST_ENV": "",
@@ -973,3 +988,258 @@ def test_the_registrar_job_passes_a_change_with_no_person_in_it(parity, tmp_path
     git("commit", "-q", "-m", "a process's event")
     result, output = registrar_step(parity, tmp_path)
     assert result.rc == 0 and "verdict=ok" in output, f"the registrar job refused a process's event: {result.out}"
+
+
+# ---- who stands behind an event, and which concept it belongs to ----
+
+needs_jq = pytest.mark.skipif(not have("jq"), reason="jq not installed locally - CI has it")
+ADA = "2026-01-02T10:00:00Z"
+
+
+def concept(name, events="", ident=None):
+    """A concept at x/<name>.md with its own id, and the events given."""
+    ident = ident or f"https://acme.example/knowledge/x/{name}"
+    return f"---\ntype: Service\nid: {ident}\ntitle: {name}\nstatus: draft\n{events}---\n\n# {name}\n"
+
+
+def by_ada(at=ADA):
+    return f'verified:\n  - by: human:ada\n    at: "{at}"\n'
+
+
+def commit(git, repo, message, files=None, remove=()):
+    """Write the files given under the bundle's x/ folder, remove the others, commit, and give the commit's sha."""
+    for name, content in (files or {}).items():
+        write(repo / ".lokf" / "knowledge" / "x" / name, content)
+    for name in remove:
+        (repo / ".lokf" / "knowledge" / "x" / name).unlink()
+    git("add", "-A")
+    git("commit", "-q", "-m", message)
+    return git("rev-parse", "HEAD").strip()
+
+
+def listed(sha, verified=True, committer="ada", author="ada"):
+    """One commit as GitHub lists it for a pull request."""
+    return {
+        "sha": sha,
+        "commit": {"verification": {"verified": verified}},
+        "committer": {"login": committer} if committer else None,
+        "author": {"login": author} if author else None,
+    }
+
+
+def review(who, state, sha):
+    return {"user": {"login": who}, "state": state, "commit_id": sha}
+
+
+@needs_jq
+@pytest.mark.parametrize(
+    ("committer", "author", "backed"),
+    [
+        ("ada", "ada", True),
+        ("ada", "mallory", True),
+        ("mallory", "ada", False),
+        ("web-flow", "ada", True),
+        ("web-flow", "mallory", False),
+        (None, "ada", False),
+    ],
+    ids=["her own commit", "she signed another's work", "another signed in her name", "in the browser", "another in the browser", "no account signed"],
+)
+def test_the_registrar_job_reads_who_signed_from_the_committer(parity, tmp_path, committer, author, backed):
+    """GitHub verifies the committer's signature, and the author is a name anyone may type."""
+    git = Git(parity)
+    sha = commit(git, parity, "a confirmation by ada", {"c.md": concept("c", by_ada())})
+    result, output = registrar_step(parity, tmp_path, commits=[listed(sha, True, committer, author)])
+    assert ("verdict=ok" in output) == backed, f"committer {committer}, author {author}: {result.out}"
+    assert backed or "signed by" in result.out, result.out
+
+
+@needs_jq
+def test_the_registrar_job_does_not_back_an_unverified_commit(parity, tmp_path):
+    git = Git(parity)
+    sha = commit(git, parity, "a confirmation by ada", {"c.md": concept("c", by_ada())})
+    result, output = registrar_step(parity, tmp_path, commits=[listed(sha, False)])
+    assert result.rc != 0 and "verdict=unbacked" in output, result.out
+
+
+@needs_jq
+def test_the_registrar_job_backs_an_approval_of_the_concept_as_it_stands(parity, tmp_path):
+    git = Git(parity)
+    sha = commit(git, parity, "a confirmation by ada", {"c.md": concept("c", by_ada())})
+    result, output = registrar_step(parity, tmp_path, reviews=[review("ada", "APPROVED", sha)], commits=[listed(sha, False, "bob", "bob")])
+    assert result.rc == 0 and "verdict=ok" in output and "as they approved it" in result.out, result.out
+
+
+@needs_jq
+def test_an_approval_given_before_the_confirmation_was_pushed_backs_nothing(parity, tmp_path):
+    """A person who approved an earlier head saw no confirmation in their name."""
+    git = Git(parity)
+    before = commit(git, parity, "a change she approved", {"d.md": concept("d")})
+    sha = commit(git, parity, "a confirmation in her name, pushed afterwards", {"c.md": concept("c", by_ada())})
+    result, output = registrar_step(
+        parity, tmp_path, base="HEAD~2", reviews=[review("ada", "APPROVED", before)], commits=[listed(before, False, "bob", "bob"), listed(sha, False, "bob", "bob")]
+    )
+    assert result.rc != 0 and "verdict=unbacked" in output and "stale" in result.out, result.out
+
+
+@needs_jq
+def test_an_approval_stands_when_a_later_commit_leaves_the_concept_alone(parity, tmp_path):
+    git = Git(parity)
+    sha = commit(git, parity, "a confirmation by ada", {"c.md": concept("c", by_ada())})
+    later = commit(git, parity, "another concept, afterwards", {"d.md": concept("d")})
+    result, output = registrar_step(
+        parity, tmp_path, base="HEAD~2", reviews=[review("ada", "APPROVED", sha)], commits=[listed(sha, False, "bob", "bob"), listed(later, False, "bob", "bob")]
+    )
+    assert result.rc == 0 and "verdict=ok" in output, result.out
+
+
+@needs_jq
+def test_an_approval_does_not_cover_a_later_edit_of_the_concept(parity, tmp_path):
+    git = Git(parity)
+    sha = commit(git, parity, "a confirmation by ada", {"c.md": concept("c", by_ada())})
+    later = commit(git, parity, "the confirmed text, edited afterwards", {"c.md": concept("c", by_ada()) + "\nA claim she never saw.\n"})
+    result, output = registrar_step(
+        parity, tmp_path, base="HEAD~2", reviews=[review("ada", "APPROVED", sha)], commits=[listed(sha, False, "bob", "bob"), listed(later, False, "bob", "bob")]
+    )
+    assert "verdict=ok" not in output and "stale" in result.out, result.out
+
+
+@needs_jq
+@pytest.mark.parametrize("last", ["CHANGES_REQUESTED", "DISMISSED"])
+def test_an_approval_a_person_took_back_backs_nothing(parity, tmp_path, last):
+    git = Git(parity)
+    sha = commit(git, parity, "a confirmation by ada", {"c.md": concept("c", by_ada())})
+    reviews = [review("ada", "APPROVED", sha), review("ada", last, sha)]
+    result, output = registrar_step(parity, tmp_path, reviews=reviews, commits=[listed(sha, False, "bob", "bob")])
+    assert "verdict=ok" not in output, result.out
+
+
+@needs_jq
+def test_the_registrar_job_reads_a_commit_with_no_parent(parity, tmp_path):
+    """A history merged in from elsewhere starts at a commit with no parent. One signed commit of hers must not back what that commit types in her name."""
+    git = Git(parity)
+    base = git("rev-parse", "HEAD").strip()
+    hers = commit(git, parity, "a confirmation ada signed", {"c.md": concept("c", by_ada())})
+    git("checkout", "-q", "--orphan", "elsewhere")
+    git("rm", "-rqf", ".")
+    forged = commit(git, parity, "a root commit that types a confirmation", {"f.md": concept("f", by_ada("2026-01-03T10:00:00Z"))})
+    git("checkout", "-q", "main")
+    git("merge", "-q", "--allow-unrelated-histories", "--no-edit", "elsewhere")
+    merge = git("rev-parse", "HEAD").strip()
+    commits = [listed(hers), listed(forged, False, "mallory", "ada"), listed(merge, False, "mallory", "mallory")]
+    result, output = registrar_step(parity, tmp_path, base=base, commits=commits)
+    assert result.rc != 0 and "verdict=unbacked" in output and forged[:8] in result.out, result.out
+
+
+MOVES = {
+    "an id that differs by a quote": "https://acme.example/knowledge/x/c'",
+    "the same id": "https://acme.example/knowledge/x/c",
+    "an id of its own": "https://acme.example/knowledge/x/d",
+}
+
+
+@needs_jq
+@pytest.mark.parametrize("ident", MOVES.values(), ids=MOVES.keys())
+def test_the_registrar_job_reads_a_confirmation_moved_into_another_concept(parity, tmp_path, ident):
+    """The event leaves the concept ada confirmed and turns up in one nobody confirmed."""
+    git = Git(parity)
+    commit(git, parity, "a confirmation by ada", {"c.md": concept("c", by_ada())})
+    sha = commit(git, parity, "her event, moved", {"c.md": concept("c"), "d.md": concept("d", by_ada(), ident)})
+    result, output = registrar_step(parity, tmp_path, commits=[listed(sha, False, "mallory", "mallory")])
+    assert result.rc != 0 and "verdict=unbacked" in output and "human:ada" in result.out, result.out
+
+
+@needs_jq
+@pytest.mark.parametrize("ident", MOVES.values(), ids=MOVES.keys())
+def test_the_registrar_job_reads_a_confirmation_copied_into_another_concept(parity, tmp_path, ident):
+    git = Git(parity)
+    commit(git, parity, "a confirmation by ada", {"c.md": concept("c", by_ada())})
+    sha = commit(git, parity, "her event, copied", {"c.md": concept("c", by_ada()) + "\nTouched.\n", "d.md": concept("d", by_ada(), ident)})
+    result, output = registrar_step(parity, tmp_path, commits=[listed(sha, False, "mallory", "mallory")])
+    assert result.rc != 0 and "verdict=unbacked" in output and "human:ada" in result.out, result.out
+
+
+def test_the_registrar_job_passes_a_renamed_concept(parity, tmp_path):
+    """A rename claims nothing: the concept keeps its id and its events."""
+    git = Git(parity)
+    commit(git, parity, "a confirmation by ada", {"c.md": concept("c", by_ada())})
+    commit(git, parity, "renamed", {"renamed.md": concept("c", by_ada())}, remove=["c.md"])
+    result, output = registrar_step(parity, tmp_path)
+    assert result.rc == 0 and "verdict=ok" in output, result.out
+
+
+def test_the_registrar_job_passes_nothing_when_github_does_not_answer(parity, tmp_path):
+    git = Git(parity)
+    commit(git, parity, "a confirmation by ada", {"c.md": concept("c", by_ada())})
+    result, output = registrar_step(parity, tmp_path, gh_fails=True)
+    assert result.rc != 0 and "verdict=ok" not in output and "unreadable" in result.out, result.out
+
+
+@pytest.mark.parametrize("ident", MOVES.values(), ids=MOVES.keys())
+def test_the_signed_form_reads_a_confirmation_moved_into_another_concept(parity, ident):
+    git = keyed(parity)
+    commit(git, parity, "a confirmation by ada", {"c.md": concept("c", by_ada())})
+    commit(git, parity, "her event, moved", {"c.md": concept("c"), "d.md": concept("d", by_ada(), ident)})
+    result = bash(PROVENANCE, "HEAD~1", "HEAD", cwd=parity)
+    assert result.rc == 1 and "confirmation by human:ada but is unsigned" in result.out, result.out
+
+
+@pytest.mark.parametrize("ident", MOVES.values(), ids=MOVES.keys())
+def test_the_signed_form_reads_a_confirmation_copied_into_another_concept(parity, ident):
+    """The copy sits in a commit that touches the concept ada confirmed, so both concepts are read."""
+    git = keyed(parity)
+    commit(git, parity, "a confirmation by ada", {"c.md": concept("c", by_ada())})
+    commit(git, parity, "her event, copied", {"c.md": concept("c", by_ada()) + "\nTouched.\n", "d.md": concept("d", by_ada(), ident)})
+    result = bash(PROVENANCE, "HEAD~1", "HEAD", cwd=parity)
+    assert result.rc == 1 and "adds or changes a confirmation by human:ada but is unsigned" in result.out, result.out
+
+
+def test_the_signed_form_passes_a_renamed_concept(parity):
+    git = keyed(parity)
+    commit(git, parity, "a confirmation by ada", {"c.md": concept("c", by_ada())})
+    commit(git, parity, "renamed", {"renamed.md": concept("c", by_ada())}, remove=["c.md"])
+    result = bash(PROVENANCE, "HEAD~1", "HEAD", cwd=parity)
+    assert result.rc == 0, result.out
+
+
+@pytest.mark.parametrize("ident", MOVES.values(), ids=MOVES.keys())
+def test_an_unattended_change_may_not_move_a_confirmation_into_another_concept(parity, ident):
+    git = Git(parity)
+    commit(git, parity, "a confirmation by ada", {"c.md": concept("c", by_ada())})
+    x = parity / ".lokf" / "knowledge" / "x"
+    write(x / "c.md", concept("c"))
+    write(x / "d.md", concept("d", f'verified: [{{ by: human:ada, at: "{ADA}" }}]\n', ident))
+    result = bash(PROVENANCE, "--unattended", cwd=parity)
+    assert result.rc == 1 and "adds or changes a confirmation by human:ada" in result.out, result.out
+
+
+def test_an_actor_is_read_whole_and_never_as_a_pattern_of_file_names(parity):
+    git = keyed(parity)
+    commit(git, parity, "an event by nobody a forge could list", {"c.md": concept("c", 'verified:\n  - by: human:*\n    at: "2026-01-02T10:00:00Z"\n')})
+    result = bash(PROVENANCE, "HEAD~1", "HEAD", cwd=parity)
+    assert result.rc == 1 and "human:*, which is not a login" in result.out, result.out
+
+
+ODD_IDS = {
+    "a second id line": "id: https://acme.example/knowledge/x/c\nid: https://acme.example/knowledge/x/d",
+    "an escape in the id": 'id: "https://acme.example/knowledge/x/\\x63"',
+    "a quote left open": 'id: "https://acme.example/knowledge/x/c',
+    "a doubled quote": "id: 'https://acme.example/knowledge/x/''c'",
+    "a comment beside the id": "id: https://acme.example/knowledge/x/c # the service",
+    "a tag on the id": "id: !!str https://acme.example/knowledge/x/c",
+    "a folded id": "id: >-\n  https://acme.example/knowledge/x/c",
+}
+
+
+@pytest.mark.parametrize("spelling", ODD_IDS.values(), ids=ODD_IDS.keys())
+def test_an_id_the_gate_cannot_take_whole_makes_the_concept_unreadable(parity, spelling):
+    """The id keys every event of its concept, so the gate reads it as a parser does or not at all."""
+    write(parity / ".lokf" / "knowledge" / "x" / "c.md", f"---\ntype: Service\n{spelling}\ntitle: C\nstatus: draft\n---\n\n# C\n")
+    result = bash(PROVENANCE, "--unattended", cwd=parity)
+    assert result.rc != 0 and "cannot read" in result.out, f"the gate read {spelling!r}: {result.out}"
+
+
+@pytest.mark.parametrize("spelling", ['"https://acme.example/knowledge/x/c"', "'https://acme.example/knowledge/x/c'", "https://acme.example/knowledge/x/c"])
+def test_a_quoted_id_is_the_id_it_holds(parity, spelling):
+    write(parity / ".lokf" / "knowledge" / "x" / "c.md", f"---\ntype: Service\nid: {spelling}\ntitle: C\nstatus: draft\n---\n\n# C\n")
+    result = bash(PROVENANCE, "--unattended", cwd=parity)
+    assert result.rc == 0, result.out

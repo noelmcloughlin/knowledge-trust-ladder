@@ -4,7 +4,7 @@ This page is for anyone who commits to a KTL repository, and above all for a cur
 
 A signature ties a commit to you cryptographically, so the forge can show it `Verified`. In the KTL repositories it is *required* for one thing: a pull request that adds or removes a `by: human:` verification event in `.lokf/knowledge/`.
 
-The `provenance` job in each repository's `knowledge-registrar.yaml` checks those. It accepts either an approving review from the confirming account or a verified commit attributed to it. A sole maintainer cannot approve their own pull request, so for them the signature is the only way. The job exists because a claim that a named person checked a concept has to be tied back to that person: [threat-model.md](threat-model.md) says what such a confirmation proves.
+The `provenance` job in each repository's `knowledge-registrar.yaml` checks those. It accepts either an approving review from the confirming account or a verified commit that account signed as its committer. A sole maintainer cannot approve their own pull request, so for them the signature is the only way. The job exists because a claim that a named person checked a concept has to be tied back to that person: [threat-model.md](threat-model.md) says what such a confirmation proves.
 
 You are encouraged to sign everything. It costs one setup and nothing afterwards.
 

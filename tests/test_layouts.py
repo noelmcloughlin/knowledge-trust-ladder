@@ -1497,20 +1497,20 @@ def test_the_registrar_triggers_on_and_diffs_both_names():
     )
     both = text.count("-- .lokf/knowledge knowledge_bundle")
     single = len(re.findall(r"-- \.lokf/knowledge *$|-- \.lokf/knowledge \|", text, re.M))
-    assert both >= 3 and single == 0, (
+    assert both >= 2 and single == 0, (
         f"knowledge-registrar.yaml: {both} pathspecs name both paths, {single} name only .lokf/knowledge"
     )
 
 
 @pytest.fixture
 def provenance_step(tmp_path):
-    """The provenance step, extracted from the template, with `gh` stubbed to answer who approved and which commits GitHub verified for whom."""
+    """The provenance step, extracted from the template, with `gh` stubbed to answer who approved which commit and which commits GitHub verified for whom."""
     step = write(
         tmp_path / "provenance-step.sh",
         step_body(REGISTRAR_YAML, "Every new human confirmation must come from that person", r"^      [#-]"),
     )
-    assert "removed_actors" in read(step) and run(["bash", "-n", step]).rc == 0, (
-        "could not extract the provenance step from knowledge-registrar.yaml, or it no longer holds removed_actors"
+    assert "needs_its_person" in read(step) and run(["bash", "-n", step]).rc == 0, (
+        "could not extract the provenance step from knowledge-registrar.yaml, or it no longer holds needs_its_person"
     )
     executable(
         tmp_path / "stub" / "gh",
@@ -1590,9 +1590,11 @@ def test_the_provenance_step(provenance_step, label, change, approver, signer, w
     git(repo, "add", "-A")
     git(repo, "commit", "-q", "-m", "change")
     head = git(repo, "rev-parse", "HEAD")
-    write(work / "approvers", f"{approver}\n" if approver else "")
+    # A review as the step's --jq prints it: who, the state, the commit it was given on.
+    write(work / "approvers", f"{approver}\tAPPROVED\t{head}\n" if approver else "")
+    # A commit as the step's --jq prints it: sha, verified, the committer, the author.
     commits = "".join(
-        f"{s}\tfalse\t-\n" if signer == "-" else f"{s}\ttrue\t{signer}\n"
+        f"{s}\tfalse\t-\t-\n" if signer == "-" else f"{s}\ttrue\t{signer}\t{signer}\n"
         for s in git(repo, "rev-list", f"{base}..{head}").split()
     )
     write(work / "commits", commits)

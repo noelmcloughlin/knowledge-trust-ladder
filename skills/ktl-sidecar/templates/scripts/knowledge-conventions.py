@@ -42,7 +42,10 @@ from pathlib import Path
 
 import yaml
 
-RESERVED = {"index.md", "log.md", "diataxis.md"}
+# An index and a log are no concept in any folder, as the toolkit reads them,
+# and KTL Registrar's diataxis.md is none at the bundle's root.
+RESERVED = {"index.md", "log.md"}
+ROOT_ONLY = {"diataxis.md"}
 OPEN_QUESTION = re.compile(r"^- \d{4}-\d{2}-\d{2}, (human|process):[^ :]+: ")
 # An index bullet in the shape knowledge-apply.sh writes: the title linked to
 # the concept, then its description. A line that lists two concepts is
@@ -97,6 +100,11 @@ MARKDOWN_LINK = re.compile(r"\[([^\]]*)\]\(([^)]+)\)")
 AFTER_TITLE = ",.:; "
 
 
+def reserved(path: Path, bundle: Path) -> bool:
+    """Whether a file under the bundle is one of its own and no concept."""
+    return path.name in RESERVED or (path.name in ROOT_ONLY and path.parent.resolve() == bundle.resolve())
+
+
 def plain_spellings(fm_text: str) -> list[str]:
     """Rule 10: what a line reader could not read the way a parser does.
 
@@ -144,6 +152,11 @@ def plain_spellings(fm_text: str) -> list[str]:
                 if ev.value == "<<" and ev.style is None:
                     findings.append(f"a merge key at {at(ev)}")
                 if ev.value in GATE_FIELDS | EVENT_KEYS:
+                    # Parsers settle a repeated key in different ways, and a
+                    # line reader takes whichever line it meets.
+                    if ev.value in top["keys"]:
+                        findings.append(f"a second {ev.value} key at {at(ev)}")
+                    top["keys"].add(ev.value)
                     if ev.style is not None:
                         findings.append(f"a quoted key ({ev.value}) at {at(ev)}")
                     elif "?" in lines[row][: ev.start_mark.column]:
@@ -187,6 +200,7 @@ def plain_spellings(fm_text: str) -> list[str]:
             stack.append(
                 {
                     "kind": "map" if isinstance(ev, yaml.MappingStartEvent) else "seq",
+                    "keys": set(),
                     "expect_key": True,
                     "key": None,
                     "key_row": None,
@@ -344,6 +358,17 @@ def git(cwd: Path, *args: str) -> str | None:
     return done.stdout if done.returncode == 0 else None
 
 
+TOPS: dict[Path, Path | None] = {}
+
+
+def top_of(folder: Path) -> Path | None:
+    """The top of the work tree a folder sits in, asked of git once per folder, or None outside git."""
+    if folder not in TOPS:
+        top = git(folder, "rev-parse", "--show-toplevel")
+        TOPS[folder] = Path(top.strip()).resolve() if top else None
+    return TOPS[folder]
+
+
 def base_iri(text: str | None) -> str:
     """The `base_iri` in the frontmatter of a bundle's root index.md, or ''."""
     found = parsed(text) if text else None
@@ -358,13 +383,13 @@ def unstamped_edit(path: Path, frontmatter: dict, body: str, bundle: Path) -> st
     and claims() says what counts as an edit.
 
     The text the person confirmed is the concept at the newest commit that
-    recorded the time of that confirmation, so the rule can miss an edit but
-    never flags a concept the person saw. Parsed values are compared, since
-    knowledge-apply.sh writes the whole frontmatter back: a requoted value
-    is no change. A move of the bundle's `base_iri` is no edit: the ids and
-    relation targets it carries along are compared by their paths under the
-    base each commit held. Outside git, or before that commit exists,
-    nothing is said.
+    put that confirmation into its frontmatter, which recorded_in finds, so
+    the rule can miss an edit but never flags a concept the person saw.
+    Parsed values are compared, since knowledge-apply.sh writes the whole
+    frontmatter back: a requoted value is no change. A move of the bundle's
+    `base_iri` is no edit: the ids and relation targets it carries along are
+    compared by their paths under the base each commit held. Outside git, or
+    before that commit exists, nothing is said.
     """
     if frontmatter.get("status") == "deprecated":
         return None
@@ -383,25 +408,24 @@ def unstamped_edit(path: Path, frontmatter: dict, body: str, bundle: Path) -> st
     if stamp > confirmed_at:
         return None  # it already reads as edited since that confirmation
     real = path.resolve()
-    found = git(real.parent, "log", "--format=%H", "-S" + written, "--", real.name)
-    commit = found.split("\n", 1)[0].strip() if found else ""
-    if not commit:
-        return None
-    then = git(real.parent, "show", f"{commit}:./{real.name}")
-    split = split_frontmatter(then.lstrip("\ufeff").replace("\r\n", "\n").replace("\r", "\n")) if then else None
-    if split is None:
+    top_path = top_of(real.parent)
+    if top_path is None:
         return None
     try:
-        frontmatter_then = yaml.safe_load(split[0])
-    except yaml.YAMLError:
+        name = real.relative_to(top_path).as_posix()
+    except ValueError:
         return None
-    if not isinstance(frontmatter_then, dict) or claims(frontmatter_then, split[1]) == claims(frontmatter, body):
+    where = recorded_in(top_path, name, (by, str(written)))
+    if where is None:
+        return None
+    commit, (frontmatter_then, body_then) = where
+    if claims(frontmatter_then, body_then) == claims(frontmatter, body):
         return None
     index = bundle.resolve() / "index.md"
     base_now = base_iri(index.read_text(encoding="utf-8", errors="replace")) if index.is_file() else ""
     base_then = base_iri(git(index.parent, "show", f"{commit}:./index.md"))
     if base_now and base_then and base_now != base_then:
-        if claims(frontmatter_then, split[1], base_then) == claims(frontmatter, body, base_now):
+        if claims(frontmatter_then, body_then, base_then) == claims(frontmatter, body, base_now):
             return None
     return (
         f"{path}: changed since {by} confirmed it ({confirmed_at[:10]}, in {commit[:7]}), and `generated` was not "
@@ -435,6 +459,60 @@ def parsed(text: str | None) -> tuple[dict, str] | None:
     return (frontmatter, split[1]) if isinstance(frontmatter, dict) else None
 
 
+def before_in(top: Path, parent: str, commit: str, name: str, ident) -> tuple[str, tuple[dict, str] | None]:
+    """The concept as a parent of a commit holds it: its path there, and what it says, or None.
+
+    With no file at the same path, a file the commit deletes that has the
+    same id is the concept before a rename.
+    """
+    text = git(top, "show", f"{parent}:{name}")
+    if text is not None:
+        return name, parsed(text)
+    if not isinstance(ident, str) or not ident:
+        return name, None
+    gone = git(top, "diff-tree", "--no-commit-id", "--name-only", "-r", "--diff-filter=D", parent, commit) or ""
+    for old in gone.splitlines():
+        if not old.endswith(".md"):
+            continue
+        found = parsed(git(top, "show", f"{parent}:{old}"))
+        if found is not None and found[0].get("id") == ident:
+            return old, found
+    return name, None
+
+
+def recorded_in(top: Path, name: str, event: tuple[str, str]) -> tuple[str, tuple[dict, str]] | None:
+    """The newest commit that put a person's event into a concept's frontmatter, and the concept as that commit holds it.
+
+    `git log -S` also names a commit that repeats the event's time in the
+    body, so each candidate is parsed: the answer is the commit whose
+    frontmatter holds the event and whose parents' do not. The search
+    follows a rename to the concept's earlier path.
+    """
+    start = "HEAD"
+    for _ in range(64):  # one round per rename of the concept
+        moved = None
+        for line in (git(top, "log", "--format=%H %P", "-S" + event[1], start, "--", name) or "").splitlines():
+            commit, *parents = line.split()
+            now = parsed(git(top, "show", f"{commit}:{name}"))
+            if now is None or event not in human_events(now[0]):
+                continue
+            holders = []
+            for parent in parents:
+                old, earlier = before_in(top, parent, commit, name, now[0].get("id"))
+                if earlier is not None and event in human_events(earlier[0]):
+                    holders.append((parent, old))
+            if not holders:
+                return commit, now
+            renamed = [held for held in holders if held[1] != name]
+            if renamed:
+                moved = renamed[0]
+                break
+        if moved is None:
+            return None
+        start, name = moved
+    return None
+
+
 def verdict_edits(bundle: Path, since: str) -> list[str]:
     """Rule 14: a commit that records a person's confirmation changes the verdict, not what the concept says.
 
@@ -445,7 +523,9 @@ def verdict_edits(bundle: Path, since: str) -> list[str]:
     may change the concept's claims only when `generated.by` names that same
     person, which is how Correct now records an edit the person made. A
     merge that brings in a confirmation made elsewhere adds nothing new, so
-    it is never read as one. Outside git nothing is said.
+    it is never read as one. A renamed concept is read against the file it
+    was, which before_in finds by its id, so a rename alone claims nothing.
+    Outside git nothing is said.
     """
     if not COMMIT.fullmatch(since):
         return [f"rule 14: '{since}' is not a commit - pass the base the pull request was opened against"]
@@ -464,13 +544,13 @@ def verdict_edits(bundle: Path, since: str) -> list[str]:
         for parent in parents or [""]:
             against = [parent, commit] if parent else ["--root", commit]
             out = git(top_path, "diff-tree", "--no-commit-id", "--name-only", "-r", "--diff-filter=AM", *against, "--", rel)
-            names.update(n for n in (out or "").splitlines() if n.endswith(".md") and Path(n).name not in RESERVED)
+            names.update(n for n in (out or "").splitlines() if n.endswith(".md") and not reserved(top_path / n, real))
         for name in sorted(names):
             now = parsed(git(top_path, "show", f"{commit}:{name}"))
             if now is None:
                 continue
             frontmatter, body = now
-            before = [parsed(git(top_path, "show", f"{parent}:{name}")) for parent in parents]
+            before = [before_in(top_path, parent, commit, name, frontmatter.get("id"))[1] for parent in parents]
             held: set[tuple[str, str]] = set()
             for earlier in before:
                 if earlier is not None:
@@ -836,7 +916,7 @@ def main(argv: list[str]) -> int:
     for path in sorted(bundle.rglob("*.md")):
         if path.is_symlink() or not path.is_file():
             continue
-        if ".obsidian" in path.parts or path.name in RESERVED:
+        if ".obsidian" in path.parts or reserved(path, bundle):
             continue
         findings.extend(check_file(path, bundle, ids, entries, titles, source_ids))
 

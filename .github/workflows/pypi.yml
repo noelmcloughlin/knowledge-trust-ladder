@@ -27,6 +27,10 @@ name: PyPI
 # details at a time, so the first upload stops at knowledge-trust-ladder:
 # register its publisher with the same details, then run the job again.
 #
+# A pushed v* tag runs its own copy of this file, which can drop every check
+# below. A required reviewer on `pypi` and `testpypi` is the check it cannot
+# drop, and is recommended: see docs/threat-model.md#repository-hardening.
+#
 # Three jobs, for least privilege. `build` runs the build backend
 # (third-party packages, installed at the hashes .pypi/requirements.txt
 # holds) under a read-only token. `upload` holds the OIDC token, runs no
@@ -67,7 +71,8 @@ jobs:
           egress-policy: audit
 
       # The version is read from the tag, so the run must stand on it, and
-      # the tag must be a release tag.
+      # the tag must be a release tag. This catches a run on the wrong ref,
+      # not a tag whose copy drops it.
       - name: Check the run stands on the release tag
         env:
           REF: ${{ github.ref }}

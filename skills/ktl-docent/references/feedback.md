@@ -39,7 +39,7 @@ Run `glab api user` only through that filter. On its own it prints the asker's w
 
 - `0`: recorded. If the reader asked, tell them so, and how many entries are waiting.
 - `2`: the call was wrong and nothing was written. Fix the call. If the kind or the login was refused, do not retry with the refusal edited out. Text that holds `" - docent"` (without the quotes) is refused because it reads as the attribution: word the entry another way.
-- `1`: the file could not be written. Either `.lokf/` is read-only, where saying the gap out loud is the expected answer, or another run holds the lock it names, which a second try a moment later usually clears.
+- `1`: the file could not be written. Either `.lokf/` is read-only, where saying the gap out loud is the expected answer, or another run holds the lock it names, which a second try a moment later usually clears. Or the script found a symbolic link at `.lokf/`, at the file or at its lock, which it neither reads nor writes through: say the gap out loud, and name the link the script names.
 
 **No `scripts/` folder beside this skill's `SKILL.md`** means the install is incomplete. Say so once, and suggest installing ktl-docent again. Until then, give the reader each entry as one line in the [format](#format) below, to file themselves or send to the repository's maintainers. Never write the entry yourself: that means opening the file, which is what the script exists to prevent.
 

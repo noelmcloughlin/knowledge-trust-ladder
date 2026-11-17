@@ -115,7 +115,7 @@ Any one of these refuses the whole file, and nothing is written:
 - a line anywhere in the file that would read as a person's event (`by: human:...`) or a person's note (`- <date>, human:...`); prose may mention the actor prefix, but only ktl-curator writes one, in a live session;
 - a patch after which any concept it writes would hold a person's record other than the one the file held, however the operations spelt it. The record is each `human:` event under any key, and each person's note in any spelling a Markdown reader shows as one;
 - a patch after which the report would no longer list a note a person left, as a second `## Open questions` heading or a code fence left open above it does;
-- `by` that is not `process:<id>`, or that is `process:ktl-curator`, the actor that stands for a person in a curator's session;
+- `by` that is not `process:<id>`, with an id of letters, digits, `.`, `_` and `-`, or that starts with `process:ktl-curator`, the actor that stands for a person in a curator's session;
 - a path that is not lowercase a-z, 0-9 and hyphens under a folder, or that is `index.md`, `log.md` or `diataxis.md`, or that a link leads out of the bundle;
 - a key given twice in one mapping, in the patch file or in a concept's frontmatter, since YAML would keep the last and say nothing;
 - a key the operation does not take, such as `edits` on a `rewrite` or `log` on a `recheck`;
