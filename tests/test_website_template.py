@@ -532,7 +532,7 @@ def test_each_template_that_writes_into_a_page_s_text_marks_what_it_writes():
     kept = set(re.search(r"SITE_DATA = \{([^}]*)\}", cleaner).group(1).replace('"', "").replace(" ", "").split(","))
     written = set()
     for template in sorted(hooks.glob("*.html")):
-        for tag in re.findall(r"<[a-z][^<>]*(?:\{\{[^}]*\}\}[^<>]*)*>", read(template)):
+        for tag in re.findall(r"<[a-z](?:[^<>{]|\{(?!\{)|\{\{[^}]*\}\})*>", read(template)):
             marks = re.findall(r"\bdata-[a-z-]+", tag)
             written |= set(marks)
             if "class=" in tag or marks:
