@@ -11,7 +11,12 @@
    commit;
 4. the jobs that run the contract set up the tools its checks need;
 5. the contract fails under CI when a tool one of its checks needs is
-   missing, and skips that check with a notice anywhere else.
+   missing, and skips that check with a notice anywhere else;
+6. semantic-release.yml's `plan` job counts a commit as releasing when the
+   pinned commit-analyzer does, a `perf:` commit and a revert among them,
+   and the pages that list the releasing types list the same ones;
+7. each skill's frontmatter is YAML an installer can read, with a name and
+   a description inside the Agent Skills limits.
 """
 
 from __future__ import annotations
@@ -27,6 +32,7 @@ from conftest import REPO, Git, read, run, write
 SMOKE = REPO / "scripts" / "smoke-test-install.sh"
 CONTRACT = REPO / "scripts" / "validate-repository.sh"
 PUBLISH = REPO / ".github" / "workflows" / "publish.yml"
+SEMANTIC = REPO / ".github" / "workflows" / "semantic-release.yml"
 VALIDATE = REPO / ".github" / "workflows" / "validate.yml"
 
 # A stand-in for npx: `skills add` writes .agents/ into the source repository
@@ -221,3 +227,130 @@ def test_the_contract_fails_under_ci_when_a_tool_is_missing_and_skips_the_check_
         assert f"FAIL: {tool} is not on PATH, so " in ci.out, f"{tool}: a missing tool passes under CI"
     assert "OK:   knowledge-m365.sh builds ktl-docent-m365 from this repository's bundle" in local.out, "without zip the folder is still checked"
     assert ci.rc == 1 and ci.out.endswith("Repository contract: FAIL"), ci.out[-400:]
+
+
+# 6. What the plan job counts as releasing.
+
+REVERTS = "This reverts commit 0123abc."
+# What @semantic-release/commit-analyzer 13.0.1 answers for each message under
+# .releaserc.json, asked of the package installed from .release/package-lock.json.
+RELEASING = [
+    "feat: a",
+    "fix(scope): a",
+    "security(ci): a",
+    "perf: a",
+    "perf(report): a",
+    "FEAT: a",
+    "FIX: a",
+    "chore!: a",
+    "docs(x)!: a",
+    "docs: a\n\nBREAKING CHANGE: b",
+    "docs: a\n\nBREAKING-CHANGE: b",
+    "docs: a\n\nbreaking change: b",
+    f"revert: feat: a\n\n{REVERTS}",
+    f'Revert "feat: a"\n\n{REVERTS}',
+    f'Revert "docs: a"\n\n{REVERTS}',
+    f'Revert "feat: a" (#12)\n\n{REVERTS}',
+]
+RELEASING_NOTHING = [
+    "docs: a",
+    "Fix: a",
+    "feat:a",
+    "revert: feat: a",
+    'Revert "feat: a"',
+    'Revert "feat: a" (#12)\n\nReverts owner/repo#12',
+    f"revert(scope): feat: a\n\n{REVERTS}",
+    "build(deps): a",
+    "chore(deps): a\n\nfix: a line of the body, which is no subject",
+    "refactor: a",
+    "style: a",
+    "test: a",
+    "ci: a",
+    "Fix the thing (#46)",
+]
+
+
+@pytest.fixture(scope="module")
+def plan(tmp_path_factory):
+    """The plan job, and a repository whose main holds one commit, to put a pull request's commits on."""
+    job = yaml.safe_load(read(SEMANTIC))["jobs"]["plan"]
+    git = Git(tmp_path_factory.mktemp("plan") / "repo")
+    git.repo.mkdir()
+    git.init()
+    git("commit", "-q", "--allow-empty", "-m", "chore: base")
+    return job, git, git("rev-parse", "HEAD")
+
+
+def commits_release(plan, *messages):
+    """The step's outputs for a pull request that holds these commits."""
+    job, git, base = plan
+    git("checkout", "-q", "-B", "work", base)
+    for message in messages:
+        git("commit", "-q", "--allow-empty", "--cleanup=verbatim", "-m", message)
+    output = git.repo.parent / "github-output"
+    write(output, "")
+    done = run_step(job, "Read whether these commits would release", git.repo, BASE=base, HEAD_SHA=git("rev-parse", "HEAD"), GITHUB_OUTPUT=output, **job["env"])
+    assert done, done.out
+    return dict(line.split("=", 1) for line in read(output).splitlines())
+
+
+def title_passes(plan, title, reverts="false"):
+    job, git, _ = plan
+    return run_step(job, "Refuse a title that would lose the release on a squash merge", git.repo, TITLE=title, REVERTS=reverts, **job["env"])
+
+
+@pytest.mark.skipif(not shutil.which("git"), reason="git is not installed")
+@pytest.mark.parametrize("message", RELEASING)
+def test_the_plan_job_counts_a_commit_the_analyzer_releases(plan, message):
+    found = commits_release(plan, "docs: an earlier commit", message)
+    assert found["releases"] == "true", message
+    assert found["reverts"] == ("true" if REVERTS in message else "false"), message
+
+
+@pytest.mark.skipif(not shutil.which("git"), reason="git is not installed")
+@pytest.mark.parametrize("message", RELEASING_NOTHING)
+def test_the_plan_job_passes_over_a_commit_the_analyzer_releases_nothing_for(plan, message):
+    assert commits_release(plan, message, "docs: a later commit") == {"releases": "false", "reverts": "false"}, message
+
+
+@pytest.mark.skipif(not shutil.which("git"), reason="git is not installed")
+def test_a_title_must_release_as_a_squash_merge_of_the_commits_would(plan):
+    for title in ("feat: a (#1)", "fix(report): a", "perf: a", "security(ci): a", "docs!: a"):
+        assert title_passes(plan, title), title
+    for title in ("Fix the thing (#46)", "docs: a", "perf a", 'Revert "feat: a"', "revert: feat: a"):
+        refused = title_passes(plan, title)
+        assert refused.rc == 1 and "retitle the pull request" in refused.out, title
+    for title in ('Revert "feat: a" (#12)', "revert: feat: a"):
+        assert title_passes(plan, title, reverts="true"), "a squash merge keeps the sentence that names the reverted commit in its body"
+    assert not title_passes(plan, "docs: undo a", reverts="true"), "a typed title over a revert releases nothing"
+
+
+def test_the_pages_list_the_types_the_plan_job_releases():
+    job = yaml.safe_load(read(SEMANTIC))["jobs"]["plan"]
+    refusal = step(job, "Refuse a title that would lose the release on a squash merge")["run"]
+    pages = {
+        "semantic-release.yml's refusal": refusal,
+        "CONTRIBUTING.md": read(REPO / "CONTRIBUTING.md"),
+        "docs/releasing.md": read(REPO / "docs" / "releasing.md"),
+        "the pull request template": read(REPO / ".github" / "pull_request_template.md"),
+    }
+    for name, text in pages.items():
+        for word in ("feat:", "fix:", "perf:", "security:", "Revert"):
+            assert word in text, f"{name} does not name {word}"
+
+
+# 7. The frontmatter an installer reads.
+
+
+@pytest.mark.parametrize("skill", sorted(p.parent.name for p in (REPO / "skills").glob("*/SKILL.md")))
+def test_a_skills_frontmatter_parses_and_keeps_to_the_agent_skills_limits(skill):
+    """The contract reads the fields with awk, which passes a quote YAML refuses; `gh skill publish` parses them."""
+    text = read(REPO / "skills" / skill / "SKILL.md")
+    assert text.startswith("---\n"), skill
+    front = yaml.safe_load(text[4:].split("\n---\n", 1)[0])
+    assert front["name"] == skill
+    description = front["description"]
+    assert isinstance(description, str) and 1 <= len(description) <= 1024, f"{skill}: {len(description)} characters"
+    assert description.rstrip().endswith("."), "the description ends its Keywords list with a full stop"
+    assert "Keywords: " in description, skill
+    assert 1 <= len(front["compatibility"]) <= 500, skill

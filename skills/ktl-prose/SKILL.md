@@ -1,6 +1,6 @@
 ---
 name: ktl-prose
-description: 'Reword the concept bodies of a `.lokf/` knowledge bundle into plain English, changing the wording and never a fact. Use when: someone asks for a plain-prose or plain-English pass, a restyle, shorter sentences or paragraphs, plainer words in place of jargon, or a style audit of the bundle; or says its concepts read as if an agent wrote them; or asks for a version for younger or dyslexic readers ("for ages 8 to 12", "for teens", "explain like I''m five"). Works between ktl-librarian and ktl-curator: it rewords only a body an agent wrote and no person confirmed, and checks by script that code, links and numbers came through unchanged. Applies the same rules to another Markdown file only when a person names it. Not for deriving, correcting or confirming what a concept claims; that is ktl-librarian / ktl-curator. Keywords: plain English, plain language, readability, style guide, technical writing, copy editing, OKF, LOKF, WikiSkill, trust ladder.'
+description: 'Reword the concept bodies of a `.lokf/` knowledge bundle into plain English, changing the wording and never a fact. Use when: someone asks for a plain-prose or plain-English pass, a restyle, shorter sentences or paragraphs, plainer words in place of jargon, or a style audit of the bundle''s wording; or says its concepts read as if an agent wrote them; or asks for a version for younger or dyslexic readers ("for ages 8 to 12", "for teens", "explain like I''m five"). Works between ktl-librarian and ktl-curator: it rewords only a body an agent wrote and no person confirmed, and checks by script that code, links and numbers came through unchanged. Applies the same rules to another Markdown file only when a person names it. Not for deriving, correcting or confirming what a concept claims; that is ktl-librarian / ktl-curator. Keywords: plain English, plain language, readability, style guide, technical writing, copy editing, OKF, LOKF, WikiSkill, trust ladder.'
 license: Apache-2.0
 compatibility: 'Works on a `.lokf/` bundle installed by ktl-sidecar. The check script needs python3 3.11 or later, or uv; without either, apply the rules by hand and say in the hand-off that no script ran. git supplies the earlier version of a file to compare against; without git, keep a copy before rewriting.'
 ---
@@ -57,7 +57,7 @@ Apply the first row that fits. Naming a concept unlocks only the eighth row.
 | A concept with no `generated.by` | Skip it and list it, because nobody recorded who wrote it. Reword it only when the person names it. |
 | Any other concept | Reword the body. |
 
-A confirmation is a person's time spent against a source, and a rewording must not spend it. Nothing a reader sees would show the edit either: this skill leaves `generated.at` where it was, so no trust label changes, and no gate ties a body to its confirmation. So the rule has no exception, and the script enforces it.
+A confirmation is a person's time spent against a source, and a rewording must not spend it. No trust label would show the edit either: this skill leaves `generated.at` where it was, so the concept would still read as confirmed, and `knowledge-conventions.sh` fails that edit (its rule 13). So the rule has no exception, and the check script enforces it.
 
 ## What a rewording never changes
 

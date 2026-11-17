@@ -9,13 +9,14 @@ Nobody picks a version number. Commits typed with [Conventional Commits](https:/
 | Commit type | Release |
 | --- | --- |
 | `feat:` | minor |
-| `fix:`, `security:` | patch |
+| `fix:`, `perf:`, `security:` | patch |
+| A revert as `git revert` writes it: a subject that starts `Revert`, and a body that says `This reverts commit <hash>.` | patch, unless the commit it reverts is still unreleased: then neither counts |
 | `BREAKING CHANGE:` in a footer, or `!` after the type | major |
-| `docs:`, `chore:`, `refactor:`, `style:`, `test:`, `ci:` | none: the change merges, releases nothing, and its changelog entries wait for the next release that does |
+| `docs:`, `chore:`, `refactor:`, `style:`, `test:`, `build:`, `ci:`, and a `revert:` typed by hand without that sentence | none: the change merges, releases nothing, and its changelog entries wait for the next release that does |
 
 Type the commit for what the change *is*. A behaviour change is a `feat:` even when most of the diff is prose. If a pull request should release and none of its commits has a type that releases, squash-merge it and give the squash commit the right type.
 
-The reverse trap is a squash merge that takes its subject from the pull request *title*, which GitHub defaults to the branch name in words, with no type. So a typed `fix:` commit reaches `main` as "Fix the thing (#46)" and releases nothing. The `plan` job refuses a pull request whose commits would release but whose title would not. Type the title like a commit. The workflow runs on `edited` pull requests as well as on pushes, so retitling re-runs the check on its own.
+The reverse trap is a squash merge that takes its subject from the pull request *title*, which GitHub defaults to the branch name in words, with no type. So a typed `fix:` commit reaches `main` as "Fix the thing (#46)" and releases nothing. The `plan` job refuses a pull request whose commits would release but whose title would not. Type the title like a commit, and leave a revert's title as GitHub writes it, `Revert "..."`. The workflow runs on `edited` pull requests as well as on pushes, so retitling re-runs the check on its own.
 
 The release note is `CHANGELOG.md`'s `## [Unreleased]` section, written as you go: a line or two per change, with the detail left to the code's comments. The pipeline releases only what has already been written up.
 

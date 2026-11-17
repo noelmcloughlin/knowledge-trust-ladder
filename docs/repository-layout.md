@@ -8,7 +8,7 @@ skills/
   ktl-librarian/       SKILL.md + references/
   ktl-curator/         SKILL.md + references/
   ktl-docent/          SKILL.md + references/ + scripts/
-  ktl-prose/           SKILL.md + references/ + scripts/
+  ktl-prose/           SKILL.md + references/ + scripts/ + assets/
   ktl-website/         SKILL.md + references/ + scripts/ + templates/
 .assets/
   *.svg, *-dark.svg     the logo, the social card and each figure the docs show, light and dark
@@ -23,6 +23,8 @@ skills/
 .github/repository-settings.json  what this repository's own workflows need from GitHub, and the hardening it keeps; `ktl gh` reads it beside the skills' catalogues
 .github/docent-eval/
   package.json, package-lock.json  Claude Code, which docent-eval.yml installs with npm ci, pinned by hash
+.github/scripts/
+  changelog-release.mjs  checks, prints and promotes CHANGELOG.md's Unreleased section for semantic-release.yml
 .github/workflows/
   validate.yml               repository contract, Agent Skills spec, Markdown and links (every PR)
   knowledge-registrar.yaml   the sidecar's schema and provenance gate (PRs touching the bundle)
@@ -60,7 +62,8 @@ docs/
   examples/
     first-bundle.md     one captured run of the four roles on a repository that had no bundle
     docent.md           eight captured docent answers against this repository's own bundle
-    curator.md          placeholder: the curator sessions still to capture
+    curator.md          one captured ktl-curator review session on this repository's own bundle
+    docent-after-curation.md  nine captured docent answers after that session: what a curation changes for a reader
     prose.md            captured ktl-prose runs that write for younger readers
 scripts/
   validate-repository.sh   the contract: the checks validate.yml runs on this repository's own files
@@ -71,8 +74,11 @@ tests/                     the behavioural tests of the sidecar scripts and the 
   conftest.py              the shared helpers, and how to run the tests
   test_*.py                one module per script: the pen, the gate, the report, the conventions checker,
                            the feedback recorder, the preflight, the prose checker, the layouts the
-                           wrapper and the workflows run in, the website skill's preflight and templates,
-                           and the ktl package and its two commands
+                           wrapper and the workflows run in, the federation build, the ingest, the sync,
+                           the Microsoft 365 builder, the website skill's preflight and templates, the
+                           ktl package and its two commands, the changelog script, and this
+                           repository's own scripts and workflows
+  requirements.in, requirements.txt  the test packages, each pinned by hash; validate.yml and publish.yml install them with --require-hashes
   docent-holdout.yaml      the eight captured docent questions and the concept each answer should rest on, as data; outside .lokf/ so the docent cannot read it
   docent-holdout-schema.yaml  its LinkML shape, importing LOKF's schema for Concept
   test_docent_holdout.py   checks that each expected concept still exists and that evals/ asks the same questions
@@ -98,4 +104,4 @@ knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar creates
 
 Each `SKILL.md` is a short router. Anything not needed on every invocation is in that skill's `references/`, loaded only when the router points to it, so the cost of a trigger stays small. Contract check 10a holds each `SKILL.md` to a word budget.
 
-`ktl-sidecar/templates/` and `ktl-website/templates/` hold the files each installs, copied verbatim, never retyped. `ktl-prose/scripts/` and `ktl-website/scripts/` hold the one script each runs in place. `ktl-docent/scripts/` holds the docent's own copies of `knowledge-report.sh` and `knowledge-feedback.sh`. Contract check 11a keeps them identical to the sidecar's templates, so a question to the docent runs no script the host repository supplies.
+`ktl-sidecar/templates/` and `ktl-website/templates/` hold the files each installs, copied verbatim, never retyped. `ktl-prose/scripts/` and `ktl-website/scripts/` hold the one script each runs in place, and `ktl-prose/assets/` holds the word list its script reads for younger readers. `ktl-docent/scripts/` holds the docent's own copies of `knowledge-report.sh` and `knowledge-feedback.sh`. Contract check 11a keeps them identical to the sidecar's templates, so a question to the docent runs no script the host repository supplies.
