@@ -19,7 +19,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T10:18:02Z"
+  at: "2026-11-17T20:29:12Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T00:59:27Z"
@@ -48,7 +48,7 @@ Reading the paper in October 2026 changed the skills in four places, which `CHAN
 
 One more change came with LOKF 0.9.0. SkillWiki's verifier specs check an output by program, and LOKF 0.9.0's `sources[].excerpt` lets a program check the exact passage a concept relies on against its source. `just lokf-check-refs` runs that check, `lokf validate --check-excerpts`, so the gate fails a quote that drifted from its source.
 
-`docs/how-it-works.md` holds what KTL took from the paper, under *How readers and verdicts steer the next run*, and `docs/skillwiki.md` is gone. `CHANGELOG.md` says this concept stays the record of the paper.
+`docs/how-it-works.md` holds what KTL took from the paper, under *How readers and verdicts steer the next run*. `CHANGELOG.md` says this concept stays the record of the paper.
 
 # Where the designs part
 
@@ -56,3 +56,8 @@ One more change came with LOKF 0.9.0. SkillWiki's verifier specs check an output
 - **What a state names.** SkillWiki stores a skill's state. KTL stores no label: `knowledge-report.sh` computes each one from the events.
 - **Scores and signals.** SkillWiki attaches a `confidence` number. LOKF's schema says that "OKF stores signals, never a score", and KTL records a named person's verdict where SkillWiki has a number.
 - **A declined proposal.** SkillWiki can raise a rejected proposal again. The librarian proposes nothing again from a pull request a person closed without merging, until the source moves, a person leaves a new note or a reader asks again.
+
+## Open questions
+
+- 2026-11-17, process:ktl-librarian: the body says `CHANGELOG.md` keeps this concept as the record of the SkillWiki paper, but `CHANGELOG.md` no longer says so, and no other file in the repository does. Should the sentence go, or does another source state it?
+- 2026-11-17, human:noelmcloughlin: sent back to fix the record: the sentence that says `CHANGELOG.md` keeps this concept as the paper's record has no source now.

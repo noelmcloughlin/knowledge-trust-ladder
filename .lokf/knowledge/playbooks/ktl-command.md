@@ -19,6 +19,8 @@ sources:
   - resource: skills/ktl-sidecar/references/repository-settings.json
   - resource: skills/ktl-website/references/repository-settings.json
   - resource: .github/repository-settings.json
+    id: repository-settings.json
+    excerpt: A pushed tag runs its own copy of pypi.yml, so a required reviewer is the one check it cannot drop.
   - resource: pyproject.toml
   - resource: alias
   - resource: tests/test_gh.py
@@ -29,11 +31,11 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T22:54:18Z"
+  at: "2026-11-17T20:29:12Z"
 status: draft
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-15T19:13:22Z"
+    at: "2026-11-17T21:23:32Z"
 ---
 
 # Overview
@@ -65,8 +67,9 @@ Each verb that changes something prints the changes and asks first, unless `--ye
 
 A catalogue is a JSON file. It lists each variable, secret, Environment, setting and ruleset a set of workflows needs, with the reason. A `workflow` entry names an action that a workflow under `.github/workflows/` must use, since `ktl gh` writes no workflow itself. ktl-sidecar and ktl-website each carry one as `references/repository-settings.json`, and this repository describes its own workflows in `.github/repository-settings.json`. Each entry is `required`, `recommended` or `optional`.
 
-The sidecar's catalogue marks the hardening `recommended`: rulesets on the default branch and on `v*` tags, a read-only default workflow token, secret scanning and push protection, a required reviewer on a `release` Environment, and, on a public repository, a workflow that publishes an OpenSSF Scorecard result. `plan` leaves that workflow to the person, and `check --strict` names a public repository without one. In this repository, required reviewers on `release` wait until releases have downstream users.[^docs-releasing.md] Its catalogue requires its Scorecard and CodeQL workflows. `tests/test_gh.py` holds the catalogues to the templates, to the table of switches and secrets in `automation.md`, and to the retired names the changelog gives.
+The sidecar's catalogue marks the hardening `recommended`: rulesets on the default branch and on `v*` tags, a read-only default workflow token, secret scanning and push protection, a required reviewer on a `release` Environment, and, on a public repository, a workflow that publishes an OpenSSF Scorecard result. `plan` leaves that workflow to the person, and `check --strict` names a public repository without one. In this repository, required reviewers on `release` wait until releases have downstream users.[^docs-releasing.md] Its catalogue requires its Scorecard and CodeQL workflows, and recommends a required reviewer on the `pypi` and `testpypi` Environments, since a pushed tag runs its own copy of `pypi.yml`.[^repository-settings.json] `tests/test_gh.py` holds the catalogues to the templates, to the table of switches and secrets in `automation.md`, and to the retired names the changelog gives.
 
 [^ktl-readme.md]: src/ktl/README.md, the paragraph after the title
 [^repository-settings.md]: skills/ktl-sidecar/references/repository-settings.md, What each verb does, `apply`
 [^docs-releasing.md]: docs/releasing.md, the paragraph after the table of repositories
+[^repository-settings.json]: .github/repository-settings.json, the `pypi` and `testpypi` Environment entries

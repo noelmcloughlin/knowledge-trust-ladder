@@ -23,6 +23,7 @@ scripts/smoke-test-website.sh, which needs the network.
 
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 import shutil
@@ -165,6 +166,45 @@ def test_step_one_writes_a_value_as_a_toml_string_and_refuses_a_line_break(tmp_p
         assert read(host / "website" / "site.toml") == before and "<PROJ_NAME>" in read(host / "website" / "README.md"), "it wrote neither file"
 
 
+NPM_STUB = """#!/usr/bin/env bash
+# `npm pack <package>@<version>` as a registry answers it: a .tgz in the
+# current folder that holds package/dist/<name>.min.js, with $BODY in it.
+printf '%s\\n' "$*" >> "$CALLS"
+spec=${!#}; name=${spec%@*}
+mkdir -p package/dist && printf '%s' "$BODY" > "package/dist/$name.min.js"
+tar -czf "$name-${spec##*@}.tgz" package && rm -rf package
+"""
+
+
+def test_vendor_sh_keeps_a_file_from_the_npm_registry_only_at_the_hash_hugo_toml_names(tmp_path):
+    """Where the CDN is blocked, a company registry gives the same file, and a file of another version must not reach assets/vendor."""
+    site = tmp_path / "website"
+    shutil.copytree(SITE_TEMPLATES / "scripts", site / "scripts")
+    write(site / "uv.lock", "version = 1\n")
+    body = "/* cytoscape */"
+    write(site / "hugo.toml", '[params.vendor.cytoscape]\nurl = "https://cdn.jsdelivr.net/npm/cytoscape@3.34.4/dist/cytoscape.min.js"\n'
+          f'sha256 = "{hashlib.sha256(body.encode()).hexdigest()}"\n')
+    for name, stub in (("uv", UV_STUB), ("npm", NPM_STUB)):
+        write(tmp_path / "bin" / name, stub).chmod(0o755)
+    calls = tmp_path / "calls"
+    env = {"PATH": f"{tmp_path / 'bin'}{os.pathsep}{os.environ['PATH']}", "PYTHON": sys.executable, "CALLS": str(calls), "TMPDIR": str(tmp_path),
+           "UV_DEFAULT_INDEX": "", "UV_INDEX_URL": "", "UV_INDEX": ""}
+    result = bash(site / "scripts" / "vendor.sh", env={**env, "BODY": body})
+    assert result and read(site / "assets" / "vendor" / "cytoscape.js") == body, result.out
+    assert "pack --silent --ignore-scripts cytoscape@3.34.4" in read(calls), "npm fetches the package and version of the address, and runs no script of it"
+    (site / "assets" / "vendor" / "cytoscape.js").unlink()
+    result = bash(site / "scripts" / "vendor.sh", "cytoscape", env={**env, "BODY": "/* another version */"})
+    assert result.rc == 1 and "not the" in result.out and "no file is written" in result.out and not (site / "assets" / "vendor" / "cytoscape.js").exists(), result.out
+    assert not list(tmp_path.glob("vendor.*")), "the fetched packages are removed"
+    result = bash(site / "scripts" / "vendor.sh", "mermaid", env={**env, "BODY": body})
+    assert result.rc == 1 and "hugo.toml names no library mermaid" in result.out, result.out
+    write(site / "hugo.toml", '[params.vendor.cytoscape]\nurl = "https://cdn.example/cytoscape@3.34.4/../../x.js"\nsha256 = "' + "0" * 64 + '"\n')
+    result = bash(site / "scripts" / "vendor.sh", env={**env, "BODY": body})
+    assert result.rc == 1 and "is not a jsDelivr npm address" in result.out, result.out
+    for name in ("cytoscape", "mermaid"):
+        assert f"[params.vendor.{name}]\nurl = \"https://cdn.jsdelivr.net/npm/{name}@" in read(SITE_TEMPLATES / "hugo.toml"), "the template's addresses are ones vendor.sh reads"
+
+
 def site_values(tmp_path, text):
     return run([sys.executable, "-I", str(SITE_TEMPLATES / "scripts" / "site-values.py"), str(write(tmp_path / "site.toml", text))])
 
@@ -268,16 +308,16 @@ def test_prepare_stops_on_an_svg_that_could_run_and_on_a_site_toml_it_cannot_rea
     shutil.rmtree(site / "generated")
     write(host / ".lokf" / "uv.lock", "version = 1\n")
     result = prepare(host, tmp_path)
-    assert result.rc == 7 and "stub: lokf export" in result.out and "check-svg" not in result.out, f"both checks pass, and prepare.sh goes on to the export: {result.out}"
+    assert result.rc == 1 and "lokf-export.py" in result.out and "No module named 'lokf'" in result.out and "check-svg" not in result.out, f"both checks pass, and prepare.sh goes on to the export: {result.out}"
     shutil.rmtree(site / "generated")
     for folder, name in ((host / "docs" / "img", "UPPER.SVG"), (host / ".assets", "charref.svg"), (site / "static", "prefixed.svg")):
         planted = write(folder / name, ACTIVE_SVG[name][0])
         result = prepare(host, tmp_path)
-        assert result.rc == 1 and f"  {planted}: {ACTIVE_SVG[name][1]}" in result.out and "stub: lokf" not in result.out, f"prepare.sh went on past {name}: {result.out}"
+        assert result.rc == 1 and f"  {planted}: {ACTIVE_SVG[name][1]}" in result.out and "lokf-export.py" not in result.out, f"prepare.sh went on past {name}: {result.out}"
         planted.unlink()
     write(site / "site.toml", read(site / "site.toml") + 'browse = "data"\nbrowseBuild = "just x"\nbrowseBuild = "touch pwned"\n')
     result = prepare(host, tmp_path)
-    assert result.rc == 1 and "site-values:" in result.out and "cannot be read as TOML" in result.out and "stub:" not in result.out, f"prepare.sh read a site.toml that is not TOML: {result.out}"
+    assert result.rc == 1 and "site-values:" in result.out and "cannot be read as TOML" in result.out and "lokf-export.py" not in result.out, f"prepare.sh read a site.toml that is not TOML: {result.out}"
     assert not (host / "pwned").exists() and not (site / "generated").exists(), "it stopped before it wrote or ran anything"
 
 
@@ -459,7 +499,8 @@ def test_both_workflows_that_build_the_site_install_the_just_the_sidecar_pins():
     pin = re.search(r'"rust-just==([0-9.]+)"', read(TEMPLATES / "pyproject.toml")).group(1)
     for workflow in (WEBSITE_TEMPLATES / "github" / "knowledge-website.yaml", TEMPLATES / "github" / "knowledge-federation.yaml"):
         text = read(workflow)
-        assert "grep -q '^browseBuild = \"just ' \"$" in text, workflow.name
+        assert "/scripts/site-values.py\" \"$" in text and "| sed -n 's/^browseBuild=//p')\"" in text and 'case "$build" in' in text, f"{workflow.name} reads browseBuild as TOML"
+        assert "grep -q '^browseBuild" not in text, workflow.name
         assert 'ln -sf "$PWD/.lokf/.venv/bin/just" "$HOME/.local/bin/just"' in text, workflow.name
         assert f"uv tool install rust-just=={pin}" in text, workflow.name
         assert text.index("Install just, when the") < text.index("/scripts/build.sh"), f"{workflow.name} installs just after the build"
@@ -478,7 +519,7 @@ def test_the_federation_reads_the_site_s_address_from_site_toml_in_either_folder
              f"spec = importlib.util.spec_from_file_location('federate', {str(TEMPLATES / 'scripts' / 'knowledge-federate.py')!r})\n" \
              "source = pathlib.Path(spec.origin).read_text()\n" \
              "start, end = source.index('def public_url('), source.index('def host_schema(')\n" \
-             "scope = {'pathlib': pathlib, 're': __import__('re')}\n" \
+             "scope = {'pathlib': pathlib, 're': __import__('re'), 'Failed': SystemExit}\n" \
              "exec('from __future__ import annotations\\n' + source[start:end], scope)\n" \
              "print(scope['public_url'](pathlib.Path(sys.argv[1]), None))\n"
     for folder in ("website", "ktl-website"):
@@ -487,6 +528,13 @@ def test_the_federation_reads_the_site_s_address_from_site_toml_in_either_folder
         result = run([sys.executable, "-c", script, str(host)])
         assert result and result.out.strip() == "https://acme.github.io/acme-platform/workspace", (folder, result.out)
     assert run([sys.executable, "-c", script, str(tmp_path)]).out.strip() == "", "a host with no site has no address to give"
+    site = tmp_path / "website" / "website" / "site.toml"
+    write(site, "# baseURL = \"https://commented.example/\"\nbaseurl = 'https://docs.example.org/'\n[params]\nbaseURL = \"https://params.example/\"\n")
+    result = run([sys.executable, "-c", script, str(tmp_path / "website")])
+    assert result and result.out.strip() == "https://docs.example.org/workspace", f"the address is the top-level key, in any case and either quote: {result.out}"
+    write(site, 'baseURL = "https://docs.example.org/\n')
+    result = run([sys.executable, "-c", script, str(tmp_path / "website")])
+    assert not result and "website/site.toml cannot be read as TOML" in result.out, result.out
 
 
 def check_links(site, address="https://acme.github.io/acme-platform/"):

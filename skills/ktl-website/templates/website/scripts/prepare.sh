@@ -58,9 +58,10 @@ mode=$("$here/scripts/uv-env.sh" "$root/.lokf")
 lokf=(uv run --project "$root/.lokf" "$mode" --quiet)
 
 # The domain vocabulary the sidecar's justfile names, so the export carries
-# its classes as `just lokf-convert` does.
+# its classes as `just lokf-convert` does. lokf-export.py runs `lokf export`
+# with the root's diataxis.md read as no concept.
 schema=$(sed -n 's/^schema := "\(.*\)"$/\1/p' "$root/.lokf/justfile" 2>/dev/null || true)
-"${lokf[@]}" lokf export ${schema:+--schema "$root/.lokf/$schema"} "$root/.lokf/knowledge" \
+"${lokf[@]}" python -I "$here/scripts/lokf-export.py" ${schema:+--schema "$root/.lokf/$schema"} "$root/.lokf/knowledge" \
   --out-dir "$out/knowledge" \
   --source-base "$repo_url/blob/$ref/.lokf/knowledge"
 

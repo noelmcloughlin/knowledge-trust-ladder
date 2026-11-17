@@ -22,7 +22,7 @@ sources:
   - resource: skills/ktl-sidecar/references/portability.md
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-15T19:13:22Z"
+    at: "2026-11-17T20:29:12Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:20:21Z"
 status: draft

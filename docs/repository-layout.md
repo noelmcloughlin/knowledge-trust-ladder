@@ -97,6 +97,8 @@ website/                   the website: Hugo, this repository's copy of ktl-webs
   scripts/prepare.sh       `lokf export`, the trust labels, gen-doc for a LinkML schema and the data site.toml names, into generated/
   scripts/clean-html.py    cleans each page's raw HTML to the tags GitHub allows
   scripts/check-svg.py     stops the build on an SVG that could run a script
+  scripts/lokf-export.py   runs lokf export with the root's diataxis.md read as no concept
+  scripts/vendor.sh        writes assets/vendor/ from an npm registry, each file checked by its hash
   scripts/site-values.py   reads site.toml through a TOML parser for prepare.sh
   scripts/check-links.py   fails the build on a link between two pages that does not resolve
 .lokf/                  this repository's own sidecar: the bundle and its tooling
@@ -105,4 +107,4 @@ knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar creates
 
 Each `SKILL.md` is a short router. Anything not needed on every invocation is in that skill's `references/`, loaded only when the router points to it, so the cost of a trigger stays small. Contract check 10a holds each `SKILL.md` to a word budget.
 
-`ktl-sidecar/templates/` and `ktl-website/templates/` hold the files each installs, copied verbatim, never retyped. `ktl-prose/scripts/` and `ktl-website/scripts/` hold the one script each runs in place, and `ktl-prose/assets/` holds the word list its script reads for younger readers. `ktl-docent/scripts/` holds the docent's own copies of `knowledge-report.sh` and `knowledge-feedback.sh`. Contract check 11a keeps them identical to the sidecar's templates, so a question to the docent runs no script the host repository supplies.
+`ktl-sidecar/templates/` and `ktl-website/templates/` hold the files each installs, copied verbatim, never retyped. `ktl-prose/scripts/`, `ktl-sidecar/scripts/` and `ktl-website/scripts/` hold the one script each runs in place, and `ktl-prose/assets/` holds the word list its script reads for younger readers. `ktl-docent/scripts/` holds the docent's own copies of `knowledge-report.sh` and `knowledge-feedback.sh`. Contract check 11a keeps them identical to the sidecar's templates, so a question to the docent runs no script the host repository supplies.

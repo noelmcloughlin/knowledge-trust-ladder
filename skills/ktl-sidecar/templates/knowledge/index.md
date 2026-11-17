@@ -3,13 +3,13 @@ lokf_version: "0.2"
 okf_version: "0.2"
 base_iri: <BASE_IRI>
 context: https://w3id.org/lokf/context.jsonld
-title: <PROJ_NAME> Knowledge Bundle
-description: <PROJ_DESC>
+title: "<PROJ_NAME> Knowledge Bundle"
+description: "<PROJ_DESC>"
 license: https://creativecommons.org/licenses/by/4.0/
 publisher:
   type: Person
   id: <BASE_IRI>person/<OWNER_SLUG>
-  name: <OWNER_NAME>
+  name: "<OWNER_NAME>"
 ---
 
 # <PROJ_NAME> Knowledge Bundle

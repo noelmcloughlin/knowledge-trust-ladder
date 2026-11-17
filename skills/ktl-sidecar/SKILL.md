@@ -87,28 +87,18 @@ Copy each template to its destination, then substitute the placeholders it lists
 
 ```bash
 mkdir -p .lokf/knowledge/services
-# ...copy the rows above, then substitute placeholders as literal text via
-# Python, not sed: sed's replacement is a fragment of its own s/// script, so
-# a value containing sed's delimiter or GNU sed's `e` (execute) command
-# changes what the command does, not just what text gets inserted - Python's
-# str.replace() has no such mini-language, so no value can do that.
+# ...copy the rows above, then fill the placeholders, never through sed.
 export PROJ_NAME PROJ_DESC PROJ_SLUG BASE_IRI OWNER_NAME OWNER_SLUG TODAY
-grep -rl -e '<PROJ_' -e '<BASE_IRI>' -e '<OWNER_' -e '<TODAY>' .lokf \
-  | xargs -I{} python3 -c '
-import os, sys
-path = sys.argv[1]
-text = open(path, encoding="utf-8").read()
-for token in ("PROJ_NAME", "PROJ_DESC", "PROJ_SLUG", "BASE_IRI", "OWNER_NAME", "OWNER_SLUG", "TODAY"):
-    text = text.replace("<" + token + ">", os.environ[token])
-open(path, "w", encoding="utf-8").write(text)
-' {}
+python3 <skill>/scripts/fill-placeholders.py $(grep -rl -e '<PROJ_' -e '<BASE_IRI>' -e '<OWNER_' -e '<TODAY>' .lokf llms.txt 2>/dev/null)
 ```
+
+Give each value as plain text on one line. The script stops, before it writes a file, on an empty value, a line break, a slug or date of another form, or a `<BASE_IRI>` that is no `http` address ending with `/`. It writes a value into frontmatter and `pyproject.toml` as an escaped string, so a colon or a quote in a description stays text.
 
 ## Step 2: point agents and humans at the bundle (optional, root-level)
 
 Make three additions at the **repo root**, outside `.lokf/`. Add only, never overwrite, and check for an existing item first. All three stay true **whether or not `.lokf/` exists later**, so nothing ever needs cleaning up if the bundle is removed. Keep that self-qualifying phrasing (a dangling symlink is harmless and easy to spot).
 
-- **`llms.txt`**: copy `templates/llms.txt` (PROJ_NAME, PROJ_DESC) if absent. If it exists, leave it intact and append only the `## Agent context` section, and only if the file does not already mention `.lokf/`.
+- **`llms.txt`**: copy `templates/llms.txt` (PROJ_NAME, PROJ_DESC) if absent, then run Step 1's block again, which fills the copy and finds nothing left to fill under `.lokf/`. If it exists, leave it intact and append only the `## Agent context` section, and only if the file does not already mention `.lokf/`.
 - **README pointer**: if `README.md` exists and does not already link to `.lokf/knowledge/` anywhere (check the path, not a heading string), insert `templates/readme-for-ai-agents.md` after the intro, before the first `##`. It is a one-paragraph blockquote aside, not a section, and it addresses both readers a README has. A person learns there is a second way in (install `ktl-docent` and ask). An agent, which reads the top of a README, is told to read the bundle first. The trust-weighing detail lives in `llms.txt` rather than being repeated here. If one question this host's readers keep asking comes to mind, put it in the aside as the example; a concrete question is what makes a person try it. Do not invent a README on a host that has none.
 - **`knowledge_bundle` symlink**: the bundle under an ordinary, visible name, beside the hidden `.lokf/`. Finder and most folder pickers hide dot-directories, a repository listing shows nothing else, and a double-click in a file manager should open the bundle. So the doorway is the one name a person needs to know, whatever they open it with. If nothing named `knowledge_bundle` already exists at the repo root:
 

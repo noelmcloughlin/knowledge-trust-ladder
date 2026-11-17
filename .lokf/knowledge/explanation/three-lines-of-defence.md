@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T22:54:18Z"
+  at: "2026-11-17T21:14:13Z"
 about: []
 relatedTo:
   - https://w3id.org/ktl/knowledge/policies/ai-covenant
@@ -19,7 +19,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/young-readers
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-15T19:13:22Z"
+    at: "2026-11-17T21:23:32Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:11:23Z"
   - by: human:noelmcloughlin
@@ -31,6 +31,9 @@ sources:
   - resource: CHANGELOG.md
   - resource: docs/architecture.md
   - resource: docs/m365.md
+  - resource: skills/ktl-sidecar/references/gate.md
+    id: gate.md
+    excerpt: only while each changed concept that carries the person's name is byte for byte what the approved commit held
 references:
   - https://w3id.org/ktl/knowledge/policies/knowledge-curation
 ---
@@ -46,7 +49,7 @@ The **docent** sits outside the lines, where the reader does, and reports what i
 
 Lines are roles, not headcount: the IIA's text says the lines "are not intended to denote structural elements but a useful differentiation in roles" and "may overlap in practice" given "clear accountability, transparency, and safeguards". The adopting organisation decides who plays each line, and the tooling holds the lines apart either way.
 
-The page says the curator's identity comes from the forge, never from the person. It is the login the machine is signed in as, or the login under which the forge lists the key the person signs with. It is never git config, and never what is typed into the agent's chat. The gate accepts a `human:` verdict only on that person's approval of the pull request or their signature on the commit. Where one person both authors and confirms, the signature is the route. A repository that cannot sign, and has nobody else to approve, has one logged exception: an approval from a required reviewer of an Environment.
+The page says the curator's identity comes from the forge, never from the person. It is the login the machine is signed in as, or the login under which the forge lists the key the person signs with. It is never git config, and never what is typed into the agent's chat. The gate accepts a `human:` verdict only on that person's approval of the pull request or their signature on the commit. An approval backs a confirmation only while it stands, and only when each changed concept that names the person is byte for byte what the approved commit held.[^gate.md] Where one person both authors and confirms, the signature is the route. A repository that cannot sign, and has nobody else to approve, has one logged exception: an approval from a required reviewer of an Environment.
 
 An auditor's questions each have a fixed place to look:
 
@@ -97,6 +100,8 @@ The page then lists what remains and who owns it, in four lines:
 - this project: `revision` from the KTL Curator plugin, an entitlement check by kind of concept, and the approval half of the gate on GitLab and Forgejo.
 - an auditor skill: it waits for a host with a third line, a person who audits the bundle and neither derives nor confirms it. Until then that person's tools are `knowledge-report.sh sample` and `evidence`, the `provenance` job's log, and the docent, which reads and never writes. A skill would add a record of the auditor's finding on each sampled concept, kept outside the bundle, and a Microsoft 365 Copilot form, which the page links to `docs/m365.md`.
 - the organisation: naming the independent re-checker, whether a red check blocks a merge, and the incentives and skill of whoever curates.
+
+[^gate.md]: skills/ktl-sidecar/references/gate.md, the paragraph on when an approval stands
 
 ## Open questions
 

@@ -7,7 +7,7 @@ genre: reference
 resource: https://cli.github.com/manual/gh_skill_install
 generated:
   by: process:ktl-librarian
-  at: "2026-10-16T23:58:13Z"
+  at: "2026-11-17T20:29:12Z"
 status: draft
 definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
@@ -27,4 +27,4 @@ verified:
 
 `gh skill install <repo> <skill[@version]>` installs one named skill from a GitHub repository or, with `--from-local`, from a local directory. With `--all` it installs every skill a repository offers. It installs into a host-specific directory at project or user scope, with `--pin` for a tag or commit SHA. `--agent` names the agent it installs for and `--scope` the scope, or `--dir` names a directory of its own. The default scope is project, and the default agent is `github-copilot` when the command runs non-interactively. The command group was added in GitHub CLI v2.90.0, whose release notes say it is launching in public preview and is subject to change without notice.
 
-`gh skill publish` validates the repository's skills against the Agent Skills specification and creates the tag and GitHub release. `--dry-run` is the validation-only mode CI runs on every pull request. `--tag vX.Y.Z` is the non-interactive publish the release workflow calls.
+`gh skill publish` validates the repository's skills against the Agent Skills specification and creates the tag and GitHub release. `--dry-run` is the validation-only mode CI runs on every pull request. `--tag vX.Y.Z` is the non-interactive publish the release workflow calls. It tags the head of `main`, not the commit the run checked out, so `publish.yml` stops unless `main` is still the commit its `verify` job checked.

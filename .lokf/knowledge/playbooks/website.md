@@ -18,14 +18,14 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/trust-label
 generated:
   by: process:ktl-librarian
-  at: "2026-11-15T21:31:28Z"
+  at: "2026-11-17T20:29:12Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:04:01Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T23:50:44Z"
   - by: process:ktl-librarian
-    at: "2026-11-14T12:32:59Z"
+    at: "2026-11-17T21:23:32Z"
   - by: human:noelmcloughlin
     at: "2026-11-14T10:23:35Z"
     revision: "5ebcfb7b854f1758f5f57e5f27b14c59a8ebcb8e"
@@ -40,7 +40,7 @@ The folder `website/` builds the project's site with Hugo. The Knowledge website
 
 No setting names any of these, though `site.toml`'s `source` can move where the README, the docs, the changelog and the figures come from, `linkml` can move the LinkML project whose schema the site shows, and `schema` can name the schema file itself. The build otherwise looks for each and shows what it finds:
 
-- Each concept in `.lokf/knowledge/` becomes a page under `knowledge/`, with its trust label from `knowledge-report.sh`, its sources and its relations both ways. The bundle also gives the health page, the graph, the four files `lokf export` writes, each concept's Markdown and JSON-LD, the bundle log as an Atom feed, `knowledge/log.xml`, and `badge.json`, labelled `KTL scorecard`: how many of the bundle's concepts a person confirmed, as `n of m`, retired ones aside, in the form a shields.io endpoint badge reads. A README shows it as a badge that links to the health page.
+- Each concept in `.lokf/knowledge/` becomes a page under `knowledge/`, with its trust label from `knowledge-report.sh`, its sources and its relations both ways. The bundle also gives the health page, the graph, the four files `lokf export` writes, each concept's Markdown and JSON-LD, the bundle log as an Atom feed, `knowledge/log.xml`, and `badge.json`, labelled `KTL scorecard`: how many of the bundle's concepts a person confirmed, as `n of m`, where `m` counts every concept, a retired one included, as the health line does, in the form a shields.io endpoint badge reads. A README shows it as a badge that links to the health page.
 - The README becomes the home page, and its Markdown is served at `index.md`. With no README, the home page opens with the bundle's own introduction.
 - Each page under `docs/` becomes a page under `docs/`, and its Markdown is served at `docs/<name>.md`, with every address made full.
 - `docs/<page>.<language>-simple.md` is a retelling of `docs/<page>.md`. Both pages offer each other above their titles, and the retelling has no line in the navigation. A concept tagged `audience-13-18` retells the one concept it is `derivedFrom` in the same way.
@@ -48,7 +48,7 @@ No setting names any of these, though `site.toml`'s `source` can move where the 
 - `CHANGELOG.md` becomes a page per release under `changelog/`, which search leaves out.
 - `.assets/` gives the figures, under `assets/`.
 - `.lokf/ingest.lock.yaml` says where each source the ingest mirrored came from, on its concept's card.
-- A LinkML schema at `src/<name>/schema/<name>.yaml`, or the same under `.linkml/`, gives the Schema part: a page per class, slot, enumeration and type, written by LinkML's `gen-doc`, each also at `elements/<Name>/`, where a schema's w3id rules point. The home page then leads with the schema.
+- A LinkML schema at `src/<name>/schema/<name>.yaml`, the same under `.linkml/`, or the file `site.toml`'s `schema` names, gives the Schema part: a page per class, slot, enumeration and type, written by LinkML's `gen-doc`, each also at `elements/<Name>/`, where a schema's w3id rules point. The home page then leads with the schema.
 - With no schema of the repository's own, the Schema part shows the schema the bundle is written in: its domain vocabulary, from `.lokf/schema/domain.yaml`, or else LOKF core, from `.lokf/schema/lokf.yaml` or the copy in the `lokf` package. Neither has `elements/` addresses, and the home page does not lead with either.
 - `.github/workflows/knowledge-federation.yaml` adds, on the graph page, the workspace a domain host's federation serves.
 
@@ -70,7 +70,7 @@ scripts/build.sh preview  # the site as it will be published, at http://localhos
 
 `PORT=1400 scripts/build.sh serve` uses another port.
 
-Hugo and Pagefind come from PyPI, at the versions `pyproject.toml` names and the hashes `uv.lock` holds. The PyPI package `hugo` is a rebuild of Hugo by another maintainer, hugo-python-distributions. The first build fetches Cytoscape and Mermaid, once, and checks each against the hash in `hugo.toml`. Where PyPI or the CDN is blocked, point uv at a mirror, and give `params.vendor.cytoscape.url` and `params.vendor.mermaid.url` a mirror's address in `site.toml`.
+Hugo and Pagefind come from PyPI, at the versions `pyproject.toml` names and the hashes `uv.lock` holds. The PyPI package `hugo` is a rebuild of Hugo by another maintainer, hugo-python-distributions. The first build fetches Cytoscape and Mermaid, once, and checks each against the hash in `hugo.toml`. Where PyPI is blocked, name a mirror of it in `UV_DEFAULT_INDEX`: the build installs the same files from it, each checked against its hash in `uv.lock`, and leaves `uv.lock` as it is. Where the CDN is blocked, give `params.vendor.cytoscape.url` and `params.vendor.mermaid.url` a mirror's address in `site.toml`, or keep a copy of each file as `assets/vendor/cytoscape.js` and `assets/vendor/mermaid.js`, which the build takes first and checks against the same hash. `scripts/vendor.sh` writes both copies from an npm registry.
 
 `serve` shows raw HTML as written and leaves the security policy off, since Hugo's reload script would break it. Its search index is the one built when it started.
 
@@ -84,7 +84,7 @@ Those two files and the folder's `README.md` are the repository's own. Every oth
 
 # Security
 
-`scripts/clean-html.py` cleans raw HTML in the repository's Markdown after the build, to the tags GitHub allows in a README. Any other markup, such as a `<meta>` refresh or a `<style>`, is shown as text, and an event handler, a style or a `javascript:` address is dropped. A Content-Security-Policy in every page stays as a second guard: a script loads only from the site's own `js/` and `pagefind/` folders, where no repository file is served. `scripts/prepare.sh` stops the build on an SVG that holds a script. No HTML or XML document is served, and neither is a file or folder whose name starts with a dot. Raw HTML that GitHub allows can still mislead, such as a link whose words name another address, so review still matters.
+`scripts/clean-html.py` cleans raw HTML in the repository's Markdown after the build, to the tags GitHub allows in a README. Any other markup, such as a `<meta>` refresh or a `<style>`, is shown as text, and an event handler, a style or a `javascript:` address is dropped. So is a class or a `data-` attribute that the site's own rendering did not write, so a file cannot draw a trust label or name itself in a search filter. A Content-Security-Policy in every page stays as a second guard: a script loads only from the site's own `js/` and `pagefind/` folders, where no repository file is served. From `docs/` and `.assets/` the site serves figures and PDF files alone, and from the bundle its Markdown, so it serves no HTML or XML document, and no file or folder whose name starts with a dot. `scripts/prepare.sh` reads each SVG as XML and stops the build on one that could run a script. An image from another site loads from that site's own address, with no referrer. Raw HTML that GitHub allows can still mislead, such as a link whose words name another address, so review still matters.
 
 The two typefaces, Source Serif 4 for headings and Atkinson Hyperlegible Next for text, are served from the site under the SIL Open Font License 1.1, whose text is beside them in `static/fonts/`.
 

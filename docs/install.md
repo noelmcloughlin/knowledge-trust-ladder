@@ -22,6 +22,18 @@ To install only one, name it:
 gh skill install noelmcloughlin/knowledge-trust-ladder ktl-docent --scope user
 ```
 
+### PyPI
+
+The [`ktl`](https://pypi.org/project/ktl/) package on PyPI carries releases of the six skills and a command to install them. It has no dependencies and needs Python 3.9 or later. Default is GitHub Copilot unless you add `--agent claude-code` or `--agent codex`, or give the agent folder with `--dest`:
+
+```bash
+uvx ktl skills install --scope user
+```
+
+Without uv, `pipx run ktl skills install --scope user` does the same. `python3 -m pip install --user ktl` works on some systems, but not on Debian, Ubuntu and Homebrew. To update, add `@latest`: `uvx ktl@latest skills install --scope user`.
+
+`ktl skills status` says if the skills in each agent folder are the package's. `ktl skills path` prints the skills folder, which `gh skill install --from-local` and `npx skills add` take instead. The [package's page](https://pypi.org/project/ktl/) shows the Claude Code plugin route from the installed package.
+
 ### Open Skills CLI
 
 Install all six skills with the Open Skills CLI, [`npx skills`](https://github.com/vercel-labs/skills).
@@ -40,16 +52,6 @@ In PowerShell or cmd, type the command on one line without the `\` continuations
 /plugin marketplace add noelmcloughlin/knowledge-trust-ladder
 /plugin install knowledge-trust-ladder@knowledge-trust-ladder
 ```
-
-### PyPI
-
-Each release is also the [`ktl`](https://pypi.org/project/ktl/) package on PyPI, which carries the six skills and a command that installs them. It has no dependencies and needs Python 3.9 or later. It installs for GitHub Copilot unless you add `--agent claude-code` or `--agent codex`, or give the folder your agent reads with `--dest`:
-
-```bash
-uvx ktl skills install --scope user
-```
-
-Without uv, `pipx run ktl skills install --scope user` does the same. `python3 -m pip install --user ktl` works where the system lets pip install for a user; Debian, Ubuntu and Homebrew refuse it. To update, add `@latest`: `uvx ktl@latest skills install --scope user`. `ktl skills status` says whether the skills in each folder an agent reads are the package's. `ktl skills path` prints the folder that holds the skills, which `gh skill install --from-local` and `npx skills add` take in place of `noelmcloughlin/knowledge-trust-ladder`. The [package's page](https://pypi.org/project/ktl/) gives the Claude Code plugin route from the installed package.
 
 ## Install for your user, not into the repository
 

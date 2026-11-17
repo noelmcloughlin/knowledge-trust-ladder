@@ -76,18 +76,17 @@ The build fetches from three places, and each has a setting. None of them needs 
 
 **Hugo and Pagefind, from PyPI.** uv fetches a locked file from the address `uv.lock` holds, which is PyPI's, whichever index uv is set to read. Name the company's index in `UV_DEFAULT_INDEX`. `scripts/uv-env.sh` then exports the versions and hashes the lock pins and installs them from that index, and uv checks each file against its hash. So `uv.lock` stays as it is, and a mirror that serves another file stops the build. Where a `uv.toml` names the index instead, the script tries PyPI's addresses first, which takes some seconds to fail, then installs from the index. The build installs the toolkit in `.lokf/` the same way. Set `UV_SYSTEM_CERTS=true` for a root certificate of your own. `UV_INSECURE_HOST` turns a host's certificate check off, so keep it for a runner that has no other way, and out of the repository.
 
-**A Python, from github.com.** uv downloads one where the machine has none at 3.11 or later. Install one, such as `dnf install python3.12` with `UV_PYTHON=3.12`, or name a mirror of the downloads in `UV_PYTHON_INSTALL_MIRROR`. The workflow's `setup-uv` step fetches uv itself from github.com; a runner that cannot reach it needs uv on its image.
+**A Python, from github.com.** uv downloads one where the machine has none at 3.11 or later. Install one, such as `dnf install python3.12` with `UV_PYTHON=3.12`, or name a mirror of the downloads in `UV_PYTHON_INSTALL_MIRROR`. The workflow's `setup-uv` step fetches uv itself from github.com. A runner that cannot reach it needs uv on its image: the workflow looks for uv first and keeps the runner's own.
 
-**Cytoscape and Mermaid, from a public CDN.** Hugo fetches each once and checks it against the hash in `hugo.toml`. Give `params.vendor.cytoscape.url` and `params.vendor.mermaid.url` a mirror's address in `site.toml`. With no mirror of the CDN, keep a copy of each file in the site's folder, as `assets/vendor/cytoscape.js` and `assets/vendor/mermaid.js`, and commit them. The build takes a copy before the address and checks it against the same hash, so a copy of another version stops the build and names the address of the file it wants. That happens when a repair brings a `hugo.toml` that names a newer version. Each file is the one its npm package holds, so a company npm registry gives it, at the version in the address `hugo.toml` names:
+**Cytoscape and Mermaid, from a public CDN.** Hugo fetches each once and checks it against the hash in `hugo.toml`. Give `params.vendor.cytoscape.url` and `params.vendor.mermaid.url` a mirror's address in `site.toml`. With no mirror of the CDN, keep a copy of each file in the site's folder, as `assets/vendor/cytoscape.js` and `assets/vendor/mermaid.js`, and commit them. The build takes a copy before the address and checks it against the same hash, so a copy of another version stops the build and names the address of the file it wants. That happens when a repair brings a `hugo.toml` that names a newer version. Each file is the one its npm package holds, so a company npm registry gives it. One command fetches both, with npm, from the registry npm is set to read in `.npmrc` or `npm_config_registry`:
 
 ```bash
-npm pack mermaid@<version>
-tar -xzf mermaid-<version>.tgz package/dist/mermaid.min.js
-mkdir -p website/assets/vendor
-mv package/dist/mermaid.min.js website/assets/vendor/mermaid.js
+bash website/scripts/vendor.sh
 ```
 
-Cytoscape's file is `package/dist/cytoscape.min.js` in `cytoscape-<version>.tgz`.
+The script reads each package and version from the address `hugo.toml` names, runs `npm pack` for it, and writes the file only when its SHA-256 is the one `hugo.toml` holds. `bash website/scripts/vendor.sh mermaid` fetches one. Run it again after a repair brings a newer `hugo.toml`.
+
+**A domain host's workspace.** `knowledge-federation.yaml` builds the same site. Where `UV_DEFAULT_INDEX`, `UV_INDEX_URL` or `UV_INDEX` names the index in the runner's environment, it installs the toolkit in `.lokf/` through `scripts/uv-env.sh` too, and its later steps run uv with no sync. A `uv.toml` alone does not switch that workflow.
 
 ## Keeping the site's tools current
 

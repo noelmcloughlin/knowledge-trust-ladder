@@ -7,7 +7,7 @@ genre: reference
 resource: https://pypi.org/project/lokf/
 generated:
   by: process:ktl-librarian
-  at: "2026-11-15T20:59:49Z"
+  at: "2026-11-17T21:14:13Z"
 status: draft
 definedBy:
   - https://w3id.org/ktl/knowledge/references/lokf-specification
@@ -15,7 +15,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/references/linkml
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-15T19:13:22Z"
+    at: "2026-11-17T21:23:32Z"
 sources:
   - resource: https://pypi.org/project/lokf/
   - resource: https://github.com/nicholsn/lokf/blob/eab5fe35b99e154bec9aabc03656446b891311f8/src/lokf/cli.py
@@ -27,6 +27,12 @@ sources:
   - resource: skills/ktl-curator/references/domain-vocabularies.md
   - resource: skills/ktl-sidecar/templates/pyproject.toml
   - resource: skills/ktl-sidecar/templates/justfile
+  - resource: skills/ktl-website/templates/website/scripts/lokf-export.py
+    id: lokf-export.py
+    excerpt: The toolkit reserves index.md and log.md alone, so its export would write the map as a node.
+  - resource: skills/ktl-sidecar/templates/scripts/knowledge-federate.py
+    id: knowledge-federate.py
+    excerpt: The toolkit reserves index.md and log.md alone, so `lokf export` would write the map as a node.
 ---
 
 # Overview
@@ -35,7 +41,7 @@ The toolkit is the implementation, not the specification. `lokf validate` checks
 
 `lokf convert` projects to RDF as Turtle, N-Triples, JSON-LD, RDF/XML, N3 or TriG, and `lokf export` writes the four files a bundle publishes, `graph.nt` among them. `lokf serve` exposes a SPARQL endpoint, `lokf query` runs a SPARQL query against the bundle, and `lokf mcp` serves it over the Model Context Protocol (MCP). From 0.9.0, `convert`, `query`, `serve` and `export` take `--schema` as `validate` does, and project each class and slot a domain vocabulary declares under its own IRI. `lokf tables` writes CSV, Parquet or SQLite: one table per concept type plus a `relations` table. For BigQuery or Athena it writes the Parquet and prints the external-table statements that register it.
 
-`lokf registry init`, `add`, `list` and `resolve` keep a registry of bundles offline. A domain's federation build registers each member release with `lokf registry add` and exports it with `lokf export` (`docs/federation.md`). The command line also carries `new`, `propose`, `vocab`, `adapt` and `skills`, and the package has a `[tables]` extra, which adds pandas and pyarrow, beside `[build]`. PyPI lists 0.9.0 as the latest release.
+`lokf registry init`, `add`, `list` and `resolve` keep a registry of bundles offline. A domain's federation build registers each member release with `lokf registry add` and exports it with `lokf export` (`docs/federation.md`). The build reads a member's schema first, and stops on one that imports anything but `lokf` and `linkml:` names, since LinkML would fetch or read any other import itself. The toolkit reserves `index.md` and `log.md` alone, so the website's build[^lokf-export.py] and the federation build[^knowledge-federate.py] run `lokf export` with a root `diataxis.md` read as no concept (`CHANGELOG.md`). The command line also carries `new`, `propose`, `vocab`, `adapt` and `skills`, and the package has a `[tables]` extra, which adds pandas and pyarrow, beside `[build]`. PyPI lists 0.9.0 as the latest release.
 
 `lokf validate --check-refs` finds typed-relation targets in the bundle's own namespace with no matching concept, and leaves targets outside its `base_iri` alone. This repository's own `just lokf-check-refs` recipe calls it, with `--check-excerpts`, which finds each `sources[].excerpt` in its local file and counts an excerpt on a URL without fetching it. It takes the relation slots from the schema, so a domain vocabulary's own slots are covered without the recipe restating a predicate list.
 
@@ -44,3 +50,7 @@ Scaffolded bundles depend on `lokf[build]>=0.9.0`, a floor and not a pin. They a
 Where Python is unavailable, the skills fall back to a structural cross-check against the raw schema, which is not a validation run. They read it from the commit tagged `v0.9.0`, which matches the `lokf` floor: `raw.githubusercontent.com/nicholsn/lokf/eab5fe35b99e154bec9aabc03656446b891311f8/lokf.yaml`. The URL names that commit, never a tag or `main`, because a tag can be moved. The pin moves with the floor, so the fallback cross-checks against the schema the installed toolkit enforces. That file is byte-identical to the schema inside the `lokf` 0.9.0 wheel, which `uv sync --locked` checks against `.lokf/uv.lock` wherever Python is present.
 
 ktl-librarian checks the toolkit's version in a live session. It compares the latest `lokf` on PyPI with the `>=` floor in `.lokf/pyproject.toml`. For a minor or patch release it raises the floor, runs `uv sync` and validates again. For a major release, or a breaking change in the changelog, it asks the person first. It never bumps `linkml` on its own.
+
+[^lokf-export.py]: skills/ktl-website/templates/website/scripts/lokf-export.py, the module's docstring
+
+[^knowledge-federate.py]: skills/ktl-sidecar/templates/scripts/knowledge-federate.py, the docstring of `leave_out_root_map`

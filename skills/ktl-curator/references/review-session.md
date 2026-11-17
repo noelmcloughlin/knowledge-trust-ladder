@@ -269,6 +269,8 @@ generated:
 - <date>, human:<id>: reported missing. Librarian: derive from the repository (they mention `workers/billing/`).
 ```
 
+With no authenticated login, the note's actor is the session too, `process:ktl-curator`, as a send-back's is.
+
 Do not add a bullet to the nearest `index.md`. That file is the librarian's, and it will add the bullet when it fills the placeholder. Log the intake as part of the session's `**Curation**` line ("recorded 1 gap").
 
 ## Handing off

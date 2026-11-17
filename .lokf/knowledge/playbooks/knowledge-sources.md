@@ -7,12 +7,12 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-11-17T19:01:39Z"
+  at: "2026-11-17T20:29:12Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-09-10T00:00:00Z"
   - by: process:ktl-librarian
-    at: "2026-11-14T12:32:59Z"
+    at: "2026-11-17T21:23:32Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T00:43:23Z"
   - by: human:noelmcloughlin
@@ -73,6 +73,7 @@ sources:
   - resource: docs/uses.md
   - resource: docs/young-readers.md
   - resource: docs/first-bundle.md
+  - resource: skills/ktl-sidecar/scripts/fill-placeholders.py
 ---
 
 # Sources swept for this bootstrap discovery pass
@@ -80,7 +81,7 @@ sources:
 | Source | Yields | Re-check by |
 | --- | --- | --- |
 | `skills/*/SKILL.md` | the six skill Playbooks | re-read each router; a changed step list, guardrail, or frontmatter `description` is a drift signal |
-| `skills/*/references/*.md`, `skills/ktl-prose/scripts/prose-check.py`, `skills/ktl-prose/assets/voa-word-book.txt`, `skills/ktl-docent/scripts/*.sh` | detail behind each skill Playbook; the prose skill's check script, which `playbooks/ktl-prose-skill.md` describes; and ktl-docent's own copies of `knowledge-report.sh` and `knowledge-feedback.sh`, which `playbooks/ktl-docent-skill.md` describes; the references include the librarian's `agent-skills.md` and `retellings.md` and the prose skill's `young-readers.md`; `voa-word-book.txt` is the word list `prose-check.py` reads under a band of readers | diff against the claims in the corresponding concept body; check 11a holds the docent's two scripts byte-identical to their templates |
+| `skills/*/references/*.md`, `skills/ktl-prose/scripts/prose-check.py`, `skills/ktl-prose/assets/voa-word-book.txt`, `skills/ktl-docent/scripts/*.sh`, `skills/ktl-sidecar/scripts/fill-placeholders.py` | detail behind each skill Playbook; the prose skill's check script, which `playbooks/ktl-prose-skill.md` describes; and ktl-docent's own copies of `knowledge-report.sh` and `knowledge-feedback.sh`, which `playbooks/ktl-docent-skill.md` describes; the references include the librarian's `agent-skills.md` and `retellings.md` and the prose skill's `young-readers.md`; `voa-word-book.txt` is the word list `prose-check.py` reads under a band of readers; `fill-placeholders.py` is the script ktl-sidecar's Step 1 runs to fill its templates' placeholders | diff against the claims in the corresponding concept body; check 11a holds the docent's two scripts byte-identical to their templates |
 | `skills/ktl-sidecar/templates/` | what the sidecar skill actually writes: the toolkit dependency and its `[build]` extra, the `justfile` with its `schema` variable for a domain vocabulary, `.gitattributes`, `gitignore`, `llms.txt`, `queries.http`, the two READMEs, the `knowledge/` skeleton, the scripts (preflight, conventions and its Python half, librarian wrapper, apply and its Python half, report, provenance gate, feedback recorder, the federation build `knowledge-federate.py`, the sync `knowledge-sync.sh` and the ingest `knowledge-ingest.sh` and its Python half), the workflows (registrar, librarian and release; `knowledge-federation.yaml` with a domain host's `domain.yaml`; `knowledge-sync.yaml`; `knowledge-ingest.yaml`; the last two each with a pull request template), `knowledge-sync.manifest`, the list of what a sync keeps current, `ingest.yaml`, the ingest's manifest, and `m365/`: the Copilot skills' builder and the docent's instructions for Copilot | diff `pyproject.toml` (the `lokf` floor and the `ktl` pin), the `justfile` recipes against `explanation/domain-vocabularies.md`, and the template lists in the skill's Step 1 and Step 5 tables |
 | `skills/ktl-website/templates/`, `skills/ktl-website/scripts/website-preflight.sh` | what the website skill lays down in a host: the Hugo site under `templates/website/`, which this repository's own `website/` copies, and the deploy workflow `knowledge-website.yaml`; and the preflight it runs in place. `playbooks/ktl-website-skill.md` carries them | diff the step list, the rule for the site's folder, the four placeholders and the three files a host owns against the concept; the site's code, its layouts, content adapters, assets, static files and scripts, is consciously excluded as concepts, as under `website/`; the template's `README.md` and `site.toml` hold the placeholders Step 1 substitutes, and every other file is copied to `website/` byte for byte, which check 11w holds |
 | `skills/ktl-sidecar/templates/knowledge-sync.manifest`, `skills/ktl-sidecar/templates/scripts/knowledge-sync.sh`, `skills/ktl-sidecar/templates/github/knowledge-sync.yaml`, `knowledge-sync-pull-request.md` | how a host keeps its sidecar current by itself: the manifest that lists each template, its copy and the rule for it, which the sync script, the preflight and contract check 11 read; the sync script, which a host's own `knowledge-sync.yaml` or a person runs; and the weekly workflow that keeps one pull request refreshed to the newest release. `playbooks/releasing.md` and `playbooks/repository-validation.md` describe them | diff the manifest's rules against check 11 in `playbooks/repository-validation.md`, and the workflow's schedule and the script's steps against `playbooks/releasing.md`; this repository has nothing to sync itself to, so it carries no copy |

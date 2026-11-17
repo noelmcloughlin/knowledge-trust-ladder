@@ -13,7 +13,7 @@ sources:
   - resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T21:26:04Z"
+  at: "2026-11-17T20:29:12Z"
 relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/why-four-roles
   - https://w3id.org/ktl/knowledge/explanation/three-lines-of-defence
@@ -34,7 +34,7 @@ status: draft
 
 # Overview
 
-A museum registrar keeps a collection's records in order: each accession (an item added to the collection) documented, its provenance filed, nothing entered in a form the catalogue can't read. `docs/architecture.md` calls the registrar the fifth role, which is not a skill, beside the four skills ([why four skill roles](why-four-roles.md)). No person has to do it. The `lokf` toolkit checks every change, and CI's `knowledge-registrar.yaml` checks every pull request that touches the bundle. There it also ties each confirmation that is added or removed to that person's approval or their signed commit.
+A museum registrar keeps a collection's records in order: each accession (an item added to the collection) documented, its provenance filed, nothing entered in a form the catalogue can't read. `docs/architecture.md` calls the registrar the fifth role, which is not a skill, beside the four skills ([why four skill roles](why-four-roles.md)). No person has to do it. The `lokf` toolkit checks every change, and CI's `knowledge-registrar.yaml` checks every pull request that touches the bundle. There it also ties each confirmation that is added or removed to that person's approval of the concept as the pull request holds it, or to their signed commit.
 
 At the librarian's [desk](../glossary/desk.md) the registrar is `knowledge-apply.sh`, *the pen*, the only way the librarian writes the bundle. The librarian describes each change as an operation in `.lokf/patch.yaml`, and the script writes it. The script stamps `generated` from the clock, keeps a concept's `description` equal to its two index bullets, and files the log line under the day's heading. It refuses a `human:` actor, a rewrite of text a person wrote, and the deletion of a concept a person confirmed or left a note on. In a scheduled run the wrapper applies the patch after the agent has finished.
 

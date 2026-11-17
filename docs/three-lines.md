@@ -9,7 +9,7 @@ KTL was not built to it, but each of its roles fits. Every control named on this
 | Line | In the model | In KTL |
 | --- | --- | --- |
 | **First**: owns the work and its risk | operational management | The **librarian** derives every record from a source it names, records its own re-checks as `process:` and never as a person, and marks what it cannot settle `status: draft` with an open question. The **curator**, a named person, decides what the team accepts as true: confirm, correct, send back, retire, or leave for later. Maker and checker: the agent cannot vouch, and the person does not derive. |
-| **Second**: ensures compliance, without owning the content | risk and compliance functions | The **registrar** keeps every record well-formed: `lokf validate` on every change, `knowledge-apply.sh`, the pen, as the only way the librarian writes the bundle, `knowledge-report.sh` computing every trust label, and the KTL Registrar plugin in Obsidian. `lokf validate` runs again as the continuous integration (CI) gate. The gate's `provenance` job ties each `human:` verdict that is added or removed to that person's approval of the pull request or their signature on the commit, and the pen refuses to write any `human:` actor. The registrar never judges truth: a verdict is only ever what that person said. |
+| **Second**: ensures compliance, without owning the content | risk and compliance functions | The **registrar** keeps every record well-formed: `lokf validate` on every change, `knowledge-apply.sh`, the pen, as the only way the librarian writes the bundle, `knowledge-report.sh` computing every trust label, and the KTL Registrar plugin in Obsidian. `lokf validate` runs again as the continuous integration (CI) gate. The gate's `provenance` job ties each `human:` verdict that is added or removed to that person's approval, while it is their last word and covers the concept as the head holds it, or to their signature as committer on the commit, and the pen refuses to write any `human:` actor. The registrar never judges truth: a verdict is only ever what that person said. |
 | **Third**: independent assurance | internal audit | The **bundle** holds the evidence an independent reviewer needs, listed below, and not the review, because assurance is independent only when it comes from someone other than the authors. |
 
 <p align="center">
@@ -97,7 +97,7 @@ The model's critics are the UK Parliamentary Commission on Banking Standards (th
 
 **The criticism.** Schuett repeats Zhivitskaya's point that a second line "might not recognize that they only see what the first line chooses to show them" ([AI & Society, 2023](https://doi.org/10.1007/s00146-023-01811-0)).
 
-**What KTL does.** The gate reads the whole pull request and the repository's history, and asks the forge, not the author, whether the named person approved or signed. The IIA's 2026 text makes such unfiltered access the condition of independence.
+**What KTL does.** The gate reads the whole pull request and the repository's history, and asks the forge, not the author, whether the named person approved the concept as the head holds it, or signed as committer. The IIA's 2026 text makes such unfiltered access the condition of independence.
 
 **Verdict: met by construction, with one limit.** The gate sees what the first line wrote, not what it never derived. A missing concept appears only as a docent miss.
 

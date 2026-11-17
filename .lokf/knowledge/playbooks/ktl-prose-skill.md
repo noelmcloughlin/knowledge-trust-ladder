@@ -27,11 +27,11 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-11-15T20:59:49Z"
+  at: "2026-11-17T20:29:12Z"
 status: draft
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-15T19:13:22Z"
+    at: "2026-11-17T21:23:32Z"
 ---
 # Overview
 
@@ -71,7 +71,7 @@ It rewords only a body an agent wrote that no person has confirmed. It never rew
 - a concept with a `refuted` event;
 - a concept whose frontmatter the script cannot read.
 
-A concept with no `generated.by` is reworded only when a person names it. Naming a confirmed concept does not unlock it, because a confirmation is a person's time spent against a source and a rewording must not spend it.
+A concept with no `generated.by` is reworded only when a person names it. Naming a confirmed concept does not unlock it, because a confirmation is a person's time spent against a source and a rewording must not spend it. Such an edit would also leave the concept reading as confirmed, and `knowledge-conventions.sh` fails it under its rule 13.
 
 # What a rewording never changes
 
