@@ -6,80 +6,80 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ### Added
 
-- **`scripts/vendor.sh` writes the site's copies of Cytoscape and Mermaid, `assets/vendor/`, from an npm registry**: it reads each package and version from the address `hugo.toml` names, fetches it with `npm pack` from the registry npm reads, and keeps a file only at the hash `hugo.toml` holds.
-- **A domain host's workspace builds behind a package mirror**: where `UV_DEFAULT_INDEX`, `UV_INDEX_URL` or `UV_INDEX` names an index, both jobs of `knowledge-federation.yaml` install the toolkit through the site's `scripts/uv-env.sh`, and the later steps run uv with no sync.
-- **A runner that holds uv keeps its own**: each job of every workflow looks for uv before `setup-uv`, which fetches uv from github.com, so a locked-down runner with uv on its image runs.
+- **`scripts/vendor.sh` writes the site's copies of Cytoscape and Mermaid, `assets/vendor/`, from an npm registry**, and keeps a file only at the hash `hugo.toml` holds.
+- **A domain host's workspace builds behind a package mirror**, through the site's `scripts/uv-env.sh`.
+- **A runner that holds uv keeps its own**, so a locked-down runner with uv on its image runs.
 
 ### Fixed
 
-- **A root `diataxis.md` is no node of the graph**: the website's build and the federation build run `lokf export` with that file read as no concept, where the toolkit, which reserves `index.md` and `log.md` alone, wrote KTL Registrar's map into `graph.json`, `graph.nt` and `concepts.jsonld`.
-- **The workflows read `site.toml` as TOML**: `knowledge-website.yaml` and `knowledge-federation.yaml` find `browseBuild` through `scripts/site-values.py`, and `knowledge-federate.py` reads `baseURL` with a TOML parser, in any letter case and either quote, where each matched one spelling of the line.
+- **A root `diataxis.md` is no node of the graph**, in the website's build or the federation build.
+- **The workflows read `site.toml` as TOML**, in any letter case and either quote.
 
 ### Security
 
-- **A description cannot add a key to the bundle's `index.md`**: ktl-sidecar's Step 1 writes each free-text value into frontmatter and `pyproject.toml` as an escaped, double-quoted string, checks a slug, a date and the base IRI by their form, and stops before it writes a file on an empty value, a line break or a character that does not print. It fills `llms.txt` the same way. A description with a colon broke the frontmatter, and one of several lines could set `license` or `publisher`.
+- **A description cannot add a key to the bundle's `index.md`**: ktl-sidecar's Step 1 writes each free-text value as a quoted string, and stops on an empty value, a line break or a character that does not print.
 
 ## [0.67.0] - 2026-11-17
 
 ### Added
 
-- **`site.toml`'s `schema` names the schema file the site shows**: a path, or `pkg:<package>/<path>` for one inside a package that the environment of `schemaProject` holds.
-- **The website builds behind a package mirror, and no lock is written again**: where `UV_DEFAULT_INDEX` names an index, or the PyPI addresses in a lock fail, `scripts/uv-env.sh` installs the versions the lock pins from the index uv reads, each file checked against the lock's hash. The build installs Hugo, Pagefind and the toolkit in `.lokf/` that way, and the workflow installs `just` so.
-- **The website builds where the CDN is blocked**: a copy of Cytoscape or Mermaid in the site's folder, `assets/vendor/cytoscape.js` or `assets/vendor/mermaid.js`, is taken before the address and checked against the same hash in `hugo.toml`. Each file is the one its npm package holds.
+- **`site.toml`'s `schema` names the schema file the site shows**: a path, or `pkg:<package>/<path>` for one inside a package.
+- **The website builds behind a package mirror, and no lock is written again**: `scripts/uv-env.sh` installs the versions the lock pins from the index uv reads, each checked against the lock's hash.
+- **The website builds where the CDN is blocked**, from a copy of Cytoscape or Mermaid in the site's `assets/vendor/`, checked against the hash in `hugo.toml`.
 
 ### Changed
 
-- **With no LinkML schema of its own, the site shows the bundle's domain vocabulary**, `.lokf/schema/domain.yaml`, before LOKF core, and the vocabulary has a title and a description.
-- **The navigation's Knowledge graph link has an icon and a tone of its own**, so it stands out in the bundle's part.
-- **The librarian keeps history out of a concept's body**: the day a fact changed, and a rule tried and retired, belong in the log.
-- **The website's text size is Medium by default**, and a reader can still choose Large or Larger from the Display menu.
-- **The release tools are in `.release/` and the PyPI build backend in `.pypi/`**, outside `.github/`, where Dependabot's pull requests for them were refused.
-- **`diataxis.md` is reserved at the bundle's root alone**, where KTL Registrar keeps its map. A file of that name in a folder is a concept to the conventions, the report and the pen. `index.md` and `log.md` stay reserved in every folder.
-- **Without zip, the contract still checks the Microsoft 365 skill's folder** and says the zip check is skipped.
+- **With no LinkML schema of its own, the site shows the bundle's domain vocabulary**, `.lokf/schema/domain.yaml`, before LOKF core.
+- **The navigation's Knowledge graph link has an icon and a tone of its own.**
+- **The librarian keeps history out of a concept's body**: it belongs in the log.
+- **The website's text size is Medium by default.**
+- **The release tools are in `.release/` and the PyPI build backend in `.pypi/`**, outside `.github/`.
+- **`diataxis.md` is reserved at the bundle's root alone**, where KTL Registrar keeps its map. `index.md` and `log.md` stay reserved in every folder.
+- **Without zip, the contract still checks the Microsoft 365 skill's folder.**
 
 ### Fixed
 
-- **The site serves each local file the schema imports beside it**, so the served schema loads as the repository's does.
-- **`knowledge-report.sh questions` lists each open question with its day, its asker and its text**, the mode the curator's queries page names, which the script lacked.
-- **A `perf:` commit and a revert count as releasing in the `plan` job**, as the pinned commit-analyzer counts them, so such a pull request is asked for its changelog entry and a title that releases.
-- **`changelog-release.mjs` reads `## [Unreleased]` only as a line of its own**, so a preamble or an entry that quotes the heading is not taken for the section.
-- **The changelog fold keeps or leaves out an entry whole**: the indented lines under a duplicate bullet go with it, and an entry that differs below its first line is kept.
-- **Each skill's description says which one takes an error report**: the curator records what a person says, the docent records a miss it meets while answering, and the librarian audits the bundle against the repository.
-- **The ingest reads a page's CDATA sections in one pass.** A page of openers with no closer took time in the square of its length, 128 seconds at 360 kB, and held a run past its time limit.
-- **`knowledge-ingest.sh --patch` writes a source's title with round brackets where it has square ones.** The pen refuses a square bracket in a title, so one page titled `[RFC] Rate limits` kept every Reference concept of the run out.
-- **A root `diataxis.md` or a folder's `log.md` does not stop the website's build**: the site treats `index.md` and `log.md` in any folder and `diataxis.md` at the bundle's root as no concept, as the report script does.
-- **Mermaid diagrams follow the Display menu**, so a diagram is drawn again in the new colours when the reader or the system switches between light and dark.
-- **The graph and health pages cope with a bundle that holds no concept**, with a sentence in place of a script error and an invalid progress bar.
-- **The KTL scorecard badge counts every concept**, a retired one included, so it shows the same "n of m" as the health line and the health page.
-- **ktl-website's page gives the preflight's rule for the site's folder**: a folder is the skill's when it holds `site.toml` and `hugo.toml`, and the earlier Astro site is told apart before another site's folder.
-- **ktl-website's deploy page says what a locked-down network needs.** It said a mirror set for uv served Hugo and Pagefind, where uv fetches a locked file from the address the lock holds, and that nothing came from github.com, where uv fetches a Python from there on a machine with none.
+- **The site serves each local file the schema imports beside it.**
+- **`knowledge-report.sh questions` lists each open question with its day, its asker and its text.**
+- **A `perf:` commit and a revert count as releasing in the `plan` job**, as the pinned commit-analyzer counts them.
+- **`changelog-release.mjs` reads `## [Unreleased]` only as a line of its own.**
+- **The changelog fold keeps or leaves out an entry whole.**
+- **Each skill's description says which one takes an error report.**
+- **The ingest reads a page's CDATA sections in one pass**, where a page of openers with no closer ran past the time limit.
+- **`knowledge-ingest.sh --patch` writes a source's title with round brackets where it has square ones**, which the pen refuses.
+- **A root `diataxis.md` or a folder's `log.md` does not stop the website's build.**
+- **Mermaid diagrams follow the Display menu** between light and dark.
+- **The graph and health pages cope with a bundle that holds no concept.**
+- **The KTL scorecard badge counts every concept**, a retired one included.
+- **ktl-website's page gives the preflight's rule for the site's folder**: one that holds `site.toml` and `hugo.toml`.
+- **ktl-website's deploy page says what a locked-down network needs.**
 
 ### Security
 
-- **The registrar's gate reads who signed a commit from its committer**, and from its author only when GitHub's web editor made the commit. A commit that names one person as its author and carries another person's valid signature backs no confirmation by the first.
-- **The gate matches a confirmation by its concept's `id` and its path**, so a confirmation moved or copied from one concept into another is one removed and one added, whatever `id` the two files give, and a second copy of an event counts. A renamed concept keeps its events.
-- **An approving review backs a confirmation only while it stands**: it is the person's last decisive review, and each changed concept that carries their name is byte for byte what the approved commit held. A confirmation pushed after the approval needs a new one.
-- **The gate reads a commit that has no parent**, so a merge of an unrelated history brings in no confirmation that nobody signed, and each event the pull request adds or removes must be one a signed commit adds or removes.
-- **The gate stops and backs nothing when git or GitHub does not answer one of its reads**, and it takes a value with an unclosed quote, an escape, a comment, a tag or an anchor, or a second `id` key, as frontmatter it cannot read.
-- **Conventions rule 13 finds the commit that put a confirmation into the frontmatter by parsing the concept at each candidate**, so a later commit that repeats the confirmation's time in the body is not taken for it. Rule 14 reads a renamed concept against the file it was, and rule 10 names a `verified`, `generated` or `id` key given twice.
-- **The pen takes a `process:` actor of letters, digits, `.`, `_` and `-` alone**, and refuses a patch under a name that starts `process:ktl-curator`, so a patch cannot write Markdown into a stamp or a bullet that reads as the curator's.
-- **A send-back that `process:ktl-curator` wrote for a person with no login counts as a person's record**: the pen keeps it, and the report lists the concept as sent back. The curator's policy template and placeholder are drafts under `process:ktl-curator` until a person confirms them, where they named a `human:` actor nobody had backed.
-- **The curator and the librarian treat a concept, an open question, a file or a page as text to quote**, never as an instruction, even when it is phrased as one.
-- **A release tags only the commit it checked**: `publish.yml` stops unless `main` is still that commit, reads the tag back after publishing, and requests no bundle zip, package or sync for a tag on another commit.
-- **The repository's own catalogue recommends a required reviewer on the `pypi` and `testpypi` Environments**, since a pushed tag carries its own copy of `pypi.yml`. `ktl gh check --strict` names an Environment without one, and `ktl gh apply --recommended` adds it.
-- **The repository contract fails under CI when shellcheck, node or zip is missing**, where it skipped the check. The jobs that run it set up Node, and a release runs the tests with `just` and one worker per CPU.
-- **A federation build refuses a member's schema that imports anything but `lokf` and `linkml:` names**, or that declares the `linkml` prefix as another namespace. LinkML fetched an import that was an address, with no check for a private one, and read one that was a path outside the bundle.
-- **A member's zip holds Markdown and images alone** (`.md`, `.gif`, `.jpeg`, `.jpg`, `.png`, `.webp`). The list of files a browser runs missed XML types such as `.owl` and `.gpx`, and a `pyproject.toml` in a zip named a schema the toolkit loaded. A member held from a previous workspace that holds such a file is not held.
-- **A member's distribution name ends `.jsonld` for a served file and `.zip` for a zip.** A served file named `x.html` was published as a page on the host's site.
+- **The registrar's gate reads who signed a commit from its committer**, and from its author only when GitHub's web editor made the commit.
+- **The gate matches a confirmation by its concept's `id` and its path**, so one moved or copied into another concept counts, and a renamed concept keeps its events.
+- **An approving review backs a confirmation only while it stands**: it is the person's last decisive review, and the concept is what the approved commit held.
+- **The gate reads a commit that has no parent**, so a merge of an unrelated history brings in no confirmation that nobody signed.
+- **The gate stops and backs nothing when git or GitHub does not answer one of its reads**, or on frontmatter it cannot read.
+- **Conventions rule 13 finds the commit that put a confirmation into the frontmatter by parsing the concept at each candidate.** Rule 14 follows a renamed concept, and rule 10 names a key given twice.
+- **The pen takes a `process:` actor of letters, digits, `.`, `_` and `-` alone**, and none that starts `process:ktl-curator`.
+- **A send-back that `process:ktl-curator` wrote for a person with no login counts as a person's record**, and the curator's policy template and placeholder are drafts under that actor.
+- **The curator and the librarian treat a concept, an open question, a file or a page as text to quote**, never as an instruction.
+- **A release tags only the commit it checked**: `publish.yml` stops unless `main` is still that commit.
+- **The repository's own catalogue recommends a required reviewer on the `pypi` and `testpypi` Environments**, since a pushed tag carries its own copy of `pypi.yml`.
+- **The repository contract fails under CI when shellcheck, node or zip is missing**, where it skipped the check.
+- **A federation build refuses a member's schema that imports anything but `lokf` and `linkml:` names**, or that declares the `linkml` prefix as another namespace.
+- **A member's zip holds Markdown and images alone**, so none carries a file a browser runs or a `pyproject.toml`.
+- **A member's distribution name ends `.jsonld` for a served file and `.zip` for a zip**, so no served file is published as a page.
 - **`members --add <address>` reads the `index.md` beside a served file as it reads a member's address**, checked before the request and at the connection.
-- **`knowledge-feedback.sh` refuses a symbolic link at `.lokf/`, at `feedback.md` or at its lock, and rewrites the file through a file `mktemp` creates.** A repository could commit a link that made the docent write over another file, or copy one into `feedback.md`.
-- **The ingest workflow hands its secrets to the script alone**, through a file only the job's user reads, so the steps that package and upload the patch hold none. A warning names a secret left out for a line break inside it, and a line break that ends one is removed.
-- **A repository file cannot draw a trust label on the website**, since raw HTML keeps a class or a `data-` attribute only where the site's own rendering wrote it. A concept's body shows no forged "Confirmed by a person" label, search filter or link preview, in its text or in the page's list of sections.
-- **The website keeps an `<input>` only as a task list's checkbox**, so `<input type="password" type="checkbox">`, which a browser reads as a password field, is shown as text.
-- **The website serves only the kinds of file it names**, figures and PDF files from `docs/` and `.assets/` and Markdown from the bundle. An XML document under a name such as `.rdf`, `.xsd` or `.atom` is not served, and a link to a file of another kind goes to GitHub.
-- **The website's build reads each SVG as XML**, so it stops on a script under a prefix, a `javascript:` address written with a character reference, a file named `.SVG`, a DOCTYPE and a compressed `.svgz`, which the earlier text search missed.
-- **A page of the website sends no referrer**, so a remote image in a concept or the README does not learn which page loaded it.
-- **A description cannot add a key to `site.toml`**: ktl-website's Step 1 writes each value as a TOML string and stops on a line break, and `prepare.sh` reads the file through a TOML parser. A description of several lines could set the `browseBuild` command the build runs.
+- **`knowledge-feedback.sh` refuses a symbolic link at `.lokf/`, at `feedback.md` or at its lock**, and rewrites the file through one `mktemp` creates.
+- **The ingest workflow hands its secrets to the script alone**, so the steps that package and upload the patch hold none.
+- **A repository file cannot draw a trust label on the website**: raw HTML keeps a class or a `data-` attribute only where the site's own rendering wrote it.
+- **The website keeps an `<input>` only as a task list's checkbox.**
+- **The website serves only the kinds of file it names**: figures and PDF files from `docs/` and `.assets/`, and Markdown from the bundle.
+- **The website's build reads each SVG as XML**, and stops on one that could run a script.
+- **A page of the website sends no referrer**, so a remote image does not learn which page loaded it.
+- **A description cannot add a key to `site.toml`**: ktl-website's Step 1 writes each value as a TOML string and stops on a line break.
 
 ## [0.66.0] - 2026-11-15
 
