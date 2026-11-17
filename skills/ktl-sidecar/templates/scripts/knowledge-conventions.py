@@ -16,7 +16,7 @@
 # Rules 15, 16 and 17 join the frontmatter to the body and to log.md. Rule
 # 4, a body rule, is checked with them.
 #
-# Usage: knowledge-conventions.py <bundle-dir> [--since <commit>]
+# Usage: knowledge-conventions.py <bundle-dir> [--since <commit> [--head <commit>]]
 #
 # Same contract as the shell half: one line per finding on stdout, exit 1 if
 # any; "OK" and exit 0 if none. The shell half runs it with the sidecar's
@@ -513,13 +513,15 @@ def recorded_in(top: Path, name: str, event: tuple[str, str]) -> tuple[str, tupl
     return None
 
 
-def verdict_edits(bundle: Path, since: str) -> list[str]:
+def verdict_edits(bundle: Path, since: str, head: str = "HEAD") -> list[str]:
     """Rule 14: a commit that records a person's confirmation changes the verdict, not what the concept says.
 
     Rule 13 compares with the commit that recorded the confirmation, so an
     edit made in that same commit would read as confirmed. Each commit after
-    `since` that touches the bundle is read against every parent, as the
-    provenance job reads one. One that adds a `human:` event no parent holds
+    `since`, up to `head`, that touches the bundle is read against every
+    parent, as the provenance job reads one. The gate names the pull
+    request's last commit as `head`: its checkout is a merge into the base,
+    and HEAD would add the commits the base gained since. One that adds a `human:` event no parent holds
     may change the concept's claims only when `generated.by` names that same
     person, which is how Correct now records an edit the person made. A
     merge that brings in a confirmation made elsewhere adds nothing new, so
@@ -529,6 +531,8 @@ def verdict_edits(bundle: Path, since: str) -> list[str]:
     """
     if not COMMIT.fullmatch(since):
         return [f"rule 14: '{since}' is not a commit - pass the base the pull request was opened against"]
+    if not COMMIT.fullmatch(head):
+        return [f"rule 14: '{head}' is not a commit - pass the last commit of the pull request"]
     real = bundle.resolve()
     top = git(real, "rev-parse", "--show-toplevel")
     if top is None:
@@ -536,9 +540,11 @@ def verdict_edits(bundle: Path, since: str) -> list[str]:
     top_path = Path(top.strip())
     if git(top_path, "rev-parse", "--verify", "--quiet", since + "^{commit}") is None:
         return [f"rule 14: the base commit {since} is not in this clone's history - check out the full history"]
+    if git(top_path, "rev-parse", "--verify", "--quiet", head + "^{commit}") is None:
+        return [f"rule 14: the head commit {head} is not in this clone's history - check out the full history"]
     rel = real.relative_to(top_path.resolve()).as_posix()
     findings: list[str] = []
-    for commit in (git(top_path, "rev-list", "--reverse", f"{since}..HEAD", "--", rel) or "").split():
+    for commit in (git(top_path, "rev-list", "--reverse", f"{since}..{head}", "--", rel) or "").split():
         parents = (git(top_path, "rev-list", "--parents", "-n", "1", commit) or "").split()[1:]
         names: set[str] = set()
         for parent in parents or [""]:
@@ -891,11 +897,13 @@ def check_file(
 
 
 def main(argv: list[str]) -> int:
-    args, since = argv[1:], ""
-    if len(args) == 3 and args[1] == "--since":
+    args, since, head = argv[1:], "", "HEAD"
+    if len(args) == 5 and args[1] == "--since" and args[3] == "--head":
+        args, since, head = args[:1], args[2], args[4]
+    elif len(args) == 3 and args[1] == "--since":
         args, since = args[:1], args[2]
     if len(args) != 1:
-        print("usage: knowledge-conventions.py <bundle-dir> [--since <commit>]", file=sys.stderr)
+        print("usage: knowledge-conventions.py <bundle-dir> [--since <commit> [--head <commit>]]", file=sys.stderr)
         return 2
     bundle = Path(args[0])
     if not bundle.is_dir():
@@ -959,7 +967,7 @@ def main(argv: list[str]) -> int:
     #     request's: on a branch's whole history a squash merge folds an edit
     #     and a later confirmation into one commit.
     if since:
-        findings.extend(verdict_edits(bundle, since))
+        findings.extend(verdict_edits(bundle, since, head))
 
     # 17. logged writes, read since the base when one is given.
     findings.extend(logged_writes(bundle, titles, since))
