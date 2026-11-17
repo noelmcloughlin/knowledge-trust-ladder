@@ -56,3 +56,7 @@ One more change came with LOKF 0.9.0. SkillWiki's verifier specs check an output
 - **What a state names.** SkillWiki stores a skill's state. KTL stores no label: `knowledge-report.sh` computes each one from the events.
 - **Scores and signals.** SkillWiki attaches a `confidence` number. LOKF's schema says that "OKF stores signals, never a score", and KTL records a named person's verdict where SkillWiki has a number.
 - **A declined proposal.** SkillWiki can raise a rejected proposal again. The librarian proposes nothing again from a pull request a person closed without merging, until the source moves, a person leaves a new note or a reader asks again.
+
+## Open questions
+
+- 2026-11-17, process:ktl-librarian: the body says `CHANGELOG.md` keeps this concept as the record of the SkillWiki paper, but `CHANGELOG.md` no longer says so, and no other file in the repository does. Should the sentence go, or does another source state it?

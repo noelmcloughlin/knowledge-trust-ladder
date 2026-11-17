@@ -2,6 +2,11 @@
 
 ## 2026-11-17
 
+* **Changed**: Three lines of defence cites `skills/ktl-sidecar/references/gate.md` for the rule that an approval backs a confirmation only while each changed concept is byte for byte what the approved commit held, since `CHANGELOG.md` no longer states that detail. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: lokf toolkit cites the website's `lokf-export.py` and the federation's `knowledge-federate.py` for why both builds read a root `diataxis.md` as no concept, since `CHANGELOG.md` no longer says the toolkit reserves `index.md` and `log.md` alone.
+* **Changed**: repository validation says check 11 holds the pen and the conventions script to the same PyYAML release alone, as `scripts/validate-repository.sh` does, and no longer names a cut-off date the scripts do not carry.
+* **Question**: SkillWiki says `CHANGELOG.md` keeps it as the paper's record, which `CHANGELOG.md` no longer says and no other file states; a person confirmed the concept, so the curator decides.
+* **Changed**: Threat model says no schema repository publishes to PyPI, that only the eval's docent has no shell, and that the librarian's `publish` is the only unattended path for an agent's output, as `docs/threat-model.md` now says. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: Threat model counts six noelmcloughlin repositories, as `docs/threat-model.md` lists them, and names the parser's one PyYAML release with no upload date, which the scripts carry no longer. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Curation**: human:noelmcloughlin corrected 1. The curator skill playbook's Step 3 now says the curation policy and a placeholder are drafts under `process:ktl-curator`, and its hand-off says an approval covers the concepts as they stood when it was given, as `references/review-session.md` does.
 * **Changed**: the curated context layer now says the federation build takes only Markdown and images from a member's zip and stops on a member schema that imports anything but `lokf` and `linkml:` names, as `docs/federation.md` says.

@@ -15,7 +15,7 @@ verified:
     at: "2026-11-12T20:38:32Z"
     revision: "12d91cac03649375c1a0a547cfb4d5987f20c558"
   - by: process:ktl-librarian
-    at: "2026-11-17T20:29:12Z"
+    at: "2026-11-17T21:14:13Z"
 stale_after: 2027-11-12
 ---
 
