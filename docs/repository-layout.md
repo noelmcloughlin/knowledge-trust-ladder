@@ -89,6 +89,8 @@ website/                   the website: Hugo, this repository's copy of ktl-webs
   scripts/build.sh         prepare, Hugo, the raw-HTML cleaning, Pagefind and the link check; `serve` and `preview` for a local look
   scripts/prepare.sh       `lokf export`, the trust labels, gen-doc for a LinkML schema and the data site.toml names, into generated/
   scripts/clean-html.py    cleans each page's raw HTML to the tags GitHub allows
+  scripts/check-svg.py     stops the build on an SVG that could run a script
+  scripts/site-values.py   reads site.toml through a TOML parser for prepare.sh
   scripts/check-links.py   fails the build on a link between two pages that does not resolve
 .lokf/                  this repository's own sidecar: the bundle and its tooling
 knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar creates (Step 2)
