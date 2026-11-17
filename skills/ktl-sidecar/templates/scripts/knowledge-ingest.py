@@ -893,7 +893,7 @@ PARAGRAPHS = {"p", "div", "section", "article", "header", "footer", "main", "asi
 SKIPPED = {"script", "style", "ac:parameter", "ac:emoticon", "ac:placeholder", "template", "noscript", "ac:adf-attribute"}
 INLINE = {"strong": "**", "b": "**", "em": "*", "i": "*", "s": "~~", "del": "~~", "strike": "~~", "code": "`", "kbd": "`"}
 PANELS = {"info": "Info", "note": "Note", "warning": "Warning", "tip": "Tip", "panel": "Panel", "expand": "Expand", "excerpt": "Excerpt"}
-CDATA = re.compile(r"<!\[CDATA\[(.*?)\]\]>", re.S)
+CDATA_OPEN, CDATA_CLOSE = "<![CDATA[", "]]>"
 # How deep lists and quotes nest in the Markdown. Each level indents every
 # line below it again, so the Markdown of a page nested thousands deep would
 # grow with the square of the page. A deeper list or quote stays at this depth.
@@ -1406,9 +1406,31 @@ def fence(text: str, language: str) -> str:
     return f"{ticks}{lang}\n{text}\n{ticks}"
 
 
+def cdata_as_text(text: str) -> str:
+    """The page with each CDATA section as the text it holds, escaped, so the parser reads it as text.
+
+    A section runs from its opener to the first closer after it. The page
+    is read once: an opener with no closer ends the search, since no opener
+    after it has one either, and the rest stays as it is. A pattern would
+    search to the end of the page again from each such opener, which takes
+    time in the square of the page.
+    """
+    out, at = [], 0
+    while True:
+        start = text.find(CDATA_OPEN, at)
+        end = text.find(CDATA_CLOSE, start + len(CDATA_OPEN)) if start >= 0 else -1
+        if end < 0:
+            break
+        out.append(text[at:start])
+        out.append(html.escape(text[start + len(CDATA_OPEN):end], quote=False))
+        at = end + len(CDATA_CLOSE)
+    out.append(text[at:])
+    return "".join(out)
+
+
 def html_to_markdown(text: str, base: str = "") -> tuple[str, str]:
     """The Markdown and the title, from HTML, XHTML or Confluence storage format, with links resolved against base."""
-    text = CDATA.sub(lambda m: html.escape(m.group(1), quote=False), text)
+    text = cdata_as_text(text)
     p = Markdowner(base)
     p.feed(text)
     p.close()
@@ -2823,7 +2845,12 @@ def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path, ca
                 if concept in used or concept in claimed:  # two items whose names slug alike
                     concept = f"references/{entry.id}-{slug(stem)[:50]}-{sha256_hex(item_id.encode())[:8]}.md"
             used.add(concept)
-            title = str(it.get("title") or item_id)
+            # A source's own title may hold a square bracket, as "[RFC] Rate
+            # limits" does. The pen refuses one in a title, where an index
+            # bullet's link would end, and applies nothing when one operation
+            # fails. So the concept, its description and its log line carry
+            # the title with round brackets, and the mirror keeps the source's.
+            title = str(it.get("title") or item_id).replace("[", "(").replace("]", ")")
             version = str(it.get("version", ""))
             when = str(it.get("last_modified") or it.get("retrieved_at", ""))[:10]
             source = {"resource": it["path"], "title": f"{title}, mirrored by the ingest"}

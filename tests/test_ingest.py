@@ -86,6 +86,7 @@ from __future__ import annotations
 
 import contextlib
 import hashlib
+import html
 import http.server
 import importlib.util
 import json
@@ -1568,6 +1569,44 @@ def test_patch_moves_a_reference_concept_to_its_items_new_commit(tmp_path, check
     checks.ok("resource: https://docs.acme.example/own" in read(own), "a resource a person set stays", read(own))
 
 
+def test_patch_writes_a_title_the_pen_takes(tmp_path, checks):
+    """A source titled "[RFC] Rate limits" went into the concept's title as it stood. The pen refuses a square bracket there and applies nothing when one operation fails, so one such page kept every Reference concept of the run out."""
+    m = load_module()
+    root = tmp_path / "host"
+    kb = root / ".lokf" / "knowledge"
+    write(kb / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kb / "log.md", "# Change Log\n")
+    entry = m.Entry(id="wiki", kind="git", url="https://github.com/o/r.git", ref="main", reference=True, sensitivity="public")
+    manifest = m.Manifest(m.MIRROR, 10**7, False, [entry])
+    titles = {"rfc.md": "[RFC] Rate limits", "plain.md": "Deploying", "nested.md": "Limits [draft [2]]"}
+
+    def lock(sha):
+        return {"entries": {"wiki": {"status": "ok", "items": {
+            name: {"status": "ok", "path": f".lokf/mirror/wiki/{name}", "origin": m.git_origin(entry, sha, name), "title": title,
+                   "version": sha, "retrieved_at": "2026-11-01T00:00:00Z"} for name, title in titles.items()}}}}
+
+    for name in titles:
+        write(root / ".lokf" / "mirror" / "wiki" / name, "x\n")
+    m.write_patch(root, manifest, lock("a" * 40), root / ".lokf" / "p1.yaml")
+    ops = {o["path"]: o for o in yaml.safe_load(read(root / ".lokf" / "p1.yaml"))["ops"]}
+    rfc = ops["references/wiki-rfc.md"]
+    checks.ok(rfc["frontmatter"]["title"] == "(RFC) Rate limits" and rfc["frontmatter"]["description"].startswith("A copy of (RFC) Rate limits, ")
+              and rfc["log"] == "**Added**: (RFC) Rate limits, a reference to a source the ingest mirrors." and rfc["body"].startswith("# (RFC) Rate limits\n"),
+              "the title, the description, the log line and the heading carry round brackets", rfc)
+    checks.ok(ops["references/wiki-nested.md"]["frontmatter"]["title"] == "Limits (draft (2))" and ops["references/wiki-plain.md"]["frontmatter"]["title"] == "Deploying",
+              "each bracket is rewritten, and a title with none stays", ops)
+    result = bash(SCRIPTS / "knowledge-apply.sh", "--root", root, root / ".lokf" / "p1.yaml")
+    made = sorted(p.name for p in (kb / "references").glob("wiki-*.md")) if (kb / "references").is_dir() else []
+    checks.ok(result and made == ["wiki-nested.md", "wiki-plain.md", "wiki-rfc.md"], "the pen applies every draft of the run", result.out)
+    checks.ok("* [(RFC) Rate limits](wiki-rfc.md) - A copy of (RFC) Rate limits, " in read(kb / "references" / "index.md"), "the index bullet links the concept by that title", read(kb / "references" / "index.md"))
+    # A newer version of the same page is a patch to the concept, whose log line names the title.
+    m.write_patch(root, manifest, lock("b" * 40), root / ".lokf" / "p2.yaml")
+    later = {o["path"]: o for o in yaml.safe_load(read(root / ".lokf" / "p2.yaml"))["ops"]}["references/wiki-rfc.md"]
+    checks.ok(later["op"] == "patch" and "(RFC) Rate limits" in later["log"] and "[" not in later["log"] + later["set"]["description"], "a later patch carries the same title", later)
+    result = bash(SCRIPTS / "knowledge-apply.sh", "--root", root, root / ".lokf" / "p2.yaml")
+    checks.ok(result, "the pen applies the later patch", result.out)
+
+
 # 9. --status
 
 
@@ -1707,6 +1746,35 @@ def test_the_converter_grows_in_step_with_the_page(checks):
               f"{time.monotonic() - started:.1f} s")
     text, _ = m.html_to_markdown("<ul><li>one<ul><li>two</li></ul></li></ul><blockquote><blockquote><p>q</p></blockquote></blockquote>")
     checks.ok(text == "- one\n  - two\n\n> > q\n", "nesting within the depth keeps its shape", text)
+
+
+def test_a_cdata_section_is_found_in_one_pass(checks):
+    """A pattern searched to the end of the page again from each CDATA opener with no closer, so a page of such openers took time in the square of its length: 128 seconds at 360 kB.
+
+    The run's time limit is read between fetches, so one such page held a
+    run past it. The pass that took the pattern's place gives the text the
+    pattern gave, for a section that closes and for one that does not.
+    """
+    m = load_module()
+    page = "<![CDATA[" * (1_000_000 // 9)
+    started = time.monotonic()
+    same = m.cdata_as_text(page) == page
+    took = time.monotonic() - started
+    checks.ok(same and took < 1, "a megabyte of openers with no closer is read once and kept as it is", f"{took:.2f} s")
+    started = time.monotonic()
+    m.convert(page.encode(), "text/html", "html-markdown")
+    took = time.monotonic() - started
+    checks.ok(took < 2, "the page converts in step with its length", f"{took:.2f} s")
+    started = time.monotonic()
+    m.cdata_as_text("<![CDATA[]]" * (1_000_000 // 11))
+    checks.ok(time.monotonic() - started < 1, "so does a page of openers each with half a closer", f"{time.monotonic() - started:.2f} s")
+    pattern = re.compile(r"<!\[CDATA\[(.*?)\]\]>", re.S)
+    for page in ("a<![CDATA[x < y & z > w]]>b", "<![CDATA[]]>", "<![CDATA[a]]><![CDATA[b]]>", "<![CDATA[a<![CDATA[b]]>c]]>", "]]><![CDATA[a\nb]]>",
+                 "<![CDATA[a]]> and <![CDATA[open <![CDATA[open again", "<![CDATA[a]]", "<![CDATA[a]>]]>", "no section", ""):
+        was = pattern.sub(lambda found: html.escape(found.group(1), quote=False), page)
+        checks.ok(m.cdata_as_text(page) == was, f"{page!r} reads as the pattern read it", m.cdata_as_text(page))
+    text, _ = m.html_to_markdown("<p>Run <code><![CDATA[a < b && c]]></code> first.</p>")
+    checks.ok(text == "Run `a < b && c` first.\n", "a section's text reaches the Markdown as text", text)
 
 
 def test_a_table_keeps_what_its_cells_hold(checks):
