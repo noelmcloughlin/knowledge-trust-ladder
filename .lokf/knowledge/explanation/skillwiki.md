@@ -60,3 +60,4 @@ One more change came with LOKF 0.9.0. SkillWiki's verifier specs check an output
 ## Open questions
 
 - 2026-11-17, process:ktl-librarian: the body says `CHANGELOG.md` keeps this concept as the record of the SkillWiki paper, but `CHANGELOG.md` no longer says so, and no other file in the repository does. Should the sentence go, or does another source state it?
+- 2026-11-17, human:noelmcloughlin: sent back to fix the record: the sentence that says `CHANGELOG.md` keeps this concept as the paper's record has no source now.
