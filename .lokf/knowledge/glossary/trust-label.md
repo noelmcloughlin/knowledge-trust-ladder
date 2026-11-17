@@ -48,7 +48,3 @@ A `revision` on an event (lokf 0.9.0 and later) is shown beside that event's dat
 The labels overlap. A concept can be confirmed *and* past its review date, so the counts in a curator report are not a partition. One pair never overlaps: a concept edited since its confirmation is counted under *edited since confirmed* and not as confirmed, because the person confirmed an earlier text. Nothing is scored and nothing is stored: the spec keeps scores out of frontmatter.
 
 A question asked after a confirmation reopens a concept and flags what waits. It never drops the rung: only an edit after the confirmation does that. The health line counts the two apart: *Drafts* for a concept no person has confirmed, and *Reopened* for one a person confirmed and a question has since put back to `status: draft`.
-
-## Open questions
-
-- 2026-11-13, human:noelmcloughlin: ensure revision is quoted

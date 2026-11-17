@@ -106,6 +106,5 @@ The page then lists what remains and who owns it, in four lines:
 
 ## Open questions
 
-- 2026-11-12, human:noelmcloughlin: remove stale information from docs/three-lines.md
 - 2026-11-13, human:noelmcloughlin: check if <https://github.com/GoogleCloudPlatform/open-knowledge-format/issues/45> and <https://github.com/GoogleCloudPlatform/open-knowledge-format/issues/46> are required for What remains to do
 - 2026-11-14, process:ktl-librarian: OKF issues 45 and 46 propose `digest` and `revision` on a `sources` entry. LOKF's `Source` class carries neither, and the Upstream line of `docs/three-lines.md` names only the fields LOKF already carries as its own, `revision` on an event and `excerpt`. So the page as it stands does not need them. Whether What remains should name them is the maintainer's choice for `docs/three-lines.md`, and this concept follows the page.

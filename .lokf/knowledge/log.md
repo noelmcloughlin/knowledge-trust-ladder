@@ -2,6 +2,7 @@
 
 ## 2026-11-17
 
+* **Curation**: human:noelmcloughlin cleared 4 answered notes. The release numbers are gone from the docent and librarian playbooks, every `revision` in the bundle is quoted, and `docs/three-lines.md` no longer holds what was stale on 2026-11-12.
 * **Changed**: the three lines of defence name the `sha256:` digest that pins a file its own branch changed, as `docs/three-lines.md` now does. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: the trust label says how the report compares a `sha256:` digest on a confirmation with the file, from `skills/ktl-curator/references/trust-fields.md`. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: the docent playbook says how a `sha256:` digest is shown beside a confirmation, from `skills/ktl-docent/references/answering.md`. Edited since a person confirmed it; the label says so until the curator looks again.

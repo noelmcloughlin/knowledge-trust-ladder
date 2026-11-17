@@ -146,7 +146,3 @@ The variable names the root file in `.lokf/schema/`, whose imports reach `lokf` 
 [^changelog.md]: CHANGELOG.md, the *Added* entry that says every concept names where it came from
 [^ktl-librarian-skill.md]: skills/ktl-librarian/SKILL.md, Writing a concept
 [^references-ingest.md]: skills/ktl-librarian/references/ingest.md, When a source goes away
-
-## Open questions
-
-- 2026-11-13, human:noelmcloughlin: remove those versions (at least eight release numbers: 0.53.0, 0.55.0, 0.56.1, 0.58.0, 0.61.0, 0.62.0 and 0.64.0 (twice))
