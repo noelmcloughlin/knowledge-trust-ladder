@@ -3,9 +3,10 @@
   the page follows the system's scheme, and the reader's choice in the
   Display menu overrides it by setting color-scheme alone. Every size is in
   rem, so the browser's own text size and the menu's Text size both scale the
-  whole page. Large is the size a reader gets before choosing one. The paper and ink are the Astro site's Catalogue style: one
+  whole page. Medium, the browser's own size, is the size a reader gets
+  before choosing one. The paper and ink are the site's Catalogue style: one
   warm hue, hsl(45), at each lightness, so the page reads as a museum's wall
-  and not a screen's white. The trust colours are the Astro site's too.
+  and not a screen's white. The trust colours are the site's own too.
 */
 @font-face { font-family: "Atkinson Hyperlegible Next"; src: url("../fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
 @font-face { font-family: "Atkinson Hyperlegible Next"; src: url("../fonts/atkinson-hyperlegible-next-latin-wght-italic.woff2") format("woff2"); font-weight: 200 800; font-style: italic; font-display: swap; }
@@ -323,8 +324,8 @@ a[data-preview]:is(:hover, :focus-visible)::after { content: attr(data-preview) 
 /*
   Narrower screens: first a concept's neighbours move under its words, then
   the navigation becomes a menu the header opens. A media query's rem is the
-  browser's own 16px, whatever the Text size, so each width is the one that
-  suits Large, the size a reader starts with.
+  browser's own 16px, whatever the Text size, so each width is one that still
+  suits Large. Medium, the size a reader starts with, has room to spare.
 */
 @media (max-width: 84rem) {
   .layout, .layout:has(> .aside) { grid-template-columns: 16.5rem minmax(0, 1fr); }

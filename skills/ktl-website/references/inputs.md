@@ -9,6 +9,7 @@ A file the repository lacks is passed over without a setting: its mount finds no
 - `.lokf/knowledge/index.md`: its frontmatter (`base_iri`, `license`, `publisher`, `description`) fills the table on the bundle's overview page, and its text is that page's. The build needs this file.
 - Each concept file becomes a page at `/knowledge/<id>/`. Its frontmatter is read as data, so a concept that sets `url`, `aliases`, `draft` or `layout` changes nothing. An id with a capital keeps it in the address. The page shows the concept's type, genre and tags, its definition, its checks, its review date, its sources with any `excerpt`, and its licence or the bundle's. A source under `.lokf/mirror/` names where the ingest fetched it, the source's version and the day, from the committed `.lokf/ingest.lock.yaml`; the confidential cache's lock is never read. The typed relations come from the `graph.json` that `lokf export` writes, both ways, not from the frontmatter.
 - Each folder of the bundle is a group in the navigation, from its `index.md`. A new folder needs no line anywhere.
+- Three names are not concepts, by the rule `knowledge-report.sh` follows: `index.md` and `log.md` in any folder, which the lokf toolkit reserves, and `diataxis.md` at the bundle's root, where the KTL Registrar plugin writes its map. A `log.md` in a folder and the root's `diataxis.md` have no page. Each is served as Markdown, and a link to one goes to GitHub. A `diataxis.md` in a folder is a concept like any other.
 - A concept's neighbours are listed beside its words: the concepts that point at it, then the concepts it points at, each with its trust dot and the relation.
 - `.lokf/knowledge/log.md`: the bundle log page, and `/knowledge/log.xml`, an Atom feed of its newest thirty days, a day being a `## YYYY-MM-DD` section. Every page names the feed in its head.
 - `.lokf/scripts/knowledge-report.sh labels` and `health`: the trust label on each concept page and the numbers the health page charts. The site never derives a label itself, and the build stops on a concept with no label.
@@ -92,7 +93,7 @@ A file the repository lacks is passed over without a setting: its mount finds no
 
 ## `badge.json`
 
-- `/badge.json` says how many of the bundle's concepts a person confirmed, as `n of m`, retired ones aside, under the label `KTL scorecard` and the mark of the Knowledge Trust Ladder (KTL), in the form a shields.io endpoint badge reads. A README shows the image `https://img.shields.io/endpoint?url=<site>/badge.json` and links it to `<site>/health/`, where `<site>` is the site's address.
+- `/badge.json` says how many of the bundle's concepts a person confirmed, as `n of m`, where `m` counts every concept, a retired one included, as the health line and the health page count them, under the label `KTL scorecard` and the mark of the Knowledge Trust Ladder (KTL), in the form a shields.io endpoint badge reads. A README shows the image `https://img.shields.io/endpoint?url=<site>/badge.json` and links it to `<site>/health/`, where `<site>` is the site's address.
 
 ## What search leaves out
 

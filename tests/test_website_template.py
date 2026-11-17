@@ -27,10 +27,13 @@ import re
 import shutil
 import subprocess
 import sys
+import json
 import tomllib
 from pathlib import Path
 
-from conftest import REPO, TEMPLATES, WEBSITE, WEBSITE_TEMPLATES, bash, read, run, write
+import pytest
+
+from conftest import REPO, TEMPLATES, WEBSITE, WEBSITE_TEMPLATES, bash, have, read, run, write
 
 SITE_TEMPLATES = WEBSITE_TEMPLATES / "website"
 PLACEHOLDERS = {
@@ -569,3 +572,137 @@ def test_the_raw_html_cleaner_stops_on_a_mark_with_no_end_and_on_a_build_with_no
     write(site / "index.html", "<body><p>No mark.</p></body>")
     result = clean_html(site)
     assert not result and "no page holds the build's mark" in result.out, result.out
+
+
+def test_the_bundle_s_adapter_asks_for_no_label_where_the_report_prints_none():
+    """index.md and log.md in any folder, and diataxis.md at the bundle's root, are not concepts, so a page for one would stop the build at trust.html."""
+    adapter = read(SITE_TEMPLATES / "content" / "knowledge" / "_content.gotmpl")
+    skip = '{{- if or (eq $rel "diataxis.md") (and (eq (path.Base $rel) "log.md") (ne $rel "log.md")) }}{{ continue }}{{ end -}}'
+    assert skip in adapter, "a folder's log.md and the root's diataxis.md get no page, and a folder's diataxis.md is a concept"
+    assert adapter.index(skip) < adapter.index("transform.Unmarshal") < adapter.index("$.AddPage"), "it is passed over before its frontmatter is read"
+    assert '{{- if eq (path.Base $id) "index" -}}' in adapter and '{{- else if eq $id "log" -}}' in adapter, "a folder's index.md is its page, and the root's log.md the bundle log"
+    assert "printed no label for %s.md" in read(SITE_TEMPLATES / "layouts" / "_partials" / "trust.html")
+
+
+def test_the_badge_and_the_health_page_count_the_concepts_the_health_line_counts():
+    """`knowledge-report.sh health` prints "Confirmed by a person: n of m" with a retired concept in m, so the badge and the page do too."""
+    report = read(TEMPLATES / "scripts" / "knowledge-report.sh")
+    counted = report[report.index("health() {"):]
+    assert counted.index("{ n++; r = rung() }") < counted.index('r == "retired" { retired++; next }'), "the health line counts a retired concept in its total"
+    badge = read(SITE_TEMPLATES / "layouts" / "home.badge.json")
+    assert '{{- range (partialCached "concepts.html" "concepts").id }}{{ $n.Add "all" 1 }}{{ $n.Add .trust.tone 1 }}{{ end -}}' in badge and 'ne .trust.tone "retired"' not in badge
+    health = read(SITE_TEMPLATES / "layouts" / "health.html")
+    assert "{{- $total := len $all.id -}}" in health
+
+
+def test_the_health_page_draws_no_bar_for_a_bundle_with_no_concept():
+    """A progress element needs a total above nought."""
+    health = read(SITE_TEMPLATES / "layouts" / "health.html")
+    empty, bars, progress = health.index("{{- if not $total }}"), health.index('<div class="bars">'), health.index('<progress class="bar__track')
+    assert empty < health.index("The bundle holds no concept yet.") < health.index("{{- else }}", empty) < bars < progress < health.index('<p class="card__caption">Also counted</p>')
+
+
+def test_the_stylesheet_names_the_size_a_reader_starts_with_and_the_site_it_is():
+    css = read(SITE_TEMPLATES / "assets" / "css" / "site.css")
+    script = read(SITE_TEMPLATES / "assets" / "js" / "site.js")
+    assert 'const defaults = { theme: "auto", size: "medium" };' in script and ":root { font-size: 100%; }" in css
+    comments = " ".join(" ".join(re.findall(r"/\*.*?\*/", css, re.S)).split())
+    assert "Medium, the browser's own size, is the size a reader gets before choosing one." in comments
+    assert "Medium, the size a reader starts with, has room to spare." in comments
+    assert "Astro" not in css and "Large is the size" not in comments and "Large, the size a reader starts with" not in comments
+
+
+BROWSER = r"""
+// A page as the site's scripts need it, with no browser: an element holds what a script sets, and does nothing.
+const fs = require("fs");
+const vm = require("vm");
+const heard = { window: {}, document: {} };
+const hear = (who) => (type, call) => (heard[who][type] ??= []).push(call);
+const tell = (who, type) => Promise.all((heard[who][type] ?? []).map((call) => call({ type })));
+const settle = () => new Promise((done) => setImmediate(done));
+const element = (extra = {}) => ({
+  dataset: {}, style: {}, attributes: {}, hidden: true, textContent: "",
+  classList: { add() {}, remove() {}, toggle() {} },
+  querySelector: () => null, querySelectorAll: () => [],
+  addEventListener() {}, append() {}, remove() {},
+  setAttribute(name, value) { this.attributes[name] = value; },
+  removeAttribute(name) { delete this.attributes[name]; },
+  ...extra,
+});
+const page = { dark: false };
+const scheme = { matches: false, addEventListener: (type, call) => hear("window")("scheme", call) };
+const diagram = element({ textContent: "graph TD; A-->B;" });
+const note = element();
+const ids = { graph: element({
+  dataset: { src: "graph.json", workspace: "workspace/graph.json", extra: "{}", tones: JSON.stringify({ order: ["person"] }) },
+  querySelector: (selector) => (selector === ".graph__note" ? note : element()),
+}) };
+globalThis.window = globalThis;
+globalThis.document = {
+  documentElement: element(), body: element({ appendChild: (node) => node }), readyState: "complete", title: "Knowledge graph",
+  getElementById: (id) => (ids[id] ??= element()),
+  querySelector: () => element(),
+  querySelectorAll: (selector) => (selector === ".prose .mermaid" ? [diagram] : []),
+  createElement: () => element(),
+  addEventListener: hear("document"),
+  dispatchEvent: (event) => tell("document", event.type),
+};
+globalThis.addEventListener = hear("window");
+globalThis.localStorage = { getItem: () => null, setItem() {} };
+globalThis.location = new URL("https://acme.example/acme-platform/graph/" + (process.env.QUERY ?? ""));
+globalThis.matchMedia = () => scheme;
+globalThis.getComputedStyle = () => ({ color: page.dark ? "rgb(20, 20, 20)" : "rgb(250, 250, 250)", fontFamily: "sans-serif" });
+"""
+
+
+@pytest.mark.skipif(not have("node"), reason="node not installed locally - CI runs the site's script")
+def test_a_diagram_is_drawn_again_when_the_scheme_changes():
+    """Mermaid keeps the colours it was started with, so site.js keeps each diagram's source and draws it again on the Display menu's event and the system's."""
+    script = BROWSER + r"""
+const drawings = [];
+globalThis.mermaid = {
+  initialize(config) { this.config = config; },
+  async run({ nodes }) {
+    for (const node of nodes) {
+      drawings.push({ paper: this.config.themeVariables.background, source: node.textContent, processed: node.attributes["data-processed"] ?? null, onLoad: this.config.startOnLoad });
+      node.textContent = "<svg>";
+      node.attributes["data-processed"] = "true";
+    }
+  },
+};
+(async () => {
+  vm.runInThisContext(fs.readFileSync(process.env.SCRIPT, "utf8"));
+  await tell("window", "DOMContentLoaded");
+  await settle();
+  page.dark = true;
+  document.dispatchEvent(new Event("displaychange"));
+  await settle();
+  // The Text size sends the same event, and changes no colour.
+  document.dispatchEvent(new Event("displaychange"));
+  await settle();
+  page.dark = false;
+  await tell("window", "scheme");
+  await settle();
+  console.log(JSON.stringify(drawings));
+})();
+"""
+    result = run(["node", "-e", script], env={"SCRIPT": SITE_TEMPLATES / "assets" / "js" / "site.js"})
+    assert result, result.out
+    light, dark = "rgb(250, 250, 250)", "rgb(20, 20, 20)"
+    assert json.loads(result.out) == [{"paper": paper, "source": "graph TD; A-->B;", "processed": None, "onLoad": False} for paper in (light, dark, light)], result.out
+
+
+@pytest.mark.skipif(not have("node"), reason="node not installed locally - CI runs the site's script")
+def test_the_graph_page_says_so_when_there_is_no_concept_to_draw():
+    script = BROWSER + r"""
+globalThis.fetch = async () => ({ ok: true, status: 200, json: async () => ({ nodes: [], edges: [], meta: { bundles: [] } }) });
+globalThis.cytoscape = () => { throw new Error("it went on to draw a graph with no concept"); };
+(async () => {
+  vm.runInThisContext(fs.readFileSync(process.env.SCRIPT, "utf8"));
+  await tell("window", "DOMContentLoaded").catch((error) => console.log(error.message));
+  console.log(JSON.stringify({ hidden: note.hidden, words: note.textContent }));
+})();
+"""
+    for query, words in (("", "The bundle holds no concept yet."), ("?graph=workspace", "The workspace holds no concept yet.")):
+        result = run(["node", "-e", script], env={"SCRIPT": SITE_TEMPLATES / "assets" / "js" / "graph.js", "QUERY": query})
+        assert result and json.loads(result.out) == {"hidden": False, "words": words}, (query, result.out)
