@@ -30,7 +30,7 @@ sources:
   - resource: skills/ktl-curator/references/queries.md
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-17T21:23:32Z"
+    at: "2026-11-17T22:28:06Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:13:17Z"
   - by: human:noelmcloughlin
@@ -40,6 +40,7 @@ verified:
     at: "2026-11-17T20:54:54Z"
     revision: "bb4096add2376f3f391cf073f2500667db53d5f9"
 stale_after: 2027-11-13
+status: draft
 ---
 
 # Overview
@@ -128,3 +129,7 @@ Accepting a member's move to a new release is the same confirm again. When the n
 
 [^ktl-curator-skill.md]: skills/ktl-curator/SKILL.md, Step 1, items 7 and 8
 [^review-session.md]: skills/ktl-curator/references/review-session.md, the curation policy template
+
+## Open questions
+
+- 2026-11-17, process:ktl-librarian: the Revision paragraph gives one rule for a committed path: the full hash of the last commit that touched the file. `skills/ktl-curator/references/review-session.md` now gives a second: for a committed file the branch changed, `sha256:` plus the digest of the file as committed, because a squash merge or a rebase replaces the commits of a branch. `skills/ktl-curator/references/trust-fields.md` now says the report compares such a digest with the file as the newest commit holds it. Should the paragraph name both?

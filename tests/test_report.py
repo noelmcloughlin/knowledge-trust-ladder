@@ -2406,6 +2406,72 @@ def test_without_a_revision_this_history_holds_the_recording_commit_decides(tmp_
     assert has_line(out, "Sources that moved since the concept was derived or last checked: none"), out
 
 
+def digest_pinned(tmp_path, shown, merged):
+    """A pull request changes a source, a person confirms its concept with a digest of the file as shown, and the squash merge holds the file as merged."""
+    git = Git(tmp_path)
+    git.init()
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(tmp_path / "docs" / "a.md", "one\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "init")
+    write(tmp_path / "docs" / "a.md", merged)
+    write(
+        kk / "t" / "a.md",
+        "---\ntype: GlossaryTerm\ntitle: A\nresource: docs/a.md\n"
+        f'verified:\n  - by: human:ada\n    at: "2026-11-01T00:00:00Z"\n    revision: "sha256:{hashlib.sha256(shown.encode()).hexdigest()}"\n---\n\nSays what docs/a.md says.\n',
+    )
+    git("add", "-A")
+    git("commit", "-q", "-m", "the pull request, squash-merged")
+    return git
+
+
+MOVED_A = r"^- t/a\.md: docs/a\.md \(\d{4}-\d\d-\d\d\)$"
+
+
+def test_a_digest_pins_the_file_the_pull_request_changed_and_a_later_change_moves_it(tmp_path):
+    """A commit of the pull request is no pin after a squash merge, so the event names the content, which the squash commit holds too."""
+    git = digest_pinned(tmp_path, "two\n", "two\n")
+    out = report(tmp_path).out
+    assert "docs/a.md (" not in out, f"a file that holds the bytes the digest names read as moved: {out}"
+    append(tmp_path / "docs" / "a.md", "three\n")
+    git("commit", "-q", "-am", "docs: a.md changes after the confirmation")
+    out = report(tmp_path).out
+    assert matches(out, MOVED_A), f"a file changed after the digest was taken did not move: {out}"
+
+
+def test_a_file_changed_after_the_digest_and_before_the_squash_merge_has_moved(tmp_path):
+    """The recording commit holds the change and the confirmation together, so by commits alone it is no move."""
+    digest_pinned(tmp_path, "two\n", "two\nthree, after the person was shown the file\n")
+    out = report(tmp_path).out
+    assert matches(out, MOVED_A), f"a file changed after the person confirmed it, in the same squash merge, did not move: {out}"
+
+
+def test_a_digest_is_of_the_file_as_head_holds_it(tmp_path):
+    """A checkout that writes CRLF holds other bytes than the commit, and the digest was taken of the commit."""
+    git = digest_pinned(tmp_path, "two\n", "two\n")
+    git("config", "core.autocrlf", "true")
+    (tmp_path / "docs" / "a.md").unlink()
+    git("checkout", "--", "docs/a.md")
+    assert b"\r\n" in (tmp_path / "docs" / "a.md").read_bytes(), "the checkout did not convert the line endings"
+    out = report(tmp_path).out
+    assert "docs/a.md (" not in out, f"a checkout with other line endings read as a moved file: {out}"
+
+
+def test_with_no_digest_tool_the_recording_commit_decides(tmp_path):
+    digest_pinned(tmp_path, "two\n", "two\nthree, after the person was shown the file\n")
+    result = report(tmp_path, env={"PATH": path_without(tmp_path, "sha256sum", "shasum")})
+    assert result.rc == 0 and "docs/a.md (" not in result.out, f"report script failed, or invented a move, with no digest tool: {result.out}"
+
+
+def test_a_digest_on_a_folder_is_not_compared(tmp_path):
+    git = digest_pinned(tmp_path, "two\n", "two\n")
+    replace_in(tmp_path / ".lokf" / "knowledge" / "t" / "a.md", "resource: docs/a.md", "resource: docs")
+    git("commit", "-q", "-am", "the concept names the folder")
+    result = report(tmp_path)
+    assert result.rc == 0 and "docs (" not in result.out, f"report script compared a digest with a folder: {result.out}"
+
+
 def test_a_source_git_holds_no_history_of_is_named_and_makes_no_run_busy(tmp_path):
     """An ignored file never moved, and nothing said it was never compared."""
     git = Git(tmp_path)

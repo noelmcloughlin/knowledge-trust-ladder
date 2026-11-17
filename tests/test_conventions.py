@@ -6,7 +6,8 @@ anything, so one bundle breaks each rule and the script must name each break.
 A bundle that keeps every rule must pass: with CRLF line endings, through a
 link, and without uv. Rule 14 reads the commits after a pull request's base,
 so a small history stages a confirmation alone, one with an edit, Correct now
-and a merge. Rule 17 reads log.md against the bundle, so another history
+and a merge. Rule 6 reads a pin against that base too, so another stages a
+pull request merged into a base that moved on, and a squash merge. Rule 17 reads log.md against the bundle, so another history
 stages two days of logged writes after a base.
 
 Thirteen of the eighteen rules run through `uv run`, so without uv the script
@@ -16,6 +17,7 @@ the job that runs them installs it.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -521,7 +523,7 @@ def test_an_awk_that_stops_early_is_no_pass(good, tmp_path):
     )
 
 
-@pytest.mark.parametrize("args", [["--strict", "--since"], ["--bogus"], ["a", "b"]])
+@pytest.mark.parametrize("args", [["--strict", "--since"], ["--head", "HEAD"], ["--bogus"], ["a", "b"]])
 def test_a_call_it_cannot_read_is_refused(good, args):
     result = bash(CONVENTIONS, *args)
     assert result.rc == 2 and "usage:" in result.out, f"conventions script accepted {args} (exit {result.rc}): {result.out}"
@@ -745,6 +747,127 @@ def test_rule_14_says_when_the_clone_lacks_the_base(rule14):
     assert "rule 14: the base commit 0123456789abcdef is not in this clone's history" in result.out, (
         f"conventions rule 14 failed some other way on an unknown base: {result.out}"
     )
+
+
+# Rule 6 on a pull request. A pin names a commit the base holds, or the
+# content as a digest. A commit the pull request made is replaced by a squash
+# merge or a rebase, and the pin then names nothing: PR #383 left one on main,
+# where only a fresh clone reported it. The gate checks out a merge into a
+# base that moved on, so it names the last commit of the pull request, and
+# the commits the base gained are not read as the pull request's.
+
+
+def v6c(k, name, resource, verified="", body="What the librarian wrote."):
+    write(
+        k / "x" / f"{name}.md",
+        f"---\ntype: Service\nid: https://example.invalid/k/x/{name}\ntitle: {name}\nresource: {resource}\n"
+        f'generated:\n  by: process:ktl-librarian\n  at: "2026-09-01T00:00:00Z"\n{verified}---\n\n# Overview\n\n{body}\n',
+    )
+
+
+def confirmed_with(revision):
+    return f'verified:\n  - by: human:contract\n    at: "2026-09-04T00:00:00Z"\n    revision: "{revision}"\n'
+
+
+@pytest.fixture(scope="module")
+def pull_request(tmp_path_factory):
+    """The bundle on a merge of a pull request into its base, the base, the pull request's last commit and the commit it pinned of its own."""
+    repo = tmp_path_factory.mktemp("conventions-rule6-pull-request")
+    k = repo / "k"
+    git = Git(repo)
+    git.init()
+    write(repo / "docs" / "a.md", "a\n")
+    write(repo / "docs" / "b.md", "b\n")
+    for name, resource in [("own", "docs/a.md"), ("digest", "docs/a.md"), ("held", "docs/b.md"), ("late", "docs/b.md"), ("folded", "docs/b.md")]:
+        v6c(k, name, resource)
+    git("add", "-A")
+    git("commit", "-q", "-m", "the base")
+    base = git("rev-parse", "HEAD")
+    git("checkout", "-q", "-b", "pr")
+    write(repo / "docs" / "a.md", "a, as the pull request changed it\n")
+    git("commit", "-q", "-am", "the pull request changes a source")
+    own = git("rev-parse", "HEAD")
+    v6c(k, "own", "docs/a.md", confirmed_with(own))
+    v6c(k, "digest", "docs/a.md", confirmed_with("sha256:" + hashlib.sha256((repo / "docs" / "a.md").read_bytes()).hexdigest()))
+    v6c(k, "held", "docs/b.md", confirmed_with(base))
+    git("commit", "-q", "-am", "a person confirms three concepts")
+    head = git("rev-parse", "HEAD")
+    git("checkout", "-q", "main")
+    write(repo / "docs" / "b.md", "b, as the base changed it\n")
+    git("commit", "-q", "-am", "the base changes a source")
+    v6c(k, "late", "docs/b.md", confirmed_with(git("rev-parse", "HEAD")))
+    v6c(k, "folded", "docs/b.md", CONFIRMED, "What a squash merge folded in with the confirmation.")
+    git("commit", "-q", "-am", "another pull request, squash-merged")
+    git("merge", "-q", "--no-ff", "--no-edit", "pr")
+    return k, base, head, own
+
+
+def test_rule_6_reports_a_pin_on_a_commit_the_pull_request_made(pull_request):
+    k, base, head, own = pull_request
+    out = bash(CONVENTIONS, k, "--since", base, "--head", head).out
+    want = f"k/x/own.md: revision {own} names a commit made after the base, which a squash merge or a rebase replaces - pin the content of docs/a.md instead, as a sha256: digest"
+    assert want in out, f"conventions rule 6 passed a pin on the pull request's own commit: {out}"
+
+
+@pytest.mark.parametrize(
+    ("quiet", "why"),
+    [
+        ("held.md", "a pin on a commit the base holds"),
+        ("digest.md", "a digest of the file the pull request changed"),
+        ("late.md", "a pin the base gained since, on a commit the base made since"),
+        ("folded.md", "a squash merge on the base, which is not the pull request's commit"),
+    ],
+)
+def test_rules_6_and_14_read_the_pull_request_and_not_what_the_base_gained(pull_request, quiet, why):
+    k, base, head, _ = pull_request
+    out = bash(CONVENTIONS, k, "--since", base, "--head", head).out
+    assert quiet not in out, f"conventions script reported {quiet}, {why}: {out}"
+
+
+def test_without_head_the_commits_after_the_base_are_read_up_to_the_checkout(pull_request):
+    """On a branch the checkout is the pull request's last commit. On a gate's merge it also holds what the base gained, which is why the gate names the head."""
+    k, base, _, _ = pull_request
+    out = bash(CONVENTIONS, k, "--since", base).out
+    for want in ["k/x/late.md: revision", "k/x/folded.md: commit"]:
+        assert want in out, f"conventions script did not read up to HEAD with no --head ('{want}'): {out}"
+
+
+def test_rule_6_is_asked_about_the_base_only_with_since(pull_request):
+    k, _, _, _ = pull_request
+    result = bash(CONVENTIONS, k)
+    assert result, f"conventions script reported a pin on a commit in the history, with no base: {result.out}"
+
+
+def test_rule_14_says_when_the_clone_lacks_the_head(pull_request):
+    k, base, _, _ = pull_request
+    result = bash(CONVENTIONS, k, "--since", base, "--head", "0123456789abcdef")
+    assert not result, f"conventions rule 14 passed a head the clone does not hold: {result.out}"
+    assert "rule 14: the head commit 0123456789abcdef is not in this clone's history" in result.out, (
+        f"conventions rule 14 failed some other way on an unknown head: {result.out}"
+    )
+
+
+def test_rule_6_reports_a_pin_a_squash_merge_left_behind(tmp_path):
+    """The commit is still in the clone that made it, on the branch, so asking git for the object passed there and failed in a fresh clone."""
+    k = tmp_path / "k"
+    git = Git(tmp_path)
+    git.init()
+    write(tmp_path / "docs" / "a.md", "a\n")
+    v6c(k, "own", "docs/a.md")
+    git("add", "-A")
+    git("commit", "-q", "-m", "the base")
+    git("checkout", "-q", "-b", "pr")
+    write(tmp_path / "docs" / "a.md", "a, as the pull request changed it\n")
+    git("commit", "-q", "-am", "the pull request changes a source")
+    own = git("rev-parse", "HEAD")
+    v6c(k, "own", "docs/a.md", confirmed_with(own))
+    git("commit", "-q", "-am", "a person confirms")
+    git("checkout", "-q", "main")
+    git("merge", "-q", "--squash", "pr")
+    git("commit", "-q", "-m", "the pull request, squash-merged")
+    out = bash(CONVENTIONS, k).out
+    want = f"k/x/own.md: revision {own} is not in the history of HEAD - a squash merge or a rebase has replaced that commit, or another branch holds it"
+    assert want in out, f"conventions rule 6 passed a pin on a commit the history does not hold: {out}"
 
 
 # Rule 17. Each Added and Deprecation bullet names a concept the bundle holds,

@@ -34,7 +34,7 @@ sources:
   - resource: .lokf/justfile
 generated:
   by: process:ktl-librarian
-  at: "2026-11-17T20:29:12Z"
+  at: "2026-11-17T22:28:06Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
 about:
@@ -135,7 +135,7 @@ The variable names the root file in `.lokf/schema/`, whose imports reach `lokf` 
 
 **Retellings for younger readers.** `references/retellings.md` says how the librarian writes and refreshes a retelling: a concept that tells younger readers what another concept says, in shorter words. A retelling may leave a fact out, and it never adds one. Its `derivedFrom` names the adult concept, a `sources` entry gives that concept's path, and its `tags` carry the band, such as `audience-13-18`. A refresh re-derives it from the adult concept as it now stands. In a live session the librarian writes one when a person asks. A scheduled run writes one only for a band the curation policy's `Younger readers:` line declares, and only from a concept a person has confirmed. No run writes one because a reader's feedback entry asks for it.
 
-**The toolkit's constraints, and `revision`.** The field tables state what lokf enforces from 0.8.0: `sources[].author` is an actor string, `http_method` is one uppercase verb from a closed list, and every timestamp, `stale_after` included, is a datetime, a bare date meaning midnight UTC. Where the toolkit accepts it, the skill also passes `revision`: the full commit hash of a file in the repository, or the ETag or a `sha256:` digest of a URL, always quoted. The field arrived in lokf 0.9.0, and the 0.8.0 validator rejects it. So the key is left out on an older toolkit, on a file with uncommitted changes or not under version control, and on a source the skill did not read that run. Conventions rule 6 checks that a commit-shaped `revision` names a commit holding the concept's `resource`, and rule 11 rejects an `at` later than the commit that first recorded it.
+**The toolkit's constraints, and `revision`.** The field tables state what lokf enforces from 0.8.0: `sources[].author` is an actor string, `http_method` is one uppercase verb from a closed list, and every timestamp, `stale_after` included, is a datetime, a bare date meaning midnight UTC. Where the toolkit accepts it, the skill also passes `revision`: the full commit hash of a file in the repository, a `sha256:` digest of a file this branch changed, or the ETag or a `sha256:` digest of a URL, always quoted. A squash merge or a rebase replaces the commits of a branch, and the gate refuses a pin on one. The field arrived in lokf 0.9.0, and the 0.8.0 validator rejects it. So the key is left out on an older toolkit, on a file with uncommitted changes or not under version control, and on a source the skill did not read that run. Conventions rule 6 checks that a commit-shaped `revision` names a commit in the history of HEAD that holds the concept's `resource`. With `--since` it also refuses one that names a commit made after that base. Rule 11 rejects an `at` later than the commit that first recorded it.
 
 **Portability.** `references/portability.md` says what the skill loses on each host and the substitute. On GitLab, Codeberg, Forgejo or Gitea the wrapper is scheduled in that CI and the merge request is opened there. From PowerShell the commands run through Git for Windows' bash, and on macOS `shasum -a 256` stands in for `sha256sum`. Files and directories are named in lowercase, since the path is the id and case-insensitive hosts collide. The audit runs the preflight first.
 
@@ -146,7 +146,3 @@ The variable names the root file in `.lokf/schema/`, whose imports reach `lokf` 
 [^changelog.md]: CHANGELOG.md, the *Added* entry that says every concept names where it came from
 [^ktl-librarian-skill.md]: skills/ktl-librarian/SKILL.md, Writing a concept
 [^references-ingest.md]: skills/ktl-librarian/references/ingest.md, When a source goes away
-
-## Open questions
-
-- 2026-11-13, human:noelmcloughlin: remove those versions (at least eight release numbers: 0.53.0, 0.55.0, 0.56.1, 0.58.0, 0.61.0, 0.62.0 and 0.64.0 (twice))

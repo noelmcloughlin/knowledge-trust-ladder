@@ -96,7 +96,7 @@ Each operation takes `op`, `path` and the keys below, and the script refuses any
 
 ## What the script does for you
 
-- **Provenance.** `create`, `patch` and `rewrite` stamp `generated: { by, at }` with this run's actor and the clock. Pass `revision: "<full commit hash>"` on one of those three to record it where the toolkit accepts the key.
+- **Provenance.** `create`, `patch` and `rewrite` stamp `generated: { by, at }` with this run's actor and the clock. Pass `revision` on one of those three to record it where the toolkit accepts the key: `"<full commit hash>"`, or `"sha256:<digest>"` for a file this branch changed ([golden-rules.md](golden-rules.md)).
 - **Status.** `create` sets `status: draft`; `question` sets it too. Nothing else touches `status`.
 - **The index.** `create` adds the concept's bullet, its title linked to its file and followed by its description, to the folder's `index.md` and to the root `index.md`. `set` of `title` or `description`, on a `patch` or a `rewrite`, rewrites both, and `delete` removes both. `reindex` re-derives both from the frontmatter as it stands, for a bullet that drifted or a concept the script may not patch, and touches neither the concept nor the log.
 

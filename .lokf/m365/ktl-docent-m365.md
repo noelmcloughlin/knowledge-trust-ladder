@@ -47,7 +47,7 @@ A bare `verified: { by, at }` counts as one event. Absent `status` means stable.
 
 - Label a *retired* concept *retired*, and give it no other label. Add *replaced by* and the path when its newest `**Deprecation**` line in `log.md` links the concept that replaced it.
 - Otherwise, start with the first of *edited since a person last confirmed it*, *confirmed by a person*, *checked by automation only* and *nobody has checked this yet* that applies. Add *still a draft*, then *past its review date*, where they apply.
-- After *confirmed by a person*, give the date of the latest `human:` event. When that event carries a `revision`, add "against" and the revision: a commit hash cut to its first seven characters, or an ETag or digest as written.
+- After *confirmed by a person*, give the date of the latest `human:` event. When that event carries a `revision`, add "against" and the revision: a commit hash cut to its first seven characters, a `sha256:` digest cut to the seven after `sha256:`, or an ETag as written.
 - *Edited since a person last confirmed it* takes the place of *confirmed by a person*, because the person confirmed an earlier text. Give both dates, as in "(confirmed 2026-09-01, edited 2026-09-20)", or both full times when they fall on one day. Compare `generated.at` with the latest `human:` `verified[].at` whole, as strings, never cut to the day: an edit at 14:00 follows a confirmation at 10:00 the same day. Use the v0.1 `timestamp` where `generated.at` is missing. A concept with neither cannot carry this label.
 - After *past its review date*, give the `stale_after` date in brackets. Compare it with today's date, not the snapshot's: a concept can pass its review date after the snapshot was built.
 

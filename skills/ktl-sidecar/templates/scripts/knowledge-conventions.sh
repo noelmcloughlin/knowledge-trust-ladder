@@ -19,10 +19,12 @@
 #      exists, relative to the repository root: the nearest directory holding
 #      `.lokf/`, or else the bundle's parent. URLs are never fetched.
 #   6. A commit-shaped `revision` (lokf 0.9.0 and later) on a `generated` or
-#      `verified` event names a commit in this repository that holds the
-#      concept's local `resource`. ETags, digests and version labels pin URLs
-#      and are not checked. The rule needs the full history: outside git it
-#      is skipped, and a shallow clone is reported.
+#      `verified` event names a commit in the history of HEAD that holds the
+#      concept's local `resource`. With `--since <commit>` it names no commit
+#      made after that base: a squash merge or a rebase replaces such a
+#      commit, and a `sha256:` digest pins the file instead. An ETag, a
+#      digest and a version label are not checked. The rule needs the full
+#      history: outside git it is skipped, and a shallow clone is reported.
 #   7. One file per `id`. A sync client's conflict copy or a pasted duplicate
 #      passes `lokf validate` and silently merges into the original in the
 #      graph.
@@ -62,8 +64,8 @@
 #      latest confirmation must move `generated.at` past that confirmation.
 #  14. A commit that records a person's confirmation changes the verdict, not
 #      what the concept says, unless `generated.by` names that same person.
-#      The rule reads the commits after `--since <commit>`, and is skipped
-#      without it.
+#      The rule reads the commits after `--since <commit>`, up to
+#      `--head <commit>` or else HEAD, and is skipped without `--since`.
 #  15. Every concept names where it came from: a top-level `resource`, or a
 #      `sources` list with an entry.
 #  16. A footnote joins a claim to a source: each footnote in a body uses the
@@ -102,26 +104,33 @@
 # sidecar's `.lokf/.gitattributes` keeps tracked files on LF; rule 9 still
 # reports a BOM, because other readers do not strip it.
 #
-# Usage: knowledge-conventions.sh [bundle-dir] [--since <commit>] [--strict]
+# Usage: knowledge-conventions.sh [bundle-dir] [--since <commit> [--head <commit>]] [--strict]
 # (default: knowledge, i.e. run from .lokf/). Exit 1 with one line per
 # finding; nothing else is written. Exit 2 when the Python half could not
 # run, or under --strict when it was skipped, with the reason on stderr.
-[ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [bundle-dir] [--since <commit>] [--strict]" >&2; exit 2; }
+#
+# `--since` names the base of a pull request, and rules 6, 14 and 17 read
+# what came after it. `--head` names the pull request's last commit where
+# HEAD is a merge of it into the base, as a gate checks out, so that rules 6
+# and 14 leave out the commits the base gained since.
+[ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [bundle-dir] [--since <commit> [--head <commit>]] [--strict]" >&2; exit 2; }
 set -euo pipefail
 
-usage() { echo "usage: ${0##*/} [bundle-dir] [--since <commit>] [--strict]" >&2; exit 2; }
+usage() { echo "usage: ${0##*/} [bundle-dir] [--since <commit> [--head <commit>]] [--strict]" >&2; exit 2; }
 # The bundle directory may be a link, on a host that keeps the real folder as
 # a visible knowledge_bundle/. Handed a link bare, find never enters it, so
 # the trailing slash below is what makes it read the files.
-bundle=""; since=""; strict=0
+bundle=""; since=""; head=""; strict=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --since) { [ $# -ge 2 ] && [ -n "$2" ]; } || usage; since="$2"; shift 2 ;;
+    --head) { [ $# -ge 2 ] && [ -n "$2" ]; } || usage; head="$2"; shift 2 ;;
     --strict) strict=1; shift ;;
     -*) usage ;;
     *) [ -z "$bundle" ] || usage; bundle="$1"; shift ;;
   esac
 done
+{ [ -z "$head" ] || [ -n "$since" ]; } || usage
 bundle="${bundle:-knowledge}"; bundle="${bundle%/}"
 [ -d "$bundle" ] || { echo "no bundle directory at $bundle" >&2; exit 2; }
 fail=0
@@ -270,9 +279,9 @@ hold() {  # <file number> <rank> <finding>
 # For rule 5, a URL, an identifier with a scheme such as urn:ietf:rfc:9110
 # or doi:10.1000/182 (two characters at least, so a Windows drive letter is
 # still a path), a fragment and the quotes are cut from a value. For rule 6,
-# a revision with a character outside [0-9a-f] pins a URL and is skipped, as
-# is every revision on a concept whose top-level `resource` is a URL, an
-# absolute path or absent.
+# a revision with a character outside [0-9a-f] names no commit and is
+# skipped, as is every revision on a concept whose top-level `resource` is a
+# URL, an absolute path or absent.
 # shellcheck disable=SC2016 # awk's own $0, not the shell's
 fields='
 # The same flowvals as in the rule11 program above.
@@ -369,12 +378,30 @@ if [ "$read_all" != 1 ]; then
   echo "the bundle could not be read to its end, so rules 5, 6, 8 and 11 were not checked - the error above names the file" >&2
   exit 2
 fi
-# Rule 6's answers, from one git call: a line for each question, in order,
-# that ends in "missing" when the commit or the path in it is not there.
+# Rule 6's answers, a line for each question, in order. One git call says
+# whether the commit holds the path: its line ends in "missing" when the
+# commit or the path in it is not there. A second gives each commit whole.
+# Two walks then list the pinned commits that the history of HEAD holds, and
+# those made after the base.
 if [ -n "$asks" ]; then
-  while IFS=$'\t' read -r n f rev res answer; do
-    case "$answer" in *" missing"|*" ambiguous"|"") hold "$n" 2 "$f: revision $rev does not hold $res - no such commit, or the path was absent in it" ;; esac
-  done < <(paste <(printf '%s' "$askers") <(printf '%s' "$asks" | git -C "$root" cat-file --batch-check 2>/dev/null || true))
+  printf '%s' "$asks" | git -C "$root" cat-file --batch-check > "$tmp/holds" 2>/dev/null || true
+  printf '%s' "$askers" | cut -f3 | sed 's/$/^{commit}/' | git -C "$root" cat-file --batch-check='%(objectname)' > "$tmp/whole" 2>/dev/null || true
+  grep -E '^[0-9a-f]+$' "$tmp/whole" | sort -u > "$tmp/pins" || true
+  : > "$tmp/inhead"; : > "$tmp/after"
+  if [ -s "$tmp/pins" ]; then
+    git -C "$root" rev-list HEAD 2>/dev/null | grep -Fxf "$tmp/pins" > "$tmp/inhead" || true
+    case "$since:${head:-HEAD}" in
+      :*|-*|*:-*) ;;
+      *) git -C "$root" rev-list "$since..${head:-HEAD}" 2>/dev/null | grep -Fxf "$tmp/pins" > "$tmp/after" || true ;;
+    esac
+  fi
+  while IFS=$'\t' read -r n finding; do
+    hold "$n" 2 "$finding"
+  done < <(paste <(printf '%s' "$askers") "$tmp/holds" "$tmp/whole" | awk -F'\t' -v inhead="$tmp/inhead" -v after="$tmp/after" '
+    BEGIN { while ((getline l < inhead) > 0) H[l] = 1; while ((getline l < after) > 0) A[l] = 1 }
+    $5 == "" || $5 ~ / (missing|ambiguous)$/ { print $1 "\t" $2 ": revision " $3 " does not hold " $4 " - no such commit, or the path was absent in it"; next }
+    !($6 in H) { print $1 "\t" $2 ": revision " $3 " is not in the history of HEAD - a squash merge or a rebase has replaced that commit, or another branch holds it"; next }
+    $6 in A { print $1 "\t" $2 ": revision " $3 " names a commit made after the base, which a squash merge or a rebase replaces - pin the content of " $4 " instead, as a sha256: digest" }')
 fi
 # 11. from one walk through the history of the bundle, oldest first.
 if [ -n "$gitroot" ] && [ -s "$tmp/ats" ]; then
@@ -437,9 +464,9 @@ fi
 if [ -n "$runner" ]; then
   rc=0
   if [ "$runner" = uv ]; then
-    out="$(uv run --quiet ${uvflags[@]+"${uvflags[@]}"} "$py" "$bundle" ${since:+--since "$since"} 2>&1)" || rc=$?
+    out="$(uv run --quiet ${uvflags[@]+"${uvflags[@]}"} "$py" "$bundle" ${since:+--since "$since"} ${head:+--head "$head"} 2>&1)" || rc=$?
   else
-    out="$("$runner" "$py" "$bundle" ${since:+--since "$since"} 2>&1)" || rc=$?
+    out="$("$runner" "$py" "$bundle" ${since:+--since "$since"} ${head:+--head "$head"} 2>&1)" || rc=$?
   fi
   # The Python half exits 1 for findings. Any other failure is the runner's,
   # or a usage error, and says nothing about the bundle.
