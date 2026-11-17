@@ -46,10 +46,8 @@ jobs:
     permissions:
       contents: read
     env:
-      # A commit subject that releases by its type: feat, fix, perf or
-      # security, or any type marked breaking by a `!`. The analyzer's
-      # default rules also read FEAT and FIX in capitals. The two checks
-      # below read commits and the title with this one pattern.
+      # A subject that releases by its type: feat, fix, perf or security
+      # (and FEAT or FIX, as the analyzer reads them), or any type with `!`.
       RELEASING_SUBJECT: '^((feat|FEAT|fix|FIX|perf|security)(\(.*\))?!?|[A-Za-z0-9_]*(\(.*\))?!): '
     steps:
       - name: Harden the runner
@@ -74,24 +72,12 @@ jobs:
           npm ci --prefix .release --no-audit --no-fund --ignore-scripts
           ln -s .release/node_modules node_modules
 
-      # Would these commits release? Each commit is read as the pinned
-      # @semantic-release/commit-analyzer reads it. .releaserc.json's
-      # `releaseRules` add `security` to the analyzer's default rules and
-      # replace none of them, so three kinds of commit release. The first is
-      # a feat, fix, perf or security commit. The second is any type marked
-      # breaking by a `!` or a BREAKING CHANGE footer. The third is a revert:
-      # a message that starts "Revert" or "revert:" and says "This reverts
-      # commit <hash>.", as `git revert` writes it. A `revert:` type without
-      # that sentence releases nothing. The preset is named because the
-      # default, angular, does not read the `!`, so it would skip a `feat!:`
-      # commit altogether. Both checks below key off this one answer. Only
-      # the pull request's own commits count: HEAD is GitHub's trial merge
-      # with today's main, so on a branch that main has moved past,
-      # "$BASE..HEAD" would read main's commits too.
-      #
-      # The analyzer drops a revert together with the commit it reverts when
-      # that commit is not yet released. This step does not: it asks such a
-      # pull request for notes, though the revert releases nothing.
+      # Would these commits release, as the pinned commit-analyzer reads them
+      # under .releaserc.json? A releasing subject does, as does a BREAKING
+      # CHANGE footer, or a revert that says "This reverts commit <hash>.", as
+      # `git revert` writes it. Only the pull request's own commits count:
+      # HEAD is GitHub's trial merge with main. A revert of an unreleased
+      # commit releases nothing, but this step still asks for notes.
       - name: Read whether these commits would release
         id: commits
         env:
@@ -135,11 +121,11 @@ jobs:
       # deps and empty changelog (#46)", which carries no type. That merge
       # reached main and released nothing while its notes waited in
       # "## [Unreleased]". So when the commits would release, the title must
-      # too: then either merge strategy releases. A revert's title releases
-      # only over a commit that says which commit it reverts, since a squash
-      # merge keeps that sentence in the commit's body. The title is read
-      # through `env:`, never interpolated into the script, since anyone can
-      # open a pull request.
+      # too: then either merge strategy releases. A revert's title passes
+      # only over a commit that says which commit it reverts, a sentence a
+      # squash merge keeps in its body. The title is read through `env:`,
+      # never interpolated into the script, since anyone can open a pull
+      # request.
       - name: Refuse a title that would lose the release on a squash merge
         if: steps.commits.outputs.releases == 'true'
         env:

@@ -209,9 +209,8 @@ addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // A diagram takes the page's own paper, ink and lines, in the scheme the reader chose. Mermaid keeps the
-  // colours it was started with, so each diagram's source is kept here, and every diagram is drawn again
-  // when the Display menu or the system changes the scheme.
+  // Mermaid keeps the colours it started with, so each diagram's source is kept, and every diagram is drawn
+  // again when the Display menu or the system changes the scheme.
   if (typeof window.mermaid?.initialize === "function" && typeof window.mermaid.run === "function") {
     const diagrams = [...document.querySelectorAll(".prose .mermaid")].map((pre) => ({ pre, source: pre.textContent }));
     const colours = () => {

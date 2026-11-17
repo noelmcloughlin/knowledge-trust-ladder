@@ -1,30 +1,8 @@
 """changelog-release.mjs reads and promotes CHANGELOG.md's Unreleased section for the release.
 
-semantic-release.yml runs .github/scripts/changelog-release.mjs three ways,
-and the release has no other writer of CHANGELOG.md. Contract check 14 runs
-the fold once; these tests run the script in a throwaway git repository and
-pin each command:
-
-- `check` refuses an empty Unreleased section, passes one with entries, and
-  passes an empty one only for the version already promoted and not yet
-  tagged;
-- `notes` prints the section and names the next version in $GITHUB_OUTPUT,
-  and for a version already promoted prints that version's notes and names
-  nothing, so the workflow commits no second promotion;
-- `promote` retitles the section and puts an empty Unreleased above it,
-  refuses an empty section and a call without a date, and writes
-  `released` and `version` to $GITHUB_OUTPUT;
-- a second `promote` before publish.yml tags folds into the pending section,
-  subsection by subsection in Keep a Changelog's order, and a section whose
-  version is tagged is left alone;
-- the fold leaves out an entry the pending section already holds, whole: its
-  indented lines go with it, and an entry that differs only below its first
-  line is kept;
-- the heading is a line of its own, so an entry or a preamble that quotes
-  "## [Unreleased]" is never read as the section.
-
-The script needs node, as the `plan` and `release` jobs have it. A machine
-without node skips the module.
+semantic-release.yml runs its `check`, `notes` and `promote` commands, and
+contract check 14 runs the fold once. These tests run each command in a
+throwaway git repository, and skip without node.
 """
 
 from __future__ import annotations

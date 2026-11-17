@@ -32,9 +32,8 @@ served = ["avif", "gif", "ico", "jpeg", "jpg", "pdf", "png", "svg", "webp"]
 # The libraries the graph page and Mermaid diagrams need. Hugo fetches each
 # once at build time, checks it against its hash and serves it from the site,
 # so no page calls a CDN. Where the CDN is blocked, give `url` a mirror's
-# address in site.toml, or keep a copy of the file in the site's folder, as
-# assets/vendor/cytoscape.js or assets/vendor/mermaid.js. The build takes
-# that copy before the address, and checks it against the same hash.
+# address in site.toml, or keep a copy as assets/vendor/<name>.js, which the
+# build takes first and checks against the same hash.
 [params.vendor.cytoscape]
 url = "https://cdn.jsdelivr.net/npm/cytoscape@3.34.4/dist/cytoscape.min.js"
 sha256 = "081591ab735b2b6a3b31a3c60f8f3a3e2fee8c92939e0c7820ad1208571b6cd8"

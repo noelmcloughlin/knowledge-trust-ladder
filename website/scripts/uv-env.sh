@@ -1,23 +1,14 @@
 #!/usr/bin/env bash
-# Installs the tools a uv project pins, and prints how to run them.
+# Installs the tools a uv project pins, and prints the option `uv run
+# --project <folder>` then takes: --frozen, or --no-sync.
 #
 #   scripts/uv-env.sh <project folder>
 #
-# Prints `--frozen` or `--no-sync`: the option that `uv run --project
-# <project folder>` takes to run one of the project's tools.
-#
-# uv fetches a locked file from the address uv.lock holds for it, whichever
-# index uv is set to read. The lock this site comes with holds PyPI's
-# addresses, so behind a package mirror `uv run --frozen` reaches for a host
-# the network blocks. There this script exports the lock's versions and
-# hashes, and installs them into the project's .venv from the index uv reads.
-# uv checks each file against the lock's hash, so a mirror serves the files
-# the lock names or the build stops, and uv.lock stays as it is.
-#
-# The script takes that route when UV_DEFAULT_INDEX, UV_INDEX_URL or UV_INDEX
-# names an index. With none set it installs from the lock's own addresses,
-# and takes the route only when that fails, as it does where a uv.toml names
-# the mirror.
+# uv fetches a locked file from the address uv.lock holds, PyPI's, whatever
+# index it reads. So where UV_DEFAULT_INDEX, UV_INDEX_URL or UV_INDEX names
+# an index, or the lock's addresses fail, the script exports the lock's pins
+# and hashes and installs them into .venv from the index uv reads. uv.lock
+# stays as it is.
 set -euo pipefail
 project=${1:?usage: scripts/uv-env.sh <project folder>}
 [ -f "$project/uv.lock" ] || { echo "uv-env.sh: $project holds no uv.lock; run uv lock in that folder and commit the file" >&2; exit 1; }

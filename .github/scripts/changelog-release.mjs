@@ -38,9 +38,7 @@ import { execFileSync } from "node:child_process";
 
 const FILE = "CHANGELOG.md";
 const HEADING = "## [Unreleased]";
-// The heading on a line of its own, whatever ends the line. An entry or a
-// preamble may quote the phrase, and a line that holds it in passing is not
-// the heading.
+// The heading as a whole line, so an entry that quotes it is not taken for it.
 const HEADING_LINE = /^## \[Unreleased\][ \t]*\r?$/m;
 const RELEASED = /^## \[(\d+\.\d+\.\d+)\] - \d{4}-\d{2}-\d{2}$/;
 
@@ -105,9 +103,8 @@ function subsections(body) {
 const ORDER = ["### Added", "### Changed", "### Deprecated", "### Removed", "### Fixed", "### Security"];
 const rank = (p) => (p.title === null ? -1 : ORDER.includes(p.title) ? ORDER.indexOf(p.title) : ORDER.length);
 
-// A subsection's lines as entries. A "- " bullet takes the indented and
-// blank lines under it, which continue it, so an entry is kept or left out
-// whole. Any other line is an entry of its own.
+// Groups a subsection's lines into entries: a "- " bullet with the indented
+// and blank lines under it, or any other line alone.
 function entries(lines) {
   const found = [];
   for (const line of lines) {

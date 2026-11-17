@@ -1,9 +1,7 @@
 {{- /*
-  A library from `params.vendor`, checked against its SHA-256 and published
-  under /js/vendor/. The site's own copy, assets/vendor/<name>.js, is taken
-  where the folder holds one, for a network that blocks the CDN. Else the
-  file is fetched once at build time from the address. Either way, a file
-  that does not match stops the build.
+  A library from `params.vendor`, from the site's assets/vendor/<name>.js
+  where it holds one, else fetched once at build time, checked against its
+  SHA-256 and published under /js/vendor/. A mismatch stops the build.
 */ -}}
 {{- $v := index site.Params.vendor . -}}
 {{- $out := false -}}

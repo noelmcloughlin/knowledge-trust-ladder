@@ -1409,11 +1409,9 @@ def fence(text: str, language: str) -> str:
 def cdata_as_text(text: str) -> str:
     """The page with each CDATA section as the text it holds, escaped, so the parser reads it as text.
 
-    A section runs from its opener to the first closer after it. The page
-    is read once: an opener with no closer ends the search, since no opener
-    after it has one either, and the rest stays as it is. A pattern would
-    search to the end of the page again from each such opener, which takes
-    time in the square of the page.
+    Reads the page once: an opener with no closer ends the search, and the
+    rest stays as it is. A regular expression would rescan the page from
+    each such opener.
     """
     out, at = [], 0
     while True:
@@ -2845,11 +2843,9 @@ def write_patch(root: Path, manifest: Manifest, lock: dict, patch_path: Path, ca
                 if concept in used or concept in claimed:  # two items whose names slug alike
                     concept = f"references/{entry.id}-{slug(stem)[:50]}-{sha256_hex(item_id.encode())[:8]}.md"
             used.add(concept)
-            # A source's own title may hold a square bracket, as "[RFC] Rate
-            # limits" does. The pen refuses one in a title, where an index
-            # bullet's link would end, and applies nothing when one operation
-            # fails. So the concept, its description and its log line carry
-            # the title with round brackets, and the mirror keeps the source's.
+            # The pen refuses a square bracket in a title and then applies
+            # nothing, so the concept, its description and its log line take
+            # round brackets. The mirror keeps the source's title.
             title = str(it.get("title") or item_id).replace("[", "(").replace("]", ")")
             version = str(it.get("version", ""))
             when = str(it.get("last_modified") or it.get("retrieved_at", ""))[:10]

@@ -130,11 +130,9 @@ jobs:
       # build.sh runs prepare.sh first, which runs `lokf export` and, for a
       # LinkML schema, gen-doc, both from the toolkit .lokf/uv.lock pins. Then
       # Hugo and Pagefind, from the site's own uv.lock, the cleaning of raw
-      # HTML, and the link check. On a runner whose uv reads a package mirror
-      # (UV_DEFAULT_INDEX, or a uv.toml), scripts/uv-env.sh installs the files
-      # each lock pins from that mirror, checked against the lock's hashes.
-      # So no step writes a lock again, and none turns a certificate check
-      # off. The site folder's README.md says what a blocked CDN needs.
+      # HTML, and the link check. Behind a package mirror, scripts/uv-env.sh
+      # installs what each lock pins from it, checked against the lock's
+      # hashes. The site's README.md says what a blocked CDN needs.
       - name: Build the site and check its links
         env:
           SITE_DIR: ${{ steps.site.outputs.dir }}

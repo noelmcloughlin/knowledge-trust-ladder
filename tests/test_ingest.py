@@ -1570,7 +1570,7 @@ def test_patch_moves_a_reference_concept_to_its_items_new_commit(tmp_path, check
 
 
 def test_patch_writes_a_title_the_pen_takes(tmp_path, checks):
-    """A source titled "[RFC] Rate limits" went into the concept's title as it stood. The pen refuses a square bracket there and applies nothing when one operation fails, so one such page kept every Reference concept of the run out."""
+    """A source titled "[RFC] Rate limits" gets round brackets in the concept's title, which the pen takes."""
     m = load_module()
     root = tmp_path / "host"
     kb = root / ".lokf" / "knowledge"
@@ -1749,12 +1749,7 @@ def test_the_converter_grows_in_step_with_the_page(checks):
 
 
 def test_a_cdata_section_is_found_in_one_pass(checks):
-    """A pattern searched to the end of the page again from each CDATA opener with no closer, so a page of such openers took time in the square of its length: 128 seconds at 360 kB.
-
-    The run's time limit is read between fetches, so one such page held a
-    run past it. The pass that took the pattern's place gives the text the
-    pattern gave, for a section that closes and for one that does not.
-    """
+    """A page of CDATA openers with no closer is read in linear time, and a closed section and an open one read as before."""
     m = load_module()
     page = "<![CDATA[" * (1_000_000 // 9)
     started = time.monotonic()

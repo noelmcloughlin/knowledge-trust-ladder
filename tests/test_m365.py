@@ -1,29 +1,8 @@
-"""knowledge-m365.sh builds the Microsoft 365 Copilot skills from a bundle, and has to keep the promises its header makes.
+"""knowledge-m365.sh builds the Microsoft 365 Copilot skills from a bundle, as its header says.
 
-The script is the template every host carries as .lokf/m365/knowledge-m365.sh.
-Contract check 17 builds this repository's own bundle with it. These tests
-run a copy of the template folder on a small bundle of their own, and pin:
-
-- the build: one folder and one zip per instructions file beside the script,
-  each with the instructions as SKILL.md, the concepts unchanged under
-  knowledge/ and a SNAPSHOT.md that names the repository, the revision, the
-  build date and how to link a concept's source. The source bundle is left
-  as it was;
-- what the snapshot takes: in a git clone the tracked files alone, and
-  never a hidden file, which is tool state;
-- one input gives one zip: with SOURCE_DATE_EPOCH set, the bytes are the
-  same under another time zone and umask, the names are sorted and every
-  file carries the epoch's time;
-- the refusals, each with exit 2 and nothing written: wrong arguments, a
-  --repo-url or --ref that is not plain, an epoch that is no number, a
-  folder that is no bundle, a skill already built there, and an
-  instructions file with no frontmatter, no name, a name that is not the
-  file's, or no description;
-- Copilot's limits, each with exit 1 and nothing written: a link, a file
-  more than three folders deep, a file type Copilot does not accept, more
-  than 350 files, instructions of 20,000 characters or more, and 10 MB or
-  more. One skill over a limit refuses every skill of the run;
-- without zip the folder is built and the script says no zip was made.
+The script is the template every host carries as .lokf/m365/knowledge-m365.sh,
+and contract check 17 builds this repository's bundle with it. These tests run
+a copy of the template folder on a small bundle of their own.
 """
 
 from __future__ import annotations

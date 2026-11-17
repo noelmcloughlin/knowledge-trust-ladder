@@ -294,7 +294,7 @@ def uv_env(tmp_path, project, **env):
 
 
 def test_the_build_installs_its_tools_from_the_index_uv_reads_and_leaves_the_lock_alone(tmp_path):
-    """uv fetches a locked file from the address uv.lock holds, PyPI's, so behind a mirror the pins and hashes are exported and installed from the mirror, with no relock."""
+    """Behind a mirror, the lock's pins and hashes are installed from the mirror, with no relock."""
     project = tmp_path / "site"
     lock = write(project / "uv.lock", read(SITE_TEMPLATES / "uv.lock"))
     for name in ("UV_DEFAULT_INDEX", "UV_INDEX_URL", "UV_INDEX"):
