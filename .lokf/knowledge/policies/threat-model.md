@@ -2,12 +2,12 @@
 type: Policy
 id: https://w3id.org/ktl/knowledge/policies/threat-model
 title: Threat model
-description: "The security design shared by every lmodel repository and seven noelmcloughlin repositories, the three KTL ones among them, which each SECURITY.md links to: repository hardening, schema builds and releases, the human:-attribution gate on a verified event, and the prompt-injection guard for each input path that reads content it did not author."
+description: "The security design shared by every lmodel repository and six noelmcloughlin repositories, the three KTL ones among them, which each SECURITY.md links to: repository hardening, schema builds and releases, the human:-attribution gate on a verified event, and the prompt-injection guard for each input path that reads content it did not author."
 genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-17T20:29:12Z"
+  at: "2026-11-17T21:00:19Z"
 verified:
   - by: process:ktl-librarian
     at: "2026-11-15T19:13:22Z"
@@ -30,7 +30,7 @@ status: draft
 
 # Overview
 
-The page is the shared threat model for every repository in the lmodel organisation and for seven repositories of the noelmcloughlin account: `ktl-federation`, `linkmo`, `ai-linkmo`, `linkml-sidecar` and the three KTL repositories (`knowledge-trust-ladder`, KTL Registrar, KTL Curator). Each of them has a `SECURITY.md` that says how to report a vulnerability, what that repository owns, and which measures on the page it carries. A reader reads that file first, and the page for the reasoning behind it.[^docs-threat-model.md] `scripts/validate-repository.sh` check 9 records this path and six of its headings, the sync workflow's and the website's among them, as ones a sibling depends on.
+The page is the shared threat model for every repository in the lmodel organisation and for six repositories of the noelmcloughlin account: `ktl-federation`, `linkmo`, `ai-linkmo` and the three KTL repositories (`knowledge-trust-ladder`, KTL Registrar, KTL Curator). Each of them has a `SECURITY.md` that says how to report a vulnerability, what that repository owns, and which measures on the page it carries. A reader reads that file first, and the page for the reasoning behind it.[^docs-threat-model.md] `scripts/validate-repository.sh` check 9 records this path and six of its headings, the sync workflow's and the website's among them, as ones a sibling depends on.
 
 The repositories share how they are built and released. Workflows start with no permissions and pin their actions to commits, releases are cut only from `main` behind an Environment, and each file a release attaches carries a signed build provenance. No agent runs in any of that. Most of the repositories also carry a knowledge bundle under `.lokf/`, kept by workflows copied from `ktl-sidecar`'s templates. The page's *Knowledge bundles and skills* part covers those workflows and the skills that work on a bundle, which is where an agent runs. A repository's own `SECURITY.md` or threat model covers what it runs beyond these: an application, a project generated from a template, or the workflows a fork carries from its upstream project.[^docs-threat-model.md]
 
@@ -67,7 +67,7 @@ ktl-docent runs none of them. It runs its own copies of `knowledge-report.sh` an
 - CodeQL scans `knowledge-trust-ladder`'s Python, JavaScript and workflows on each pull request, each push to `main` and weekly, and each finding becomes a code scanning alert. Elsewhere, CodeQL and dependency review are skipped where there is nothing for them to scan.
 - The skill a scheduled run installs is pinned by hash. A host's `.lokf/pyproject.toml` pins the `ktl` package at one release, and `.lokf/uv.lock` holds its files' hashes, which the librarian's `uv sync --locked` checks. A person merges every change to the two, so the instructions an agent follows unattended are the ones a person accepted.[^docs-threat-model.md]
 - Every workflow that installs the lokf toolkit does so with `uv sync --locked`. So each file is checked against the hash `.lokf/uv.lock` records, and a lock that is missing or out of date fails the job.
-- The Python halves of the conventions script and the pen name one PyYAML release, and take no file uploaded after a set date.
+- The Python halves of the conventions script and the pen name one PyYAML release.
 - Where there is no Python, ktl-librarian and ktl-sidecar read LOKF's schema from GitHub by commit, never by tag, so the file cannot change under them. The contract in `knowledge-trust-ladder` fails a tag or a branch in that URL, and two pages that pin different commits.
 
 **The sync workflow** keeps a host's sidecar and site copies, and its skill pin, at the newest release, and runs no agent. Its `sync` job moves the pin, runs `uv lock` against the host's own index, and installs that one `ktl` package at the lock's hash, unbuilt, into a temporary folder. Nothing from the package runs, and the job copies only what the package's `knowledge-sync.manifest` names. It refuses a copy path outside the host's tree or inside a `.git` folder, where a copy would be git's own configuration, which can name a command git runs. Its `publish` job runs the default branch's copy of `knowledge-sync.sh --apply`. That refuses a patch that touches anything but the sidecar's copies, the site's copies, the pin's two files and the changelog, or that moves the pin to another release than the run's. It runs `uv lock` from the default branch's lock and refuses a patch whose lock differs, so the hashes are the index's.[^docs-threat-model.md] It also refuses a path with a character outside the plain set the templates use, and a deletion, a rename, a link or an unusual mode. It keeps every workflow as the default branch has it.

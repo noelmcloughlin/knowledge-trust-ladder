@@ -2,6 +2,7 @@
 
 ## 2026-11-17
 
+* **Changed**: Threat model counts six noelmcloughlin repositories, as `docs/threat-model.md` lists them, and names the parser's one PyYAML release with no upload date, which the scripts carry no longer. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Curation**: human:noelmcloughlin corrected 1. The curator skill playbook's Step 3 now says the curation policy and a placeholder are drafts under `process:ktl-curator`, and its hand-off says an approval covers the concepts as they stood when it was given, as `references/review-session.md` does.
 * **Changed**: the curated context layer now says the federation build takes only Markdown and images from a member's zip and stops on a member schema that imports anything but `lokf` and `linkml:` names, as `docs/federation.md` says.
 * **Changed**: why a registrar role says the gate ties a confirmation to an approval of the concept as the pull request holds it, as `skills/ktl-sidecar/SKILL.md` now says. Edited since a person confirmed it; the label says so until the curator looks again.
