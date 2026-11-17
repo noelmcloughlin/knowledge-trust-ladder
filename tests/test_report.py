@@ -2596,3 +2596,46 @@ def test_vocabulary_fit_counts_a_type_and_a_status_outside_core_and_the_domain_v
     write(tmp_path / ".lokf" / "justfile", 'bundle := "knowledge"\nschema := ""\n')
     out = report(tmp_path).out
     assert has_line(out, "Vocabulary fit: 5 concepts do not fit the known vocabulary (Widget, Gizmo, Runbook, Note, status wip)"), out
+
+
+# ---- what an audit found, 2026-11-17 -----------------------------------------
+
+
+def test_diataxis_md_is_no_concept_at_the_root_of_the_bundle_alone(tmp_path):
+    """The toolkit reads a file of that name in a folder below as a concept, so it has a label like any other."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "diataxis.md", "---\ntype: Dataset\ntitle: The map\n---\n")
+    write(kk / "x" / "diataxis.md", "---\ntype: Dataset\ntitle: Below\n---\n")
+    write(kk / "x" / "log.md", "---\ntype: Dataset\ntitle: A log\n---\n")
+    out = report(tmp_path, "labels").out
+    assert has_line(out, "- Below (x/diataxis.md) - nobody has checked this yet"), f"a concept named diataxis.md in a folder has no label: {out}"
+    assert "The map" not in out and "A log" not in out, f"a file of the bundle's own was listed as a concept: {out}"
+
+
+def test_questions_lists_each_open_question_with_its_day_its_asker_and_its_text(tmp_path):
+    """ktl-curator's queries page sends a reader to this mode."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(
+        kk / "x" / "a.md",
+        "---\ntype: Service\ntitle: A\nstatus: draft\n---\n\n# A\n\n## Open questions\n\n"
+        "- 2026-03-01, human:ada: re-derive this from the runbook\n- 2026-03-02, process:ktl-librarian: which region is primary\n",
+    )
+    result = report(tmp_path, "questions")
+    assert result.rc == 0, result.out
+    assert has_line(result.out, "- x/a.md (2026-03-01, human:ada): re-derive this from the runbook"), result.out
+    assert has_line(result.out, "- x/a.md (2026-03-02, process:ktl-librarian): which region is primary"), result.out
+    assert report(tmp_path, "questions", "extra").rc == 2
+
+
+def test_a_send_back_the_curator_recorded_with_no_login_waits_as_a_person_s_note(tmp_path):
+    """The pen keeps that note as it keeps a person's, so the work list must not file it as a question the librarian may withdraw."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(
+        kk / "x" / "a.md",
+        "---\ntype: Service\ntitle: A\nstatus: draft\n---\n\n# A\n\n## Open questions\n\n- 2026-03-01, process:ktl-curator: re-derive this from the runbook\n",
+    )
+    out = report(tmp_path, "worklist").out
+    assert has_line(out, "Notes a person left that still wait: 1") and has_line(out, "Your own open questions: none"), out

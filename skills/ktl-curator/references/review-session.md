@@ -11,7 +11,7 @@ glab api user | sed -n 's/.*"username":"\([^"]*\)".*/\1/p'   # GitLab
 
 Run `glab api user` only through that filter. On its own it prints the person's whole profile, with their email, commit email and linked accounts, and nothing here needs any of it.
 
-A forge login is stable and matches `CODEOWNERS`. It is the accepted source because it is the identity the `provenance` gate can check an event against afterwards: the gate asks whether that account approved the pull request carrying the event, or signed the commit. With neither CLI, the third route resolves the local signing key to a forge account through the forge's public key listing. With no forge, the id is the account the host platform's version history shows. Both are spelled out, host by host, in [portability.md](portability.md).
+A forge login is stable and matches `CODEOWNERS`. It is the accepted source because it is the identity the `provenance` gate can check an event against afterwards: the gate asks whether that account approved the concept as the pull request holds it, or signed the commit. With neither CLI, the third route resolves the local signing key to a forge account through the forge's public key listing. With no forge, the id is the account the host platform's version history shows. Both are spelled out, host by host, in [portability.md](portability.md).
 
 The two fallbacks this skill used to allow are gone, and it matters why:
 
@@ -185,7 +185,7 @@ Write no log line for a session that changed nothing.
 
 ## The curation policy concept
 
-Create `policies/knowledge-curation.md` on the first Step 3 request (or when the person asks "how often should we re-check things?"). It is a normal concept: the person reviews and confirms it like any other. Write it in plain words; they edit the defaults:
+Create `policies/knowledge-curation.md` on the first Step 3 request (or when the person asks "how often should we re-check things?"). It is a normal concept, and it starts as a draft nobody has confirmed: the defaults below are this skill's words, not the person's. Write it in plain words, with the session as its author and no `verified` event:
 
 ```markdown
 ---
@@ -193,12 +193,10 @@ type: Policy
 id: <BASE_IRI>policies/knowledge-curation
 title: Knowledge curation policy
 description: How often each kind of concept in this bundle is re-confirmed by a person, and who does it.
+status: draft
 generated:
-  by: human:<id>
+  by: process:ktl-curator
   at: "<now>"
-verified:
-  - by: human:<id>
-    at: "<now>"
 ---
 
 # Who curates
@@ -244,13 +242,15 @@ Younger readers: no
 Set to a band of age, 8-12 or 13-18, or to both with a comma between, and ktl-librarian may write retellings of confirmed concepts for those readers on its scheduled runs. Each one is a new concept, which a person confirms against the concept it retells. With no band, a retelling is written only when a person asks for one.
 ```
 
+Then show the draft to the person, as any other item of the session. A default they change is a *Correct now* edit they dictate, and their *Confirm* is what records them: a question about review dates is no verdict on the policy.
+
 Step 1's report reads the `Independent re-check:` and `Automation re-check:` lines, ktl-docent reads `Evidence first:`, and ktl-librarian and ktl-prose read `Younger readers:`. All four are optional, and absent means off.
 
 Derive `stale_after` as *confirmation date + the row's interval*, and always show the date before writing it. Read the table tolerantly. A row names its classes in prose, so match ignoring spaces and plural form: "Glossary terms" is `GlossaryTerm`, "attested computations" is `AttestedComputation`, "Policies" is `Policy`, "people" is `Person`. A row naming a class you do not know binds nothing. A host that extends the vocabulary with a domain vocabulary may set an interval for its own classes the same way.
 
 ## Recording something missing
 
-When the person reports that the bundle lacks something ("there's no concept for the billing worker"), write a placeholder for the librarian: type, title, and one open question only. Never fill in facts you do not have:
+When the person reports that the bundle lacks something ("there's no concept for the billing worker"), write a placeholder for the librarian: type, title, and one open question only. Never fill in facts you do not have. The placeholder's author is the session, `process:ktl-curator`, so the librarian may fill it: the pen changes no concept whose `generated.by` names a person. The person's report is the note under `## Open questions`, which stays theirs:
 
 ```markdown
 ---
@@ -260,7 +260,7 @@ title: Billing worker
 description: Placeholder - not yet derived from the repository.
 status: draft
 generated:
-  by: human:<id>
+  by: process:ktl-curator
   at: "<now>"
 ---
 
@@ -283,6 +283,6 @@ bash scripts/knowledge-conventions.sh knowledge --since "$(git merge-base origin
 
 Without `--since`, the script skips rule 14, so a run that passes here can still fail at the gate.
 
-Each named person must have approved the pull request or, when the pull request is their own, have signed its commits, since GitHub will not let authors approve themselves. Tell the person plainly that the pull request needs their approval or signature before the confirmations they just gave will pass. If they are the repository's only maintainer, tell them that GitHub will not let them approve their own pull request, so signing their commits is the path (ktl-sidecar's `references/gate.md` has the three-line setup). That is the gate working, not a fault in it. It is what makes their confirmation something a later reader can check rather than take on faith.
+Each named person must have approved the pull request or, when the pull request is their own, have signed its commits, since GitHub will not let authors approve themselves. An approval covers the concepts as they stood when it was given, so one given before a later push to a concept that carries their name is asked for again. Tell the person plainly that the pull request needs their approval or signature before the confirmations they just gave will pass. If they are the repository's only maintainer, tell them that GitHub will not let them approve their own pull request, so signing their commits is the path (ktl-sidecar's `references/gate.md` has the three-line setup). That is the gate working, not a fault in it. It is what makes their confirmation something a later reader can check rather than take on faith.
 
 **Gitignored `.lokf/`.** There is no diff to show; hand the person the list of changed files and the health line instead.

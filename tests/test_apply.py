@@ -2040,3 +2040,43 @@ def test_the_contracts_unseen_character_check_is_as_wide_as_the_pen(tmp_path):
     result = run([sys.executable, "-c", snippet], cwd=tmp_path, stdin=names)
     found = {line.split(":")[0] for line in result.out.split("\n") if line}
     assert result.rc == 1 and found == {p.name for p in tmp_path.iterdir()} - {"clean.md"}, result.out
+
+
+# ---- what an audit found, 2026-11-17 -----------------------------------------
+
+
+def test_a_rewrite_may_not_drop_a_curators_send_back(sent_back):
+    """A rewrite keeps the Open questions section only when its own body has none, so one that brings its own would clear the note, and a delete could follow."""
+    refuses(
+        sent_back,
+        lines(
+            "ops:",
+            "  - op: rewrite",
+            "    path: playbooks/sentback.md",
+            '    body: "# Overview\\n\\nRe-derived.\\n\\n## Open questions\\n\\n- 2026-03-04, process:ktl-librarian: is this right?\\n"',
+            "    log: re-derived from the source",
+        ),
+        "a rewrite that drops the curator's send-back",
+        "would remove a note a person left (process:ktl-curator, 2026-03-03)",
+    )
+
+
+def test_a_rewrite_with_no_questions_of_its_own_carries_the_send_back_over(sent_back):
+    applies(
+        sent_back,
+        lines("ops:", "  - op: rewrite", "    path: playbooks/sentback.md", '    body: "# Overview\\n\\nRe-derived.\\n"', "    log: re-derived from the source"),
+    )
+    assert "- 2026-03-03, process:ktl-curator: re-derive this from the source" in read(kb_of(sent_back) / "playbooks" / "sentback.md")
+
+
+@pytest.mark.parametrize(
+    ("actor", "why"),
+    [
+        ("process:ktl-curator:x", "by must be a process:<id> actor"),
+        ("process:ktl-curator-2", "by may not be process:ktl-curator"),
+        ("process:x*y", "by must be a process:<id> actor"),
+        ("process:[x](y)", "by must be a process:<id> actor"),
+    ],
+)
+def test_an_actor_is_spelt_as_a_login_and_never_reads_as_the_curator(ka, actor, why):
+    refuses(ka, lines(f'by: "{actor}"', "ops:", '  - {op: question, path: playbooks/draft.md, text: "Sent back: wrong."}'), f"a patch by {actor}", why)

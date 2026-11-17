@@ -7,6 +7,7 @@
 #   knowledge-report.sh                    the whole report: ktl-curator's Step 1 starts from it
 #   knowledge-report.sh health             the one health line
 #   knowledge-report.sh labels [<path>..]  one line per concept, in the shape of ktl-docent's footer
+#   knowledge-report.sh questions          every open question, with its day, who asked, and its text
 #   knowledge-report.sh worklist           where ktl-librarian starts: paths and dates only
 #   knowledge-report.sh quiet              exit 0 when nothing waits for the librarian, 1 when work does
 #   knowledge-report.sh changes            what the working tree does to the record, against HEAD
@@ -153,7 +154,7 @@
 # `quiet` exits 1 when work waits, and `coverage --strict` when a file is
 # named by nobody or the count could not be made. `sample` exits 2 on a host
 # with no tool to compute a digest.
-[ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [--root <dir>] [health|labels|worklist|quiet|changes|retrieval|coverage|sample|evidence] [...]" >&2; exit 2; }
+[ -n "${BASH_VERSION:-}" ] || { echo "run this with bash: bash ${0##*/} [--root <dir>] [health|labels|questions|worklist|quiet|changes|retrieval|coverage|sample|evidence] [...]" >&2; exit 2; }
 set -u
 # Byte-oriented awk and sort, so that the BOM and CRLF strips and every
 # comparison read raw bytes in any awk and locale: under UTF-8, gawk reads
@@ -162,7 +163,7 @@ set -u
 export LC_ALL=C
 
 usage() {
-  echo "usage: ${0##*/} [--root <dir>] [health | labels [<path>...] | worklist | quiet | changes | retrieval --prompt | retrieval <reply-file> | isolated | coverage [--strict] [<dir>...] | coverage --why <path>... | sample [--seed <text>] [--independent <n>] [--automation <n>] | evidence]" >&2
+  echo "usage: ${0##*/} [--root <dir>] [health | labels [<path>...] | questions | worklist | quiet | changes | retrieval --prompt | retrieval <reply-file> | isolated | coverage [--strict] [<dir>...] | coverage --why <path>... | sample [--seed <text>] [--independent <n>] [--automation <n>] | evidence]" >&2
   exit 2
 }
 
@@ -475,6 +476,9 @@ function finish() {
   if (!hasgen && vn == 0) print head "\t\t\t\t"
 }'
 
+# An index and a log are no concept in any folder, as the toolkit reads
+# them. diataxis.md, the map KTL Registrar writes, is none at the root of the
+# bundle alone: in a folder below, the toolkit reads it as a concept.
 facts() {  # every concept in the bundle -> the lines in the table above, V only when `rows` is 1
   # One awk reads them all. A path from find is absolute, so awk never takes
   # it for an assignment. The shell leaves out a folder whose name ends in
@@ -482,7 +486,9 @@ facts() {  # every concept in the bundle -> the lines in the table above, V only
   # the exit status of awk, so a read that stopped early never passes for a
   # smaller bundle.
   find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' | LC_ALL=C sort \
-    | awk '{ n = $0; sub(/.*\//, "", n) } n != "index.md" && n != "log.md" && n != "diataxis.md"' \
+    | KR_BUNDLE="$bundle" awk 'BEGIN { root = ENVIRON["KR_BUNDLE"]; sub(/\/+$/, "", root) }
+        { n = $0; sub(/.*\//, "", n); d = $0; sub(/\/+[^\/]*$/, "", d) }
+        n != "index.md" && n != "log.md" && !(n == "diataxis.md" && d == root)' \
     | while IFS= read -r p; do [ -d "$p" ] || printf '%s\n' "$p"; done > "$tmp/files"
   [ -s "$tmp/files" ] || return 0
   KR_LIST="$tmp/files" KR_BUNDLE="$bundle" awk -v SQ="'" -v rows="${rows:-0}" "$extract" < /dev/null
@@ -912,6 +918,11 @@ function names(t, p,  n, off, i, at, before, after, beyond) {
   }
   return 0
 }
+# A note counts as left by a person when its actor is one, or is the
+# curator: with no login to name, ktl-curator records the send-back of a
+# person under its own actor, and knowledge-apply.sh keeps that note as it
+# keeps one a person signed.
+function person(a) { return a ~ /^human:/ || a == "process:ktl-curator" }
 # The commit that first held a question a process asked, or "new".
 function asked_at(p, i) { c = first(p, "- " qd[p, i] ", " qa[p, i] ": " qt[p, i]); return c == "" ? "new" : c }
 # A question a process asked, naming the source, with this state of it before
@@ -920,7 +931,7 @@ function asked_at(p, i) { c = first(p, "- " qd[p, i] ", " qa[p, i] ": " qt[p, i]
 # order, so any question on file that names it covers it.
 function asked_since(p, state, h, path,  i, c) {
   for (i = 1; i <= nq[p]; i++) {
-    if (qa[p, i] ~ /^human:/ || !names(qt[p, i], path)) continue
+    if (person(qa[p, i]) || !names(qt[p, i], path)) continue
     c = asked_at(p, i)
     if (c == "new") return 1
     if (h == "") { if (state == "gone") return 1 }
@@ -931,7 +942,7 @@ function asked_since(p, state, h, path,  i, c) {
 # A question a process asked at or after the commit that changed the body.
 function asked_after(p, h,  i, c) {
   for (i = 1; i <= nq[p]; i++) {
-    if (qa[p, i] ~ /^human:/) continue
+    if (person(qa[p, i])) continue
     c = asked_at(p, i)
     if (c == "new") return 1
     if (h != "" && anc(h, c)) return 1
@@ -1023,7 +1034,7 @@ END {
     dec = (p in DEC) ? DEC[p] : ""; split(dec, dd, " ")
     rec = ($14 != "" ? first(p, $14) : "")
     for (i = 1; i <= nq[p]; i++) {
-      if (qa[p, i] !~ /^human:/) continue
+      if (!person(qa[p, i])) continue
       if ($4 != "draft" && $8 != "" && qd[p, i] <= substr($8, 1, 10)) continue
       note = first(p, "- " qd[p, i] ", " qa[p, i] ": " qt[p, i])
       if (note == "") print "new" > notefile
@@ -1109,13 +1120,13 @@ successors() {
 # right after the kind, `- **Disagreement** (on `<path>`) -`, where no text
 # of a reader can stand, and `disputed` reads nothing else of the entry. A
 # path counts only in the path spelling of the bundle, only while it names a
-# concept, and never for an index, a log or diataxis.md.
+# concept, and never for an index, a log or the diataxis.md at the root.
 disputed() {
   [ -f "$root/.lokf/feedback.md" ] || return 0
   awk -v dir="$bundle" '
   function held(p,  line, there) {
     if (p !~ /^[a-z0-9][a-z0-9._\/-]*\.md$/ || p ~ /\.\./) return 0
-    if (p ~ /(^|\/)(index|log|diataxis)\.md$/) return 0
+    if (p ~ /(^|\/)(index|log)\.md$/ || p == "diataxis.md") return 0
     there = (getline line < (dir "/" p)); close(dir "/" p); return there >= 0
   }
   /^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/ { day = substr($0, 4, 10); next }
@@ -1191,7 +1202,7 @@ lists() {  # mode
   END {
     if (mode == "questions" || mode == "worklist") {
       for (i = 1; i <= nq; i++) {
-        split(q[i], f, "\t"); p = f[2]; who = (f[4] ~ /^human:/ ? "person" : "process")
+        split(q[i], f, "\t"); p = f[2]; who = ((f[4] ~ /^human:/ || f[4] == "process:ktl-curator") ? "person" : "process")
         if (answered(p, f[3])) { na++; a = a "- " p " (" f[3] ", " f[4] "; a person confirmed the concept " day(human[p]) ")" (mode == "questions" ? ": " f[5] : "") "\n" }
         else if (who == "person") { nw++; w = w "- " p " (" f[3] ", " f[4] ")" (mode == "questions" ? ": " f[5] : "") "\n" }
         else { no++; o = o "- " p " (" f[3] ", " f[4] ")" (mode == "questions" ? ": " f[5] : "") "\n" }
@@ -1493,7 +1504,8 @@ changes() {
     st="${line%%$'\t'*}"; path="${line#*$'\t'}"
     case "$path" in *.md) ;; *) continue ;; esac
     rel="${path#"$pfx"}"; rel="${rel#.lokf/knowledge/}"; rel="${rel#knowledge_bundle/}"
-    case "${rel##*/}" in index.md|log.md|diataxis.md) continue ;; esac
+    case "${rel##*/}" in index.md|log.md) continue ;; esac
+    [ "$rel" != diataxis.md ] || continue
     case "$st" in A*) added=$((added + 1)); continue ;; D*) removed=$((removed + 1)) ;; *) changed=$((changed + 1)) ;; esac
     was="$(git -C "$root" show "HEAD:$path" 2>/dev/null | awk -v path="$rel" -v SQ="'" "$extract" | awk -F'\t' "$label_fn$standing_fn")"
     case "$was" in ""|none) continue ;; esac
@@ -1994,6 +2006,7 @@ times=""
 case "$cmd" in
   health)   [ $# -eq 0 ] || usage; health ;;
   labels)   labels "$@" ;;
+  questions) [ $# -eq 0 ] || usage; lists questions ;;
   coverage) coverage "$@"; exit $? ;;
   isolated) [ $# -eq 0 ] || usage; ranked isolated ;;
   worklist)

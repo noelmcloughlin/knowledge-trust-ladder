@@ -97,9 +97,14 @@ CURATOR_NOTE_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, *process:ktl-curator:")  # 
 LOOSE_NOTE_RE = re.compile(r"^\s*[-*+]\s+\d{4}-\d{2}-\d{2}\s*,\s*human:")
 # A person's note as knowledge-report.sh lists one, under an open-questions heading outside a code fence.
 SEEN_NOTE_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, human:[^ ]*: ")
-ACTOR_RE = re.compile(r"process:\S+")
+# An actor a patch may name: letters, digits, '.', '_' and '-' after
+# `process:`, as a login is spelt. Anything else could carry Markdown or a
+# colon into every stamp and bullet the patch writes.
+ACTOR_RE = re.compile(r"process:[A-Za-z0-9][A-Za-z0-9._-]*")
 # The curator's actor, which stands for a person who could not sign in. A
-# patch under it would write that person's send-back and events.
+# patch under it would write that person's send-back and events. A patch
+# under an actor that only starts with it is refused too: its bullets would
+# read as the curator's to a person and to CURATOR_NOTE_RE.
 CURATOR_ACTOR = "process:ktl-curator"
 # Matched case-insensitively, and including the event-internal keys, so a
 # patch cannot write a top-level `by: human:...` or a `Verified:` that a line
@@ -250,7 +255,11 @@ NOT_LINKS = {
     "endpoint", "documentation", "license", "author", "publisher", "generated", "verified", "status",
     "base_iri", "context", "stale_after", "timestamp", "genre", "definition", "version",
 }
-NOT_CONCEPTS = {"index.md", "log.md", "diataxis.md"}
+# The files of a bundle that are no concept: an index and a log in any
+# folder, as the toolkit reads them, and KTL Registrar's map at the root of
+# the bundle alone. The pen writes no file of either name (RESERVED).
+NOT_CONCEPTS = {"index.md", "log.md"}
+ROOT_MAP = "diataxis.md"
 SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:")
 WHOLE_IRI = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:\S+")
 
@@ -446,7 +455,7 @@ def person_record(text: str | None) -> Counter:
             for event in human_events(value, str(key)):
                 record[event] += 1
     for line in text.split("\n"):
-        if KEPT_NOTE_RE.match(line) or LOOSE_NOTE_RE.match(line):
+        if KEPT_NOTE_RE.match(line) or LOOSE_NOTE_RE.match(line) or CURATOR_NOTE_RE.match(line):
             record[("note", line.rstrip())] += 1
     for line in seen_notes(split[1] if split else text):
         record[("seen", line)] += 1
@@ -469,7 +478,7 @@ def record_findings(path: str, was: Counter, now: Counter) -> list:
                     f"add no second {OPEN_Q} heading, and close every code fence the new text opens"
                 )
         elif entry[0] == "note":
-            who = re.match(r"^- (\d{4}-\d{2}-\d{2}), *(human:[^ :]*)", entry[1])
+            who = re.match(r"^- (\d{4}-\d{2}-\d{2}), *(human:[^ :]*|process:ktl-curator)", entry[1])
             name = f"{who.group(2)}, {who.group(1)}" if who else "a person"
             if what == "remove":
                 findings.append(f"{path}: this patch would remove a note a person left ({name}); only ktl-curator clears one, on that person's word, and a rewrite carries the {OPEN_Q} section over only when its own body has none")
@@ -976,7 +985,7 @@ class Bundle:
         before, after, standing = {}, {}, {}
         for file in sorted(self.knowledge.rglob("*.md")):
             path = file.relative_to(self.knowledge).as_posix()
-            if file.name in NOT_CONCEPTS or ".obsidian" in path.split("/"):
+            if file.name in NOT_CONCEPTS or path == ROOT_MAP or ".obsidian" in path.split("/"):
                 continue
             try:
                 split = split_frontmatter(file.read_text(encoding="utf-8"))
@@ -1434,7 +1443,7 @@ def main(argv: list[str]) -> int:
     findings: list[str] = []
     if not isinstance(by, str) or not ACTOR_RE.fullmatch(by):
         findings.append(f"by must be a process:<id> actor, not {by!r}")
-    elif by == CURATOR_ACTOR:
+    elif by.startswith(CURATOR_ACTOR):
         findings.append(f"by may not be {CURATOR_ACTOR}: that actor stands for a person in a curator's session, and only ktl-curator writes under it")
     handoff: list = []
     try:

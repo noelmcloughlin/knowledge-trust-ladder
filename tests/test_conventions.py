@@ -914,3 +914,95 @@ def test_a_larger_bundle_asks_git_no_more_often(tmp_path):
         assert "not checked" in result.out or result, result.out
         calls.append(read(shim / "calls").count("\n"))
     assert calls[0] == calls[1], f"the shell half ran git {calls[0]} times for 3 concepts and {calls[1]} for 12"
+
+
+# ---- what an audit of the gate found, 2026-11-17 -----------------------------
+
+ADA_AT = "2026-09-02T00:00:00Z"
+
+
+def confirmed_by_ada(name, body, more="", ident=None):
+    ident = ident or f"https://example.invalid/k/x/{name}"
+    return (
+        f"---\ntype: Service\nid: {ident}\ntitle: {name}\nresource: https://example.invalid/src/{name}\n{STAMP}"
+        f'verified:\n  - by: human:ada\n    at: "{ADA_AT}"\n{more}---\n\n# Overview\n\n{body}\n'
+    )
+
+
+@pytest.fixture
+def confirmed_repo(tmp_path):
+    """A bundle in git with one concept human:ada confirmed, and the base commit before a change."""
+    git = Git(tmp_path)
+    git.init()
+    k = bundle_of(tmp_path, {"a.md": confirmed_by_ada("a", "What ada read.")})
+    git("add", "-A")
+    git("commit", "-q", "-m", "ada confirms", env={"GIT_COMMITTER_DATE": "2026-09-17T00:00:00Z"})
+    return k, git, git("rev-parse", "HEAD").strip()
+
+
+def test_rule_13_is_not_misled_by_the_time_of_the_confirmation_repeated_in_an_edit(confirmed_repo):
+    """`git log -S` names the edit as the newest commit that changed how often the time occurs, and the edit is not the confirmation."""
+    k, git, base = confirmed_repo
+    write(k / "x" / "a.md", confirmed_by_ada("a", f"What nobody read.\n\n<!-- {ADA_AT} -->"))
+    git("commit", "-q", "-am", "an edit that repeats the time", env={"GIT_COMMITTER_DATE": "2026-09-18T00:00:00Z"})
+    result = bash(CONVENTIONS, k, "--since", base)
+    assert result.rc == 1 and "a.md: changed since human:ada confirmed it" in result.out, result.out
+
+
+def test_rule_13_still_passes_the_text_the_person_saw(confirmed_repo):
+    k, git, base = confirmed_repo
+    write(k / "x" / "b.md", f"---\ntype: Service\nid: https://example.invalid/k/x/b\nresource: https://example.invalid/b\n{STAMP}---\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "another concept", env={"GIT_COMMITTER_DATE": "2026-09-18T00:00:00Z"})
+    result = bash(CONVENTIONS, k, "--since", base)
+    assert result, result.out
+
+
+def test_rule_14_passes_a_confirmed_concept_that_is_renamed(confirmed_repo):
+    """A rename claims nothing: the concept keeps its id, its events and its text."""
+    k, git, base = confirmed_repo
+    git("mv", str(k / "x" / "a.md"), str(k / "x" / "renamed.md"))
+    git("commit", "-q", "-m", "renamed", env={"GIT_COMMITTER_DATE": "2026-09-18T00:00:00Z"})
+    result = bash(CONVENTIONS, k, "--since", base)
+    assert result, f"a rename alone was refused: {result.out}"
+
+
+def test_a_confirmed_concept_renamed_and_rewritten_is_reported(confirmed_repo):
+    """Rule 13 follows the concept to the path it was confirmed under, by its id."""
+    k, git, base = confirmed_repo
+    (k / "x" / "a.md").unlink()
+    write(k / "x" / "renamed.md", confirmed_by_ada("renamed", "What nobody read.", ident="https://example.invalid/k/x/a"))
+    git("add", "-A")
+    git("commit", "-q", "-m", "renamed and rewritten", env={"GIT_COMMITTER_DATE": "2026-09-18T00:00:00Z"})
+    result = bash(CONVENTIONS, k, "--since", base)
+    assert result.rc == 1 and "renamed.md: changed since human:ada confirmed it" in result.out, result.out
+
+
+def test_a_confirmed_concept_renamed_under_a_new_id_and_rewritten_is_reported(confirmed_repo):
+    """With another id it is a new concept, and the commit that adds it records a confirmation with text of its own."""
+    k, git, base = confirmed_repo
+    (k / "x" / "a.md").unlink()
+    write(k / "x" / "renamed.md", confirmed_by_ada("renamed", "What nobody read."))
+    git("add", "-A")
+    git("commit", "-q", "-m", "renamed, re-identified and rewritten", env={"GIT_COMMITTER_DATE": "2026-09-18T00:00:00Z"})
+    result = bash(CONVENTIONS, k, "--since", base)
+    assert result.rc == 1 and "renamed.md: commit" in result.out and "records a confirmation by human:ada" in result.out, result.out
+
+
+def test_diataxis_md_is_no_concept_at_the_root_of_the_bundle_alone(tmp_path):
+    """The toolkit reads a file of that name in a folder below as a concept, so the rules read it too."""
+    odd = "---\ntype: Service\nid: https://example.invalid/k/x/a\nverified:\n  - by: human:ada\n    at: 2026-09-02\n---\n"
+    k = bundle_of(tmp_path, {"a.md": f"---\ntype: Service\nid: https://example.invalid/k/x/a\nresource: https://example.invalid/a\n{STAMP}---\n"})
+    write(k / "diataxis.md", "# Map\n")
+    result = bash(CONVENTIONS, k)
+    assert result, f"the map at the root was read as a concept: {result.out}"
+    write(k / "x" / "diataxis.md", odd)
+    result = bash(CONVENTIONS, k)
+    assert result.rc == 1 and "x/diataxis.md" in result.out and "is declared by more than one file" in result.out, result.out
+
+
+def test_rule_10_refuses_a_key_the_gates_read_given_twice(tmp_path):
+    """Parsers settle a repeated key in different ways, and the gates read the id as the key of every event."""
+    k = bundle_of(tmp_path, {"a.md": f"---\ntype: Service\nid: https://example.invalid/k/x/a\nid: https://example.invalid/k/x/b\nresource: https://example.invalid/a\n{STAMP}---\n"})
+    result = bash(CONVENTIONS, k)
+    assert result.rc == 1 and "a second id key at line 4" in result.out, result.out
