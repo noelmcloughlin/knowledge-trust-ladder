@@ -2,12 +2,12 @@
 type: Playbook
 id: https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
 title: ktl-sidecar skill
-description: Procedure that creates a .lokf/ sidecar, tooling, docs, a dummy skeleton, and the knowledge_bundle doorway link beside it, from bundled templates, or repairs a missing or broken sidecar file, then hands off to ktl-librarian.
+description: "Procedure that creates a .lokf/ sidecar from bundled templates, or repairs a missing or broken sidecar file: the tooling, docs, a dummy skeleton and the knowledge_bundle doorway link, then optionally the CI workflows (scheduled librarian, registrar gate, release, sync, ingest, federation) with the variables, secrets, Environments and tokens each needs, such as AGENT_API_KEY and KNOWLEDGE_SYNC_TOKEN. It then hands off to ktl-librarian."
 genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-15T20:59:49Z"
+  at: "2026-11-17T20:29:12Z"
 hasPart:
   - https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
   - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
@@ -20,6 +20,7 @@ references:
   - https://w3id.org/ktl/knowledge/explanation/hosts-and-doorways
 sources:
   - resource: skills/ktl-sidecar/SKILL.md
+  - resource: skills/ktl-sidecar/scripts/fill-placeholders.py
   - resource: skills/ktl-sidecar/references/automation.md
     id: automation.md
     excerpt: a fine-grained personal access token (Settings, Developer settings, Personal access tokens, Fine-grained tokens) for this repository alone, with the repository permissions Contents, Pull requests and Workflows set to read and write, and an expiry you will renew.
@@ -62,7 +63,7 @@ stale_after: 2027-11-13
 ktl-sidecar runs **once** per repository, or to repair a missing or broken sidecar file. A repair rewrites only the missing or broken file, and never overwrites concept files. It never authors concepts. It has seven steps, 0 to 6:
 
 - **Step 0.** Run the preflight from the host repository's root and gather the host project's facts. The preflight says what the machine can do, and the layout is the same on every host: `.lokf/knowledge` is the real folder (see [Hosts and doorways](../explanation/hosts-and-doorways.md)).
-- **Step 1.** Copy each file from `templates/` and substitute placeholders as literal text with Python, not sed, since a value holding sed's delimiter or GNU sed's `e` command would change what the command does. The files include `.lokf/.gitattributes`, which keeps the bundle on LF.
+- **Step 1.** Copy each file from `templates/` then fill the placeholders with `scripts/fill-placeholders.py`, never through sed. The script stops before it writes a file on an empty value, a line break, a slug or a date of another form, or a base IRI that is no `http` address ending with `/`. It writes each value into frontmatter and `pyproject.toml` as an escaped, double-quoted string, so a colon or a quote in a description stays text. The files include `.lokf/.gitattributes`, which keeps the bundle on LF.
 - **Step 2.** Add three root-level pointers: `llms.txt`, a README aside, and a `knowledge_bundle` symlink onto `.lokf/knowledge` for people, folder pickers and Obsidian (see [Open the knowledge bundle in Obsidian](open-bundle-in-obsidian.md)).
 - **Step 3.** Verify no placeholder survives.
 - **Step 4.** Validate.
@@ -133,7 +134,7 @@ When `.lokf/justfile` names a schema on its `schema :=` line, the release attach
 
 **A domain host.** `references/automation.md` describes a domain host as one whose bundle names other bundles. Each `MemberBundle` concept names one released zip and its checksum, and a `MemberDomain` concept does the same when that bundle is a domain in turn. A person confirms that it belongs, and the workspace is the graph built from those releases, one named graph per bundle. Nothing in the host's three files runs a model:
 
-- `knowledge-federate.py build --tag <tag>` resolves the members into a lock, fetches each zip over http or https from a public address, and checks it against the checksum its concept names. A local path needs `--allow-local`, and a private address needs a person's `private_addresses: allow` on the top `Domain` concept. For a GitHub release the build verifies the attestation, pinned to the member's `knowledge-release.yaml`, or to its `knowledge-federation.yaml` for a workspace, and without `gh` it stops unless run with `--no-attestation`. It refuses a zip holding a symbolic link, a path outside its root, a hidden file such as a `.git` folder or a file a browser runs, and a distribution name that is not one plain file name. A member that releases no zip names the `concepts.jsonld` its site serves instead, and the build checks that file against its checksum.
+- `knowledge-federate.py build --tag <tag>` resolves the members into a lock, fetches each zip over http or https from a public address, and checks it against the checksum its concept names. A local path needs `--allow-local`, and a private address needs a person's `private_addresses: allow` on the top `Domain` concept. For a GitHub release the build verifies the attestation, pinned to the member's `knowledge-release.yaml`, or to its `knowledge-federation.yaml` for a workspace, and without `gh` it stops unless run with `--no-attestation`. It refuses a zip holding a symbolic link, a path outside its root, a hidden file such as a `.git` folder, or any file but Markdown and images. It also refuses a distribution name that is not one plain file name, or that does not end `.zip` for a zip and `.jsonld` for a served file, and a member's schema that imports anything but `lokf` and `linkml:` names. A member that releases no zip names the `concepts.jsonld` its site serves instead, and the build checks that file against its checksum.
 
   The build downloads each zip, schema or served file to a temporary folder, and removes the folder when the run ends, unless `--cache <folder>` names a folder to keep them in. Only `.lokf/.cache/federation/validators.json`, what each served member's site last served, stays on a domain host, for a conditional request (`references/automation.md`, `templates/gitignore`).
 
@@ -141,7 +142,7 @@ When `.lokf/justfile` names a schema on its `schema :=` line, the release attach
 
   The build takes each member as a person last confirmed it. A moved member no person has confirmed is built at the newest release the default branch held confirmed, while that confirmation stands, and a member no person confirmed is left out. The lock and the workspace index list both as waiting. A retired member or `Domain` concept is left out too, and the top `Domain` concept's `unowned_targets`, `max_depth` and `sensitivity` count only as a person confirmed them. `--verify-only` runs every step up to the gate in a temporary folder and writes nothing, and its gate judges the workspace the next release build would make.
 
-- `knowledge-federation.yaml` runs the build on each release of the host and deploys the workspace under `/workspace/` of the host's site, once the `KNOWLEDGE_FEDERATION_ENABLED` repository variable is `true`. A domain host leaves `KNOWLEDGE_WEBSITE_ENABLED` unset, since this workflow is its one Pages deployer. It builds the host's site as the website workflow does, from `website/` or `ktl-website/`, and the workspace's address defaults to `baseURL` in that folder's `site.toml`.
+- `knowledge-federation.yaml` runs the build on each release of the host and deploys the workspace under `/workspace/` of the host's site, once the `KNOWLEDGE_FEDERATION_ENABLED` repository variable is `true`. A domain host leaves `KNOWLEDGE_WEBSITE_ENABLED` unset, since this workflow is its one Pages deployer. It builds the host's site as the website workflow does, from `website/` or `ktl-website/`, and the workspace's address defaults to `baseURL` in that folder's `site.toml`. Where `UV_DEFAULT_INDEX`, `UV_INDEX_URL` or `UV_INDEX` names a package mirror, both of its jobs install the toolkit through the site's `scripts/uv-env.sh`.
 - `knowledge-federate.py members` is the domain's librarian, a script the librarian workflow runs as `AGENT_CLI`. It picks each member's newest release that carries a bundle zip, verifies it, and writes the change as operations for the pen. It verifies attestations with the job's read-only token, under `AGENT_USE_JOB_TOKEN` set to `true` and `AGENT_API_KEY_ENV` set to `KNOWLEDGE_FEDERATE_TOKEN`.
 
   The patch moves the old tag, zip name and release day in the description and the body as well as in the frontmatter. A release pruned from the list has no day, so the day written right after the old tag moves with the tag alone. When the new release's `index.md`, or a served file's `@base`, names another `base_iri`, the patch sets it and moves the old namespace where the text gives it as code, and the question says so. A namespace the build would refuse leaves the member as it is: one that does not end in `/` or `#`, or that nests with the domain's namespace or another member's. A member a person wrote gets the question alone.

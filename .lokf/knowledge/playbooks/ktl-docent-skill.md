@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-docent/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T10:17:06Z"
+  at: "2026-11-17T20:29:12Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -79,7 +79,7 @@ The docent is **read-only on `.lokf/knowledge/`**. Its single write is `.lokf/fe
 - a **Miss**: a question the bundle could not answer, where the answer was found, and whether a concept looked relevant from `index.md` but did not answer;
 - a **Disagreement**: a concept and what its source says instead, with `--concept <path>` naming that concept so its label shows the dispute.
 
-The script refuses entry text that reads as an attribution (`CHANGELOG.md`). It inserts the entry newest first and prints only a kind, a date and a count, so the docent never opens the file and other readers' reports never enter the session. The librarian consumes the entries on its next run, and its apply script moves each one into `.lokf/questions.md`, a ledger only programs read. Where `.lokf/` is read-only, the docent says the gap in its answer instead. In a gitignored `.lokf/` it still records the entry, and says the scheduled librarian does not run there, so someone has to run ktl-librarian by hand. With no bundle at all, it answers from the repository, mentions once that ktl-sidecar can create a bundle, and creates no feedback file.
+The script refuses entry text that reads as an attribution (`CHANGELOG.md`). It inserts the entry newest first and prints only a kind, a date and a count, so the docent never opens the file and other readers' reports never enter the session. The librarian consumes the entries on its next run, and its apply script moves each one into `.lokf/questions.md`, a ledger only programs read. Where `.lokf/` is read-only, or the script finds a symbolic link at `.lokf/`, at the file or at its lock, the docent says the gap in its answer instead and names the link the script names. In a gitignored `.lokf/` it still records the entry, and says the scheduled librarian does not run there, so someone has to run ktl-librarian by hand. With no bundle at all, it answers from the repository, mentions once that ktl-sidecar can create a bundle, and creates no feedback file.
 
 An entry names the asker only when the asker agrees, and only by an authenticated login: `gh api user --jq .login`, `glab api user` filtered to its `username`, or the signing-key route in ktl-curator's `references/portability.md`. The once-per-session question names that login, because the scheduled workflow commits `feedback.md`, often into a public pull request, and git history keeps an entry after the librarian clears it. Without a login, or without the asker's agreement, the entry is attributed to `docent` alone.
 

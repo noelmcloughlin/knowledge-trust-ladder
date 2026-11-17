@@ -7,7 +7,7 @@ genre: how-to
 resource: CONTRIBUTING.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T22:33:20Z"
+  at: "2026-11-17T20:29:12Z"
 status: draft
 references:
   - https://w3id.org/ktl/knowledge/playbooks/repository-validation
@@ -38,7 +38,7 @@ The sibling repositories link deep into this repository's files, and their own l
 
 A change under a skill's `templates/` is copied over each of this repository's copies, ktl-docent's included, in the same pull request. Checks 11, 11a and 11w name the pairs and hold each byte-identical.
 
-When the commits would release, the pull request title carries the releasing type too (`feat:`, `fix:`, `security:`). A squash merge takes its subject from the title, and the `plan` job refuses a mismatch. Pinned action SHAs are bumped by Dependabot, and CI fails an action that floats on a tag or branch instead of a commit. The pull request template's checklist is the short form of this list.
+When the commits would release, the pull request title must release too: `feat:`, `fix:`, `perf:`, `security:`, or a revert's `Revert`. A squash merge takes its subject from the title, and the `plan` job refuses a mismatch. Pinned action SHAs are bumped by Dependabot, and CI fails an action that floats on a tag or branch instead of a commit. The pull request template's checklist is the short form of this list.
 
 A change to what an agent should actually *do* needs its *why* in the pull request, and must keep the role boundary intact:
 

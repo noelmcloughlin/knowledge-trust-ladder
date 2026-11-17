@@ -7,7 +7,7 @@ genre: reference
 resource: https://pypi.org/project/lokf/
 generated:
   by: process:ktl-librarian
-  at: "2026-11-15T20:59:49Z"
+  at: "2026-11-17T20:29:12Z"
 status: draft
 definedBy:
   - https://w3id.org/ktl/knowledge/references/lokf-specification
@@ -35,7 +35,7 @@ The toolkit is the implementation, not the specification. `lokf validate` checks
 
 `lokf convert` projects to RDF as Turtle, N-Triples, JSON-LD, RDF/XML, N3 or TriG, and `lokf export` writes the four files a bundle publishes, `graph.nt` among them. `lokf serve` exposes a SPARQL endpoint, `lokf query` runs a SPARQL query against the bundle, and `lokf mcp` serves it over the Model Context Protocol (MCP). From 0.9.0, `convert`, `query`, `serve` and `export` take `--schema` as `validate` does, and project each class and slot a domain vocabulary declares under its own IRI. `lokf tables` writes CSV, Parquet or SQLite: one table per concept type plus a `relations` table. For BigQuery or Athena it writes the Parquet and prints the external-table statements that register it.
 
-`lokf registry init`, `add`, `list` and `resolve` keep a registry of bundles offline. A domain's federation build registers each member release with `lokf registry add` and exports it with `lokf export` (`docs/federation.md`). The command line also carries `new`, `propose`, `vocab`, `adapt` and `skills`, and the package has a `[tables]` extra, which adds pandas and pyarrow, beside `[build]`. PyPI lists 0.9.0 as the latest release.
+`lokf registry init`, `add`, `list` and `resolve` keep a registry of bundles offline. A domain's federation build registers each member release with `lokf registry add` and exports it with `lokf export` (`docs/federation.md`). The build reads a member's schema first, and stops on one that imports anything but `lokf` and `linkml:` names, since LinkML would fetch or read any other import itself. The toolkit reserves `index.md` and `log.md` alone, so the website's build and the federation build run `lokf export` with a root `diataxis.md` read as no concept (`CHANGELOG.md`). The command line also carries `new`, `propose`, `vocab`, `adapt` and `skills`, and the package has a `[tables]` extra, which adds pandas and pyarrow, beside `[build]`. PyPI lists 0.9.0 as the latest release.
 
 `lokf validate --check-refs` finds typed-relation targets in the bundle's own namespace with no matching concept, and leaves targets outside its `base_iri` alone. This repository's own `just lokf-check-refs` recipe calls it, with `--check-excerpts`, which finds each `sources[].excerpt` in its local file and counts an excerpt on a URL without fetching it. It takes the relation slots from the schema, so a domain vocabulary's own slots are covered without the recipe restating a predicate list.
 

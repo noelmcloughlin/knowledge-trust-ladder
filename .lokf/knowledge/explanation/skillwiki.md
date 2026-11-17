@@ -19,7 +19,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T10:18:02Z"
+  at: "2026-11-17T20:29:12Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T00:59:27Z"
@@ -48,7 +48,7 @@ Reading the paper in October 2026 changed the skills in four places, which `CHAN
 
 One more change came with LOKF 0.9.0. SkillWiki's verifier specs check an output by program, and LOKF 0.9.0's `sources[].excerpt` lets a program check the exact passage a concept relies on against its source. `just lokf-check-refs` runs that check, `lokf validate --check-excerpts`, so the gate fails a quote that drifted from its source.
 
-`docs/how-it-works.md` holds what KTL took from the paper, under *How readers and verdicts steer the next run*, and `docs/skillwiki.md` is gone. `CHANGELOG.md` says this concept stays the record of the paper.
+`docs/how-it-works.md` holds what KTL took from the paper, under *How readers and verdicts steer the next run*. `CHANGELOG.md` says this concept stays the record of the paper.
 
 # Where the designs part
 

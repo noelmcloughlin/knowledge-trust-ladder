@@ -37,6 +37,7 @@ verified:
     at: "2026-11-13T14:49:03Z"
     revision: "d412ad09085764fa70d26e5eb4fd254602b560f2"
 stale_after: 2027-11-13
+status: draft
 ---
 
 # Overview
@@ -125,3 +126,7 @@ Accepting a member's move to a new release is the same confirm again. When the n
 
 [^ktl-curator-skill.md]: skills/ktl-curator/SKILL.md, Step 1, items 7 and 8
 [^review-session.md]: skills/ktl-curator/references/review-session.md, the curation policy template
+
+## Open questions
+
+- 2026-11-17, process:ktl-librarian: Step 3 here says the curation policy and a placeholder write `human:<id>` and need the same authenticated id as Confirm. `skills/ktl-curator/references/review-session.md` now writes both under `process:ktl-curator`, the policy as a draft with no `verified` event until the person confirms it, and adds that an approval covers concepts only as they stood when it was given. A person wrote this text, so the librarian cannot change it: correct it, or release it to the librarian.

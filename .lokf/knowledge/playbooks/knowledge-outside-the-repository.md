@@ -23,7 +23,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/policies/threat-model
 generated:
   by: process:ktl-librarian
-  at: "2026-11-15T19:13:22Z"
+  at: "2026-11-17T20:29:12Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -66,7 +66,7 @@ A confidential entry's records go to `.lokf/.cache/ingest.lock.yaml`, beside its
 
 1. Install the ingest files with ktl-sidecar's Step 5, or its repair.
 2. Copy `.lokf/ingest.yaml.sample` to `.lokf/ingest.yaml` and replace its examples. A sidecar installed before the sample existed gets it from the same repair.
-3. Store each credential as a secret in the `knowledge-ingest` Environment, limited to the default branch, under the name the manifest gives. Every name starts `KNOWLEDGE_INGEST_`.
+3. Store each credential as a secret in the `knowledge-ingest` Environment, limited to the default branch, under the name the manifest gives. Every name starts `KNOWLEDGE_INGEST_`, and the workflow hands those secrets to the script alone. A secret is one line: a run leaves out a secret with a line break inside it, and warns of it by name.
 4. Set the repository variable `KNOWLEDGE_INGEST_ENABLED` to `true`, and allow GitHub Actions to create and approve pull requests.
 5. Start one run from the Actions tab and read its summary.
 
@@ -74,11 +74,11 @@ The workflow runs on Sundays and keeps one pull request open on the branch `know
 
 # What the librarian does
 
-`skills/ktl-librarian/references/ingest.md` gives the rules. In a live session the librarian runs `knowledge-ingest.sh` before the work list. Unattended, it does not. A concept derived from a mirrored page names the mirror file as its `resource` and the origin as a `sources` entry, with the entry's `owner` as `author`. A `Reference` concept is the other way round. The source map gains one row per entry, naming the entry's folder. A file marked `gone` or `unlisted` stays while a concept cites it, and the librarian re-verifies each such concept. The librarian derives nothing from a file the lock does not mark `ok`.
+`skills/ktl-librarian/references/ingest.md` gives the rules. In a live session the librarian runs `knowledge-ingest.sh` before the work list. Unattended, it does not. A concept derived from a mirrored page names the mirror file as its `resource` and the origin as a `sources` entry, with the entry's `owner` as `author`. A `Reference` concept is the other way round, and takes its source's title with any square bracket written as a round one, since the pen refuses a square bracket in a title. The source map gains one row per entry, naming the entry's folder. A file marked `gone` or `unlisted` stays while a concept cites it, and the librarian re-verifies each such concept. The librarian derives nothing from a file the lock does not mark `ok`.
 
 # Security
 
-The ingest keeps its secrets and its write token in separate jobs, and fetches only the addresses the manifest names, within size caps. It checks the address each connection opens, so a name that answers a public address to the check and a private one to the connection reaches nothing, unless the manifest allows private addresses (`CHANGELOG.md`). The ingest tries a download again when it is cut short, and its privileged job refuses a rename, a link and a file marked to run (`CHANGELOG.md`). `docs/threat-model.md` covers the ingest workflow.
+The ingest keeps its secrets and its write token in separate jobs, hands its secrets to the script alone, and fetches only the addresses the manifest names, within size caps. It checks the address each connection opens, so a name that answers a public address to the check and a private one to the connection reaches nothing, unless the manifest allows private addresses (`CHANGELOG.md`). The ingest tries a download again when it is cut short, and its privileged job refuses a rename, a link and a file marked to run (`CHANGELOG.md`). `docs/threat-model.md` covers the ingest workflow.
 
 Behind a proxy, the proxy resolves each name. The script still refuses a name that resolves locally to a private address, but it cannot check a name that resolves only at the proxy, so the proxy must refuse private addresses itself. Where the manifest refuses private addresses, git uses the proxy that `https_proxy` or `all_proxy` names for a `git` entry, and ignores any proxy in git's own configuration.
 

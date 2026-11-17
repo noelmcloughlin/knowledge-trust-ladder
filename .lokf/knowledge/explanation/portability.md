@@ -20,6 +20,9 @@ generated:
   by: process:ktl-librarian
   at: "2026-11-15T20:43:54Z"
 status: draft
+verified:
+  - by: process:ktl-librarian
+    at: "2026-11-17T20:29:12Z"
 ---
 
 # One matrix

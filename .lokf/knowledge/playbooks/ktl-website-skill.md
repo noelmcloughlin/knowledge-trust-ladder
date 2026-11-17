@@ -37,7 +37,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-11-15T21:31:28Z"
+  at: "2026-11-17T20:29:12Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -46,7 +46,7 @@ verified:
 
 # Overview
 
-ktl-website installs a website for the knowledge bundle in the repository it is invoked from: a Hugo site under `website/`, built from the bundle and from whatever else the repository holds. The site shows a page per concept with the trust label `knowledge-report.sh` gives it, a health page, a knowledge graph, and search that filters by trust and type. It serves the four files `lokf export` writes under `/knowledge/`, and `/badge.json`, labelled `KTL scorecard`, which says how many of the bundle's concepts a person confirmed, as `n of m`, retired ones aside, in the form a shields.io endpoint badge reads, for a README to show. The architecture page names it the sixth skill, optional like `ktl-prose`, and links this repository's own site, at `https://w3id.org/ktl/`, as the template's first copy.
+ktl-website installs a website for the knowledge bundle in the repository it is invoked from: a Hugo site under `website/`, built from the bundle and from whatever else the repository holds. The site shows a page per concept with the trust label `knowledge-report.sh` gives it, a health page, a knowledge graph, and search that filters by trust and type. It serves the four files `lokf export` writes under `/knowledge/`, and `/badge.json`, labelled `KTL scorecard`, which says how many of the bundle's concepts a person confirmed, as `n of m`, where `m` counts every concept, a retired one included, as the health line does, in the form a shields.io endpoint badge reads, for a README to show. The architecture page names it the sixth skill, optional like `ktl-prose`, and links this repository's own site, at `https://w3id.org/ktl/`, as the template's first copy.
 
 It runs once, to install the site, or again to repair or update it. It writes nothing into the bundle, the README, the docs or the changelog. ktl-sidecar runs first, since the site builds from the sidecar's scripts and toolkit. ktl-librarian and ktl-curator change what the pages say. Every file is copied from the skill's `templates/`, never retyped. The build needs uv, git and a POSIX shell, and no Node.js.
 
@@ -71,12 +71,12 @@ The home page has five buttons on every site: the schema, the bundle, the archit
 
 # The site's folder
 
-A folder is this skill's when it holds `site.toml`. The preflight's `website` line settles which folder a run uses:
+A folder is this skill's when it holds `site.toml` and `hugo.toml`. The preflight's `website` line settles which folder a run uses, and the first rule that holds decides:
 
-- When `website/site.toml` exists, the skill repairs or updates the site there.
-- When `ktl-website/site.toml` exists, the site is there, since `website/` was another site's when the skill first ran.
-- When `website/` exists with no `site.toml`, it is another site's, and the skill installs into `ktl-website/`.
+- When `website/` is this skill's, the skill repairs or updates the site there.
+- When `ktl-website/` is this skill's, the site is there, since `website/` was another site's when the skill first ran.
 - When `website/site.config.mjs` exists, it is the skill's earlier Astro site, which Step 1 moves to Hugo in place.
+- When `website/` exists otherwise, it is another site's, and the skill installs into `ktl-website/`.
 - When neither folder exists, the skill installs into `website/`.
 
 Three files are the repository's own once written, and a repair never replaces them: `site.toml`, `README.md` and `assets/css/custom.css`. The skill stops when the sidecar's preflight reports the bundle unhealthy.
@@ -86,7 +86,7 @@ Three files are the repository's own once written, and a repair never replaces t
 It has eight steps, 0 to 6 with a 5b:
 
 - **Step 0.** Run `scripts/website-preflight.sh`, which runs the sidecar's own preflight inside it. It says whether another publisher already holds the repository's Pages, which folder the site is in or goes in, and which inputs the site will find. Its `mkdocs` line says whether an mkdocs site is there for the website to replace. Resolve four placeholders: `<REPO_OWNER>` and `<REPO_NAME>` from the origin remote, never from a person's name, and `<PROJ_NAME>` and `<PROJ_DESC>`, the site's title and description. When the site replaces an mkdocs site, read `mkdocs.yml` once, by eye, for a `[params.redirects]` entry for each page its `nav` names and the folders `exclude_docs` names for `docsExclude`.
-- **Step 1.** Copy `templates/website` to the site's folder, and substitute the placeholders in `site.toml` and `README.md` as literal text through Python, never sed. Then edit `site.toml` only for what the preflight settled: `branch`, `baseURL` for a custom domain or a user site, and a logo. Set `browse` only when the person asks to publish the data. A repair copies each template that is missing or differs, one file at a time. With the person's agreement, an earlier Astro site's values move into `site.toml` and its old files are removed, as `references/customising.md` lists.
+- **Step 1.** Copy `templates/website` to the site's folder, and substitute the placeholders in `site.toml` and `README.md` through Python, never sed. The script writes each value into `site.toml` as an escaped TOML string, and stops before it writes either file on a value with a line break or a character that does not print. Then edit `site.toml` only for what the preflight settled: `branch`, `baseURL` for a custom domain or a user site, and a logo. Set `browse` only when the person asks to publish the data. A repair copies each template that is missing or differs, one file at a time. With the person's agreement, an earlier Astro site's values move into `site.toml` and its old files are removed, as `references/customising.md` lists.
 - **Step 2.** Add an exclusion for `website/(dist|generated|resources|\.venv)/` to each Markdown lint, link check or spell check configuration, and change nothing else at the root. Where the repository runs Dependabot, suggest the `uv` entry for the site's folder in one line.
 - **Step 3.** Verify with `grep` that no placeholder survives in `site.toml` or `README.md`. The build refuses a `site.toml` that still holds one.
 - **Step 4.** Build with `bash website/scripts/build.sh`. It runs `scripts/prepare.sh`, which runs `lokf export`, `gen-doc` for a schema and the report script from `.lokf/`'s own environment. Then it runs Hugo and Pagefind, which uv installs from PyPI at the versions the site's `uv.lock` holds. The raw-HTML cleaning and the link check run last. `build.sh serve` serves the site locally and rebuilds it on each edit. With no uv, report the build as skipped.
@@ -106,7 +106,7 @@ A domain host deploys the site from its federation workflow, from the release's 
 
 The variable goes under Repository variables, never on an environment, because the deploy job's `if:` sees only repository and organization variables. The maintainer sets it, and tells Pages once to take its site from Actions. The skill gives the two commands and does not run them. A repository whose Pages another publisher already holds keeps the variable unset until that publisher is retired, since two publishers overwrite each other's site. A domain host leaves the variable unset, because its federation workflow builds the site and deploys it with the workspace beside it.
 
-On another forge, the same `bash website/scripts/build.sh` runs in that forge's CI, and the forge publishes `website/dist`. Behind a proxy, a mirror set for uv serves Hugo and Pagefind, and `site.toml` can name a mirror for each of the two libraries the build fetches from a CDN. Nothing is fetched from github.com.
+On another forge, the same `bash website/scripts/build.sh` runs in that forge's CI, and the forge publishes `website/dist`. Behind a proxy, the build fetches from three places, and each has a setting. With a mirror of PyPI named in `UV_DEFAULT_INDEX`, `scripts/uv-env.sh` installs Hugo, Pagefind and the toolkit in `.lokf/` from it, at the versions and hashes the locks pin, so no lock is written again. uv downloads a Python from github.com where the machine has none at 3.11 or later, and the workflow's `setup-uv` step fetches uv from there, so a runner that cannot reach github.com needs uv on its image. Each job looks for uv first and keeps the runner's own. For Cytoscape and Mermaid, `site.toml` can name a mirror's address, or the site's folder can hold a copy of each, `assets/vendor/cytoscape.js` and `assets/vendor/mermaid.js`, which the build takes first and checks against the same hash in `hugo.toml`. `scripts/vendor.sh` writes both copies from an npm registry.
 
 # In this repository
 

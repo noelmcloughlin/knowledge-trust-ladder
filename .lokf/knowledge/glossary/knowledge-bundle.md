@@ -14,7 +14,7 @@ sources:
   - resource: skills/ktl-librarian/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-10-19T23:21:13Z"
+  at: "2026-11-17T20:29:12Z"
 about:
   - https://w3id.org/ktl/knowledge/glossary/lokf
 verified:
@@ -55,7 +55,7 @@ The **sidecar** is `.lokf/`, a dot-folder beside the code like `.git/`, kept out
 
 ## Reserved files
 
-Two files in the bundle are reserved. The root `index.md` carries the bundle's metadata and its table of contents. Its semantic header holds `lokf_version`, `okf_version`, `base_iri`, `context`, `title`, `description`, `license` and `publisher`, and a concept's IRI is `base_iri` plus its path. `log.md` is the change history, and it records knowledge changes only. The librarian treats `diataxis.md` the same way: KTL Registrar may write that map at the bundle root, and it is never a concept.
+Two files in the bundle are reserved. The root `index.md` carries the bundle's metadata and its table of contents. Its semantic header holds `lokf_version`, `okf_version`, `base_iri`, `context`, `title`, `description`, `license` and `publisher`, and a concept's IRI is `base_iri` plus its path. `log.md` is the change history, and it records knowledge changes only. KTL Registrar may write a `diataxis.md` map at the bundle root, and that map is reserved too.
 
 ## The doorway
 

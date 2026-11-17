@@ -7,7 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T22:54:18Z"
+  at: "2026-11-17T20:29:12Z"
 about: []
 relatedTo:
   - https://w3id.org/ktl/knowledge/policies/ai-covenant
@@ -46,7 +46,7 @@ The **docent** sits outside the lines, where the reader does, and reports what i
 
 Lines are roles, not headcount: the IIA's text says the lines "are not intended to denote structural elements but a useful differentiation in roles" and "may overlap in practice" given "clear accountability, transparency, and safeguards". The adopting organisation decides who plays each line, and the tooling holds the lines apart either way.
 
-The page says the curator's identity comes from the forge, never from the person. It is the login the machine is signed in as, or the login under which the forge lists the key the person signs with. It is never git config, and never what is typed into the agent's chat. The gate accepts a `human:` verdict only on that person's approval of the pull request or their signature on the commit. Where one person both authors and confirms, the signature is the route. A repository that cannot sign, and has nobody else to approve, has one logged exception: an approval from a required reviewer of an Environment.
+The page says the curator's identity comes from the forge, never from the person. It is the login the machine is signed in as, or the login under which the forge lists the key the person signs with. It is never git config, and never what is typed into the agent's chat. The gate accepts a `human:` verdict only on that person's approval of the pull request or their signature on the commit. An approval backs a confirmation only while it stands, and only when each changed concept that names the person is byte for byte what the approved commit held, as `CHANGELOG.md` records. Where one person both authors and confirms, the signature is the route. A repository that cannot sign, and has nobody else to approve, has one logged exception: an approval from a required reviewer of an Environment.
 
 An auditor's questions each have a fixed place to look:
 
