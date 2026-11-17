@@ -208,7 +208,7 @@ trap 'rm -rf "$tmp"' EXIT
 #   C  path  title  status  stale_after  generated.by  generated.at
 #      latest human verified.at  human events  verified events  latest verified.at  open questions
 #      that human time as written  the later of generated.at and verified.at as written
-#      the revision that human event carries, a commit hash cut to seven characters
+#      the revision that human event carries, a commit hash cut to seven characters and a digest to seven after `sha256:`
 #      the revision of the event the work list compares with, and that of the human event, whole
 #   I  path  id  type  resource  one per concept: its `id`, its `type`, and its top `resource`, else its first source
 #   R  path  resource            one per `resource:` line, the concept's own and each source's
@@ -457,6 +457,7 @@ function finish() {
   st = norm(stale); if (st != "") st = substr(st, 1, 10); else if (stale ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/) st = substr(stale, 1, 10)
   human_full = human_rev
   if (human_rev ~ /^[0-9a-f]+$/ && length(human_rev) > 7) human_rev = substr(human_rev, 1, 7)
+  else if (human_rev ~ /^sha256:[0-9a-f]+$/ && length(human_rev) > 14) human_rev = substr(human_rev, 1, 14)
   printf "C\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%d\t%s\t%s\t%s\t%s\t%s\n", path, (title == "" ? path : title), status, st, gen_by, gen_at, human_at, hn, vn, check_at, qn, human_raw, (gen_at > check_at ? gen_raw : check_raw), human_rev, (gen_at > check_at ? gen_rev : check_rev), human_full
   printf "I\t%s\t%s\t%s\t%s\n", path, cid, ctype, (topres != "" ? topres : firstres)
   for (i = 1; i <= vn; i++) if (eby[i] ~ /^human:/ && eraw[i] != "") print "H\t" path "\t" eraw[i]
@@ -596,6 +597,10 @@ quotes_load() {
 # A change in that recording commit, as a squash merge makes, is no move. An
 # event not yet committed is newer than any commit, and one that git cannot
 # find is skipped, so a moved source may be missed but is never invented.
+# A `revision` on the event pins the resource of the concept alone. One that
+# names a commit in this history takes the place of the recording commit.
+# One that is a `sha256:` digest is compared with the file as HEAD holds it,
+# so a change in the recording commit is a move too.
 #
 # For the work list, a source that a question of the librarian covers is in
 # `M a path list`, one that a closed pull request had before it in a `D`
@@ -618,11 +623,12 @@ moved() {
   sources_load
   history_load
   revisions_load
+  digests_load
   round=0
   while :; do
     round=$((round + 1))
     : > "$tmp/need"; : > "$tmp/notes.next"
-    { printf '%s\n' "$all"; cat "$tmp/sources" "$tmp/hist" "$tmp/revs" "$tmp/anc" "$tmp/bodies"
+    { printf '%s\n' "$all"; cat "$tmp/sources" "$tmp/hist" "$tmp/revs" "$tmp/digs" "$tmp/anc" "$tmp/bodies"
       awk -F'\t' '{ print "ZT\t" $1 "\t" $2 " " $3 " " $4 }' "$tmp/touched" 2>/dev/null
       awk -F'\t' '{ print "ZQ\t" $1 "\t" $3 }' "$tmp/quoted"
       awk -F'\t' '{ print "ZG\t" $1 "\t" $2 }' "$tmp/quote_gone"
@@ -811,6 +817,34 @@ revisions_load() {
   fi
 }
 
+# The digest of each file that a compared event pins as `sha256:`, as `ZD
+# resource digest`. The bytes are those HEAD holds, so a checkout that
+# converts line endings gives the same digest. One git call writes each file
+# out, and one call of the digest tool reads them all. A folder gets no
+# line, and neither does any file on a host with no digest tool: the work
+# list then compares with the recording commit.
+digests_load() {
+  local res p i=0
+  : > "$tmp/digs"
+  can_digest || return 0
+  printf '%s\n' "$all" | awk -F'\t' '
+    $1 == "I" { main[$2] = $5; next }
+    $1 == "C" && ($16 ~ /^sha256:[0-9a-f]+$/ || $17 ~ /^sha256:[0-9a-f]+$/) { want[$2] = 1 }
+    END { for (p in want) if (main[p] != "") print main[p] }' | LC_ALL=C sort -u > "$tmp/digq"
+  [ -s "$tmp/digq" ] || return 0
+  awk -F'\t' -v want="$tmp/digq" 'BEGIN { while ((getline r < want) > 0) w[r] = 1 }
+    ($1 in w) && $2 == 1 && $3 == "P" { print $1 "\t" $4 }' "$tmp/res.top" > "$tmp/digp"
+  mkdir -p "$tmp/dig"; : > "$tmp/dign"
+  while IFS=$'\t' read -r res p; do
+    i=$((i + 1))
+    if git -C "$top" cat-file blob "HEAD:$p" > "$tmp/dig/$i" 2>/dev/null; then printf '%s\t%s\n' "$i" "$res" >> "$tmp/dign"; else rm -f "$tmp/dig/$i"; fi
+  done < "$tmp/digp"
+  [ -s "$tmp/dign" ] || return 0
+  (cd "$tmp/dig" && sha256 ./*) 2>/dev/null | awk -v names="$tmp/dign" '
+    BEGIN { while ((getline l < names) > 0) { split(l, a, "\t"); res[a[1]] = a[2] } }
+    { h = $1; sub(/^\\/, "", h); n = $NF; sub(/.*\//, "", n); if (n in res) print "ZD\t" res[n] "\t" h }' > "$tmp/digs"
+}
+
 # Whether one commit comes before another in history, for each pair moved_fn
 # asked about, as `ZA first second 1` or `... 0`. A commit with several pairs
 # asks git once for the commits after it up to HEAD, whose history holds the
@@ -876,6 +910,7 @@ bodies_run() {
 #   ZH  each concept: its last commit and day; ZF the commit that first wrote
 #       a text in it; ZY a concept not yet committed (history_load)
 #   ZV  a revision that names a commit (revisions_load)
+#   ZD  the digest of a file that a revision pins (digests_load)
 #   ZA  the order of two commits (ancestry_run); ZB whether a body changed
 #       (bodies_run)
 #   ZT  the closed pull request that touched a concept; ZQ a passage a
@@ -955,6 +990,7 @@ $1 == "ZH" { LAST[$2] = $3; LDAY[$2] = $4; next }
 $1 == "ZF" { FIRST[$2, $4] = $3; next }
 $1 == "ZY" { DIRTY[$2] = 1; next }
 $1 == "ZV" { VALID[$2] = $3; next }
+$1 == "ZD" { DIG[$2] = $3; next }
 $1 == "ZA" { ANC[$2, $3] = $4; next }
 $1 == "ZB" { BODY[$2, $3] = $4; next }
 $1 == "ZT" { if (!($2 in DEC)) DEC[$2] = $3; next }
@@ -983,6 +1019,9 @@ END {
       # recording commit still does not count, and each other source is
       # compared with the commit that recorded the stamp.
       base = ""; if ((rv in VALID) && anc(VALID[rv], head)) base = VALID[rv]
+      # A digest that the `revision` gives, of the resource of the concept
+      # only: the file moved when HEAD holds other bytes.
+      dg = (rv ~ /^sha256:[0-9a-f]+$/) ? substr(rv, 8) : ""
       out = ""; asked = ""; aside = ""; nohist = ""
       for (i = 1; i <= m; i++) {
         r = srt[i]; if (!(r in STATE)) continue
@@ -991,6 +1030,7 @@ END {
         else if (st == "edited") { if (!dirty) out = add(out, r " (edited, not yet committed" quoted(p, r) ")") }
         else if (st == "clean") {
           if (base != "" && r == MAIN[p]) { if (h != rec && h != base && anc(base, h)) entry = r " (" DAY[r] quoted(p, r) ")" }
+          else if (dg != "" && r == MAIN[p] && (r in DIG)) { if (DIG[r] != dg) entry = r " (" DAY[r] quoted(p, r) ")" }
           else if (rec != "" && h != rec && anc(rec, h)) entry = r " (" DAY[r] quoted(p, r) ")"
         }
         else if (st == "nohist" && which == "w") nohist = add(nohist, r)
@@ -1807,8 +1847,8 @@ as_number() {  # <digits> -> the number without its leading zeros, which bash an
 }
 can_digest() { command -v sha256sum >/dev/null 2>&1 || command -v shasum >/dev/null 2>&1; }
 no_digest="Sample: not drawn here, since the pick needs sha256sum or shasum and this host has neither"
-sha256() {  # standard input -> its SHA-256 as hex, then what the tool prints after it
-  if command -v sha256sum >/dev/null 2>&1; then sha256sum; else shasum -a 256; fi
+sha256() {  # standard input, or each file named -> its SHA-256 as hex, then what the tool prints after it
+  if command -v sha256sum >/dev/null 2>&1; then sha256sum "$@"; else shasum -a 256 "$@"; fi
 }
 # The seed reaches printf and the digest as it was given, and never awk,
 # which would read a backslash in it as an escape. A list whose size is 0 is
