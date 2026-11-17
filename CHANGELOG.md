@@ -4,6 +4,26 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Added
+
+- **The website builds behind a package mirror, and no lock is written again**: where `UV_DEFAULT_INDEX` names an index, or the PyPI addresses in a lock fail, `scripts/uv-env.sh` installs the versions the lock pins from the index uv reads, each file checked against the lock's hash. The build installs Hugo, Pagefind and the toolkit in `.lokf/` that way, and the workflow installs `just` so.
+- **The website builds where the CDN is blocked**: a copy of Cytoscape or Mermaid in the site's folder, `assets/vendor/cytoscape.js` or `assets/vendor/mermaid.js`, is taken before the address and checked against the same hash in `hugo.toml`. Each file is the one its npm package holds.
+
+### Fixed
+
+- **A `perf:` commit and a revert count as releasing in the `plan` job**, as the pinned commit-analyzer counts them, so such a pull request is asked for its changelog entry and a title that releases.
+- **`changelog-release.mjs` reads `## [Unreleased]` only as a line of its own**, so a preamble or an entry that quotes the heading is not taken for the section.
+- **The changelog fold keeps or leaves out an entry whole**: the indented lines under a duplicate bullet go with it, and an entry that differs below its first line is kept.
+- **Each skill's description says which one takes an error report**: the curator records what a person says, the docent records a miss it meets while answering, and the librarian audits the bundle against the repository.
+- **The ingest reads a page's CDATA sections in one pass.** A page of openers with no closer took time in the square of its length, 128 seconds at 360 kB, and held a run past its time limit.
+- **`knowledge-ingest.sh --patch` writes a source's title with round brackets where it has square ones.** The pen refuses a square bracket in a title, so one page titled `[RFC] Rate limits` kept every Reference concept of the run out.
+- **A root `diataxis.md` or a folder's `log.md` does not stop the website's build**: the site treats `index.md` and `log.md` in any folder and `diataxis.md` at the bundle's root as no concept, as the report script does.
+- **Mermaid diagrams follow the Display menu**, so a diagram is drawn again in the new colours when the reader or the system switches between light and dark.
+- **The graph and health pages cope with a bundle that holds no concept**, with a sentence in place of a script error and an invalid progress bar.
+- **The KTL scorecard badge counts every concept**, a retired one included, so it shows the same "n of m" as the health line and the health page.
+- **ktl-website's page gives the preflight's rule for the site's folder**: a folder is the skill's when it holds `site.toml` and `hugo.toml`, and the earlier Astro site is told apart before another site's folder.
+- **ktl-website's deploy page says what a locked-down network needs.** It said a mirror set for uv served Hugo and Pagefind, where uv fetches a locked file from the address the lock holds, and that nothing came from github.com, where uv fetches a Python from there on a machine with none.
+
 ## [0.67.0] - 2026-11-17
 
 ### Added
