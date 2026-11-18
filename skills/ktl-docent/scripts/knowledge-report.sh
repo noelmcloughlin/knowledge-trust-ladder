@@ -26,8 +26,9 @@
 #
 # The labels, in the words ktl-curator and ktl-docent use:
 #   confirmed by a person        a `verified` event whose actor starts human:
-#   edited since a person last   `generated.at` is later than the latest such
-#     confirmed it               event, the two times compared whole; such a
+#   edited since a person last   `generated.at`, or a later `revised.at`, is
+#     confirmed it               later than the latest such event, the two
+#                                times compared whole; such a
 #                                concept is counted here and not as confirmed,
 #                                since the person confirmed an earlier text
 #   checked by automation only   `verified` holds events, none a person's
@@ -289,6 +290,7 @@ function emit(  n) {
   if (inev) {
     n = norm(at)
     if (kind == "generated") { gen_by = by; gen_at = n; gen_raw = at; gen_rev = rev; hasgen = 1 }
+    else if (kind == "revised") { if (n > rvd_at) { rvd_at = n; rvd_raw = at; rvd_rev = rev } }
     else { vn++; eby[vn] = by; eat[vn] = n; eraw[vn] = at; erev[vn] = rev
            if (n > check_at) { check_at = n; check_raw = at; check_rev = rev }
            if (by ~ /^human:/) { hn++; if (n > human_at) { human_at = n; human_raw = at; human_rev = rev } } }
@@ -344,7 +346,7 @@ function mention(f, l,  n, items, i, w) { sub(/^[ \t]*(-[ \t]+)*/, "", l)
 function reset() {
   title = ""; status = ""; stale = ""; tstamp = ""; cid = ""; ctype = ""; topres = ""; firstres = ""
   fm = 0; body = 0; started = 0; skip = 0; top = ""; inv = 0; inev = 0; kind = ""; by = ""; at = ""; rev = ""
-  gen_by = ""; gen_at = ""; gen_raw = ""; gen_rev = ""; hasgen = 0; vn = 0; hn = 0; hm = 0
+  gen_by = ""; gen_at = ""; gen_raw = ""; gen_rev = ""; hasgen = 0; vn = 0; hn = 0; hm = 0; rvd_at = ""; rvd_raw = ""; rvd_rev = ""
   check_at = ""; check_raw = ""; check_rev = ""; human_at = ""; human_raw = ""; human_rev = ""; human_full = ""
   inflow = 0; flowbuf = ""; flowseq = 0; sidx = -1; kcol = 0; sres = ""; shas = 0; sid = 0; skey = 0
   rel = ""; rp = ""; rt = ""; inrels = 0; fence = 0; inq = 0; qn = 0
@@ -387,8 +389,8 @@ fm {
     if (r != "" && top == "exclusions" && $0 !~ /^resource:/) print "X\t" path "\t" r
     else if (r != "") { print "R\t" path "\t" r; if ($0 ~ /^resource:/) topres = r; else if (firstres == "") firstres = r }
   }
-  if ($0 ~ /^(verified|generated):/) {
-    relend(); emit(); inv = 1; kind = $0; sub(/:.*/, "", kind); rest = $0; sub(/^(verified|generated):[ \t]*/, "", rest)
+  if ($0 ~ /^(verified|generated|revised):/) {
+    relend(); emit(); inv = 1; kind = $0; sub(/:.*/, "", kind); rest = $0; sub(/^(verified|generated|revised):[ \t]*/, "", rest)
     if (rest ~ /^\{/) { flowseq = 0; flowbuf = rest; inv = 0; if (index(rest, "}")) flushflow(); else inflow = 1 }
     else if (rest ~ /^\[/) { flowseq = 1; flowbuf = rest; inv = 0; if (index(rest, "]")) flushflow(); else inflow = 1 }
     next
@@ -450,6 +452,11 @@ function finish() {
   relend()
   emit()
   if (gen_at == "" && tstamp != "") { gen_at = norm(tstamp); gen_raw = tstamp }
+  # LOKF 0.9.0 lets a producer record a later edit as `revised` and leave
+  # `generated` alone. The last change is the later of the two times, and
+  # the evidence row keeps what `generated` itself says.
+  made_at = gen_at; made_raw = gen_raw; made_rev = gen_rev
+  if (rvd_at > gen_at) { gen_at = rvd_at; gen_raw = rvd_raw; gen_rev = rvd_rev }
   # A review date is read by its day: in UTC where the value carries an
   # offset, else as the day its first ten characters name, as the website
   # reads it. The specification makes a concept stale from that instant on,
@@ -472,7 +479,7 @@ function finish() {
   for (i = 1; i <= hm; i++) chk[hum[i]] = (i == 1 ? "first" : (eby[hum[i]] == eby[hum[1]] ? "same-person" : "second-person"))
   for (i = 2; i <= vn; i++) { k = ord[i]; j = i - 1; while (j > 0 && shown[ord[j]] > shown[k]) { ord[j + 1] = ord[j]; j-- } ord[j + 1] = k }
   head = "V\t" cell(path) "\t" cell(ctype) "\t" cell(status) "\t" cell(st != "" ? st : stale) "\t" cell(topres != "" ? topres : firstres) "\t"
-  if (hasgen) print head "generated\t" cell(gen_by) "\t" cell(gen_at != "" ? gen_at : gen_raw) "\t" cell(gen_rev) "\t"
+  if (hasgen) print head "generated\t" cell(gen_by) "\t" cell(made_at != "" ? made_at : made_raw) "\t" cell(made_rev) "\t"
   for (i = 1; i <= vn; i++) { k = ord[i]; print head "verified\t" cell(eby[k]) "\t" cell(shown[k]) "\t" cell(erev[k]) "\t" chk[k] }
   if (!hasgen && vn == 0) print head "\t\t\t\t"
 }'
@@ -1408,7 +1415,7 @@ ranked() {  # queue | lists | isolated | isolated-worklist | isolated-count
       section("Due soon, a review date within 30 days", ns, soon)
       for (k = 1; k <= nd; k++) {
         a = dfrom[k]; b = dto[k]
-        if (conf[a] && gat[b] != "" && gat[b] > hat[a]) { nx++; drv = drv "- " a ": " b " (edited " day(gat[b]) ", confirmed " day(hat[a]) ")\n" }
+        if (conf[a] && hat[a] != "" && gat[b] != "" && gat[b] > hat[a]) { nx++; drv = drv "- " a ": " b " (edited " day(gat[b]) ", confirmed " day(hat[a]) ")\n" }
       }
       section("Confirmed by a person, and derived from a concept edited after that confirmation", nx, drv)
       m = 0
@@ -2096,7 +2103,7 @@ case "$cmd" in
     unconfirmed_successors
     echo ""
     echo "Reader feedback waiting: $(waiting_feedback)"
-    disputed | awk -F'\t' '{ n++; body = body "- " $2 " (" $3 ")\n" } END { print "Disputed by a reader, waiting for the librarian: " (n ? n : "none"); if (n) printf "%s", body }'
+    { printf '%s\n' "$all"; disputed; } | awk -F'\t' '$1 == "C" { st[$2] = $4; next } $1 == "G" && st[$2] != "deprecated" { n++; body = body "- " $2 " (" $3 ")\n" } END { print "Disputed by a reader, waiting for the librarian: " (n ? n : "none"); if (n) printf "%s", body }'
     repeats
     # The sample, only when the curation policy asks for one.
     ni="$(policy_size "independent re-check")"; na="$(policy_size "automation re-check")"

@@ -26,6 +26,7 @@ No setting names any of these. The build looks for each and shows what it finds.
 | --- | --- |
 | `.lokf/knowledge/` | a page per concept under `knowledge/`, with its trust label from `knowledge-report.sh`, its sources and its relations both ways; the health page; the graph; the four files `lokf export` writes, each concept's Markdown and JSON-LD, and the bundle log as an Atom feed, `knowledge/log.xml` |
 | `README.md` | the home page, and its Markdown at `index.md`. With none, the home page opens with the bundle's own introduction |
+| `SPEC.md` | the specification's page, `spec/`, with a line under Home in the navigation and a Specification button on the home page after Architecture, and its Markdown at `spec.md` |
 | `docs/**.md` | a page each under `docs/`, and its Markdown at `docs/<name>.md`, with every address made full |
 | `docs/<page>.<language>-simple.md` | a retelling of `docs/<page>.md`. Both pages offer each other above their titles, and the retelling has no line in the navigation. A concept tagged `audience-13-18` retells the one concept it is `derivedFrom` in the same way |
 | `docs/architecture.md` | the home page's Architecture button |
@@ -44,7 +45,7 @@ A release page links the repository, the docs and the bundle at the release's ta
 
 ## What to edit
 
-- **A page's words:** the file it comes from: the README, a page under `docs/`, the schema, or a concept, through the librarian and the curator like any other change to the bundle.
+- **A page's words:** the file it comes from: the README, `SPEC.md`, a page under `docs/`, the schema, or a concept, through the librarian and the curator like any other change to the bundle.
 - **The site's own values:** `site.toml`: its address, title and description, the repository, and optionally a logo, the docs pages' groups, more docs folders to leave out, old addresses to redirect, and the data to publish. A comment above each says what it takes.
 - **Its look:** `assets/css/custom.css`, loaded last, is this repository's own. The colours and the trust tones are custom properties at the top of `assets/css/site.css`.
 

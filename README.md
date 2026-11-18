@@ -55,7 +55,7 @@ Five roles keep a bundle, named after the people who work in libraries and museu
 | [**Curator**](https://w3id.org/ktl/docs/cast/curator/) | a named person, helped by `ktl-curator` | *Holds the scales.* Confirms, corrects, sends back or retires what the bundle claims | a little, regularly |
 | [**Docent**](https://w3id.org/ktl/docs/cast/docent/) | `ktl-docent` | Answers from the bundle, and says how far each answer has been checked | whenever anyone asks |
 
-Two optional skills work beside them. [`ktl-prose`](https://w3id.org/ktl/docs/cast/prose/) rewords what the librarian wrote, in plain English. [`ktl-website`](https://w3id.org/ktl/docs/cast/website/) publishes the bundle as a website. In Obsidian, two optional plugins do the registrar's work and the curator's in a vault with no CI. [The architecture](https://w3id.org/ktl/docs/architecture/) tells how the roles fit together and what checks their work.
+Two optional skills work beside them. [`ktl-prose`](https://w3id.org/ktl/docs/cast/prose/) rewords what the librarian wrote, in plain English. [`ktl-website`](https://w3id.org/ktl/docs/cast/website/) publishes the bundle as a website. In Obsidian, two optional plugins do the registrar's work and the curator's in a vault with no CI. [The architecture](https://w3id.org/ktl/docs/architecture/) tells how the roles fit together and what checks their work, and [the specification](SPEC.md) states the rules a program that reads or writes a bundle must keep.
 
 The same ladder serves both ends of a range: [a school or a youth group](https://w3id.org/ktl/docs/young-readers/) that retells adult knowledge for younger readers, and [a regulated team](https://w3id.org/ktl/docs/three-lines/) that must show who vouched for each claim.
 

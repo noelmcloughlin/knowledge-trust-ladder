@@ -2705,3 +2705,52 @@ def test_a_send_back_the_curator_recorded_with_no_login_waits_as_a_person_s_note
     )
     out = report(tmp_path, "worklist").out
     assert has_line(out, "Notes a person left that still wait: 1") and has_line(out, "Your own open questions: none"), out
+
+
+def test_a_later_revised_time_counts_as_the_last_edit_and_evidence_keeps_generated(tmp_path):
+    """LOKF 0.9.0: a producer may record an edit as `revised` and leave `generated` alone."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    stamps = 'generated:\n  by: process:ktl-librarian\n  at: "2026-01-01T00:00:00Z"\nverified:\n  - by: human:ada\n    at: "2026-01-02T00:00:00Z"\n'
+    write(kk / "x" / "later.md", f'---\ntype: Service\ntitle: Later\n{stamps}revised:\n  by: other-tool/1.0\n  at: "2026-01-03T00:00:00Z"\n---\n')
+    write(kk / "x" / "earlier.md", f'---\ntype: Service\ntitle: Earlier\n{stamps}revised: {{ by: other-tool/1.0, at: "2026-01-01T12:00:00Z" }}\n---\n')
+    out = report(tmp_path, "labels").out
+    assert has_line(out, "- Later (x/later.md) - edited since a person last confirmed it (confirmed 2026-01-02, edited 2026-01-03)"), out
+    assert has_line(out, "- Earlier (x/earlier.md) - confirmed by a person, 2026-01-02"), out
+    assert report(tmp_path, "health").out.startswith("Confirmed by a person: 1 of 2 "), "a revised event was counted as a check"
+    evidence = bash(REPORT, "evidence", cwd=tmp_path, stdout_only=True).out
+    assert "x/later.md\tService\t\t\t\tgenerated\tprocess:ktl-librarian\t2026-01-01T00:00:00Z" in evidence, evidence
+    assert "other-tool" not in evidence, evidence
+
+
+def test_a_confirmation_with_no_readable_time_is_not_listed_as_derived_from_an_edit(tmp_path):
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "x" / "origin.md", '---\ntype: Service\ntitle: Origin\ngenerated:\n  by: process:ktl-librarian\n  at: "2026-01-05T00:00:00Z"\n---\n')
+    write(
+        kk / "x" / "badtime.md",
+        "---\ntype: Service\ntitle: Badtime\nderivedFrom:\n  - https://acme.example/knowledge/x/origin\nverified:\n  - by: human:ada\n    at: soon\n---\n",
+    )
+    out = report(tmp_path).out
+    assert has_line(out, "Confirmed by a person, and derived from a concept edited after that confirmation: none"), out
+
+
+def test_a_retired_concept_is_not_listed_as_disputed(tmp_path):
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(kk / "x" / "old.md", "---\ntype: Service\ntitle: Old\nstatus: deprecated\n---\n")
+    write(kk / "x" / "live.md", "---\ntype: Service\ntitle: Live\n---\n")
+    write(
+        tmp_path / ".lokf" / "feedback.md",
+        lines(
+            "# Reader feedback for the librarian",
+            "",
+            "## 2026-02-12",
+            "",
+            "- **Disagreement** (on `x/old.md`) - the source differs. - docent",
+            "- **Disagreement** (on `x/live.md`) - the source differs. - docent",
+        ),
+    )
+    out = report(tmp_path).out
+    assert has_line(out, "Disputed by a reader, waiting for the librarian: 1") and has_line(out, "- x/live.md (2026-02-12)"), out
+    assert not has_line(out, "- x/old.md (2026-02-12)"), out

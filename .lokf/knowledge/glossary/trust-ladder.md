@@ -14,7 +14,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
 generated:
   by: process:ktl-librarian
-  at: "2026-10-26T20:05:58Z"
+  at: "2026-11-18T00:02:42Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -27,4 +27,4 @@ The architecture page says a catalogue is useful only when a reader can tell whi
 
 Its rungs are frontmatter fields. The page calls Knowledge Trust Ladder (KTL) an OKF runtime. OKF sets out to "standardize the small set of frontmatter fields that make an agent-maintained corpus **trustable**, without prescribing any runtime". In KTL those fields are the rungs a claim climbs, with a gate that refuses a `human:` confirmation no person can be tied to. The page's figure of the ladder runs from still a draft, through checked by automation, to confirmed by a person, and shows what drops a concept a rung and what only flags it. A question asked after a confirmation reopens the concept and flags what waits, but never drops the rung. Only an edit after the confirmation does that.
 
-The curator reports each concept's place on the ladder in plain words, as a [trust label](trust-label.md) computed from the frontmatter on every read and never stored. The architecture page says each label is a signal for the reader to weigh, never a score.
+The curator reports each concept's place on the ladder in plain words, as a [trust label](trust-label.md) computed from the frontmatter on every read and never stored. The architecture page says each label is a signal for the reader to weigh, never a score. It points to [the KTL specification](../references/ktl-specification.md) for the rule behind each label, and for the four rules that move a concept on the ladder.

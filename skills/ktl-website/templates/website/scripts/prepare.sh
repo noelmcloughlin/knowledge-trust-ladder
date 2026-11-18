@@ -27,9 +27,9 @@ repo_url=$(value repo)
 # The commit of the build, or the branch where the folder is not under git.
 branch=$(value branch)
 ref=$(git -C "$root" rev-parse HEAD 2>/dev/null || echo "${branch:-main}")
-# site.toml's source: the folder the README, docs/, the changelog and
-# .assets/ come from, by the mounts in generated/source.toml. Its linkml: the
-# folder whose src/<name>/schema/ holds the schema.
+# site.toml's source: the folder the README, SPEC.md, docs/, the changelog
+# and .assets/ come from, by the mounts in generated/source.toml. Its linkml:
+# the folder whose src/<name>/schema/ holds the schema.
 source=$(value source); source=${source%/}
 linkml=$(value linkml); linkml=${linkml%/}
 src_root="$root${source:+/$source}"
@@ -40,13 +40,14 @@ src_root="$root${source:+/$source}"
 rm -rf "$out"
 mkdir -p "$out/knowledge"
 
-# hugo.toml's mounts with the README, docs/, the changelog and .assets/ read
-# from the source folder. build.sh reads this file last, and Hugo then takes
-# its mounts in place of hugo.toml's.
+# hugo.toml's mounts with the README, SPEC.md, docs/, the changelog and
+# .assets/ read from the source folder. build.sh reads this file last, and
+# Hugo then takes its mounts in place of hugo.toml's.
 if [ -n "$source" ]; then
   [ -d "$src_root" ] || { echo "prepare.sh: site.toml's source names $source, which is no folder" >&2; exit 1; }
   sed -n '/^\[\[module\.mounts\]\]/,$p' "$here/hugo.toml" | sed \
     -e "s#^source = \"\.\./README\.md\"#source = \"../$source/README.md\"#" \
+    -e "s#^source = \"\.\./SPEC\.md\"#source = \"../$source/SPEC.md\"#" \
     -e "s#^source = \"\.\./docs\"#source = \"../$source/docs\"#" \
     -e "s#^source = \"\.\./CHANGELOG\.md\"#source = \"../$source/CHANGELOG.md\"#" \
     -e "s#^source = \"\.\./\.assets\"#source = \"../$source/.assets\"#" >"$out/source.toml"

@@ -77,7 +77,7 @@ esac
 # it is handed bare: it would count zero concepts and say nothing.
 bundle="$root/.lokf/knowledge"
 if [ -d "$bundle" ]; then
-  n="$(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' -not -name index.md -not -name log.md -not -name diataxis.md | wc -l | tr -d ' ')"
+  n="$(find "$bundle/" -name '*.md' -not -path '*/.obsidian/*' -not -name index.md -not -name log.md -not -path "$bundle/diataxis.md" | wc -l | tr -d ' ')"
   door="$root/knowledge_bundle"
   if [ -L "$door" ]; then doorway="knowledge_bundle -> $(readlink "$door")"
   elif [ -d "$door" ]; then doorway="knowledge_bundle is a folder or junction"

@@ -2,7 +2,8 @@
 # Copies the ktl-website templates into a throwaway host built from the
 # sidecar's dummy skeleton, as the skill's Steps 1 to 4 would. It builds
 # the site three times: once with a README, docs pages, a changelog,
-# figures, a LinkML schema, retellings, the federation workflow, a mirrored
+# a root SPEC.md, figures, a LinkML schema, retellings, the federation
+# workflow, a mirrored
 # source and data, once with none of them, and once with a domain
 # vocabulary alone. No setting names any of those: the site must find each,
 # and show none of what is not there. This repository's own
@@ -75,6 +76,9 @@ open(path, "w", encoding="utf-8").write(text)
     BASE_IRI=https://acme.example/knowledge/ OWNER_NAME=Acme OWNER_SLUG=acme TODAY=2026-01-01 \
     -- -e '<PROJ_' -e '<BASE_IRI>' -e '<OWNER_' -e '<TODAY>' .lokf
   printf '# Acme Platform\n\nThe platform Acme runs. See [the bundle](.lokf/knowledge/index.md), [the guide](docs/guide.md) and [the about page](/docs/about.md), the last from the root as GitHub reads it.\n' > README.md
+  printf '\nThe rules are in [the specification](SPEC.md#1-rules).\n' >> README.md
+  # A specification at the root, whose frontmatter tries to rename and move it.
+  printf -- '---\ntitle: Not the title\nurl: /stolen-spec/\n---\n\n# Acme specification\n\n## 1. Rules\n\nSee [the guide](docs/guide.md) and ![the figure](.assets/figure.svg).\n' > SPEC.md
   mkdir -p docs
   printf '# The guide\n\nHow to use the platform. See [the tutorial](how-to/first.md) and ![the map](img/map.png).\n' > docs/guide.md
   # Links that leave the docs folder, raw HTML GitHub would not show, and a
@@ -84,6 +88,7 @@ open(path, "w", encoding="utf-8").write(text)
 ## Out of the folder
 
 See [the README](../README.md), [the first release](../CHANGELOG.md#100---2026-01-01) and <a href="about.md">About, in raw HTML</a>.
+The rules are in [the specification](../SPEC.md).
 
 ```text
 A fenced [link](../README.md) stays as written.
@@ -129,7 +134,7 @@ tags:
 
 # Overview
 
-Example Service A, in fewer words.
+Example Service A, in fewer words. It follows [the specification](../../../SPEC.md).
 MD
   # The map the KTL Registrar plugin writes at the bundle's root, and a
   # group's own log. Neither is a concept, so the report prints no label for it.
@@ -190,7 +195,7 @@ enums:
       RETIRED:
 YAML
   printf 'name: Knowledge federation\n' > .github/workflows/knowledge-federation.yaml
-  printf '# Changelog\n\n## [Unreleased]\n\n## [1.0.0] - 2026-01-01\n\n### Added\n\n- The platform.\n' > CHANGELOG.md
+  printf '# Changelog\n\n## [Unreleased]\n\n## [1.0.0] - 2026-01-01\n\n### Added\n\n- The platform, and [its specification](SPEC.md).\n' > CHANGELOG.md
   # The template pins ktl exactly, often at a release newer than this
   # repository's lock, so the cutoff leaves ktl out.
   spare=(--exclude-newer-package "ktl=$(date -u +%Y-%m-%dT%H:%M:%SZ)")
@@ -249,7 +254,7 @@ dist="$host/website/dist"
 for f in index.html knowledge/index.html knowledge/services/example-service-a/index.html health/index.html graph/index.html \
          knowledge/concepts.jsonld knowledge/graph.json knowledge/graph.nt knowledge/datasets.jsonld \
          knowledge/services/example-service-a.md knowledge/services/example-service-a.jsonld \
-         knowledge/log.xml llms.txt llms-full.txt badge.json docs/index.html docs/guide/index.html docs/guide.md docs/how-to/index.html \
+         knowledge/log.xml llms.txt llms-full.txt badge.json spec/index.html spec.md docs/index.html docs/guide/index.html docs/guide.md docs/how-to/index.html \
          docs/how-to/first/index.html docs/img/map.png assets/figure.svg changelog/index.html changelog/version/1-0-0/index.html \
          og/index.png brand/knowledge-trust-ladder-logo.svg pagefind/pagefind.js \
          schema/index.html schema/classes/Service/index.html schema/enums/ServiceStatus/index.html schema/slots/owner/index.html \
@@ -301,6 +306,20 @@ assert "a docs page's Markdown has every address made full and its fenced code a
   "grep -qF '[the README](https://acme.github.io/acme-platform/)' \"$dist/docs/guide.md\" && grep -qF '[the tutorial](https://acme.github.io/acme-platform/docs/how-to/first/)' \"$dist/docs/guide.md\" && grep -qF 'href=\"https://acme.github.io/acme-platform/docs/about/\"' \"$dist/docs/guide.md\" && grep -qF 'A fenced [link](../README.md)' \"$dist/docs/guide.md\""
 assert "the README's Markdown is served at index.md, from its title, and the page names it" \
   "head -n 1 \"$dist/index.md\" | grep -qx '# Acme Platform' && grep -q 'text/markdown[^>]*acme-platform/index.md' \"$dist/index.html\""
+assert "a root SPEC.md is the page /spec/, titled by its first heading, and its frontmatter cannot rename or move it" \
+  "grep -q '<title>Acme specification | Acme Platform</title>' \"$dist/spec/index.html\" && grep -q '<h1 id=\"\\?acme-specification' \"$dist/spec/index.html\" && ! grep -q 'Not the title' \"$dist/spec/index.html\" && [[ ! -e \"$dist/stolen-spec\" ]]"
+assert "the specification's page has a docs page's list of sections, Edit link and Markdown file, and search reads it" \
+  "grep -q 'On this page' \"$dist/spec/index.html\" && grep -q 'https://github.com/acme/acme-platform/edit/main/SPEC.md' \"$dist/spec/index.html\" && grep -q 'text/markdown[^>]*acme-platform/spec.md' \"$dist/spec/index.html\" && grep -q 'data-pagefind-body' \"$dist/spec/index.html\""
+assert "a link and an image in SPEC.md resolve from the repository's root" \
+  "grep -q 'href=\"\\?/acme-platform/docs/guide/\"\\?>the guide' \"$dist/spec/index.html\" && grep -q 'src=\"\\?/acme-platform/assets/figure.svg' \"$dist/spec/index.html\""
+assert "SPEC.md's Markdown is served at spec.md, from its title, with every address made full, and llms.txt lists it" \
+  "head -n 1 \"$dist/spec.md\" | grep -qx '# Acme specification' && grep -qF '[the guide](https://acme.github.io/acme-platform/docs/guide/)' \"$dist/spec.md\" && grep -qF '![the figure](https://acme.github.io/acme-platform/assets/figure.svg)' \"$dist/spec.md\" && grep -qF '[Acme specification](https://acme.github.io/acme-platform/spec.md)' \"$dist/llms.txt\""
+assert "a link to SPEC.md goes to its page from the README, a docs page, the changelog and a concept" \
+  "grep -q 'href=\"\\?/acme-platform/spec/#1-rules\"\\?>the specification' \"$dist/index.html\" && grep -q 'href=\"\\?/acme-platform/spec/\"\\?>the specification' \"$dist/docs/guide/index.html\" && grep -q 'href=\"\\?/acme-platform/spec/\"\\?>its specification' \"$dist/changelog/version/1-0-0/index.html\" && grep -q 'href=\"\\?/acme-platform/spec/\"\\?>the specification' \"$dist/knowledge/services/example-service-a-simple/index.html\""
+assert "the navigation lists the specification right under Home, and its page opens the Guide part, the first" \
+  "grep -q 'Home</a></li><li><a href=\"\\?/acme-platform/spec/\"\\?>Specification</a></li>' \"$dist/docs/guide/index.html\" && [[ \"\$(grep -o '<details class=\"\\?section\"\\? name=\"\\?part\"\\?[^>]*>' \"$dist/spec/index.html\" | head -n 1)\" == *' open>' ]]"
+assert "the home page has the specification's button right after Architecture" \
+  "grep -q '^<a class=\"button button--secondary\" href=\"\\?/acme-platform/spec/\"\\?>Specification</a>\$' <<<\"\$(grep -A 1 '>Architecture</a>\$' \"$dist/index.html\")\""
 assert "a link from the root, one to a release's heading and one in raw HTML go to their pages" \
   "grep -q 'href=\"\\?/acme-platform/docs/about/\"\\?>the about page' \"$dist/index.html\" && grep -q 'href=\"\\?/acme-platform/changelog/version/1-0-0/\"\\?>the first release' \"$dist/docs/guide/index.html\" && grep -q 'href=\"\\?/acme-platform/docs/about/\"\\?>About, in raw HTML' \"$dist/docs/guide/index.html\""
 assert "raw HTML GitHub would not show is shown as text, and no handler, style or javascript: address is left" \
@@ -324,7 +343,7 @@ echo ""
 echo "Step 4 again: the bare shape, with a bundle and nothing else, and site.toml as Step 1 left it"
 (
   cd "$host"
-  git rm -rq README.md docs CHANGELOG.md .assets .linkml .github
+  git rm -rq README.md SPEC.md docs CHANGELOG.md .assets .linkml .github
   git checkout -q HEAD~1 -- website/site.toml
   git commit -q -m "a bare host"
 )
@@ -332,6 +351,8 @@ build
 assert "the link check passed" "grep -q 'check-links: .* 0 broken link' \"$test_root/build.log\""
 assert "the home page is there, from the bundle's own introduction" "[[ -f \"$dist/index.html\" ]] && grep -q '<h1>Acme Platform</h1>' \"$dist/index.html\""
 assert "no docs pages, no release pages, no element addresses, and no data" "[[ ! -d \"$dist/docs\" && ! -d \"$dist/changelog\" && ! -d \"$dist/elements\" && ! -d \"$dist/browse\" && ! -e \"$dist/index.md\" ]]"
+assert "with no SPEC.md there is no specification page, no line for it in the navigation and no button" \
+  "[[ ! -e \"$dist/spec\" && ! -e \"$dist/spec.md\" ]] && ! grep -q '>Specification<' \"$dist/index.html\" && ! grep -q 'spec\.md' \"$dist/llms.txt\""
 assert "the schema pages show LOKF core from the lokf package, served beside them" \
   "grep -q 'Linked Open Knowledge Format' \"$dist/schema/index.html\" && grep -q 'pypi.org/project/lokf/' \"$dist/schema/index.html\" && [[ -f \"$dist/schema/lokf.yaml\" && -f \"$dist/schema/classes/Concept/index.html\" ]]"
 assert "the home page keeps its five buttons, with the schema's and the bundle's links and the architecture page's and the quick start's greyed, and does not lead with LOKF core" \

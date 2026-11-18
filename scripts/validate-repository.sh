@@ -1148,6 +1148,61 @@ rm -rf "${unseen_dir:?}"
 #     secrets, to the pages they link to and to the changelog's retired
 #     names in tests/test_gh.py.
 
+# 24. SPEC.md is the source for the rules more than one program applies, and
+#     four copies say the same words: the conventions in the script's header,
+#     the pen's operations and some of its refusals in patch.md, and the label
+#     table and the queue's order in trust-fields.md.
+say ""
+say "Checking SPEC.md against the copies of its rules..."
+spec="SPEC.md"
+spec_before="$fail"
+conventions_script="$templates/scripts/knowledge-conventions.sh"
+patch_page="skills/ktl-librarian/references/patch.md"
+trust_page="skills/ktl-curator/references/trust-fields.md"
+if [[ ! -f "$spec" ]]; then
+  err "$spec is missing"
+else
+  # The header's numbered rules, each joined to one line.
+  header_rules="$(awk '
+    /^# Rules 2, 3/ { exit }
+    /^#[ ]+1\. / { on = 1 }
+    !on { next }
+    { sub(/^#[ ]*/, ""); if ($0 == "") next }
+    /^[0-9]+\. / { if (rule != "") print rule; rule = $0; next }
+    { rule = rule " " $0 }
+    END { if (rule != "") print rule }' "$conventions_script")"
+  spec_rules="$(awk '
+    /conventions:end/ { on = 0 }
+    on && /^[0-9]+\. / { print }
+    /conventions:start/ { on = 1 }' "$spec")"
+  if [[ -z "$header_rules" || "$header_rules" != "$spec_rules" ]]; then
+    err "$spec section 6 and the header of $conventions_script disagree: $(diff <(printf '%s\n' "$spec_rules") <(printf '%s\n' "$header_rules") | grep -c '^[<>]' || true) lines differ"
+  fi
+  # spec_holds <page> <what> <lines>: each line is a whole line of SPEC.md.
+  spec_holds() {
+    local line count=0
+    while IFS= read -r line; do
+      [[ -n "$line" ]] || continue
+      count=$((count + 1))
+      grep -Fxq -- "$line" "$spec" || err "$spec does not hold this line of $1: ${line:0:90}"
+    done <<< "$3"
+    [[ "$count" -ge "$4" ]] || err "found $count lines of $2 in $1, expected at least $4"
+  }
+  spec_holds "$trust_page" "the label table" "$(awk '/^\| Label \|/ { on = 1 } on && !/^\|/ { exit } on' "$trust_page")" 17
+  spec_holds "$trust_page" "the queue's order" "$(awk '/^## Ranking/ { on = 1; next } on && /^## / { exit } on && /^[0-9]\. /' "$trust_page")" 4
+  spec_holds "$patch_page" "the operations" "$(awk '/^Each operation takes/ { on = 1; next } on && /^## / { exit } on && /^- `/' "$patch_page")" 7
+  # The refusals that keep a person's record; SPEC.md names them itself.
+  spec_refusals="$(awk '/^### 5\.3 / { exit } on && /^- / { print } /These keep a person/ { on = 1 }' "$spec")"
+  refusal_count=0
+  while IFS= read -r line; do
+    [[ -n "$line" ]] || continue
+    refusal_count=$((refusal_count + 1))
+    grep -Fxq -- "$line" "$patch_page" || err "$patch_page does not hold this refusal of $spec: ${line:0:90}"
+  done <<< "$spec_refusals"
+  [[ "$refusal_count" -ge 8 ]] || err "$spec section 5.2 lists $refusal_count refusals, expected at least 8"
+  [[ "$fail" -ne "$spec_before" ]] || ok "$spec and its four copies say the same words"
+fi
+
 say ""
 if [[ "$fail" -eq 0 ]]; then
   say "Repository contract: PASS"

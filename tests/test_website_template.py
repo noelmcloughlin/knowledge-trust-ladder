@@ -398,6 +398,7 @@ def test_the_site_finds_each_input_through_a_mount_and_takes_no_setting_for_it()
     mounts = {m["source"]: m["target"] for m in tomllib.loads(read(SITE_TEMPLATES / "hugo.toml"))["module"]["mounts"]}
     for source, target in {
         "../README.md": "assets/readme/README.md",
+        "../SPEC.md": "assets/spec/SPEC.md",
         "../docs": "static/docs",
         "../.assets": "static/assets",
         "../CHANGELOG.md": "assets/changelog/CHANGELOG.md",
@@ -409,6 +410,7 @@ def test_the_site_finds_each_input_through_a_mount_and_takes_no_setting_for_it()
     }.items():
         assert mounts.get(source) == target, source
     assert 'resources.Get "readme/README.md"' in read(SITE_TEMPLATES / "content" / "_content.gotmpl"), "the README is read as data, as the docs are"
+    assert 'resources.Get "spec/SPEC.md"' in read(SITE_TEMPLATES / "content" / "_content.gotmpl"), "and so is a root SPEC.md"
     assert 'resources.Match "docs/**.md"' in read(SITE_TEMPLATES / "content" / "docs" / "_content.gotmpl")
     assert 'resources.Get "host/knowledge-federation.yaml"' in read(SITE_TEMPLATES / "layouts" / "graph.html")
     prepare = read(SITE_TEMPLATES / "scripts" / "prepare.sh")
@@ -438,8 +440,8 @@ def test_a_page_sends_no_referrer_and_still_loads_a_remote_image():
     assert "img-src 'self' https: data:;" in base, "a README's badges are remote images"
 
 
-def test_a_source_folder_moves_the_four_root_mounts_and_build_reads_it_last(tmp_path):
-    """site.toml's source moves the README, docs/, the changelog and .assets/ mounts, and no other; Hugo takes the last file's mounts whole."""
+def test_a_source_folder_moves_the_five_root_mounts_and_build_reads_it_last(tmp_path):
+    """site.toml's source moves the README, SPEC.md, docs/, the changelog and .assets/ mounts, and no other; Hugo takes the last file's mounts whole."""
     prepare = read(SITE_TEMPLATES / "scripts" / "prepare.sh")
     block = prepare[prepare.index('  sed -n \'/^\\[\\[module'):prepare.index('>"$out/source.toml"')]
     hugo = tmp_path / "hugo.toml"
@@ -448,17 +450,48 @@ def test_a_source_folder_moves_the_four_root_mounts_and_build_reads_it_last(tmp_
     out = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=True).stdout
     moved = {m["source"] for m in tomllib.loads(out)["module"]["mounts"]}
     before = {m["source"] for m in tomllib.loads(read(SITE_TEMPLATES / "hugo.toml"))["module"]["mounts"]}
-    four = {"../README.md", "../docs", "../CHANGELOG.md", "../.assets"}
-    assert moved == (before - four) | {s.replace("../", "../.linkml/", 1) for s in four}, moved ^ before
+    five = {"../README.md", "../SPEC.md", "../docs", "../CHANGELOG.md", "../.assets"}
+    assert moved == (before - five) | {s.replace("../", "../.linkml/", 1) for s in five}, moved ^ before
     build = read(SITE_TEMPLATES / "scripts" / "build.sh")
     assert build.index("scripts/prepare.sh") < build.index("config=$config,generated/source.toml") < build.index('hugo=("${tool[@]}" hugo --config "$config")')
 
 
 def test_the_home_page_has_five_buttons_and_greys_the_one_it_cannot_find():
     heroes = read(SITE_TEMPLATES / "layouts" / "_partials" / "heroes.html")
-    assert re.findall(r'\(dict "text" "([^"]+)"', heroes) == ["The schema", "The bundle", "Architecture", "Glossary", "Quick start"]
+    assert re.findall(r'\(dict "text" "([^"]+)" "link" \S+ "missing"', heroes) == ["The schema", "The bundle", "Architecture", "Glossary", "Quick start"]
     assert '"architecture" (slice "/docs/architecture")' in heroes and '"schema" (slice "/schema")' in heroes
     assert '<span class="button button--missing" role="link" aria-disabled="true" title="{{ .missing }}">' in heroes, "a missing page is a greyed word, never a link"
+
+
+def test_the_specification_s_button_follows_architecture_and_is_never_greyed():
+    """Most hosts have no SPEC.md, so its button names no reason for a missing page, and a button with none is not drawn."""
+    heroes = read(SITE_TEMPLATES / "layouts" / "_partials" / "heroes.html")
+    assert re.findall(r'\(dict "text" "([^"]+)"', heroes) == ["The schema", "The bundle", "Architecture", "Specification", "Glossary", "Quick start"]
+    assert '(dict "text" "Specification" "link" $link.spec)\n' in heroes
+    assert '{{- with partialCached "spec.html" "spec" }}{{ $link = merge $link (dict "spec" .RelPermalink) }}{{ end -}}' in heroes
+    assert '{{- else if .missing }}\n  <span class="button button--missing"' in heroes, "a button whose page is missing is greyed only when it names a reason"
+
+
+def test_a_root_spec_md_is_a_page_of_the_guide_and_nothing_names_it_where_it_is_missing():
+    """The adapter adds /spec/ only where the mount finds SPEC.md, and each part that names the page asks for it first."""
+    adapter = read(SITE_TEMPLATES / "content" / "_content.gotmpl")
+    found = adapter.index('{{- with resources.Get "spec/SPEC.md" -}}')
+    added = adapter.index('{{- $.AddPage (dict "kind" "page" "path" "spec" "title" (or $title "Specification")')
+    assert found < added < adapter.index("{{- end -}}", found), "the page is added only where the file is"
+    assert '"params" (dict "repoPath" (path.Join (strings.Trim (site.Params.source | default "") "/") "SPEC.md"))' in adapter, "its links resolve from the file, and a link to the file finds the page"
+    assert "transform.Unmarshal" not in adapter[: adapter.index("$redirects")], "neither the README's frontmatter nor SPEC.md's reaches Hugo"
+    partials = SITE_TEMPLATES / "layouts" / "_partials"
+    assert '{{- with site.GetPage "/spec" }}{{ if eq (partial "site-path.html" (partial "repo-path.html" .)) "SPEC.md" }}{{ $out = . }}{{ end }}{{ end -}}' in read(partials / "spec.html"), "a redirect from an old address /spec/ is not the specification's page"
+    assert '{{ else if and (eq .Path "/spec") (eq $rel "SPEC.md") }}{{ $at = "spec.md" }}' in read(partials / "markdown-file.html"), "its Markdown is served at spec.md"
+    assert '{{ if or (hasPrefix $rel "docs/") (eq $rel "SPEC.md") }}' in read(SITE_TEMPLATES / "layouts" / "page.html"), "it has a docs page's Edit link"
+    sidebar = read(partials / "sidebar.html")
+    line = '    <li><a href="{{ "" | relURL }}">Home</a></li>\n    {{- with partialCached "spec.html" "spec" }}\n    <li><a href="{{ .RelPermalink }}">Specification</a></li>\n    {{- end }}\n'
+    assert line in sidebar and sidebar.index(line) < sidebar.index('{{- with site.GetPage "/docs" }}'), "its line is right under Home"
+    assert '{{- else if not (or (hasPrefix .Path "/changelog") (hasPrefix .Path "/browse")) }}{{ $key = "guide" -}}' in read(partials / "nav-key.html"), "its page opens the guide"
+    llms = read(SITE_TEMPLATES / "layouts" / "home.llms.txt")
+    assert '{{- with partialCached "spec.html" "spec" }}{{ $s := . }}{{ with partialCached "markdown-file.html" $s $s.RelPermalink }}\n- [{{ $s.Title }}]({{ .Permalink }}){{ end }}{{ end }}' in llms, "llms.txt lists its Markdown as a docs page's"
+    workflow = read(WEBSITE_TEMPLATES / "github" / "knowledge-website.yaml")
+    assert workflow.count('      - "SPEC.md"') == 2, "a push and a pull request that change it both build the site"
 
 
 def test_a_retelling_is_found_by_its_file_name_and_has_no_line_in_the_navigation():

@@ -1,5 +1,22 @@
 # Change Log
 
+## 2026-11-18
+
+* **Prose**: reworded 2 concept bodies in plain English. No link, number or frontmatter changed.
+* **Changed**: the sentences on the specification's page and button stand in paragraphs of their own in the validation and website skill playbooks; no fact changed.
+* **Changed**: the retelling of the pen for readers aged 13 to 18 carries the refusals `glossary/the-pen.md` gained: a retired concept, the curator's two log labels, and a person's exclusion and note kept whole.
+* **Changed**: KTL specification carries no version in its title, so the title matches its line above; the description and the body give version 0.2.
+* **Added**: KTL specification, from the root `SPEC.md`, version 0.2: the ladder, who writes each record, the eighteen conventions, a person's confirmation, the trust labels and conformance.
+* **Changed**: Trust ladder says where the rule behind each label and the four rules of the ladder are stated, as `docs/architecture.md` does with its links to `SPEC.md`.
+* **Changed**: Trust label follows `skills/ktl-curator/references/trust-fields.md`: a later `revised.at` counts as the last edit, a reopened label falls back to the earliest question of all, and five labels partition the bundle while the others overlap them. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: The pen lists what `skills/ktl-librarian/references/patch.md` adds to its refusals: a change to an exclusion a person decided, a note's lines and order, a `question` or a `delete` on a retired concept, and the curator's two log labels.
+* **Changed**: the librarian playbook names three more refusals of the pen, from `references/patch.md`: a change to an exclusion a person decided, a `question` or a `delete` on a retired concept, and the curator's two log labels. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: repository validation gains contract check 24, which holds four copies of the rules to `SPEC.md`, and `tests/test_conformance.py`; the website tests and the smoke test cover a root `SPEC.md`, as `scripts/validate-repository.sh`, `scripts/smoke-test-website.sh` and `tests/test_website_template.py` do.
+* **Changed**: the website skill playbook says a root `SPEC.md` becomes the page `/spec/`, with a line in the navigation, a sixth home page button and its Markdown at `/spec.md`, from the skill's `SKILL.md` and `references/inputs.md`.
+* **Changed**: the website playbook says a root `SPEC.md` becomes the page `spec/`, moves with `source`, and starts the workflow when it changes, from `website/README.md`, `website/` and `knowledge-website.yaml`. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: the source map names the root `SPEC.md`, carried by the new `references/ktl-specification.md`, and the conformance fixture under `tests/conformance/reader/` with its test. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Open question**: ktl-curator skill: the report's second item says the queue ranks within a group by reliance through the fourteen relation fields and `relations[].target`. `skills/ktl-curator/references/trust-fields.md` also counts a domain vocabulary's own slots, and orders a group by reliance, then the newest `generated.at`, then the path. Should the item name them?
+
 ## 2026-11-17
 
 * **Curation**: human:noelmcloughlin cleared 4 answered notes. The release numbers are gone from the docent and librarian playbooks, every `revision` in the bundle is quoted, and `docs/three-lines.md` no longer holds what was stale on 2026-11-12.

@@ -17,7 +17,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T10:17:06Z"
+  at: "2026-11-18T00:02:42Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -36,7 +36,9 @@ The pen:
 - runs `lokf validate` on every concept a patch would write, with `--dry-run` too, when `.lokf/.venv` holds the toolkit;
 - moves a feedback entry the librarian handled into `.lokf/questions.md`, ten to a patch at most.
 
-It refuses a `human:` actor, a rewrite of text a person wrote, and the deletion of a concept a person confirmed or left a note on. It also refuses a patch after which any concept it writes would hold a person's record other than the one the file held. That covers a `human:` event or a person's note added, changed or removed, however the operations spelt it.
+It refuses a `human:` actor, a rewrite of text a person wrote, and the deletion of a concept a person confirmed or left a note on. It also refuses a patch after which any concept it writes would hold a person's record other than the one the file held. That record is each mapping whose `by` names a person, under any key and with every key it holds, so an exclusion a person decided keeps its `resource` and `reason`. It is also each person's note, with the indented lines under it and in the order the file held.
+
+The pen also refuses a `question` or a `delete` on a concept a person retired, one with `status: deprecated`. It refuses a `log` line that starts with `**Curation**` or `**Deprecation**`, the two lines ktl-curator writes for a person. It refuses a path that is `index.md` or `log.md`.
 
 In the scheduled run, the wrapper applies the patch file after the agent has finished, and refuses a run in which the agent changed any other file. In the agent's step the pen only checks the patch: the wrapper sets `KNOWLEDGE_PEN_DRY_RUN_ONLY`, so a run without `--dry-run` exits 2, writes nothing and leaves the patch file for the wrapper. A patch may also carry `handoff`, up to ten lines for the person reviewing the change, in the librarian's own words. The pen holds each to one line of printable text and writes none of it to the bundle. The scheduled pull request shows them under *From the librarian*.
 

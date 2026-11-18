@@ -2,7 +2,7 @@
 type: Playbook
 id: https://w3id.org/ktl/knowledge/playbooks/website
 title: Build, preview and edit the website
-description: How the project website in `website/` is built with Hugo from the README, `docs/`, retellings, the knowledge bundle, `CHANGELOG.md`, the figures and, when the repository has one, a LinkML schema, each found with no setting; how to preview it locally with uv and `scripts/build.sh`; which file to edit for each kind of change; how raw HTML is cleaned; and how `knowledge-website.yaml` publishes it to GitHub Pages, on a push, weekly or by hand.
+description: How the project website in `website/` is built with Hugo from the README, a root `SPEC.md`, `docs/`, retellings, the knowledge bundle, `CHANGELOG.md`, the figures and, when the repository has one, a LinkML schema, each found with no setting; how to preview it locally with uv and `scripts/build.sh`; which file to edit for each kind of change; how raw HTML is cleaned; and how `knowledge-website.yaml` publishes it to GitHub Pages, on a push, weekly or by hand.
 genre: how-to
 resource: website/README.md
 sources:
@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/trust-label
 generated:
   by: process:ktl-librarian
-  at: "2026-11-17T20:29:12Z"
+  at: "2026-11-18T00:02:42Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:04:01Z"
@@ -38,10 +38,11 @@ The folder `website/` builds the project's site with Hugo. The Knowledge website
 
 # What each page comes from
 
-No setting names any of these, though `site.toml`'s `source` can move where the README, the docs, the changelog and the figures come from, `linkml` can move the LinkML project whose schema the site shows, and `schema` can name the schema file itself. The build otherwise looks for each and shows what it finds:
+No setting names any of these, though `site.toml`'s `source` can move where the README, `SPEC.md`, the docs, the changelog and the figures come from, `linkml` can move the LinkML project whose schema the site shows, and `schema` can name the schema file itself. The build otherwise looks for each and shows what it finds:
 
 - Each concept in `.lokf/knowledge/` becomes a page under `knowledge/`, with its trust label from `knowledge-report.sh`, its sources and its relations both ways. The bundle also gives the health page, the graph, the four files `lokf export` writes, each concept's Markdown and JSON-LD, the bundle log as an Atom feed, `knowledge/log.xml`, and `badge.json`, labelled `KTL scorecard`: how many of the bundle's concepts a person confirmed, as `n of m`, where `m` counts every concept, a retired one included, as the health line does, in the form a shields.io endpoint badge reads. A README shows it as a badge that links to the health page.
 - The README becomes the home page, and its Markdown is served at `index.md`. With no README, the home page opens with the bundle's own introduction.
+- A root `SPEC.md` becomes the specification's page, `spec/`, with a line under Home in the navigation and a Specification button on the home page after Architecture. Its Markdown is served at `spec.md`.
 - Each page under `docs/` becomes a page under `docs/`, and its Markdown is served at `docs/<name>.md`, with every address made full.
 - `docs/<page>.<language>-simple.md` is a retelling of `docs/<page>.md`. Both pages offer each other above their titles, and the retelling has no line in the navigation. A concept tagged `audience-13-18` retells the one concept it is `derivedFrom` in the same way.
 - `docs/architecture.md` lights the home page's Architecture button.
@@ -76,8 +77,8 @@ Hugo and Pagefind come from PyPI, at the versions `pyproject.toml` names and the
 
 # What to edit
 
-- **A page's words:** edit the file it comes from: the README, a page under `docs/`, the schema, or a concept, through the librarian and the curator like any other change to the bundle.
-- **The site's own values:** edit `site.toml`: its address, title and description, the repository, and optionally a logo, the folder the README, the docs, the changelog and the figures come from, a LinkML project's folder, the docs pages' groups, more docs folders to leave out, old addresses to redirect, and the data to publish. A comment above each says what it takes.
+- **A page's words:** edit the file it comes from: the README, `SPEC.md`, a page under `docs/`, the schema, or a concept, through the librarian and the curator like any other change to the bundle.
+- **The site's own values:** edit `site.toml`: its address, title and description, the repository, and optionally a logo, the folder the README, `SPEC.md`, the docs, the changelog and the figures come from, a LinkML project's folder, the docs pages' groups, more docs folders to leave out, old addresses to redirect, and the data to publish. A comment above each says what it takes.
 - **Its look:** edit `assets/css/custom.css`, which is loaded last and is this repository's own. The colours and the trust tones are custom properties at the top of `assets/css/site.css`.
 
 Those two files and the folder's `README.md` are the repository's own. Every other file in `website/` is a copy of the ktl-website skill's template, and the skill's repair replaces it, so change one of those in the skill's templates.
@@ -90,6 +91,6 @@ The two typefaces, Source Serif 4 for headings and Atkinson Hyperlegible Next fo
 
 # How it is published
 
-`knowledge-website.yaml` runs on a push and on a pull request that touch `website/`, `ktl-website/`, `.lokf/`, `knowledge_bundle/`, `README.md`, `docs/`, `.assets/`, `CHANGELOG.md`, `.linkml/`, a schema under `src/*/schema/`, the workflow itself or `knowledge-federation.yaml`. It also runs every Monday at 05:23 UTC, and it can be run by hand. A push builds on the default branch only. A pull request gets the same build, link check included, and no deployment.
+`knowledge-website.yaml` runs on a push and on a pull request that touch `website/`, `ktl-website/`, `.lokf/`, `knowledge_bundle/`, `README.md`, `SPEC.md`, `docs/`, `.assets/`, `CHANGELOG.md`, `.linkml/`, a schema under `src/*/schema/`, the workflow itself or `knowledge-federation.yaml`. It also runs every Monday at 05:23 UTC, and it can be run by hand. A push builds on the default branch only. A pull request gets the same build, link check included, and no deployment.
 
 The workflow has two jobs, for least privilege. `build` checks out the whole history, since the health page's "a source moved" lines come from git. It finds the site's folder, installs `just` when the data is built with it, runs `scripts/build.sh` under a read-only token, and uploads the folder's `dist`. `deploy` runs harden-runner and GitHub's own deploy-pages action, holds the Pages scopes, and warns when a private repository's site is public. It runs for the default branch only, and the scheduled run deploys too, once the repository variable `KNOWLEDGE_WEBSITE_ENABLED` is `true`. Before setting the variable, a maintainer tells Pages once to take its site from Actions, under **Settings > Pages > Source**.

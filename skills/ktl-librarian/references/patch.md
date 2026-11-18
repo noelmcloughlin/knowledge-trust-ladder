@@ -113,16 +113,18 @@ Each operation takes `op`, `path` and the keys below, and the script refuses any
 Any one of these refuses the whole file, and nothing is written:
 
 - a line anywhere in the file that would read as a person's event (`by: human:...`) or a person's note (`- <date>, human:...`); prose may mention the actor prefix, but only ktl-curator writes one, in a live session;
-- a patch after which any concept it writes would hold a person's record other than the one the file held, however the operations spelt it. The record is each `human:` event under any key, and each person's note in any spelling a Markdown reader shows as one;
+- a patch after which any concept it writes would hold a person's record other than the one the file held, however the operations spelt it. The record is each mapping whose `by` names a person, under any key and with every key it holds, so an exclusion a person decided keeps its `resource` and `reason`. It is also each person's note, with the indented lines under it and in the order the file held. The script reads a note as a `-`, `*`, `+` or numbered item, also behind a quote mark or a task box, or with an escaped colon;
 - a patch after which the report would no longer list a note a person left, as a second `## Open questions` heading or a code fence left open above it does;
 - `by` that is not `process:<id>`, with an id of letters, digits, `.`, `_` and `-`, or that starts with `process:ktl-curator`, the actor that stands for a person in a curator's session;
-- a path that is not lowercase a-z, 0-9 and hyphens under a folder, or that is `index.md`, `log.md` or `diataxis.md`, or that a link leads out of the bundle;
+- a path that is not lowercase a-z, 0-9 and hyphens under a folder, or that is `index.md` or `log.md`, or that a link leads out of the bundle;
 - a key given twice in one mapping, in the patch file or in a concept's frontmatter, since YAML would keep the last and say nothing;
 - a key the operation does not take, such as `edits` on a `rewrite` or `log` on a `recheck`;
 - `create` on a path that exists, or any other operation on one that does not, a `delete` of a concept the same patch creates among them;
-- `create` or `set` carrying `generated`, `verified`, `revised`, `refuted`, `status`, `stale_after` or `timestamp`; `set` carrying `id` or `type`; an `id` that is not `base_iri` plus the path;
+- `create` or `set` carrying `generated`, `verified`, `revised`, `refuted`, `status`, `stale_after`, `timestamp`, `by`, `at` or `revision`, in any letter case; `set` carrying `id` or `type`; an `id` that is not `base_iri` plus the path;
 - `patch`, `rewrite`, `set` or `delete` on a concept whose `generated.by` starts with `human:` (a person wrote that text; add a `question` instead);
-- `delete` on a concept with a `human:` event under `verified`, or with a person's note under `## Open questions` (add a `question` saying the source is gone; the curator retires it);
+- `delete` on a concept with a `human:` event under `verified`, or with a person's note or a curator's send-back under `## Open questions` (add a `question` saying the source is gone; the curator retires it);
+- `question` or `delete` on a concept a person retired, one with `status: deprecated`: a question would set it back to a draft, and a retired concept stays for links and history;
+- a `log` line that starts with `**Curation**` or `**Deprecation**`, the two lines ktl-curator writes for a person;
 - `delete` on a concept that an `index.md` links in a sentence, or anywhere but in its own bullet or a comma-separated list of links (a person takes that link out, and the delete can then run);
 - a relation the patch adds that names no concept of the bundle, or a `delete` that leaves another concept's relation pointing at the deleted one (drop or repoint it in the same patch). An IRI outside the bundle, and a relation that was already broken, are left alone. So is a domain vocabulary's own slot, which only `--check-refs` can read;
 - a `replace` target that occurs zero or several times, or an `insert_after` target on zero or several lines, in the text outside the `lokf:related` block and `## Open questions`, which are never edited;

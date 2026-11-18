@@ -7,3 +7,4 @@
 * [LinkML (linkml.io)](linkml.md) - The schema-modelling language LOKF is written in, and the generator suite that turns a schema into JSON Schema, Pydantic models, SHACL shapes, docs, and OWL.
 * [gh skill (GitHub CLI)](gh-skill-cli.md) - The GitHub CLI command group that installs, pins, and publishes agent skills from GitHub repositories; the publish path this repository uses for releases.
 * [Open Skills CLI (npx skills)](open-skills-cli.md) - The vendor-neutral installer for agent skills, `npx skills add`, which takes a local path as its source, so this repository uses it as a pre-publication install check.
+* [KTL specification](ktl-specification.md) - The Knowledge Trust Ladder (KTL) specification, `SPEC.md`, version 0.2, a draft: the rules KTL adds to a LOKF bundle. It states the ladder, who writes each record, the eighteen conventions, what counts as a person's confirmation, how each trust label is computed, and what conformance means.
