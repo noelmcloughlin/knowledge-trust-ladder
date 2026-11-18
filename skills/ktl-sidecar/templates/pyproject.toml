@@ -18,7 +18,7 @@ dependencies = [
     "rust-just==1.47.0",
     # The skills: the librarian workflow installs ktl-librarian from this
     # package, and the weekly sync moves the pin to each release.
-    "ktl==0.66.0",
+    "ktl==0.67.0",
 ]
 
 [tool.uv]

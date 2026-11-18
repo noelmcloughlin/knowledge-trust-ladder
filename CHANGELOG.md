@@ -4,6 +4,8 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+## [0.68.0] - 2026-11-18
+
 ### Added
 
 - **`SPEC.md`, version 0.2, states the rules KTL adds to a LOKF bundle**: the ladder, who writes each record, the eighteen conventions, what counts as a person's confirmation, and how each trust label is computed.
