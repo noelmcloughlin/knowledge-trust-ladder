@@ -4,6 +4,32 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Added
+
+- **`SPEC.md`, version 0.2, states the rules KTL adds to a LOKF bundle**: the ladder, who writes each record, the eighteen conventions, what counts as a person's confirmation, and how each trust label is computed.
+- **Contract check 24 holds the copies of those rules to `SPEC.md`**, in the conventions script's header, patch.md and trust-fields.md.
+- **`tests/conformance/reader/` holds a bundle and the labels a program must report of it**, for the report script and for any second program that reports trust.
+- **A root `SPEC.md` becomes the site's page `/spec/`**, with a Specification line under Home, a home page button after Architecture, its Markdown at `/spec.md`, and every link to `SPEC.md` sent to the page.
+
+### Changed
+
+- **The report script reads a later `revised.at` as the last edit**, so a concept another LOKF producer edited after its confirmation reads as edited since.
+- **The wording of conventions 1, 4, 5, 6, 8, 10, 13, 16, 17 and 18 says what the script checks**, and the trust-fields table says what the report computes.
+
+### Fixed
+
+- **`diataxis.md` in a folder below the root is a concept to every script**: the pen, the shell half of the conventions, the feedback recorder and the preflight read the name as reserved in every folder.
+- **Convention 5 finds a quoted `resource` with a comment beside it.**
+- **Convention 10 refuses a tag on a list or a mapping**, as it refuses one on a value.
+- **The report lists no retired concept as disputed by a reader**, and none as derived from an edited concept when its confirmation's time cannot be read.
+
+### Security
+
+- **The pen refuses a change to an exclusion a person decided**, to its `resource` or its `reason`.
+- **The pen refuses a `question` or a `delete` on a concept a person retired.**
+- **The pen refuses a log line that starts with `**Curation**` or `**Deprecation**`**, the two lines ktl-curator writes for a person.
+- **The pen reads a person's note in four more spellings, with the lines under it and the order it stands in.**
+
 ## [0.67.0] - 2026-11-17
 
 ### Added

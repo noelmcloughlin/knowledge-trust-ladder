@@ -95,7 +95,7 @@ The **curator** reports each concept's trust record in plain words:
 
 ***As a flow diagram, drawn with Archify: [light](../.assets/companions/trust-ladder.svg), [dark](../.assets/companions/trust-ladder-dark.svg).***
 
-The labels are computed from the frontmatter on every read, never stored, so they always agree with what they describe. Each is a signal for the reader to weigh, never a score. The number to watch is **confirmed by a person: n of N**. It is meant to rise slowly, a handful of concepts in a sitting.
+The labels are computed from the frontmatter on every read, never stored, so they always agree with what they describe. [The specification](../SPEC.md#8-trust-labels) gives the rule behind each label, and [the ladder](../SPEC.md#3-the-ladder) the four rules that move a concept on it. Each is a signal for the reader to weigh, never a score. The number to watch is **confirmed by a person: n of N**. It is meant to rise slowly, a handful of concepts in a sitting.
 
 ## Read on
 
@@ -107,6 +107,7 @@ The labels are computed from the frontmatter on every read, never stored, so the
 | The context layer: what it is, how one bundle already is one, and why bundles federate through domains | [context-layer.md](context-layer.md), and [what it integrates with](context-layer-technology.md) |
 | A federation of bundles: domains as manifests, tiers of domains, the workspace built ahead of time, what exists and what remains a design, and the decisions an adopter must make | [federation.md](federation.md) |
 | Knowledge outside the repository: wiki pages, documents and files in other repositories, mirrored by the ingest so the bundle can cite them | [ingest.md](ingest.md), and [its reference](ingest-reference.md) |
+| The specification: the ladder, who writes each record, the eighteen conventions, what counts as a person's confirmation, and how a trust label is computed | [SPEC.md](../SPEC.md) |
 | The mechanics: who writes the bundle and what checks it, the four levels of checking, which the plugins run live, how readers and verdicts steer the next run, and what to do when a bundle outgrows LOKF's vocabulary | [how-it-works.md](how-it-works.md) |
 | What the project's own words mean, such as *sidecar*, *registrar*, *docent*, *desk* and *the pen* | [the bundle's glossary](../.lokf/knowledge/glossary/index.md) |
 | The bundle in Obsidian, and the two plugins | [obsidian.md](obsidian.md) |

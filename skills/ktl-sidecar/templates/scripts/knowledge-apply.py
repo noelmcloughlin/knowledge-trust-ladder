@@ -73,6 +73,7 @@ import argparse
 import copy
 import datetime as dt
 import difflib
+import json
 import os
 import re
 import shutil
@@ -85,16 +86,20 @@ from pathlib import Path
 
 import yaml
 
-RESERVED = {"index.md", "log.md", "diataxis.md"}
+RESERVED = {"index.md", "log.md"}  # in every folder; a concept path names a folder, so never the root map
 PATH_RE = re.compile(r"[a-z0-9][a-z0-9-]*(/[a-z0-9][a-z0-9-]*)+\.md")  # matched whole, so no line break can follow it
 EVENT_RE = re.compile(r"^\s*-?\s*by:\s*human:")  # a line the provenance gates read as a person's event
 NOTE_RE = re.compile(r"^\s*-\s*\d{4}-\d{2}-\d{2},\s*human:")  # a line the curator reads as a person's note
 KEPT_NOTE_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, *human:")  # a person's note as knowledge-provenance.sh --unattended reads one
 CURATOR_NOTE_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, *process:ktl-curator:")  # a curator's send-back recorded with no authenticated login (review-session.md)
-# A person's note in any spelling a Markdown reader shows as one: another
-# bullet mark, an indent, a tab or two spaces after the comma. The gates read
-# the strict shape above, so no program counts these, and a person does.
-LOOSE_NOTE_RE = re.compile(r"^\s*[-*+]\s+\d{4}-\d{2}-\d{2}\s*,\s*human:")
+# A person's note in the spellings a Markdown reader shows as one: another
+# bullet mark or a numbered item, an indent, a quote mark or a task box in
+# front, a tab or two spaces after the comma, an escaped colon. The gates
+# read the strict shape above, so no program counts these, and a person does.
+LOOSE_NOTE_RE = re.compile(r"^[\s>]*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?\d{4}-\d{2}-\d{2}\s*,\s*human\\?:")
+# The labels of the two log lines ktl-curator writes for a person. The report
+# reads a retired concept's successor from the second.
+CURATOR_LABELS = {"curation", "deprecation"}
 # A person's note as knowledge-report.sh lists one, under an open-questions heading outside a code fence.
 SEEN_NOTE_RE = re.compile(r"^- \d{4}-\d{2}-\d{2}, human:[^ ]*: ")
 # A patch's actor is `process:` and a login's characters, so no Markdown or
@@ -254,7 +259,7 @@ NOT_LINKS = {
     "base_iri", "context", "stale_after", "timestamp", "genre", "definition", "version",
 }
 # An index and a log are no concept in any folder, and KTL Registrar's map is
-# none at the bundle's root. The pen writes neither (RESERVED).
+# none at the bundle's root. The pen writes none of the three.
 NOT_CONCEPTS = {"index.md", "log.md"}
 ROOT_MAP = "diataxis.md"
 SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:")
@@ -410,10 +415,11 @@ def shown(text: str) -> str:
 
 
 def human_events(value, slot: str):
-    """Each mapping under one frontmatter key whose `by` names a person, at any depth, as (slot, by, at, revision)."""
+    """Each mapping under one frontmatter key whose `by` names a person, at any depth, as (slot, by, at, revision, the other keys). The other keys are an exclusion's `resource` and `reason`, so neither changes under a person's name."""
     if isinstance(value, dict):
         if str(value.get("by", "")).startswith("human:"):
-            yield (slot, str(value.get("by")), str(value.get("at", "")), str(value.get("revision", "")))
+            rest = {str(k): v for k, v in value.items() if k not in ("by", "at", "revision")}
+            yield (slot, str(value.get("by")), str(value.get("at", "")), str(value.get("revision", "")), json.dumps(rest, sort_keys=True, default=str))
         for inner in value.values():
             yield from human_events(inner, slot)
     elif isinstance(value, list):
@@ -451,9 +457,22 @@ def person_record(text: str | None) -> Counter:
         for key, value in fm.items():
             for event in human_events(value, str(key)):
                 record[event] += 1
-    for line in text.split("\n"):
+    lines = text.split("\n")
+    kept = []
+    for i, line in enumerate(lines):
         if KEPT_NOTE_RE.match(line) or LOOSE_NOTE_RE.match(line) or CURATOR_NOTE_RE.match(line):
             record[("note", line.rstrip())] += 1
+            kept.append(line.rstrip())
+            # The indented lines under a note are part of it to a reader.
+            under = []
+            for more in lines[i + 1:]:
+                if not more.strip() or not more[0] in " \t":
+                    break
+                under.append(more.rstrip())
+            if under:
+                record[("under", line.rstrip(), "\n".join(under))] += 1
+    if kept:
+        record[("order", "\n".join(kept))] += 1
     for line in seen_notes(split[1] if split else text):
         record[("seen", line)] += 1
     return record
@@ -463,8 +482,18 @@ def record_findings(path: str, was: Counter, now: Counter) -> list:
     """One line for each way a patch would change a person's record in one concept, naming the actor and the day and never the words."""
     findings = []
     gone = {e[1] for e in was - now if e[0] == "note"}
+    came = {e[1] for e in now - was if e[0] == "note"}
     for what, entry in [("remove", e) for e in sorted(was - now)] + [("add", e) for e in sorted(now - was)]:
-        if entry[0] == "seen":
+        if entry[0] == "order":
+            # The same notes in another order: the curator quotes the first.
+            if what == "add" and not gone and not came and any(e[0] == "order" for e in was):
+                findings.append(f"{path}: this patch would put the notes people left in another order; leave the {OPEN_Q} section as it stands")
+        elif entry[0] == "under":
+            if entry[1] not in gone and entry[1] not in came:
+                who = re.match(r"^[\s>]*\S+\s+(?:\[[ xX]\]\s+)?(\d{4}-\d{2}-\d{2})\s*,\s*(human\\?:[^ :]*|process:ktl-curator)", entry[1])
+                name = f"{who.group(2)}, {who.group(1)}" if who else "a person"
+                findings.append(f"{path}: this patch would {'take lines from' if what == 'remove' else 'add lines to'} a note a person left ({name}); only ktl-curator changes one, on that person's word")
+        elif entry[0] == "seen":
             # A note that left the file is reported as removed. One still in
             # the file that the report no longer lists was hidden: a second
             # heading above it, or a fence opened and never closed.
@@ -613,6 +642,10 @@ class Concept:
 
     def confirmed_by_person(self) -> bool:
         return any(str(e.get("by", "")).startswith("human:") for e in self.events())
+
+    def retired(self) -> bool:
+        """`status: deprecated`, which only the curator writes, on a person's word."""
+        return str(self.fm.get("status", "")).strip().lower() == "deprecated"
 
     def noted_by_person(self) -> bool:
         q = questions_span(self.body)
@@ -866,6 +899,8 @@ class Bundle:
     def question(self, op: dict) -> None:
         path = op["path"]
         c = self.concept(path, must_exist=True)
+        if c.retired():
+            raise Refused(f"{path}: a person retired this concept, so question is refused: it would set the status back to draft; name the concept in the hand-off instead")
         text = autolinked(shown(one_line(op.get("text"), f"{path}: question text")))
         if not text:
             raise Refused(f"{path}: question text has no visible characters")
@@ -941,6 +976,8 @@ class Bundle:
             raise Refused(f"{path}: a person left a note on this concept, so delete is refused; add a question saying the source is gone, and the curator retires it")
         if c.noted_by_curator():
             raise Refused(f"{path}: the curator left a send-back on this concept, so delete is refused; re-derive it and leave the note for the curator")
+        if c.retired():
+            raise Refused(f"{path}: a person retired this concept, so delete is refused; a retired concept stays for links and history")
         self.guard_writable(c, "delete")
         if not isinstance(op.get("log"), str) or not op["log"].strip():
             raise Refused(f"{path}: delete needs a log line saying why")
@@ -1259,7 +1296,7 @@ class Bundle:
 
 def check_path(path) -> str:
     if not isinstance(path, str) or not PATH_RE.fullmatch(path) or ".." in path or path.rsplit("/", 1)[-1] in RESERVED:
-        raise Refused(f"path {path!r} is not a concept path: lowercase a-z, 0-9 and hyphens, at least one folder, .md, and not a reserved name")
+        raise Refused(f"path {path!r} is not a concept path: lowercase a-z, 0-9 and hyphens, at least one folder, .md, and not index.md or log.md")
     if path.startswith("knowledge/"):
         raise Refused(f"path {path!r} starts with knowledge/; paths are relative to .lokf/knowledge/")
     return path
@@ -1270,6 +1307,9 @@ def log_line(text, what: str, label: str = "Changed") -> str:
     text = shown(one_line(text, what))
     if not text:
         raise Refused(f"{what} line has no visible characters")
+    own = re.match(r"[*_]{2}\s*([^*_]*?)\s*[*_]{2}", text)
+    if own and own.group(1).strip(" :").lower() in CURATOR_LABELS:
+        raise Refused(f"{what} line starts with **{own.group(1)}**, a line only ktl-curator writes, for a person")
     return text if text.startswith("**") else f"**{label}**: {text}"
 
 

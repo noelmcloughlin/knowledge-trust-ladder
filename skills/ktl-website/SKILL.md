@@ -19,6 +19,7 @@ No setting names what the site shows: the build looks for each of these and show
 | --- | --- |
 | `.lokf/knowledge/` | the bundle's pages, the health page and the graph (required) |
 | `README.md` | the home page; without one, the bundle's own introduction |
+| `SPEC.md` | the Specification page |
 | `docs/**.md` | the Guide part, a page per file |
 | `docs/<page>.<language>-simple.md` | a retelling, which `docs/<page>.md` offers above its title |
 | `docs/architecture.md` | the home page's Architecture button |
@@ -52,7 +53,7 @@ The workflow and the sidecar's sync look in both folders, so neither needs to be
 
 ## Step 0: gather the facts
 
-**First, the preflight.** Run `bash scripts/website-preflight.sh <repo-root>` from this skill's directory and read its screen before anything else. It runs the sidecar's own preflight inside it, then checks the report script, the toolkit and its lock, and the origin remote and the default branch. It says whether another publisher already holds the repository's Pages, which folder the site is in or goes in, and which of the inputs above the site will find. Its `mkdocs` line says whether an mkdocs site is there for the website to replace. Its last line names what is missing and which steps that disables; repeat that line in the Step 6 hand-off. When the person cannot act on a `missing` or `warn` line, write them a request note from [references/prerequisites.md](references/prerequisites.md).
+**First, the preflight.** Run `bash scripts/website-preflight.sh <repo-root>` from this skill's directory and read its screen. It runs the sidecar's own preflight inside it, then checks the report script, the toolkit and its lock, and the origin remote and the default branch. It says whether another publisher already holds the repository's Pages, which folder the site is in or goes in, and which of the inputs above the site will find. Its `mkdocs` line says whether an mkdocs site is there for the website to replace. Its last line names what is missing and which steps that disables; repeat that line in the Step 6 hand-off. When the person cannot act on a `missing` or `warn` line, write them a request note from [references/prerequisites.md](references/prerequisites.md).
 
 Resolve every placeholder from real sources before writing anything; never leave a `<...>` token behind.
 

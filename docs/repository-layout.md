@@ -82,6 +82,8 @@ tests/                     the behavioural tests of the sidecar scripts and the 
   docent-holdout.yaml      the eight captured docent questions and the concept each answer should rest on, as data; outside .lokf/ so the docent cannot read it
   docent-holdout-schema.yaml  its LinkML shape, importing LOKF's schema for Concept
   test_docent_holdout.py   checks that each expected concept still exists and that evals/ asks the same questions
+  test_conformance.py      holds knowledge-report.sh to conformance/reader/expected.json
+  conformance/reader/      a bundle with one concept per trust label, and what a program must report of it (SPEC.md section 10)
 evals/                     the holdout as `claude plugin eval` cases, one directory per question with its prompt, graders and scaffold; README.md says how to run it
   scaffold-bundle.sh       copies .lokf/knowledge/ alone into a run's empty directory
 pyproject.toml             builds the ktl package for PyPI: the skills and .claude-plugin/ verbatim, and the command in src/ktl/
@@ -103,6 +105,7 @@ website/                   the website: Hugo, this repository's copy of ktl-webs
   scripts/check-links.py   fails the build on a link between two pages that does not resolve
 .lokf/                  this repository's own sidecar: the bundle and its tooling
 knowledge_bundle        -> .lokf/knowledge, the doorway link ktl-sidecar creates (Step 2)
+SPEC.md                 the rules KTL adds to a LOKF bundle; contract check 24 holds the copies in the scripts and skills to it
 ```
 
 Each `SKILL.md` is a short router. Anything not needed on every invocation is in that skill's `references/`, loaded only when the router points to it, so the cost of a trigger stays small. Contract check 10a holds each `SKILL.md` to a word budget.

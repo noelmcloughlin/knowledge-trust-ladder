@@ -13,7 +13,7 @@ The site finds what it shows, so `site.toml` is short: four values every site ne
 | `params.branch` | the branch an "Edit this page" link opens | `main` |
 | `params.releaseTag` | the tag a release carries, with `{version}` for its number | `v{version}` |
 | `params.logo`, `params.logoDark` | a logo of the repository's own, each a file under `.assets/` | the Knowledge Trust Ladder logo |
-| `params.source` | the folder the README, `docs/`, the changelog and `.assets/` come from, such as a fork's `.linkml/`; `prepare.sh` writes `generated/source.toml` with the mounts moved there, which `build.sh` reads last | the repository's root |
+| `params.source` | the folder the README, `SPEC.md`, `docs/`, the changelog and `.assets/` come from, such as a fork's `.linkml/`; `prepare.sh` writes `generated/source.toml` with the mounts moved there, which `build.sh` reads last | the repository's root |
 | `params.linkml` | the folder of a LinkML project whose `src/<name>/schema/` the site shows | the root, then `.linkml/` |
 | `params.schema`, `params.schemaProject` | the schema file itself, when no `src/<name>/schema/` holds it: a path from the repository's root, or `pkg:<package>/<path>` for one inside a Python package, found without importing it in the environment of the uv project `schemaProject` names | the schema the site finds, as below; for `schemaProject`, the repository's root |
 | `params.docsExclude` | folders under `docs/` that are not pages | `templates-linkml` and `elements`, which LinkML's `gen-doc` keeps there |

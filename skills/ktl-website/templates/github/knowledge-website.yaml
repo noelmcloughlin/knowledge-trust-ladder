@@ -1,8 +1,8 @@
 name: Knowledge website
 
 # Builds the site in website/ (or in ktl-website/, where website/ was another
-# site's) from the knowledge bundle, the README, docs/, the figures, the
-# changelog and a LinkML schema, each when the repository has it, and
+# site's) from the knowledge bundle, the README, SPEC.md, docs/, the figures,
+# the changelog and a LinkML schema, each when the repository has it, and
 # publishes the default branch's build to GitHub Pages. A pull request that
 # touches any of them gets the same build, link check included, and no
 # deployment. A weekly run rebuilds the site from the default branch. It
@@ -33,6 +33,7 @@ on:
       - ".lokf/**"
       - "knowledge_bundle/**"
       - "README.md"
+      - "SPEC.md"
       - "docs/**"
       - ".assets/**"
       - "CHANGELOG.md"
@@ -47,6 +48,7 @@ on:
       - ".lokf/**"
       - "knowledge_bundle/**"
       - "README.md"
+      - "SPEC.md"
       - "docs/**"
       - ".assets/**"
       - "CHANGELOG.md"

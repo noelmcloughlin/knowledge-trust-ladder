@@ -8,8 +8,7 @@ genre: reference
 resource: skills/ktl-curator/references/trust-fields.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-17T22:28:06Z"
-  revision: "sha256:4477263be0c0ef43310498672c41071cb1555c524bba23e0e0b748f2c487d418"
+  at: "2026-11-18T00:02:42Z"
 definedBy: []
 about:
   - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
@@ -31,13 +30,13 @@ references:
 
 # Overview
 
-The labels restate OKF v0.2 section 5's trust fields in words a non-specialist can act on. `knowledge-report.sh` computes them each time from `verified`, `status`, `generated.at` and `stale_after`. It also uses the relation fields for reliance. It computes each one from frontmatter and git history, *doesn't fit the known vocabulary* and *not tied to a signed commit* among them.
+The labels restate OKF v0.2 section 5's trust fields in words a non-specialist can act on. `knowledge-report.sh` computes them each time from `verified`, `status`, `generated.at`, `revised.at` and `stale_after`. The last edit of a concept is the later of `generated.at` and `revised.at`, because LOKF 0.9.0 lets a producer record a later edit as `revised.at` and leave `generated.at` alone. It also uses the relation fields for reliance. It computes each one from frontmatter and git history, *doesn't fit the known vocabulary* and *not tied to a signed commit* among them.
 
 - Any `verified` actor prefixed `human:` means confirmed by a person.
 - Events by non-human actors alone mean checked by automation.
 - No `verified` key, or one with no events, means nobody has checked it.
 - `status: draft` with no `human:` `verified` event means still a draft.
-- `status: draft` with a `human:` `verified` event means reopened: the pen's `question` and the curator's send-back set it. The label gives the earliest open question asked on or after the confirmation's day, its asker, and how many wait. The confirmation still counts as one, so the rung stays.
+- `status: draft` with a `human:` `verified` event means reopened: the pen's `question` and the curator's send-back set it. The label gives the earliest open question asked on or after the confirmation's day, or else the earliest of all, with its asker and how many wait in all. The confirmation still counts as one, so the rung stays.
 
 `knowledge-report.sh` reads `resource`, `sources[].resource` and git history for the label *a source moved since the confirmation*.
 
@@ -45,6 +44,6 @@ It reads `.lokf/feedback.md` for the label *a reader disputed this*: a waiting `
 
 A `revision` on an event (lokf 0.9.0 and later) is shown beside that event's date. Its absence means unrecorded, never unchanged, so it changes no label. When a confirmation carries a `revision` that names a commit this history holds, the script compares the concept's `resource` with that commit for the label *a source moved since the confirmation*. When the `revision` is a `sha256:` digest, the script compares it with the file as the newest commit holds it, so a `resource` changed after the person was shown it has moved, whichever commit changed it. It compares every other source with the commit that recorded the confirmation.
 
-The labels overlap. A concept can be confirmed *and* past its review date, so the counts in a curator report are not a partition. One pair never overlaps: a concept edited since its confirmation is counted under *edited since confirmed* and not as confirmed, because the person confirmed an earlier text. Nothing is scored and nothing is stored: the spec keeps scores out of frontmatter.
+Every concept is counted under exactly one of *confirmed by a person*, *edited since confirmed*, *checked by automation only*, *nobody has checked* and *retired*, so those five add up to the number of concepts. A concept edited since its confirmation is not counted as confirmed, because the person confirmed an earlier text. The other labels overlap those five: a concept can be confirmed by a person *and* past its review date. Nothing is scored and nothing is stored: the spec keeps scores out of frontmatter.
 
 A question asked after a confirmation reopens a concept and flags what waits. It never drops the rung: only an edit after the confirmation does that. The health line counts the two apart: *Drafts* for a concept no person has confirmed, and *Reopened* for one a person confirmed and a question has since put back to `status: draft`.

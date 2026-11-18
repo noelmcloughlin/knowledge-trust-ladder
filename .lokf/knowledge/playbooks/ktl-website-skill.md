@@ -2,7 +2,7 @@
 type: Playbook
 id: https://w3id.org/ktl/knowledge/playbooks/ktl-website-skill
 title: ktl-website skill
-description: Procedure that installs a Hugo website for the knowledge bundle in `website/`, or in `ktl-website/` where `website/` is another site's, from bundled templates. The site finds the README, the docs, retellings, the changelog, the figures, a LinkML schema and a domain host's workspace with no setting, shows a page per concept with its trust label, a health page and the knowledge graph, and builds with uv and no Node.js. A workflow publishes it to GitHub Pages once `KNOWLEDGE_WEBSITE_ENABLED` is set; the skill also repairs or updates a site it installed, moves its earlier Astro site to Hugo, and hands the maintainer the steps that retire an mkdocs site it replaces.
+description: Procedure that installs a Hugo website for the knowledge bundle in `website/`, or in `ktl-website/` where `website/` is another site's, from bundled templates. The site finds the README, a root `SPEC.md`, the docs, retellings, the changelog, the figures, a LinkML schema and a domain host's workspace with no setting, shows a page per concept with its trust label, a health page and the knowledge graph, and builds with uv and no Node.js. A workflow publishes it to GitHub Pages once `KNOWLEDGE_WEBSITE_ENABLED` is set; the skill also repairs or updates a site it installed, moves its earlier Astro site to Hugo, and hands the maintainer the steps that retire an mkdocs site it replaces.
 genre: how-to
 resource: skills/ktl-website/SKILL.md
 sources:
@@ -37,7 +37,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-11-17T20:29:12Z"
+  at: "2026-11-18T00:02:42Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -52,10 +52,11 @@ It runs once, to install the site, or again to repair or update it. It writes no
 
 # What the site finds by itself
 
-No setting names what the site shows, though `site.toml`'s `source` can move where the README, the docs, the changelog and the figures come from, `linkml` can move the LinkML project whose schema the site shows, and `schema` can name the schema file itself, in the repository or inside a Python package. The build otherwise looks for each input and shows what it finds:
+No setting names what the site shows, though `site.toml`'s `source` can move where the README, `SPEC.md`, the docs, the changelog and the figures come from, `linkml` can move the LinkML project whose schema the site shows, and `schema` can name the schema file itself, in the repository or inside a Python package. The build otherwise looks for each input and shows what it finds:
 
 - `.lokf/knowledge/`: the bundle's pages, the health page and the graph. The build needs it.
 - `README.md`: the home page. Without one, the home page opens with the bundle's own introduction.
+- `SPEC.md`: the Specification page, `/spec/`, as written, titled by its first `#` heading and laid out as a docs page is. The navigation lists it as *Specification*, under *Home* in the Guide part. Its Markdown is served at `/spec.md`, `llms.txt` lists it, and a link to `SPEC.md` goes to the page.
 - `docs/**.md`: the Guide part, a page per file, each also served as Markdown at `/docs/<name>.md` with every address made full.
 - `docs/<page>.<language>-simple.md`: a retelling, which `docs/<page>.md` offers above its title. A concept that names its readers in `audience` or in a tag such as `audience-13-18` retells the one concept it is `derivedFrom`.
 - `src/<name>/schema/<name>.yaml`, at the root or under `.linkml/`: the Schema part, written by LinkML's `gen-doc` with the LinkML that `.lokf/uv.lock` already pins. Each element also answers at `/elements/<Name>/`, the address mkdocs gave it and the one a schema's w3id rules point at, and the home page leads with the schema.
@@ -65,7 +66,7 @@ No setting names what the site shows, though `site.toml`'s `source` can move whe
 - `.lokf/ingest.lock.yaml`: a mirrored source's origin, version and day of fetching, on its concept's card.
 - `.github/workflows/knowledge-federation.yaml`: the workspace, on the graph page.
 
-The home page has five buttons on every site: the schema, the bundle, the architecture page, the glossary and the quick start.[^skill.md] A button whose page is not there keeps its place, greyed, with the reason on hover.[^inputs.md] Quick start is the filled one, or, on a site without a quick start, the first button found. One part is set, never found: the data. `browse` in `site.toml` names a folder of SQLite databases, because the databases go on the public site. The site serves them under `/browse/`, with a page that opens each in Datasette Lite.
+The home page has five buttons on every site: the schema, the bundle, the architecture page, the glossary and the quick start.[^skill.md] A button whose page is not there keeps its place, greyed, with the reason on hover.[^inputs.md] A sixth button, *Specification*, follows *Architecture* when the repository has a root `SPEC.md`, and is not drawn without one.[^inputs.md] Quick start is the filled one, or, on a site without a quick start, the first button found. One part is set, never found: the data. `browse` in `site.toml` names a folder of SQLite databases, because the databases go on the public site. The site serves them under `/browse/`, with a page that opens each in Datasette Lite.
 
 `references/inputs.md` gives the rule for each input. It also says that raw HTML in any Markdown the site renders is cleaned after the build, by `scripts/clean-html.py`, to the tags GitHub allows in a README, with a Content-Security-Policy in every page as a second guard. An SVG that holds a script, an event handler or a `javascript:` address stops the build. After the build, `scripts/check-links.py` fails it on a link between the site's own pages that does not resolve.
 
@@ -110,7 +111,7 @@ On another forge, the same `bash website/scripts/build.sh` runs in that forge's 
 
 # In this repository
 
-This repository's own `website/` is the template's first copy, and `.github/workflows/knowledge-website.yaml` is the workflow's. The contract's check 11w holds every template byte-identical to its copy, apart from the three files the repository owns, and fails a tracked file under `website/` that has no template. The `smoke-test-website` job builds the template three times, on a host made from the sidecar's dummy skeleton. The first build has a README, docs pages, a changelog, figures, a LinkML schema, retellings, the federation workflow, a mirrored source and data. The second has none of them, and the third has a domain vocabulary alone.[^smoke-test-website.sh]
+This repository's own `website/` is the template's first copy, and `.github/workflows/knowledge-website.yaml` is the workflow's. The contract's check 11w holds every template byte-identical to its copy, apart from the three files the repository owns, and fails a tracked file under `website/` that has no template. The `smoke-test-website` job builds the template three times, on a host made from the sidecar's dummy skeleton. The first build has a README, docs pages, a changelog, a root `SPEC.md`, figures, a LinkML schema, retellings, the federation workflow, a mirrored source and data. The second has none of them, and the third has a domain vocabulary alone.[^smoke-test-website.sh]
 
 [^skill.md]: skills/ktl-website/SKILL.md, *What the site finds by itself*
 [^inputs.md]: skills/ktl-website/references/inputs.md, *The home page*

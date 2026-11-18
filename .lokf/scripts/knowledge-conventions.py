@@ -144,6 +144,8 @@ def plain_spellings(fm_text: str) -> list[str]:
             findings.append(f"an alias (*{ev.anchor}) at {at(ev)}")
         elif getattr(ev, "anchor", None):
             findings.append(f"an anchor (&{ev.anchor}) at {at(ev)}")
+        if isinstance(ev, (yaml.MappingStartEvent, yaml.SequenceStartEvent)) and ev.tag is not None:
+            findings.append(f"a tag ({ev.tag}) on a collection at {at(ev)}")
         if isinstance(ev, yaml.ScalarEvent):
             if ev.tag is not None:
                 findings.append(f"a tag on '{ev.value}' at {at(ev)}")

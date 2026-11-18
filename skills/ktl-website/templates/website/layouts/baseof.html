@@ -37,7 +37,7 @@
   <meta name="twitter:card" content="summary_large_image">
   {{- end }}
   <link rel="alternate" type="application/atom+xml" title="{{ site.Title }}: bundle log" href="{{ "knowledge/log.xml" | relURL }}">
-  {{- /* The page as Markdown: a docs page's or the README's with full addresses, a concept's file as the bundle holds it. */ -}}
+  {{- /* The page as Markdown: a docs page's, the README's or SPEC.md's with full addresses, a concept's file as the bundle holds it. */ -}}
   {{- with partialCached "markdown-file.html" . .RelPermalink }}
   <link rel="alternate" type="text/markdown" href="{{ .RelPermalink }}">
   {{- else }}{{ with .Params.conceptId }}

@@ -1191,3 +1191,27 @@ def test_rule_10_refuses_a_key_the_gates_read_given_twice(tmp_path):
     k = bundle_of(tmp_path, {"a.md": f"---\ntype: Service\nid: https://example.invalid/k/x/a\nid: https://example.invalid/k/x/b\nresource: https://example.invalid/a\n{STAMP}---\n"})
     result = bash(CONVENTIONS, k)
     assert result.rc == 1 and "a second id key at line 4" in result.out, result.out
+
+
+def test_the_shell_half_reads_a_diataxis_md_in_a_folder_as_a_concept(tmp_path):
+    """Rule 5 is the shell half's: a missing resource in x/diataxis.md is a finding, and none in the root's map."""
+    k = bundle_of(tmp_path, {"a.md": f"---\ntype: Service\nid: https://example.invalid/k/x/a\nresource: https://example.invalid/a\n{STAMP}---\n"})
+    write(k / "diataxis.md", "---\nresource: docs/not-there.md\n---\n\n# Map\n")
+    assert bash(CONVENTIONS, k), "the map at the root was read as a concept"
+    write(k / "x" / "diataxis.md", f"---\ntype: Service\nid: https://example.invalid/k/x/diataxis\nresource: docs/not-there.md\n{STAMP}---\n")
+    result = bash(CONVENTIONS, k)
+    assert result.rc == 1 and "x/diataxis.md" in result.out and "docs/not-there.md" in result.out, result.out
+
+
+def test_rule_5_finds_a_quoted_resource_with_a_comment_beside_it(tmp_path):
+    k = bundle_of(tmp_path, {"a.md": f'---\ntype: Service\nid: https://example.invalid/k/x/a\nresource: "pinned.md" # the pin\n{STAMP}---\n'})
+    write(tmp_path / "pinned.md", "pinned\n")
+    result = bash(CONVENTIONS, k)
+    assert result, f"a comment after a quoted resource was read as part of its path: {result.out}"
+
+
+@pytest.mark.parametrize("spelling", ["verified: !!seq\n  - by: process:ktl-librarian\n    at: \"2026-09-02T00:00:00Z\"\n", "generated: !!map\n  by: process:ktl-librarian\n  at: \"2026-09-02T00:00:00Z\"\n"])
+def test_rule_10_refuses_a_tag_on_a_list_or_a_mapping(tmp_path, spelling):
+    k = bundle_of(tmp_path, {"a.md": f"---\ntype: Service\nid: https://example.invalid/k/x/a\nresource: https://example.invalid/a\n{spelling}---\n"})
+    result = bash(CONVENTIONS, k)
+    assert result.rc == 1 and "a tag (" in result.out and "on a collection" in result.out, result.out

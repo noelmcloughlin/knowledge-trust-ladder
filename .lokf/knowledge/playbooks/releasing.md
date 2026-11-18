@@ -37,7 +37,7 @@ sources:
   - resource: .pypi
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-17T22:28:06Z"
+    at: "2026-11-18T00:02:42Z"
 ---
 
 # Overview

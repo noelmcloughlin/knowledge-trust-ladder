@@ -95,7 +95,8 @@ if [ -n "$concept" ]; then
       echo "--concept takes a concept's path in the bundle, in lowercase with no '..' or '.' segment, such as services/orders-api.md, not '$concept'" >&2; exit 2 ;;
   esac
   case "$concept" in *.md) ;; *) echo "--concept takes the concept's file, ending in .md, not '$concept'" >&2; exit 2 ;; esac
-  case "${concept##*/}" in index.md|log.md|diataxis.md) echo "--concept takes a concept, not the bundle's $concept" >&2; exit 2 ;; esac
+  [ "$concept" != diataxis.md ] || { echo "--concept takes a concept, not the bundle's $concept" >&2; exit 2; }
+  case "${concept##*/}" in index.md|log.md) echo "--concept takes a concept, not the bundle's $concept" >&2; exit 2 ;; esac
 fi
 
 # One entry is one line. Collapse every whitespace run, drop control

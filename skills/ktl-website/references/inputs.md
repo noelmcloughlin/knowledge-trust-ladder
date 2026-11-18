@@ -29,6 +29,13 @@ A file the repository lacks is passed over without a setting: its mount finds no
 | Glossary | the bundle has a `glossary` group, or `docs/glossary.md` exists |
 | Quick start | a docs page is named `quick-start`, `quickstart` or `getting-started`; or the install page, another docs page or the README has a heading of one of those names, or *Get started* |
 
+A sixth button, *Specification*, follows *Architecture* when the repository has a root `SPEC.md`. Without one it is not drawn.
+
+## The specification
+
+- A root `SPEC.md` becomes the page `/spec/`, as written, titled by its first `#` heading and laid out as a docs page is, with the list of its sections and an *Edit this page* link. Its frontmatter is read as data, as the README's is. The navigation lists it as *Specification*, under *Home* in the Guide part. With no `SPEC.md`, none of this is drawn.
+- Its Markdown is served at `/spec.md`, as a docs page's is, and `llms.txt` lists it. A link to `SPEC.md` goes to the page, and a relative link inside the file is resolved from the repository's root, as the README's is.
+
 ## The docs pages
 
 - Each `.md` file under `docs/` becomes a page at `/docs/<name>/`, in lower case. A folder's `index.md` is that folder's own page. A file or folder whose name starts with a dot is left out, and so is a folder `docsExclude` names.
@@ -88,7 +95,7 @@ A file the repository lacks is passed over without a setting: its mount finds no
 
 ## `llms.txt` and `llms-full.txt`
 
-- `/llms.txt` opens with the site's description, then lists the four export files, the data page and the schema file when there are, the home page and each docs page by its Markdown file, and every concept with its Markdown file and its trust label.
+- `/llms.txt` opens with the site's description, then lists the four export files, the data page and the schema file when there are, the home page, the specification and each docs page by its Markdown file, and every concept with its Markdown file and its trust label.
 - `/llms-full.txt` holds every concept's text in one file, each under its address, trust label, type and definition, with every link a full address and its headings under the concept's title.
 
 ## `badge.json`

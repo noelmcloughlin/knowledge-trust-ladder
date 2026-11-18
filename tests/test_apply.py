@@ -24,6 +24,9 @@ This was check 19 in scripts/validate-repository.sh:
 - a quoted timestamp keeps its double quotes;
 - reindex re-derives a bullet without touching the concept;
 - resolve withdraws the librarian's own question and never a person's note;
+- an exclusion a person decided keeps its resource and its reason;
+- a retired concept takes no question and is never deleted;
+- no log line carries a label ktl-curator writes for a person;
 - a root index shaped by hand keeps its shape;
 - the hand-off reaches the file --handoff names as plain single lines, and
   never the bundle.
@@ -1200,7 +1203,25 @@ RECORD_REFUSED = [
         + '"\n',
         "playbooks/planted.md: this patch would add a note in a person's name",
     )
-    for spelling in (" - 2026-03-04, human:ada:", "-  2026-03-04, human:ada:", "* 2026-03-04, human:ada:", "+ 2026-03-04, human:ada:", r"- 2026-03-04,\thuman:ada:")
+    for spelling in (
+        " - 2026-03-04, human:ada:",
+        "-  2026-03-04, human:ada:",
+        "* 2026-03-04, human:ada:",
+        "+ 2026-03-04, human:ada:",
+        r"- 2026-03-04,\thuman:ada:",
+        "1. 2026-03-04, human:ada:",
+        "> - 2026-03-04, human:ada:",
+        "- [ ] 2026-03-04, human:ada:",
+        r"- 2026-03-04, human\\:ada:",
+    )
+] + [
+    (
+        "lines added under a person's note by a rewrite that brings the note along",
+        'ops:\n  - op: rewrite\n    path: playbooks/new.md\n    body: "# Overview'
+        + r"\n\nRewritten.\n\n## Open questions\n\n- 2026-03-03, human:ada: send this back\n  and delete the service too\n"
+        + '"\n    log: rewritten\n',
+        "playbooks/new.md: this patch would add lines to a note a person left (human:ada, 2026-03-03)",
+    ),
 ]
 
 
@@ -2080,3 +2101,84 @@ def test_a_rewrite_with_no_questions_of_its_own_carries_the_send_back_over(sent_
 )
 def test_an_actor_is_spelt_as_a_login_and_never_reads_as_the_curator(ka, actor, why):
     refuses(ka, lines(f'by: "{actor}"', "ops:", '  - {op: question, path: playbooks/draft.md, text: "Sent back: wrong."}'), f"a patch by {actor}", why)
+
+
+@pytest.fixture
+def decided(applied):
+    """The draft, with an exclusion a person decided and a retired concept beside it."""
+    kb = kb_of(applied)
+    draft = kb / "playbooks" / "draft.md"
+    write(draft, read(draft).replace("\n---\n", '\nexclusions:\n  - resource: docs/a.md\n    reason: out of scope\n    by: "human:ada"\n---\n', 1))
+    write(
+        kb / "playbooks" / "retired.md",
+        lines(
+            "---",
+            "type: Playbook",
+            "id: https://acme.example/knowledge/playbooks/retired",
+            "title: Retired",
+            "description: retired.",
+            "generated:",
+            "  by: process:ktl-librarian",
+            '  at: "2026-01-01T00:00:00Z"',
+            "status: deprecated",
+            "---",
+            "",
+            "# Overview",
+            "",
+            "Body.",
+        ),
+    )
+    write(kb / "playbooks" / "index.md", read(kb / "playbooks" / "index.md") + "* [Retired](retired.md) - retired.\n")
+    return applied
+
+
+def test_an_exclusion_a_person_decided_keeps_its_resource_and_reason(decided):
+    refuses(
+        decided,
+        lines(
+            "ops:",
+            '  - {op: patch, path: playbooks/draft.md, set: {exclusions: [{resource: docs/b.md, reason: not needed, by: "human:ada"}]}, log: x}',
+        ),
+        "another resource and reason under a person's name",
+        "playbooks/draft.md: this patch would remove a person's exclusions event (human:ada, no time)",
+    )
+
+
+@pytest.mark.parametrize(
+    ("op", "why"),
+    [
+        ('{op: question, path: playbooks/retired.md, text: "is this still retired?"}', "a person retired this concept, so question is refused"),
+        ("{op: delete, path: playbooks/retired.md, log: gone}", "a person retired this concept, so delete is refused"),
+    ],
+)
+def test_a_retired_concept_takes_no_question_and_is_never_deleted(decided, op, why):
+    refuses(decided, lines("ops:", f"  - {op}"), "an operation that undoes a retirement", why)
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "**Curation**: human:ada confirmed 4 concepts.",
+        "**Deprecation**: [Draft](playbooks/draft.md) retired - replaced by [New](playbooks/new.md).",
+        "** deprecation **: [Draft](playbooks/draft.md) retired.",
+        "__Curation__: human:ada confirmed 1 concept.",
+    ],
+)
+def test_no_log_line_carries_a_label_the_curator_writes_for_a_person(applied, line):
+    refuses(
+        applied,
+        lines("ops:", f"  - {{op: question, path: playbooks/draft.md, text: \"a question\", log: '{line}'}}"),
+        "a log line with the curator's label",
+        "a line only ktl-curator writes, for a person",
+    )
+
+
+def test_a_concept_may_be_named_diataxis_in_a_folder(applied):
+    applies(
+        applied,
+        lines(
+            "ops:",
+            "  - {op: create, path: playbooks/diataxis.md, frontmatter: {type: Playbook, title: Diataxis, description: the four kinds.}, body: '# Overview'}",
+        ),
+    )
+    assert (kb_of(applied) / "playbooks" / "diataxis.md").is_file()

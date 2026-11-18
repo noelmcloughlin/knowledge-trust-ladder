@@ -99,14 +99,17 @@ getenv = ["^HUGO_"]
 source = "content"
 target = "content"
 
-# The README, the docs, the bundle and the changelog are read by the content
-# adapters in content/, content/docs/, content/knowledge/ and
-# content/changelog/, which write the home page and a page per file, per
-# concept and per release. A file's own frontmatter is data there, so no key
-# in it can move, hide or redirect a page.
+# The README, a root SPEC.md, the docs, the bundle and the changelog are read
+# by the content adapters in content/, content/docs/, content/knowledge/ and
+# content/changelog/, which write the home page, the specification's page
+# and a page per file, per concept and per release. A file's own frontmatter
+# is data there, so no key in it can move, hide or redirect a page.
 [[module.mounts]]
 source = "../README.md"
 target = "assets/readme/README.md"
+[[module.mounts]]
+source = "../SPEC.md"
+target = "assets/spec/SPEC.md"
 [[module.mounts]]
 source = "../docs"
 target = "assets/docs"
@@ -128,7 +131,7 @@ target = "assets/ingest/ingest.lock.yaml"
 
 # What the site shows only when the repository has it. A mount whose source
 # is missing mounts nothing, so neither needs a setting, and nor do the
-# README, the docs, the changelog and the figures above and below. The first is the
+# README, SPEC.md, the docs, the changelog and the figures above and below. The first is the
 # folder of pages prepare.sh has gen-doc write for a LinkML schema, or for
 # the bundle's domain vocabulary or LOKF core when the repository holds none. The second is the
 # workflow of a domain host, whose graph page offers the workspace that

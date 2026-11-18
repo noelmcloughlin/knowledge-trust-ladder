@@ -10,7 +10,7 @@
 
 The workflow has no placeholders and names no branch: it reads the repository's default branch from the event.
 
-It runs on a change to the site's folder, the bundle, the README, `docs/`, `.assets/`, the changelog, a schema under `src/` or `.linkml/`, and every Monday from the default branch. A change anywhere else reaches the site with that weekly run, or at once by hand: `gh workflow run knowledge-website.yaml`.
+It runs on a change to the site's folder, the bundle, the README, `SPEC.md`, `docs/`, `.assets/`, the changelog, a schema under `src/` or `.linkml/`, and every Monday from the default branch. A change anywhere else reaches the site with that weekly run, or at once by hand: `gh workflow run knowledge-website.yaml`.
 
 A domain host, which has `knowledge-federation.yaml`, leaves `KNOWLEDGE_WEBSITE_ENABLED` unset: the federation workflow builds the site the same way and deploys it with the workspace beside it, from the release's tag as well as the default branch, so its `github-pages` Environment admits release tags too.
 
