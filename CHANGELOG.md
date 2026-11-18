@@ -13,6 +13,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ### Changed
 
+- **The sidecar's lokf floor is 0.10.0, and the no-Python schema names its commit.**
 - **A skill's concept is `playbooks/<name>-skill.md`, with its `SKILL.md` as `resource`.**
 - **ktl-sidecar commits Step 5's files, and keeps the KTL skills out of a host's own `skills/`.**
 - **ktl-librarian's first pull request follows the sidecar's.**
