@@ -4,6 +4,9 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Fixed
+- **The sync keeps a website script's executable bit, so a site it adds `uv-env.sh` and `vendor.sh` to still builds.** build.sh runs them directly; the sidecar copies already kept theirs.
+
 ## [0.69.0] - 2026-11-18
 
 ### Added
