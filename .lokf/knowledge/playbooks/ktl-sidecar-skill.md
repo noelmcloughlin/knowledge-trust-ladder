@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-sidecar/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-17T22:28:06Z"
+  at: "2026-11-18T11:50:44Z"
 hasPart:
   - https://w3id.org/ktl/knowledge/playbooks/open-bundle-in-obsidian
   - https://w3id.org/ktl/knowledge/playbooks/docent-in-m365-copilot
@@ -25,7 +25,7 @@ sources:
     id: automation.md
     excerpt: a fine-grained personal access token (Settings, Developer settings, Personal access tokens, Fine-grained tokens) for this repository alone, with the repository permissions Contents, Pull requests and Workflows set to read and write, and an expiry you will renew.
   - resource: skills/ktl-sidecar/references/gate.md
-    id: gate.md
+    id: gate-conventions
     excerpt: "`knowledge-conventions.sh` checks the bundle against eighteen conventions the toolkit never sees."
   - resource: skills/ktl-sidecar/references/portability.md
   - resource: skills/ktl-sidecar/references/prerequisites.md
@@ -36,8 +36,11 @@ sources:
   - resource: skills/ktl-librarian/references/scheduled-task.md
   - resource: .lokf/scripts/knowledge-preflight.sh
   - resource: CHANGELOG.md
-    id: changelog.md
+    id: changelog-exclusions
     excerpt: Coverage and `--why` count an excluded file apart and never as a source, and conventions rule 18 fails a blank reason or a material listed both ways.
+  - resource: CHANGELOG.md
+    id: changelog-ingest-git
+    excerpt: such an entry needs git 2.37 or later ... The ingest refuses a `git` entry when git is older than 2.31
   - resource: https://github.com/noelmcloughlin/knowledge-trust-ladder/commit/61b9355f0dfa037ff8e165affa285344e451c209
   - resource: https://github.com/noelmcloughlin/knowledge-trust-ladder/commit/8fcdd867e45528a21f20f177fb63306afe8d278d
   - resource: skills/ktl-sidecar/templates
@@ -102,7 +105,7 @@ The forge-free gate verifies GPG keys with their subkeys and SSH keys alike agai
 
 The conventions script's thirteenth convention fails an edit to a confirmed concept that leaves `generated` older than the confirmation. A move of the bundle's `base_iri` is no edit, since an id or relation target that moved with it still says the same. Its fourteenth, given a base commit with `--since`, fails a commit that records a person's confirmation and also changes the concept's claims, unless `generated.by` names that same person. The `validate` job passes the merge-base of the pull request's base and head, the commit the `provenance` job also uses, and the pull request's last commit as `--head`. The job checks out a merge of the pull request into its base, so `--head` keeps the sixth and the fourteenth to the pull request's own commits.
 
-The conventions script checks eighteen conventions.[^gate.md] Every workflow runs it with `--strict`, which fails the step when the script could not check a rule, so a runner without `uv` never passes. The fifteenth asks every concept to name where it came from, as a top-level `resource` or a `sources` entry. The sixteenth joins each footnote in a body to a `sources` entry by its `id`, and holds one `id` to one resource across the bundle. The seventeenth asks that each `**Added**` and `**Deprecation**` bullet in `log.md` names a concept the bundle holds. The sidecar's two example concepts carry a `resource`, so the skeleton keeps the fifteenth before anyone edits it. The eighteenth fails an `exclusions` entry with a blank reason, and a material that is both a source and an exclusion of one concept.[^changelog.md]
+The conventions script checks eighteen conventions.[^gate-conventions] Every workflow runs it with `--strict`, which fails the step when the script could not check a rule, so a runner without `uv` never passes. The fifteenth asks every concept to name where it came from, as a top-level `resource` or a `sources` entry. The sixteenth joins each footnote in a body to a `sources` entry by its `id`, and holds one `id` to one resource and one excerpt across the bundle. The seventeenth asks that each `**Added**` and `**Deprecation**` bullet in `log.md` names a concept the bundle holds. The sidecar's two example concepts carry a `resource`, so the skeleton keeps the fifteenth before anyone edits it. The eighteenth fails an `exclusions` entry with a blank reason, and a material that is both a source and an exclusion of one concept.[^changelog-exclusions]
 
 `gate.md` also carries what Step 5 points a curator at:
 
@@ -159,7 +162,7 @@ It then pushes the branch `knowledge-sync`, leased to the commit the `earlier` j
 
 **Knowledge outside the repository.** `.lokf/ingest.yaml` names each source outside the repository, `knowledge-ingest.sh` fetches it and writes it as Markdown under `.lokf/mirror/<entry id>/`, and `.lokf/ingest.lock.yaml` records what was fetched. `knowledge-ingest.yaml` runs weekly and on demand once `KNOWLEDGE_INGEST_ENABLED` is `true`. Its read-only `ingest` job passes the script only the secrets whose names start `KNOWLEDGE_INGEST_`, from the `knowledge-ingest` Environment, and its `publish` job opens one pull request on the branch `knowledge-ingest`, refreshed until it is merged. A scheduled run also prunes a mirror file whose source is gone or has left the selection, that no concept cites, and that an earlier run recorded so.
 
-The ingest checks the address each connection opens, so a name that answers a public address to the check and a private one to the connection reaches nothing unless the manifest allows private addresses (`CHANGELOG.md`). Every `git` entry needs git 2.31 or later, and one that names a host, not an IP address, needs 2.37 or later unless the manifest allows private addresses or a proxy resolves the name.[^changelog.md] With an older git the run refuses the entry, and the preflight's `ingest` line warns before a run.[^ktl-sidecar-prerequisites.md] The script starts no work after 25 minutes, inside the job's 30, and leaves what it did not reach to the next run.[^automation.md]
+The ingest checks the address each connection opens, so a name that answers a public address to the check and a private one to the connection reaches nothing unless the manifest allows private addresses (`CHANGELOG.md`). Every `git` entry needs git 2.31 or later, and one that names a host, not an IP address, needs 2.37 or later unless the manifest allows private addresses or a proxy resolves the name.[^changelog-ingest-git] With an older git the run refuses the entry, and the preflight's `ingest` line warns before a run.[^ktl-sidecar-prerequisites.md] The script starts no work after 25 minutes, inside the job's 30, and leaves what it did not reach to the next run.[^automation.md]
 
 **Behind a package mirror, or with an old python3.** A company package index, such as Nexus or Artifactory, often serves no upload times. The scripts carry no `exclude-newer` date of their own, and `uv sync` in `.lokf/` still installs the toolkit there, through `uv run` after it (`references/portability.md`). Where a person's own uv settings apply an `exclude-newer` date, the pen, the conventions check and the ingest lift it for each package uv names that the script pins with `==`, and keep the version. Every script needs Python 3.11 or later; where python3 is older, as RHEL 9's 3.9 and Ubuntu 22.04's 3.10 are, the preflight warns. When its runner cannot start, the conventions check says so and exits 2, rather than reporting findings against the bundle.
 
@@ -171,8 +174,9 @@ The preflight warns on its `python` line when python3 is older than 3.11, and on
 
 The preflight also lists KTL skills installed for one user, under `~/.copilot/skills/`, `~/.claude/skills/` or `~/.agents/skills/`. Those serve that user's live sessions, but the scheduled librarian runs on a fresh runner and needs a copy in the repository (`references/prerequisites.md`).
 
-[^gate.md]: skills/ktl-sidecar/references/gate.md, "The eighteen conventions"
-[^changelog.md]: CHANGELOG.md, 0.57.0 to 0.59.0
+[^gate-conventions]: skills/ktl-sidecar/references/gate.md, "The eighteen conventions"
+[^changelog-exclusions]: CHANGELOG.md, 0.59.0, Added
+[^changelog-ingest-git]: CHANGELOG.md, 0.57.0, Security
 [^automation.md]: skills/ktl-sidecar/references/automation.md, the librarian's variables, the domain vocabulary beside the release, the `ingest` job, and the sync's Setting it up (quoted) and Workflow changes wait for a person
 [^knowledge-federation.yaml]: skills/ktl-sidecar/templates/github/knowledge-federation.yaml, the `nudge` job
 [^ktl-sidecar-prerequisites.md]: skills/ktl-sidecar/references/prerequisites.md, the `ingest`, `toolkit` and `schema` rows

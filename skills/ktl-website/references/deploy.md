@@ -58,9 +58,13 @@ Step 0 reads `mkdocs.yml` once, by eye, and Step 1 writes what it found into `si
 - Add each folder `exclude_docs` names to `docsExclude`.
 - Check the Pages address against `site_url`.
 
-## A custom domain, or a user site
+## A custom domain, a user site, or a private site
 
-Set `baseURL` in `site.toml` to the domain, `https://docs.example.org/`. The domain's DNS and the Pages setting for it stay the repository's own; a deployment from Actions needs no `CNAME` file. A user site, the `<owner>.github.io` repository, sets `baseURL` to `https://<owner>.github.io/`.
+Set `baseURL` in `site.toml` to the address Pages serves the site at. Once Pages is on, the preflight's `address` line reads it from the Pages API's `html_url` and warns when `baseURL` differs, so run the preflight again after Pages is switched on or its domain changes.
+
+- **A custom domain** is `https://docs.example.org/`. The domain's DNS and the Pages setting for it stay the repository's own; a deployment from Actions needs no `CNAME` file.
+- **A user site**, the `<owner>.github.io` repository, is `https://<owner>.github.io/`.
+- **A private site**, on GitHub Enterprise Cloud, gets a domain of its own under `pages.github.io` in place of `<owner>.github.io/<name>/`, which only the Pages API or Settings > Pages shows.
 
 ## A gitignored `.lokf/`
 

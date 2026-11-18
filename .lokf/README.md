@@ -68,5 +68,5 @@ When the justfile's `schema` line names a domain vocabulary, run the recipes ins
 
 - LOKF specification & Golden Rules: <https://lokf.nolan-nichols.com/>
 - `lokf` toolkit (PyPI): <https://pypi.org/project/lokf/>
-- LOKF schema, if Python is not available, from the commit tagged with the `pyproject.toml` floor, `v0.9.0`: <https://github.com/nicholsn/lokf/blob/eab5fe35b99e154bec9aabc03656446b891311f8/lokf.yaml>
+- LOKF schema, if Python is not available, from the commit tagged with the `pyproject.toml` floor, `v0.10.0`: <https://github.com/nicholsn/lokf/blob/ee37659ca2f78915f5a691da7bad9239da624c87/lokf.yaml>
 - OKF spec: <https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md>

@@ -23,7 +23,9 @@
 #     too, when the sidecar's .venv holds the toolkit, and says when it cannot
 #     check them; that check also refuses a `sources[].excerpt` its local file
 #     does not hold;
-#   - refuses an excerpt that is empty or longer than 500 characters.
+#   - refuses an excerpt that is empty or longer than 500 characters, and a
+#     sources id the patch gives another resource or excerpt than another
+#     concept gives it, since the id is one node in the graph.
 #
 # Every concept it writes keeps a person's record as it was: each `human:`
 # event and each note in a person's name, as knowledge-provenance.sh
@@ -266,6 +268,16 @@ NOT_CONCEPTS = {"index.md", "log.md"}
 ROOT_MAP = "diataxis.md"
 SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:")
 WHOLE_IRI = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:\S+")
+
+
+def material(value):
+    """A resource as rule 16 compares it, as `lokf validate` does: `./docs/a.md`, `docs/a.md` and `docs/a.md/` name one material."""
+    if not isinstance(value, str) or not value.strip():
+        return None
+    key = value.strip()
+    while key.startswith("./"):
+        key = key[2:]
+    return key.rstrip("/") or key
 
 
 def relation_targets(fm: dict) -> set:
@@ -1054,6 +1066,59 @@ class Bundle:
                     findings.append(f"{path}: {field} still names {named}, which this patch deletes; drop or repoint the relation in this patch, or add a question to the concept if a person wrote it")
         return findings
 
+    def source_findings(self) -> list:
+        """Rule 16 across the bundle, for the `sources` entries this patch adds or changes: one id names one resource and one excerpt.
+
+        A clash the patch did not make is left to the gate.
+        """
+        def entries(fm) -> set:
+            found = fm.get("sources") if isinstance(fm, dict) else None
+            found = [found] if isinstance(found, dict) else found if isinstance(found, list) else []
+            return {(str(e["id"]), material(e.get("resource")), e.get("excerpt") if isinstance(e.get("excerpt"), str) else None)
+                    for e in found if isinstance(e, dict) and e.get("id") is not None}
+
+        added = {path: entries(c.fm) - entries(getattr(c, "fm_read", {})) for path, c in self.concepts.items() if c.touched and not c.deleted}
+        added = {path: found for path, found in added.items() if found}
+        if not added:
+            return []
+        uses: dict = {}
+        for path, fm in self.standing().items():
+            for label, resource, excerpt in entries(fm):
+                uses.setdefault(label, []).append((path, resource, excerpt))
+        findings = []
+        for path, found in sorted(added.items()):
+            for label, resource, excerpt in sorted(found, key=str):
+                for other, theirs, quoted in sorted(uses.get(label, []), key=str):
+                    if other == path:
+                        continue
+                    if theirs != resource:
+                        findings.append(f"{path}: sources id {label} names {resource} here and {theirs} in {other}; one id names one resource across the bundle, so give this entry an id of its own and use it in the footnote")
+                    elif excerpt is not None and quoted is not None and quoted != excerpt:
+                        findings.append(f"{path}: sources id {label} quotes another passage in {other}; one id is one source node across the bundle, which holds one excerpt, so give this entry an id named after its passage and use it in the footnote")
+                    else:
+                        continue
+                    break
+        return findings
+
+    def standing(self) -> dict:
+        """Each concept's frontmatter as the bundle would hold it after this patch, by path."""
+        standing = {}
+        for file in sorted(self.knowledge.rglob("*.md")):
+            path = file.relative_to(self.knowledge).as_posix()
+            if path in self.concepts or file.name in NOT_CONCEPTS or path == ROOT_MAP or ".obsidian" in path.split("/"):
+                continue
+            try:
+                split = split_frontmatter(file.read_text(encoding="utf-8"))
+                fm = read_yaml(split[0]) if split else None
+            except (OSError, UnicodeDecodeError, yaml.YAMLError):
+                continue  # a concept this script cannot read is refused when an operation names it
+            if isinstance(fm, dict):
+                standing[path] = fm
+        for path, c in self.concepts.items():
+            if not c.deleted:
+                standing[path] = c.fm
+        return standing
+
     # ---- index, log, feedback -------------------------------------------
     def index_text(self, file: Path, default: str) -> str:
         if file not in self.indexes:
@@ -1100,7 +1165,10 @@ class Bundle:
                 del lines[k]
                 if 0 < k < len(lines) and lines[k - 1] == "" and lines[k] == "":
                     del lines[k]  # the blank line on either side of it, now two in a row
-            return Bundle.joined([Bundle.unlink(line, link, path, where) if ref.search(line) else line for line in lines])
+            lines = [Bundle.unlink(line, link, path, where) if ref.search(line) else line for line in lines]
+            if section is not None:
+                lines = Bundle.drop_empty_section(lines, section[0])
+            return Bundle.joined(lines)
         if mine:
             for k in mine:
                 lines[k] = bullet
@@ -1125,6 +1193,53 @@ class Bundle:
             if last + 3 < len(lines) and lines[last + 3] != "":
                 lines.insert(last + 3, "")
         return Bundle.joined(lines)
+
+    @staticmethod
+    def drop_empty_section(lines: list, name: str) -> list:
+        """The lines without the heading named after a folder when nothing but blank lines is left under it."""
+        heads = Bundle.headings(lines)
+        for i, (k, level, text) in enumerate(heads):
+            if i == 0 or text.lower() != name.lower():
+                continue
+            end = next((k2 for k2, level2, _ in heads[i + 1 :] if level2 <= level), len(lines))
+            if any(line.strip() for line in lines[k + 1 : end]):
+                continue
+            while k > 0 and lines[k - 1] == "":
+                k -= 1
+            lines = lines[:k] + ([""] if end < len(lines) and k > 0 else []) + lines[end:]
+            break
+        return lines
+
+    def index_writes(self) -> list:
+        """Each index.md this patch changed, with None for a folder's index left holding only its heading, no concept beside it and no link to it."""
+        out = []
+        for file, text in self.indexes.items():
+            if file != self.knowledge / "index.md" and len([line for line in text.split("\n") if line.strip()]) == 1 and HEADING_RE.match(text.strip()):
+                folder = file.parent.relative_to(self.knowledge).as_posix()
+                left = {f.relative_to(self.knowledge).as_posix() for f in file.parent.rglob("*.md") if f != file}
+                left -= {p for p, c in self.concepts.items() if c.deleted}
+                left |= {p for p, c in self.concepts.items() if not c.deleted and p.startswith(folder + "/")}
+                if not left and not self.linked_from_an_index(file):
+                    text = None
+            out.append((file, text))
+        return out
+
+    def linked_from_an_index(self, folder_index: Path) -> bool:
+        """Whether another index.md, as this patch leaves it, links to the folder or its index.md."""
+        others = set(self.knowledge.rglob("index.md")) | set(self.indexes)
+        for other in sorted(others):
+            if other == folder_index or ".obsidian" in other.relative_to(self.knowledge).parts:
+                continue
+            text = self.indexes.get(other)
+            if text is None:
+                try:
+                    text = other.read_text(encoding="utf-8")
+                except (OSError, UnicodeDecodeError):
+                    continue
+            rel = Path(os.path.relpath(folder_index.parent, other.parent)).as_posix()
+            if re.search(r"\]\((?:\./)?" + re.escape(rel) + r"(?:/(?:index\.md)?)?(?:#[^)]*)?\)", text):
+                return True
+        return False
 
     @staticmethod
     def joined(lines: list) -> str:
@@ -1525,6 +1640,7 @@ def main(argv: list[str]) -> int:
                 if c.touched:
                     findings.extend(record_findings(path, c.record, Counter() if c.deleted else person_record(c.text())))
             findings.extend(bundle.relation_findings())
+            findings.extend(bundle.source_findings())
     for line in findings:
         print(line)
     if findings:
@@ -1535,8 +1651,7 @@ def main(argv: list[str]) -> int:
         if not c.touched:
             continue
         writes.append((bundle.knowledge / path, None if c.deleted else c.text()))
-    for file, text in bundle.indexes.items():
-        writes.append((file, text))
+    writes.extend(bundle.index_writes())
     try:
         log_text = bundle.log_text()
     except (OSError, UnicodeDecodeError) as exc:

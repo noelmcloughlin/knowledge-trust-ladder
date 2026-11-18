@@ -85,6 +85,8 @@ COMMIT = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/~^-]*")
 # Rule 16's shape for a `sources[].id`: what rule 8 allows in a path segment,
 # since the id becomes the IRI of the source's node under the bundle base.
 SOURCE_ID = re.compile(r"[a-z0-9][a-z0-9._-]*")
+# A frontmatter delimiter as LOKF section 5 reads one.
+LOKF_DELIMITER = re.compile(r"---[ \t]*")
 # A footnote reference, and a definition line, which Markdown reads at the
 # start of a line with at most three spaces before it.
 FOOTNOTE = re.compile(r"\[\^([^\]\s]+)\]")
@@ -576,7 +578,8 @@ def verdict_edits(bundle: Path, since: str, head: str = "HEAD") -> list[str]:
     return findings
 
 
-def footnotes(path: Path, frontmatter: dict, body: str, source_ids: dict[str, dict[str, list[Path]]]) -> list[str]:
+def footnotes(path: Path, frontmatter: dict, body: str, source_ids: dict[str, dict[str, list[Path]]],
+              source_quotes: dict[str, dict[str, list[Path]]]) -> list[str]:
     """Rule 16: each footnote in the body joins a claim to one of the concept's `sources` entries, by that entry's `id`.
 
     A reference `[^label]` and a definition line `[^label]: text` each use
@@ -586,8 +589,9 @@ def footnotes(path: Path, frontmatter: dict, body: str, source_ids: dict[str, di
     the footnote cannot drift from its entry. A footnote mark in a code
     fence or a code span is an example, not a reference. OKF v0.2 section
     5.1 says a footnote whose label equals `id` attributes the claim to that
-    entry. Each id is recorded in `source_ids` with its resource, for the
-    check across the bundle in main: one id names one resource.
+    entry. Each id is recorded in `source_ids` with its resource, and in
+    `source_quotes` with its excerpt, for the checks across the bundle in
+    main: one id names one resource and one excerpt.
     """
     findings: list[str] = []
     sources = frontmatter.get("sources")
@@ -608,6 +612,9 @@ def footnotes(path: Path, frontmatter: dict, body: str, source_ids: dict[str, di
         # One material however it is written: `./docs/a.md` and `docs/a.md`
         # are one resource, as rule 18 reads them.
         source_ids.setdefault(label, {}).setdefault(same_material(resource) or resource, []).append(path)
+        # Compared as lokf compares them: the exact text, and only where given.
+        if isinstance(entry.get("excerpt"), str):
+            source_quotes.setdefault(label, {}).setdefault(entry["excerpt"], []).append(path)
     referenced: set[str] = set()
     defined: dict[str, str] = {}
     fenced = False
@@ -762,6 +769,7 @@ def check_file(
     entries: dict[Path, tuple[str, str]],
     titles: set[str],
     source_ids: dict[str, dict[str, list[Path]]],
+    source_quotes: dict[str, dict[str, list[Path]]],
 ) -> list[str]:
     findings: list[str] = []
     raw = path.read_bytes()
@@ -776,6 +784,17 @@ def check_file(
     if len(block) == 3 and "\r" in block[1].replace("\r\n", ""):
         findings.append(f"{path}: frontmatter uses a bare carriage return - write it plainly, so a line reader reads what a parser reads")
 
+    # LOKF section 5 also reads a block after blank lines, and ends it at
+    # `---` with spaces or tabs after it. The line readers here read neither.
+    lines = text.split("\n")
+    lead = next((i for i, line in enumerate(lines) if line.strip()), 0)
+    if LOKF_DELIMITER.fullmatch(lines[lead]):
+        if lead:
+            findings.append(f"{path}: blank lines stand before the frontmatter block - LOKF reads past them and the line readers here do not; delete them")
+            return findings
+        if any(lines[i] != "---" for i in [i for i, line in enumerate(lines) if LOKF_DELIMITER.fullmatch(line)][:2]):
+            findings.append(f"{path}: a frontmatter delimiter has spaces or tabs after '---' - LOKF ends the block there and the line readers here do not; delete them")
+            return findings
     split = split_frontmatter(text)
     if split is None:
         findings.append(
@@ -783,10 +802,10 @@ def check_file(
         )
         return findings
     fm_text, body = split
-    # The toolkit ends the block at the first `---` it meets, in a line or not,
-    # so it would read less of this block than every script here reads.
+    # lokf before 0.10.0 ends the block at the first `---`, in a line or not,
+    # and a host keeps its own floor.
     if "---" in fm_text:
-        findings.append(f"{path}: frontmatter holds '---', where the toolkit ends the block - write the value another way")
+        findings.append(f"{path}: frontmatter holds '---', where lokf before 0.10.0 ends the block - write the value another way")
 
     try:
         frontmatter = yaml.safe_load(fm_text)
@@ -893,7 +912,7 @@ def check_file(
         )
 
     # 16. each footnote joins a claim to a `sources` entry by its id.
-    findings.extend(footnotes(path, frontmatter, body, source_ids))
+    findings.extend(footnotes(path, frontmatter, body, source_ids, source_quotes))
 
     return findings
 
@@ -917,6 +936,7 @@ def main(argv: list[str]) -> int:
     entries: dict[Path, tuple[str, str]] = {}
     titles: set[str] = set()
     source_ids: dict[str, dict[str, list[Path]]] = {}
+    source_quotes: dict[str, dict[str, list[Path]]] = {}
     # 9. the toolkit reads a link as the file it points at, and the gates read
     #    it as the path it names, so its events would go unseen.
     for path in sorted(bundle.rglob("*")):
@@ -928,7 +948,7 @@ def main(argv: list[str]) -> int:
             continue
         if ".obsidian" in path.parts or reserved(path, bundle):
             continue
-        findings.extend(check_file(path, bundle, ids, entries, titles, source_ids))
+        findings.extend(check_file(path, bundle, ids, entries, titles, source_ids, source_quotes))
 
     # 12. an index bullet that names a concept says what the concept says.
     #     ktl-docent chooses what to open from the bullets alone, so a bullet
@@ -963,6 +983,15 @@ def main(argv: list[str]) -> int:
             findings.append(
                 f"id {label} names more than one resource: {where} - "
                 "one id names one resource across the bundle, since the id mints one source node under the bundle base"
+            )
+    # ... and one excerpt: the node holds every excerpt given under its id,
+    #     and LOKF's SHACL shapes allow it one (LOKF 0.10.0, section 9).
+    for label, by_quote in sorted(source_quotes.items()):
+        if len(by_quote) > 1:
+            where = "; ".join(f"{json.dumps(quote[:40] + ('...' if len(quote) > 40 else ''))} in {' '.join(str(p) for p in paths)}" for quote, paths in by_quote.items())
+            findings.append(
+                f"id {label} carries more than one excerpt: {where} - "
+                "one id is one source node across the bundle, which holds one excerpt; give each other passage an id of its own"
             )
 
     # 14. only with a base, which the registrar's gate sets to the pull

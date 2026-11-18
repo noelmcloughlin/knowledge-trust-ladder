@@ -4,6 +4,47 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Added
+
+- **ktl-sidecar's `<OWNER_TYPE>` sets the publisher to `Person` or `Organization`.**
+- **ktl-docent answers "which skill should I use?" from a skill's concept.**
+- **Feedback starting `Host text:` records a fault in the host's own files.**
+- **ktl-librarian's bootstrap maps a plugin marketplace manifest.**
+- **The pen refuses a source id that another concept gives another resource or excerpt.**
+- **The gate checks LOKF's SHACL shapes where `uv.lock` holds lokf's `shacl` extra.**
+- **The preflight warns when `uv.lock` holds no pyshacl.**
+
+### Changed
+
+- **The sidecar names `lokf[build,shacl]>=0.10.0`, and the no-Python schema names its commit.**
+- **A skill's concept is `playbooks/<name>-skill.md`, with its `SKILL.md` as `resource`.**
+- **ktl-sidecar commits Step 5's files, and keeps the KTL skills out of a host's own `skills/`.**
+- **ktl-librarian's first pull request follows the sidecar's.**
+- **ktl-librarian cites an installed skill's published copy, committed or not.**
+- **Conventions rule 16 fails one source id with two excerpts, as LOKF 0.10.0's shapes do.**
+- **A concept may cite two passages of one file, each under an id of its own.**
+- **ktl-librarian uses LOKF 0.10.0's names for a domain vocabulary, and `adapt --beside`.**
+- **ktl-librarian's version check asks uv's index, and finds a tag's commit through `gh api`.**
+- **ktl-website's `baseURL` is the Pages API's `html_url`, which names a private site's own domain.**
+- **The sync's pull request checklist says how to clear a convention a release tightens.**
+
+### Fixed
+
+- **The pen drops a folder's empty root section and `index.md` with its last concept**, unless another index links it.
+- **ktl-sidecar puts the README aside before the first heading of any level.**
+- **ktl-sidecar names all six skills, as the preflight does.**
+- **Conventions rule 9 fails a blank line before the frontmatter and a `---` with spaces after it**, which LOKF 0.10.0 reads.
+- **The federation build reads a member page that opens after a byte order mark or blank lines.**
+- **`MemberDomain` keeps a class IRI of its own**, so no catalogue reads as a member and `moved.rq` finds member domains.
+- **The website preflight warns when `site.toml`'s `baseURL` is not where Pages serves the site.**
+- **The preflight reads a lokf floor whose extras hold a space.**
+- **ktl-sidecar's Step 1 names an unset placeholder rather than failing with a traceback.**
+- **The federation build and its MCP `read_document` treat frontmatter that does not parse as none.**
+
+### Security
+
+- **ktl-librarian finds a `Host text:` fault in the file itself, and never words its question from the entry**, so a reader's text cannot reach a concept.
+
 ## [0.68.0] - 2026-11-18
 
 ### Added

@@ -29,3 +29,16 @@ Where `npx` is missing, grep the files you changed for the mistake that has alre
 ## Without `uv`
 
 Without `uv` or the `lokf` package there is no substitute for the generated validator and the reference check. Fall back to the manual structural cross-check against the raw schema that ktl-sidecar's Step 4 describes, and say so in the audit report rather than claim full coverage. The fallback has no cardinality check, so a bare scalar where a slot is multivalued (Rule 4) passes it and fails only real `lokf validate`. A bundle that has only passed the manual fallback is not proven schema-valid; report it as such.
+
+## Raising the toolkit floor
+
+Take the newest `lokf` from the index `uv sync` reads, never from GitHub: a floor above what that index serves breaks `uv sync` on the host, so wait until a mirror carries a release before raising the floor to it.
+
+When SKILL.md's step 7 raises the floor, two things change with it. A host with a domain vocabulary refreshes its pinned `lokf.yaml` ([domain-vocabulary.md](domain-vocabulary.md)). The no-Python fallback link in `.lokf/README.md` moves to the commit tagged `v<version>`, never to the tag itself. Either command prints that commit; use the second where a proxy blocks git over HTTPS but lets the API through:
+
+```bash
+git ls-remote https://github.com/nicholsn/lokf 'refs/tags/v<version>^{}'
+gh api repos/nicholsn/lokf/commits/refs/tags/v<version> --jq .sha
+```
+
+Both give the commit an annotated tag points at. Where both fail, leave the link as it is and say so in the hand-off: an older schema still serves a cross-check, and a guessed commit does not.

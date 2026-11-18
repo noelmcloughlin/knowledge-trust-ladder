@@ -900,6 +900,60 @@ def test_the_sidecars_two_examples_can_be_deleted_together_or_in_the_order_they_
     applies(tmp_path, lines("ops:", "  - op: delete", "    path: s/a.md", log, "  - op: delete", "    path: s/b.md", log))
 
 
+def test_deleting_a_folders_last_concept_removes_its_root_section_and_its_index(tmp_path):
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n\nIntro.\n\n# Services\n\n* [A](services/a.md) - A.\n* [B](services/b.md) - B.\n\n# Glossary\n\n* [T](glossary/t.md) - T.\n")
+    write(kk / "services" / "index.md", "# Services\n\n* [A](a.md) - A.\n* [B](b.md) - B.\n")
+    stamp = "generated:\n  by: process:ktl-librarian\n  at: 2026-01-01T00:00:00Z\nstatus: draft\n"
+    for name in ("a", "b"):
+        write(kk / "services" / f"{name}.md", f"---\ntype: Service\ntitle: {name.upper()}\ndescription: {name.upper()}.\n{stamp}---\n\n# {name}\n")
+    log = '    log: "**Removal**: an example."'
+    applies(tmp_path, lines("ops:", "  - op: delete", "    path: services/a.md", log))
+    assert "# Services" in read(kk / "index.md") and (kk / "services" / "index.md").exists(), "a section with a concept left lost its heading"
+    applies(tmp_path, lines("ops:", "  - op: delete", "    path: services/b.md", log))
+    root = read(kk / "index.md")
+    assert "# Services" not in root and "Intro.\n\n# Glossary\n\n* [T]" in root, f"the emptied section stayed, or the blank lines around it did not close up: {root}"
+    assert not (kk / "services" / "index.md").exists(), "the folder index outlived its last concept"
+
+
+def test_a_folder_index_another_index_links_outlives_its_last_concept(tmp_path):
+    """A root that reaches a folder by a link to its index.md keeps a file to link to."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n\n## What we run\n\n"
+          "The [service catalogue](services/index.md) lists each one.\n\n* [A](services/a.md) - A.\n")
+    write(kk / "services" / "index.md", "# Services\n\n* [A](a.md) - A.\n")
+    write(kk / "services" / "a.md", "---\ntype: Service\ntitle: A\ndescription: A.\ngenerated:\n  by: process:ktl-librarian\n"
+          "  at: 2026-01-01T00:00:00Z\nstatus: draft\n---\n\n# a\n")
+    applies(tmp_path, lines("ops:", "  - op: delete", "    path: services/a.md", '    log: "**Removal**: an example."'))
+    assert "[service catalogue](services/index.md)" in read(kk / "index.md"), read(kk / "index.md")
+    assert read(kk / "services" / "index.md") == "# Services\n", "the pen deleted a folder index the root links, or kept its bullet"
+
+
+def test_a_source_id_names_one_passage_across_the_bundle(tmp_path):
+    """The id resolves to one source node, which LOKF's shapes allow one excerpt."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(tmp_path / "notes.md", "First line.\nSecond line.\n")
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    stamp = "generated:\n  by: process:ktl-librarian\n  at: 2026-01-01T00:00:00Z\nstatus: draft\n"
+
+    def concept(name, excerpt):
+        return (f"---\ntype: Service\ntitle: {name.upper()}\n{stamp}sources:\n  - resource: notes.md\n    id: notes.md\n"
+                f"    excerpt: {excerpt}\n---\n\n# {name}\n\nA claim.[^notes.md]\n\n[^notes.md]: notes.md\n")
+
+    write(kk / "s" / "a.md", concept("a", "First line."))
+    write(kk / "s" / "c.md", concept("c", "Second line."))
+    create = ["ops:", "  - op: create", "    path: s/b.md", "    frontmatter:", "      type: Service", "      title: B",
+              "      description: B.", "      sources:", "        - resource: notes.md", "          id: notes.md"]
+    body = ["    body: \"# B\\n\\nA claim.[^notes.md]\\n\\n[^notes.md]: notes.md\\n\""]
+    refuses(tmp_path, lines(*create, "          excerpt: Third line.", *body), "an id that would carry a new excerpt",
+            "s/b.md: sources id notes.md quotes another passage in s/a.md")
+    refuses(tmp_path, lines(*create[:-1], "          id: notes.md", "          excerpt: First line.", *body).replace("resource: notes.md", "resource: other.md"),
+            "an id that would name a second resource", "s/b.md: sources id notes.md names other.md here and notes.md in s/a.md")
+    applies(tmp_path, lines("ops:", "  - op: patch", "    path: s/c.md", "    set: {description: C.}", '    log: "**Changed**: C."'))
+    write(kk / "s" / "c.md", concept("c", "First line."))
+    applies(tmp_path, lines(*create, "          excerpt: First line.", *body))
+
+
 def test_the_pen_and_the_report_read_the_same_relation_fields():
     pen = re.search(r"RELATION_FIELDS = \((.*?)\)", read(SCRIPTS / "knowledge-apply.py"), re.S).group(1)
     report = re.search(r'split\("([A-Za-z ]+)", relnames', read(SCRIPTS / "knowledge-report.sh")).group(1)

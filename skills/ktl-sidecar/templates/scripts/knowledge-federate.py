@@ -2307,7 +2307,10 @@ def _build(args, tmp: pathlib.Path, note_new) -> int:
         else:
             check = run_lokf(["validate", str(kdir)])
             fit.append(f"- `{slug}`: " + ("validates against LOKF core" if check.returncode == 0 else "does not validate against LOKF core alone (a domain vocabulary of its own, or types outside LOKF): " + (check.stderr or check.stdout).strip().splitlines()[-1][:200]))
-        meta = read_frontmatter(kdir / "index.md") if (kdir / "index.md").read_text(encoding="utf-8").startswith("---") else {}
+        try:
+            meta = read_frontmatter(kdir / "index.md") if opens_with_block((kdir / "index.md").read_text(encoding="utf-8")) else {}
+        except (ValueError, yaml.YAMLError):
+            meta = {}
         pub = meta.get("publisher") or {}
         records.append({
             "slug": slug, "base_iri": entry.base_iri, "title": plain(entry.title) or slug, "version": member.version if member else tag,
@@ -3094,8 +3097,8 @@ def served_add(spec: str, knowledge: pathlib.Path, domain_iri: str, cache: pathl
     try:
         refuse_private(folder + "/index.md")
         text = http_get(folder + "/index.md", max_bytes=1_000_000, member=True).decode("utf-8")
-        meta = frontmatter_of(text) if text.startswith("---") else {}
-    except (OSError, http.client.HTTPException, Failed, UnicodeDecodeError, ValueError):
+        meta = frontmatter_of(text) if opens_with_block(text) else {}
+    except (OSError, http.client.HTTPException, Failed, UnicodeDecodeError, ValueError, yaml.YAMLError):
         meta = {}
     if meta.get("base_iri") not in (None, base):
         meta = {}
@@ -3604,6 +3607,11 @@ def registry_from(source: Snapshot):
         return load_registry(path)
 
 
+def opens_with_block(text: str) -> bool:
+    """Whether a page opens with a frontmatter block as LOKF section 5 reads one: after at most a byte order mark or blank lines."""
+    return text.lstrip("\ufeff \t\r\n").startswith("---")
+
+
 def frontmatter_of(text: str) -> dict:
     """A document's frontmatter as the toolkit reads a concept file."""
     with tempfile.TemporaryDirectory(prefix="federate-doc-") as tmp:
@@ -4046,7 +4054,10 @@ def mcp_server(args) -> int:
         if got is None:
             return {"error": f"{owner['slug']} has no document at {rel}"}
         text, where = got
-        summary = trust.trust_summary(frontmatter_of(text)) if not rel.endswith("/index.md") and text.startswith("---") else None
+        try:
+            summary = trust.trust_summary(frontmatter_of(text)) if not rel.endswith("/index.md") and opens_with_block(text) else None
+        except (ValueError, yaml.YAMLError):  # a block the toolkit cannot read: the page as it is, with no label
+            summary = None
         return {"iri": iri, "bundle": owner, "path": rel, "source_url": source, "read_from": where, "markdown": text, "trust": summary}
 
     warn(f"lokf-registry over {ws.source.label}: {len(ws.members)} bundles{ws.scope_note()}, "

@@ -12,9 +12,9 @@ Create a fresh **`.lokf/` sidecar** inside the repository this skill is invoked 
 > Sources: lokf.nolan-nichols.com is the canonical site for what LOKF *means*
 > (spec, Golden Rules). The tooling this skill installs comes from the
 > [`lokf` PyPI package](https://pypi.org/project/lokf/). With no Python, the
-> fallback (Step 4) is the raw schema from the commit tagged `v0.9.0`, which
+> fallback (Step 4) is the raw schema from the commit tagged `v0.10.0`, which
 > matches `templates/pyproject.toml`'s floor:
-> <https://raw.githubusercontent.com/nicholsn/lokf/eab5fe35b99e154bec9aabc03656446b891311f8/lokf.yaml>.
+> <https://raw.githubusercontent.com/nicholsn/lokf/ee37659ca2f78915f5a691da7bad9239da624c87/lokf.yaml>.
 > The URL never names a tag or `main`: a tag can be moved, and `main` can be
 > ahead of the toolkit. Cite each for its own role in generated docs.
 
@@ -50,18 +50,19 @@ Resolve every placeholder from real project sources before writing anything; nev
 | `<BASE_IRI>` | Bundle base IRI, **must end with `/`** | (1) a persistent-identifier namespace the project already publishes under (w3id.org, purl.org, owned domain) + `/knowledge/`; (2) a stable URL the project controls (docs `site_url`, Pages, service catalog) + `/knowledge/`; (3) else `https://<PROJ_SLUG>.example/knowledge/`, flagged for review. **Never** the code-host repo URL (`https://github.com/<org>/<repo>/...`): that path space is not the project's, so the IDs could never resolve |
 | `<OWNER_NAME>` | Owning team/org display name | `CODEOWNERS`, manifest authors, service catalog, or README |
 | `<OWNER_SLUG>` | lowercase-hyphenated owner slug | derive from `<OWNER_NAME>` |
+| `<OWNER_TYPE>` | `Person` or `Organization`: what the owner is | `Organization` for a team or company, `Person` for one person; `<OWNER_FOLDER>` follows it in lower case |
 | `<TODAY>` | `YYYY-MM-DD` | system clock (for `log.md`) |
 
 `<BASE_IRI>` matters most: each concept's `@id` is `base_iri` plus the concept's path. It need not resolve today, but must be stable and in a namespace the project controls (ktl-librarian Rule 2 has the authority test and migration steps). For a plain directory tree with no manifest, CODEOWNERS or repo, use the directory name, any document in the tree, and the `.example` fallback, and flag every guess in Step 6.
 
-**Tracked or gitignored: decide now.** Check whether the root `.gitignore` already excludes `.lokf/` (ask if unclear). Committing `.lokf/` is the default the four skills assume. Gitignoring it is equally valid (a personal bundle, or a policy against committing agent-authored content) but changes four things:
+**Tracked or gitignored: decide now.** Check whether the root `.gitignore` already ignores `.lokf/` (ask if unclear). Committing `.lokf/` is the default every KTL skill assumes. Gitignoring it is equally valid (a personal bundle, or a policy against committing agent-authored content) but changes four things:
 
 - still create every file (the bundle is filesystem-based either way);
 - skip the commit in Step 4, and Step 5 apart from the scripts and the `m365/` folder its table says to install anyway;
 - add the Step 2 `knowledge_bundle` symlink to the root `.gitignore` instead of committing it;
 - say so in the Step 6 handoff.
 
-This is unrelated to `.lokf/.gitignore` below, which only excludes tool build noise.
+This is unrelated to `.lokf/.gitignore` below, which only ignores tool build noise.
 
 **One layout, every host.** `.lokf/knowledge/` is the real folder wherever the sidecar is installed (a code repository, a notes vault, a shared folder), and it is the name every skill, the toolkit, CI and `llms.txt` address. Step 2 adds `knowledge_bundle` beside it: a link, so people and folder pickers have an ordinary name to open. Never place the bundle as a *real* folder inside an Obsidian vault: the vault indexes it like any other folder, and the exhibition's notes show up in the workshop's link suggestions, graph and search. A shared folder that is not a vault is covered in [references/portability.md](references/portability.md).
 
@@ -78,7 +79,7 @@ Copy each template to its destination, then substitute the placeholders it lists
 | `templates/gitattributes` | `.lokf/.gitattributes` (keeps the bundle on LF on every machine; inert without git) | - |
 | `templates/justfile` | `.lokf/justfile` | PROJ_NAME |
 | `templates/README.md` | `.lokf/README.md` | PROJ_NAME |
-| `templates/knowledge/index.md` | `.lokf/knowledge/index.md` (semantic header + TOC, reserved) | PROJ_NAME, PROJ_DESC, BASE_IRI, OWNER_NAME, OWNER_SLUG |
+| `templates/knowledge/index.md` | `.lokf/knowledge/index.md` (semantic header + TOC, reserved) | PROJ_NAME, PROJ_DESC, BASE_IRI, OWNER_NAME, OWNER_SLUG, OWNER_TYPE |
 | `templates/knowledge/log.md` | `.lokf/knowledge/log.md` (reserved) | PROJ_NAME, TODAY |
 | `templates/knowledge/services/index.md` | `.lokf/knowledge/services/index.md` | - |
 | `templates/knowledge/services/example-service-a.md`, `-b.md` | same paths under `.lokf/` (DUMMY; ktl-librarian replaces) | PROJ_NAME, PROJ_SLUG, BASE_IRI |
@@ -88,18 +89,18 @@ Copy each template to its destination, then substitute the placeholders it lists
 ```bash
 mkdir -p .lokf/knowledge/services
 # ...copy the rows above, then fill the placeholders, never through sed.
-export PROJ_NAME PROJ_DESC PROJ_SLUG BASE_IRI OWNER_NAME OWNER_SLUG TODAY
+export PROJ_NAME PROJ_DESC PROJ_SLUG BASE_IRI OWNER_NAME OWNER_SLUG OWNER_TYPE TODAY
 python3 <skill>/scripts/fill-placeholders.py $(grep -rl -e '<PROJ_' -e '<BASE_IRI>' -e '<OWNER_' -e '<TODAY>' .lokf llms.txt 2>/dev/null)
 ```
 
-Give each value as plain text on one line. The script stops, before it writes a file, on an empty value, a line break, a slug or date of another form, or a `<BASE_IRI>` that is no `http` address ending with `/`. It writes a value into frontmatter and `pyproject.toml` as an escaped string, so a colon or a quote in a description stays text.
+Give each value as plain text on one line. The script stops, before it writes a file, on an empty value, a line break, a slug, date or owner type of another form, or a `<BASE_IRI>` that is no `http` address ending with `/`. It writes a value into frontmatter and `pyproject.toml` as an escaped string, so a colon or a quote in a description stays text.
 
 ## Step 2: point agents and humans at the bundle (optional, root-level)
 
 Make three additions at the **repo root**, outside `.lokf/`. Add only, never overwrite, and check for an existing item first. All three stay true **whether or not `.lokf/` exists later**, so nothing ever needs cleaning up if the bundle is removed. Keep that self-qualifying phrasing (a dangling symlink is harmless and easy to spot).
 
 - **`llms.txt`**: copy `templates/llms.txt` (PROJ_NAME, PROJ_DESC) if absent, then run Step 1's block again, which fills the copy and finds nothing left to fill under `.lokf/`. If it exists, leave it intact and append only the `## Agent context` section, and only if the file does not already mention `.lokf/`.
-- **README pointer**: if `README.md` exists and does not already link to `.lokf/knowledge/` anywhere (check the path, not a heading string), insert `templates/readme-for-ai-agents.md` after the intro, before the first `##`. It is a one-paragraph blockquote aside, not a section, and it addresses both readers a README has. A person learns there is a second way in (install `ktl-docent` and ask). An agent, which reads the top of a README, is told to read the bundle first. The trust-weighing detail lives in `llms.txt` rather than being repeated here. If one question this host's readers keep asking comes to mind, put it in the aside as the example; a concrete question is what makes a person try it. Do not invent a README on a host that has none.
+- **README pointer**: if `README.md` exists and does not already link to `.lokf/knowledge/` anywhere (check the path, not a heading string), insert `templates/readme-for-ai-agents.md` after the intro: before the first heading below the title, of any level, or after the first paragraph when there is none. It is a one-paragraph blockquote aside, not a section, and it addresses both readers a README has. A person learns there is a second way in (install `ktl-docent` and ask). An agent, which reads the top of a README, is told to read the bundle first. The trust-weighing detail lives in `llms.txt` rather than being repeated here. If one question this host's readers keep asking comes to mind, put it in the aside as the example; a concrete question is what makes a person try it. Do not invent a README on a host that has none.
 - **`knowledge_bundle` symlink**: the bundle under an ordinary, visible name, beside the hidden `.lokf/`. Finder and most folder pickers hide dot-directories, a repository listing shows nothing else, and a double-click in a file manager should open the bundle. So the doorway is the one name a person needs to know, whatever they open it with. If nothing named `knowledge_bundle` already exists at the repo root:
 
   ```bash
@@ -108,7 +109,7 @@ Make three additions at the **repo root**, outside `.lokf/`. Add only, never ove
 
     Run it from the repo root. The target is relative, which keeps the link valid after a clone or move (`just lokf-link` from `.lokf/` does the same, and recreates it on a machine where a sync service dropped it). Mirror the Step 0 tracked/gitignored decision: commit it alongside a tracked `.lokf/`, or add `knowledge_bundle` to the root `.gitignore` alongside a gitignored one. This is POSIX only. On Windows a junction does the job with no elevated rights (`mklink /J knowledge_bundle .lokf\knowledge`). On a filesystem without links, skip it (see [references/portability.md](references/portability.md)); the bundle works identically without it. If the host repo lints, spell-checks, or link-checks `**/*.md` repo-wide, exclude `knowledge_bundle/` from that config. Otherwise the same files under `.lokf/knowledge/` are processed twice, once at each path.
 
-    **If the person uses Obsidian** (optional; every step here is the same without it), they open `knowledge_bundle` *itself* as a vault (File → Open folder as vault). That is the exhibition, beside whatever vault they already keep, the workshop. Obsidian writes that vault's workspace state through the link into `.lokf/knowledge/.obsidian/`, which `templates/gitignore` excludes and `lokf validate` ignores (Step 4 reads only `*.md`). A vault opened at the host root never lists a dot-directory or a link that resolves inside it, which is what keeps the workshop clean when the host is itself a vault. So point people at the doorway, not the root. The rule against a real folder inside a vault is in Step 0; the mechanics are in [references/portability.md](references/portability.md).
+    **If the person uses Obsidian** (optional), they open `knowledge_bundle` *itself* as a vault (File → Open folder as vault), never the host root; [references/portability.md](references/portability.md#an-obsidian-vault-as-host) says why the host vault never lists it.
 
 ## Step 3: verify the skeleton
 
@@ -160,13 +161,15 @@ The registrar's `provenance` job needs no setup, but check one thing and report 
 
 Show the three `git config` lines from [references/gate.md](references/gate.md) and let them run those; do not run them yourself and never touch their `--global` config. The optional `KNOWLEDGE_CURATION_ENVIRONMENT` route, for a curator who cannot sign, is in the same file. It needs an Environment *with required reviewers* first, and does nothing without one.
 
-The wrapper looks for `ktl-librarian/SKILL.md` under `.agents/skills/`, `.claude/skills/`, `.github/skills/`, then bare `skills/` (a repo that publishes the skills it also uses). If this repo uses another directory, add it to the script's `candidate` list now and run the script once; a mismatch otherwise fails at scheduled-run time. [references/automation.md](references/automation.md) says what each file does and needs, and [references/gate.md](references/gate.md) covers the registrar, signing and the forge-free gate. On GitHub, run `uvx ktl gh plan` and show the person what it lists; `ktl gh apply` sets it once they agree ([references/repository-settings.md](references/repository-settings.md)).
+The wrapper looks for `ktl-librarian/SKILL.md` under `.agents/skills/`, `.claude/skills/`, `.github/skills/`, then bare `skills/` (a repo that publishes the KTL skills it also uses). Where `skills/` is the host's own collection, install them under `.agents/skills/`, or they read as the host's skills. If this repo uses another directory, add it to the script's `candidate` list now and run the script once; a mismatch otherwise fails at scheduled-run time. [references/automation.md](references/automation.md) says what each file does and needs, and [references/gate.md](references/gate.md) covers the registrar, signing and the forge-free gate. On GitHub, run `uvx ktl gh plan` and show the person what it lists; `ktl gh apply` sets it once they agree ([references/repository-settings.md](references/repository-settings.md)).
+
+Commit what this step installed on its own, once `git status --short .lokf .github` shows nothing untracked. A gitignored `.lokf/` has nothing here to commit.
 
 Nothing in the host lints these files yet. Check whether the host already runs ShellCheck and `actionlint` over its tree. If it does not, say so and suggest, in one line, coverage for the nine `scripts/*.sh`, `m365/*.sh`, the `scripts/*.py` and the six `.github/workflows/*.yaml`, so a scheduled agent's wrapper is not left unchecked. A full lint and release CI is the host's choice; `validate.yml` in this skill's home repository is one shape, never copied wholesale.
 
 ## Step 6: hand off to ktl-librarian
 
-The sidecar ends here. ktl-librarian's first run is a **bootstrap discovery** pass that records the repo's knowledge sources as `playbooks/knowledge-sources.md`. The librarian in turn hands off to **ktl-curator**, where a person confirms what it derived, and **ktl-docent** answers readers from the bundle, recording what it lacked for the librarian's next run. So all four skills should be installed, and **ktl-website** can publish the bundle as a site once it is worth showing. In the handoff, tell the user:
+The sidecar ends here. ktl-librarian's first run is a **bootstrap discovery** pass that records the repo's knowledge sources as `playbooks/knowledge-sources.md`. The librarian in turn hands off to **ktl-curator**, where a person confirms what it derived, and **ktl-docent** answers readers from the bundle, recording what it lacked for the librarian's next run. So install all four. **ktl-prose** (plain English) and **ktl-website** (a site) are optional; the preflight lists all six. In the handoff, tell the user:
 
 - which Step 0 values were **guessed** rather than found (a fallback `<BASE_IRI>` above all; every `@id` starts with it, so it needs sign-off);
 - whether Step 4 validation ran, ran as the manual fallback, or was skipped;

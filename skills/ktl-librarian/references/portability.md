@@ -19,6 +19,6 @@ Three rules that hold on every host:
 
 - **Lowercase paths.** The path is the concept's id, and two paths differing only by case collide on Windows, macOS and SharePoint. Name files and directories in a-z, 0-9 and hyphens. The gate rejects anything else (conventions rule 8).
 - **LF line endings.** The sidecar's `.lokf/.gitattributes` keeps a tracked bundle on LF. Without git, an editor that writes CRLF or a byte order mark is tolerated by the conventions script and `lokf validate`. The mark is reported (rule 9) because other readers do not strip it.
-- **The version check.** `uvx --from pip pip index versions lokf` works wherever `uv` does. `uv pip` has no `index` subcommand. Offline, PyPI's JSON is unreachable too: skip the check and say so in the hand-off.
+- **The version check.** `uv lock --dry-run --upgrade-package lokf`, run from `.lokf/`, reads the index, proxy and certificates `uv sync` reads, so it works behind a mirror where `pip index` and GitHub do not. Offline, skip the check and say so in the hand-off.
 
 The identity behind a `human:` event is the **curator**'s concern, not this skill's. This skill never writes one.

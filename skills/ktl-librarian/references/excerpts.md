@@ -40,7 +40,8 @@ A bundle older than this rule carries footnotes with no excerpt, and the work li
 - **Quote the fewest words that carry the fact**: the sentence, the table row, the line of configuration. The pen refuses an excerpt longer than 500 characters.
 - **Quote what the source says, never what you conclude from it.** When no one passage states the fact, the claim is your reading of several. Say so in the body and write no excerpt.
 - **Join two passages with `...`** when the claim needs both, such as a rule and its exception. Both must sit in one section of the file, in the order the file has them. A section of a Markdown file runs from one `#` or `##` heading to the next, and any other file is one section. An excerpt holds one `...` at most.
-- **One entry holds one excerpt**, and one resource has one entry, since its `id` names it across the bundle. When a concept footnotes facts from two sections of one file, quote the passage that would change the concept most if it changed. The footnote's definition line names where the other one is.
+- **One entry holds one excerpt.** When a concept footnotes facts from two passages of one file, give each passage an entry and an `id` of its own.
+- **An `id` is one source node across the bundle.** It resolves against `base_iri` (LOKF section 5.4), so every concept that gives it shares the node, and the node holds one excerpt. Reuse another concept's id only for the same passage of the same resource, quoted the same way. Name an id for a new passage after the passage, such as `changelog-major-releases` beside `changelog.md`. The pen refuses an id that would carry a second resource or a second excerpt, and conventions rule 16 fails one the bundle already holds.
 
 ## Copying it
 

@@ -10,7 +10,8 @@ name: Knowledge Registrar
 # and runs no LLM or agent. An auditor can follow a run top to bottom:
 #
 #   validate      every run       `lokf validate --check-refs`, which checks
-#                                 the schema and every relation target; then
+#                                 the schema, every relation target and,
+#                                 with lokf's shacl extra, LOKF's shapes; then
 #                                 the conventions script, which checks dates,
 #                                 event shape and open questions.
 #
@@ -99,7 +100,8 @@ jobs:
       # A typed relation whose target is no concept in the bundle is still a
       # well-formed IRI, so schema validation alone passes it. --check-refs
       # resolves every target in the bundle's own namespace, taking the
-      # relation slots from the schema. It is part of `lokf validate`, so it
+      # relation slots from the schema, and the recipe adds --shacl where
+      # uv.lock holds lokf's shacl extra. It is part of `lokf validate`, so it
       # rides on this step rather than validating the same bundle twice. A
       # host with a domain vocabulary names it as `schema :=` in the justfile, and
       # the recipe passes it; the workflow runs the recipe so no host edits this line.

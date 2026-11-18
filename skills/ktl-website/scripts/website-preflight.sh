@@ -147,10 +147,18 @@ done
 if [ -f "$root/mkdocs.yml" ] && grep -q '^site_url:' "$root/mkdocs.yml"; then
   publishers="${publishers}${publishers:+, }mkdocs.yml with a site_url"
 fi
-pages_api=""
+pages_api=""; pages_url=""; pages_asked=""
 if have gh && [ -n "$slug" ] && gh auth status >/dev/null 2>&1; then
-  # A 404 means Pages is not on yet, and gh prints the error body. Only a success counts.
-  pages_api="$(gh api "repos/$slug/pages" --jq '"Pages is on: built from \(.build_type)" + (if .source.branch then ", branch " + .source.branch else "" end) + (if .cname then ", custom domain " + .cname else "" end)' 2>/dev/null)" || pages_api=""
+  pages_asked=1
+  # A 404 means Pages is not on yet, and gh prints the error body. Only a
+  # success counts. The first line is html_url, the address Pages serves the
+  # site at, which names a custom domain or a private site's own domain.
+  pages_answer="$(gh api "repos/$slug/pages" --jq '(.html_url // ""), ("Pages is on: built from \(.build_type)" + (if .source.branch then ", branch " + .source.branch else "" end) + (if .cname then ", custom domain " + .cname else "" end) + (if .public == false then ", private" else "" end))' 2>/dev/null)" || pages_answer=""
+  pages_url="$(printf '%s\n' "$pages_answer" | sed -n 1p)"
+  pages_api="$(printf '%s\n' "$pages_answer" | sed -n 2p)"
+  # Only an address of the expected shape reaches this screen and site.toml.
+  printf '%s' "$pages_url" | grep -qE '^https?://[^[:space:]"\\<>]+$' || pages_url=""
+  case "$pages_url" in ""|*/) ;; *) pages_url="$pages_url/" ;; esac
 fi
 if [ -n "$publishers" ]; then
   warn pages "another publisher: $publishers - the site builds, but leave KNOWLEDGE_WEBSITE_ENABLED unset here until that publisher is retired (references/deploy.md)"
@@ -200,7 +208,7 @@ if [ -n "$site" ]; then
       warn website "$site/ installed; differs from the templates: $drift - a deliberate edit, or a template bump not yet copied (repair mode)"
     fi
   fi
-  if grep -qE '<(REPO|PROJ)_[A-Z]+>' "$root/$site/site.toml"; then
+  if grep -qE '<(REPO|PROJ|SITE)_[A-Z]+>' "$root/$site/site.toml"; then
     warn website "$site/site.toml still holds a <PLACEHOLDER> - Step 1 fills it, and the build refuses it until then"
   fi
   if [ -f "$root/$site/site.config.mjs" ]; then
@@ -222,6 +230,52 @@ if [ -n "$own_found" ]; then
   info workflow "$own_found present; the deploy runs once KNOWLEDGE_WEBSITE_ENABLED is true"
 elif [ -n "$site" ] && [ -f "$root/$site/site.toml" ]; then
   info workflow "no .github/workflows/knowledge-website.yaml - Step 5 lays it down"
+fi
+
+# ---- address: the site's baseURL ----------------------------------------------
+# The Pages API's html_url is where Pages serves the site. Before Pages is
+# on, or where gh cannot ask, a project site's address follows from the
+# remote, and a user site's has no path.
+lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
+same_address() {
+  # site.toml's address, then the Pages API's. Hosts match without case and
+  # paths as written, with or without a final slash; https in site.toml
+  # matches the http Pages gives a domain without enforced https.
+  local a="${1%/}" b="${2%/}"
+  case "$a" in http://*) case "$b" in https://*) return 1 ;; esac ;; esac
+  a="${a#*://}"; b="${b#*://}"
+  [ "$(lower "${a%%/*}")${a#"${a%%/*}"}" = "$(lower "${b%%/*}")${b#"${b%%/*}"}" ]
+}
+guess=""
+if [ -n "$slug" ]; then
+  owner="$(lower "${slug%%/*}")"; repo="${slug#*/}"
+  if [ "$(lower "$repo")" = "$owner.github.io" ]; then guess="https://$owner.github.io/"; else guess="https://$owner.github.io/$repo/"; fi
+fi
+site_base=""
+if [ -n "$site" ] && [ -f "$root/$site/site.toml" ]; then
+  # The top-level baseURL, in either quote, before the first table.
+  site_base="$(awk '/^[[:space:]]*\[/ { exit } { line = $0; sub(/^[[:space:]]+/, "", line) } tolower(line) ~ /^baseurl[[:space:]]*=/ { sub(/^[^=]*=[[:space:]]*/, "", line); q = substr(line, 1, 1); if (q == "\"" || q == "\047") { line = substr(line, 2); sub(q ".*$", "", line); print line; exit } }' "$root/$site/site.toml")"
+  case "$site_base" in *"<"*) site_base="" ;; esac
+fi
+if [ -n "$pages_url" ]; then
+  if [ -n "$site_base" ] && ! same_address "$site_base" "$pages_url"; then
+    warn address "Pages serves the site at $pages_url, but $site/site.toml's baseURL is $site_base - set baseURL to $pages_url, or the site's links, search and social cards point elsewhere"
+  elif [ -n "$site_base" ]; then
+    ok address "$pages_url, from the Pages API, is $site/site.toml's baseURL"
+  else
+    ok address "$pages_url, from the Pages API: Step 1's <SITE_URL>"
+  fi
+elif [ -n "$site_base" ]; then
+  if [ -n "$pages_asked" ]; then why="Pages is not on yet, so the Pages API cannot confirm it"
+  elif [ -n "$slug" ]; then why="gh cannot read repos/$slug/pages here to confirm it"
+  else why="no GitHub remote, so the Pages API cannot confirm it"; fi
+  info address "$site/site.toml's baseURL is $site_base; $why"
+elif [ -n "$guess" ] && [ -n "$pages_asked" ]; then
+  info address "$guess, from the remote: Step 1's <SITE_URL>. Pages is not on yet; once it is, run this again, since a private site or a custom domain has another address"
+elif [ -n "$guess" ]; then
+  info address "$guess, from the remote: Step 1's <SITE_URL>, unless Settings > Pages shows another. gh cannot read repos/$slug/pages here, and a private site or a custom domain has another address"
+else
+  info address "no GitHub remote - give Step 1's <SITE_URL> the address the site will be served at"
 fi
 
 # ---- what the site can show beside the bundle ---------------------------------

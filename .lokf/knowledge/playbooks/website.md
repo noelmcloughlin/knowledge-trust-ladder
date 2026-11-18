@@ -18,7 +18,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/trust-label
 generated:
   by: process:ktl-librarian
-  at: "2026-11-18T00:02:42Z"
+  at: "2026-11-18T11:53:34Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:04:01Z"
@@ -65,7 +65,7 @@ Install bash, git and uv, then run these from `website/`:
 
 ```bash
 scripts/build.sh          # dist/, with the search index, then checks every link between its pages
-scripts/build.sh serve    # http://localhost:1313/knowledge-trust-ladder/, rebuilt as you edit
+scripts/build.sh serve    # http://localhost:1313/ under baseURL's path, rebuilt as you edit
 scripts/build.sh preview  # the site as it will be published, at http://localhost:1313/
 ```
 

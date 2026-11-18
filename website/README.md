@@ -8,7 +8,7 @@ You need bash, git and [uv](https://docs.astral.sh/uv/). Run these from this fol
 
 ```bash
 scripts/build.sh          # dist/, with the search index, then checks every link between its pages
-scripts/build.sh serve    # http://localhost:1313/knowledge-trust-ladder/, rebuilt as you edit
+scripts/build.sh serve    # http://localhost:1313/ under baseURL's path, rebuilt as you edit
 scripts/build.sh preview  # the site as it will be published, at http://localhost:1313/
 ```
 

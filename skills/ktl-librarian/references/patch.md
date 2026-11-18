@@ -132,6 +132,7 @@ Any one of these refuses the whole file, and nothing is written:
 - a `resolve` target found in no open question or in several, or found in one another actor asked: a person's note is the curator's to clear, on that person's word;
 - a `patch`, `rewrite`, `delete` or `resolve` with no `log` line, its own or the patch's; a `title` with square brackets;
 - a `sources` entry whose `excerpt` is empty, is longer than 500 characters, or is not in its local file;
+- a `sources` entry the patch adds or changes whose `id` another concept gives another resource or another excerpt, since the id is one source node across the bundle: name the entry's id after its passage. A clash the patch did not make is the gate's (conventions rule 16);
 - a `from_feedback` line the feedback file does not hold, one that two operations name, or more than ten of them in one file; `asked` on an operation with no `from_feedback`, or with no printable text;
 - a `handoff` that is not a list, or holds more than ten lines, or a line that is empty or longer than 300 characters once the characters no reader sees are gone. Those are the controls, the format characters, such as a zero-width space, a bidirectional mark or a tag character, and the other characters Unicode calls default ignorable, such as a variation selector. The script takes them out of a reader's question too.
 
@@ -144,3 +145,7 @@ Any one of these refuses the whole file, and nothing is written:
 In a live session, then run `just lokf-validate`, `just lokf-check-refs` and `bash scripts/knowledge-conventions.sh knowledge` as section 2 says. In a scheduled run the workflow runs them after the wrapper applies the file.
 
 The script writes a touched concept's frontmatter back with double quotes where a value needs quoting and keeps the blank line after the closing `---` as it found it, so the diff shows the change and not the rewrite. An operation that changes no frontmatter key, such as `resolve`, writes the block back as the file held it, comments and folded lines too. A value YAML would read as a number, a boolean or a time goes back as the text the file held: `1.10` stays `1.10`, and an unquoted time on a person's event stays as that person's commit wrote it. The script keeps the conventions it knows, and checks the schema of what it writes when `.lokf/.venv` holds the toolkit. The relation targets are the toolkit's to check.
+
+## A fault in the host's own text
+
+A feedback entry that starts `Host text:` names a fault in one of the host's own files, such as a guide that names a script the repository does not hold. Never edit that file. Open it and find the fault yourself; when it is not there, write nothing for the entry and say so in the hand-off. Otherwise add a `question` to the concept that cites the file, naming the file and the fault in your own words, never the entry's, and the curator takes it to a person who can fix the file. Where no concept cites the file, derive one as for a Miss and add the question there. Change a claim only where another source settles the fact.

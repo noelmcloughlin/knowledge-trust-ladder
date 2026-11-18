@@ -252,6 +252,8 @@ def findings(tmp_path_factory) -> str:
     write(x / "qa-rootflow.md", '---\n{type: Service, id: "https://example.invalid/k/x/qa"}\n---\n')
     write(x / "qb-break.md", f"---\ntype: Service\nid: https://example.invalid/k/x/qb\nnote: x{chr(0x2028)}other: y\n---\n")
     write(x / "qd-dashes.md", "---\ntype: Service\nid: https://example.invalid/k/x/qd\ndescription: a---b\n---\n")
+    write(x / "qf-blank.md", "\n---\ntype: Service\nid: https://example.invalid/k/x/qf\n---\n")
+    write(x / "qg-spaced.md", "---\ntype: Service\nid: https://example.invalid/k/x/qg\n--- \nverified: [{by: human:x, at: '2026-01-01T00:00:00Z'}]\n---\n")
     os.symlink("qd-dashes.md", x / "qe-link.md")
     write(x / "qc-cr.md", "---\ntype: Service\nid: https://example.invalid/k/x/qc\nnote: x\rother: y\n---\n")
     # A comment beside such a field is valid YAML that a parser drops and a
@@ -346,6 +348,9 @@ def findings(tmp_path_factory) -> str:
     sourced(x, "fn-upper", "  - id: Pin\n    resource: pinned.md\n", "A claim.[^Pin]\n\n[^Pin]: pinned.md, line 1")
     sourced(x, "fn-two-a", "  - id: shared\n    resource: pinned.md\n", "A claim.[^shared]\n\n[^shared]: pinned.md, line 1")
     sourced(x, "fn-two-b", "  - id: shared\n    resource: https://example.invalid/other\n", "A claim.[^shared]\n\n[^shared]: https://example.invalid/other, section 2")
+    quoted = "  - id: {id}\n    resource: pinned.md\n    excerpt: {q}\n"
+    for name, label, quote in (("fn-quote-a", "quoted", "line one"), ("fn-quote-b", "quoted", "line two"), ("fn-same-a", "same", "line one"), ("fn-same-b", "same", "line one")):
+        sourced(x, name, quoted.format(id=label, q=quote), f"A claim.[^{label}]\n\n[^{label}]: pinned.md, line 1")
     sourced(x, "fn-ok", pin + other, "A claim.[^pin] Another.[^other]\n\n[^pin]: `pinned.md`, line 1\n[^other]: https://example.invalid/other, section 2")
     sourced(x, "fn-code", "  - resource: pinned.md\n", "Write `[^id]` after the claim.\n\n```markdown\nA claim.[^example]\n\n[^example]: docs/x.md, line 1\n```")
     return bash(CONVENTIONS, k).out
@@ -378,7 +383,9 @@ REPORTED = [
     "qa-rootflow.md: frontmatter uses a flow mapping for the whole frontmatter",
     "qb-break.md: frontmatter uses a line break a line reader does not see (U+2028)",
     "qc-cr.md: frontmatter uses a bare carriage return",
-    "qd-dashes.md: frontmatter holds '---'",
+    "qd-dashes.md: frontmatter holds '---', where lokf before 0.10.0 ends the block",
+    "qf-blank.md: blank lines stand before the frontmatter block",
+    "qg-spaced.md: a frontmatter delimiter has spaces or tabs after '---'",
     "qe-link.md: is a symbolic link",
     "t-tag.md: frontmatter uses a tag on",
     "t-anchor.md: frontmatter uses an anchor (&t)",
@@ -407,7 +414,12 @@ REPORTED = [
     "fn-uncited.md: sources[].id pin is cited by no footnote",
     'fn-upper.md: sources[].id "Pin" is not lowercase',
     "id shared names more than one resource",
+    "id quoted carries more than one excerpt",
 ]
+
+
+def test_rule_16_lets_concepts_share_an_id_for_the_same_passage(findings):
+    assert "id same carries" not in findings, f"rule 16 refused two concepts that quote one passage under one id:\n{findings}"
 
 
 @pytest.mark.parametrize("want", REPORTED, ids=lambda w: w.pattern if isinstance(w, re.Pattern) else w)
@@ -574,6 +586,7 @@ SKELETON = {
     "BASE_IRI": "https://acme.example/knowledge/",
     "OWNER_NAME": "Ada",
     "OWNER_SLUG": "ada",
+    "OWNER_TYPE": "Person",
     "TODAY": "2026-09-14",
 }
 
@@ -583,7 +596,8 @@ def step_one(host, **values):
     found = re.search(r"```bash\nmkdir -p \.lokf/knowledge/services\n(.*?)```", read(SCRIPTS.parent.parent / "SKILL.md"), re.S)
     assert found, "SKILL.md's Step 1 still gives the block that fills the placeholders"
     path = f"{Path(sys.executable).parent}{os.pathsep}{os.environ['PATH']}"
-    return run(["bash", "-c", found.group(1).replace("<skill>", str(SCRIPTS.parent.parent))], cwd=host, env={**SKELETON, **values, "PATH": path})
+    env = {k: v for k, v in {**SKELETON, **values}.items() if v is not None}
+    return run(["bash", "-c", found.group(1).replace("<skill>", str(SCRIPTS.parent.parent))], cwd=host, env={**env, "PATH": path})
 
 
 def skeleton(host):
@@ -612,24 +626,27 @@ def test_step_one_writes_a_value_as_a_quoted_string_and_refuses_what_is_not_one_
     spoken = 'Acme: the "platform" # with C:\\tools and <BASE_IRI>.'
     host = tmp_path / "quoted"
     k = skeleton(host)
-    filled = step_one(host, PROJ_NAME='The "Acme": Platform', PROJ_DESC=spoken, OWNER_NAME="Ada: #1")
+    filled = step_one(host, PROJ_NAME='The "Acme": Platform', PROJ_DESC=spoken, OWNER_NAME="Ada: #1", OWNER_TYPE="Organization")
     assert filled, filled.out
     index = yaml.safe_load(read(k / "index.md").split("\n---\n")[0].removeprefix("---\n"))
     assert index["title"] == 'The "Acme": Platform Knowledge Bundle' and index["description"] == spoken and index["publisher"]["name"] == "Ada: #1", index
+    assert index["publisher"]["type"] == "Organization" and index["publisher"]["id"] == "https://acme.example/knowledge/organization/ada", index
     service = yaml.safe_load(read(k / "services" / "example-service-a.md").split("\n---\n")[0].removeprefix("---\n"))
     assert service["description"].endswith('of The "Acme": Platform.'), service
     assert tomllib.loads(read(host / ".lokf" / "pyproject.toml"))["project"]["description"] == 'LOKF knowledge-bundle tooling for The "Acme": Platform.'
     assert f"> {spoken}\n" in read(host / "llms.txt") and '# The "Acme": Platform Knowledge Bundle\n' in read(k / "index.md"), "a body takes the value as it is"
 
-    for token, value, said in (
+    for n, (token, value, said) in enumerate((
         ("PROJ_DESC", "The platform.\nlicense: none", "PROJ_DESC: empty, or a line break or unprintable character"),
         ("OWNER_NAME", "Ada" + chr(0x200B), "OWNER_NAME: empty, or a line break or unprintable character"),
         ("PROJ_NAME", " ", "PROJ_NAME: empty"),
         ("BASE_IRI", "https://acme.example/knowledge", "BASE_IRI: not of the form"),
         ("PROJ_SLUG", "acme platform", "PROJ_SLUG: not of the form"),
         ("TODAY", "today", "TODAY: not of the form"),
-    ):
-        host = tmp_path / f"refused-{token}"
+        ("OWNER_TYPE", "Team", "OWNER_TYPE: not of the form"),
+        ("OWNER_TYPE", None, "OWNER_TYPE: not set in the environment"),
+    )):
+        host = tmp_path / f"refused-{n}-{token}"
         k = skeleton(host)
         before = read(k / "index.md")
         refused = step_one(host, **{token: value})

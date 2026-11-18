@@ -70,7 +70,7 @@ Never add a relation only to join two concepts. That rules out a hub concept tha
 
 Two v0.1 fields are **superseded in v0.2** and still read as fallbacks: `timestamp` by `generated.at`, and `citations` by `sources` (Rule 6). Keep `timestamp` only on a v0.1 concept you are not otherwise touching.
 
-A local `resource` must be a path git *tracks*. Gitignored runtime state, such as an installed skill under `.agents/` or `.claude/`, a build artifact or a local virtualenv, resolves on the machine that has it and nowhere else. It fails conventions rule 5 in CI and tells a reader to open a file they do not have. Point at the published copy instead, pinned to the version the host installs (a skill's release tag, for example), and say in the body where it is installed locally if that helps.
+A local `resource` must be a path git *tracks*, and a file the host itself authors. Gitignored runtime state, such as a build artifact or a local virtualenv, resolves on the machine that has it and nowhere else. It fails conventions rule 5 in CI and tells a reader to open a file they do not have. An installed skill under `.agents/`, `.claude/` or `.github/skills/` is another project's file, whether the host gitignores it or commits it: a committed copy passes rule 5, but changes when the host reinstalls, not when its author edits it. Point at the skill's published copy instead, pinned to the version the host installs (its release tag, for example), and say in the body where it is installed locally if that helps.
 
 ## Rule 6: trust, provenance and lifecycle
 

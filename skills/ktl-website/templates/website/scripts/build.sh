@@ -25,7 +25,7 @@ tool=(uv run --project "$here" "$mode" --quiet)
 # shellcheck disable=SC2054 # one --config value: Hugo takes the files as a comma-separated list
 port=${PORT:-1313}
 
-if grep -qE '<(REPO|PROJ)_[A-Z]+>' site.toml; then
+if grep -qE '<(REPO|PROJ|SITE)_[A-Z]+>' site.toml; then
   echo "build.sh: site.toml still holds a <PLACEHOLDER>; give it this repository's values first" >&2
   exit 1
 fi

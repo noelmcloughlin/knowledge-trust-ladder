@@ -18,7 +18,7 @@ about:
   - https://w3id.org/ktl/knowledge/glossary/context-layer
 generated:
   by: process:ktl-librarian
-  at: "2026-11-17T20:29:12Z"
+  at: "2026-11-18T11:22:41Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -35,7 +35,7 @@ ktl-sidecar's `templates/domain.yaml` is installed as `.lokf/schema/domain.yaml`
 
 - **`Domain`** (a `Dataset`, `dcat:Catalog`): the named set of bundles with one accountable owner, one concept under `domains/` named for the domain and never for its position. The build reads four settings as a person last confirmed them. Under `unowned_targets`, `fail` stops the build on a link into no member's namespace, or to no concept of the member whose namespace holds it, and `report` lists it. `max_depth` is how many tiers the build follows, 3 unless set. `sensitivity` is `public` unless set, and `internal` admits internal members, only in a private or internal repository. `private_addresses` is `refuse` unless set, and a person confirms `allow` to let the build fetch a member from a private, loopback or link-local address, for a forge on the host's own network.
 - **`MemberBundle`** (a `Dataset`): one admitted bundle, under `members/`. It names the bundle's `base_iri`, the release `version` it pins, the `release` page, and a `distribution` whose `access_url` is the release's zip and whose `checksum` is its digest. A bundle that releases no zip is named by the `concepts.jsonld` its site serves, with that file's checksum. The distribution's `name` ends `.zip` for a zip and `.jsonld` for a served file, or the build refuses the concept. A second distribution names a schema released beside the zip, and the build validates against it. The build stops at a schema that imports anything but `lokf` and `linkml:` names, such as an address or a file path. `isPartOf` names the domain. Its `sensitivity` is `public` unless set, `internal`, or `confidential`, which joins no workspace.
-- **`MemberDomain`** (a `MemberBundle`, `dcat:Catalog`): a member whose bundle is a domain in turn. The build follows its members into the same workspace, as deep as `max_depth` allows, and follows a `MemberBundle` whose zip holds a `Domain` concept too.
+- **`MemberDomain`** (a `MemberBundle`, which the workspace lists as a `dcat:Catalog`): a member whose bundle is a domain in turn. The build follows its members into the same workspace, as deep as `max_depth` allows, and follows a `MemberBundle` whose zip holds a `Domain` concept too.
 - **`ReleaseDistribution`** (a `Distribution`): the file with its `checksum`, a `ReleaseChecksum`. A `ReleaseChecksum` is LOKF's `Checksum` with `algorithm: sha256`, the one algorithm the build reads, and a `checksum_value` of 64 hexadecimal digits. A concept written before lokf 0.9.0 names the checksum as one string, `sha256:` and the digits. The domain vocabulary refuses that form, so a domain host rewrites its member concepts when it takes this schema, and a person confirms each again. The build still reads the string in a member domain's earlier releases.
 
 A member names the newest release that carries a `knowledge-*.zip`. Nothing is copied into the domain, so a member's new release changes nothing until a person confirms a member concept that names it.

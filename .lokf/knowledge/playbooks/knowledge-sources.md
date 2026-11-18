@@ -7,7 +7,7 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-11-18T00:02:42Z"
+  at: "2026-11-18T11:03:45Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-09-10T00:00:00Z"
@@ -44,7 +44,7 @@ sources:
   - resource: .github/dependabot.yml
   - resource: .github/workflows/knowledge-registrar.yaml
   - resource: CHANGELOG.md
-    id: changelog.md
+    id: changelog-docent-holdout
     excerpt: "`tests/docent-holdout.yaml` pairs the eight captured questions with the concept each answer should rest on"
   - resource: docs/architecture.en-simple.md
   - resource: website
@@ -60,7 +60,7 @@ sources:
   - resource: .gitignore
   - resource: scripts/companion-diagrams.mjs
   - resource: docs/threat-model.md
-    id: docs-threat-model.md
+    id: threat-model-docent-holdout
     excerpt: The questions and the concept each expects live in `tests/docent-holdout.yaml`, outside `.lokf/`, so the docent never reads a question beside its answer.
   - resource: evals
   - resource: justfile
@@ -112,7 +112,7 @@ sources:
 | `scripts/*.sh` | what the validation playbook claims CI enforces, and `smoke-test-website.sh`, which `validate.yml`'s `smoke-test-website` job runs | re-read the assertions; a new check is a gap in the playbook |
 | `tests/*.py`, `tests/requirements.in`, `tests/requirements.txt`, `pytest.ini` | the behavioural tests of the sidecar scripts and the prose checker; `validate.yml` runs them in its `test-scripts` job and `publish.yml` runs them in its read-only `verify` job before a release; both install the test packages by hash from `tests/requirements.txt`, compiled from `tests/requirements.in` | consciously excluded as concepts; re-check that `playbooks/repository-validation.md` still names the job that runs them and the contract checks that moved there |
 | `tests/conformance/reader/`, `tests/test_conformance.py` | a bundle with one concept per trust label, and `expected.json`, what a program must report of it; the test holds `knowledge-report.sh` to those values, as `docs/repository-layout.md` says | consciously excluded as concepts: the bundle is a fixture with fictional services, not knowledge about this repository; re-check that `references/ktl-specification.md` and `playbooks/repository-validation.md` still name the folder and the test |
-| `evals/`, `tests/docent-holdout.yaml`, `tests/docent-holdout-schema.yaml`, `tests/test_docent_holdout.py`, `justfile`, `.github/workflows/docent-eval.yml`, `.github/docent-eval/` | the docent holdout: the eight captured docent questions and the concept each answer should rest on,[^changelog.md] as data, with its LinkML shape; the same questions as `claude plugin eval` cases; the test that checks that each expected concept still exists and that `evals/` asks the same questions; the root `justfile`'s `docent-eval` and `docent-holdout` recipes; the workflow that runs the suite weekly and by hand under a cost cap, never on a pull request; and the `package.json` and `package-lock.json` under `.github/docent-eval/`, which pin by hash the Claude Code that workflow installs with `npm ci`[^repository-layout.md] | consciously excluded as concepts: the questions and the concept each expects are kept outside `.lokf/`, so the docent never reads a question beside its answer,[^docs-threat-model.md] and no concept names a question or the concept it expects; `policies/threat-model.md` and `policies/security.md` carry the workflow's guards; re-check that `evals/scaffold-bundle.sh` still copies the bundle alone |
+| `evals/`, `tests/docent-holdout.yaml`, `tests/docent-holdout-schema.yaml`, `tests/test_docent_holdout.py`, `justfile`, `.github/workflows/docent-eval.yml`, `.github/docent-eval/` | the docent holdout: the eight captured docent questions and the concept each answer should rest on,[^changelog-docent-holdout] as data, with its LinkML shape; the same questions as `claude plugin eval` cases; the test that checks that each expected concept still exists and that `evals/` asks the same questions; the root `justfile`'s `docent-eval` and `docent-holdout` recipes; the workflow that runs the suite weekly and by hand under a cost cap, never on a pull request; and the `package.json` and `package-lock.json` under `.github/docent-eval/`, which pin by hash the Claude Code that workflow installs with `npm ci`[^repository-layout.md] | consciously excluded as concepts: the questions and the concept each expects are kept outside `.lokf/`, so the docent never reads a question beside its answer,[^threat-model-docent-holdout] and no concept names a question or the concept it expects; `policies/threat-model.md` and `policies/security.md` carry the workflow's guards; re-check that `evals/scaffold-bundle.sh` still copies the bundle alone |
 | `CHANGELOG.md` | what changed between releases | read the `[Unreleased]` section for behaviour changes not yet reflected in concepts |
 | external URLs cited across the repo | the seven Reference concepts; the commit-analyzer's README and default release rules and the Conventional Commits preset's parser, which `policies/versioning.md` and `playbooks/releasing.md` cite; and the toolkit's `cli.py`, which `references/lokf-toolkit.md` cites | confirm each still resolves and still says what the concept claims |
 | `.assets/*.svg`, `.assets/companions/`, `scripts/companion-diagrams.mjs` | the social-preview card, which `docs/architecture.md` shows, the project's logo mark, and the diagrams `docs/` pages embed. `.assets/companions/` holds the Archify flow diagrams that some figures link beside them, each a light and a dark SVG drawn from its `.archify.json`, and `scripts/companion-diagrams.mjs` draws them again when a maintainer runs it by hand, as `docs/repository-layout.md` says | consciously excluded as concepts: the card and the mark carry no knowledge, and each diagram, a companion too, draws what the page that embeds or links it says; re-check only that each diagram still matches that page |
@@ -127,6 +127,6 @@ sources:
 - **No `Person` or `Organization` concept.** The maintainer is recorded once, as the bundle's `publisher` in `index.md`, and no concept links to a person.
 - **`base_iri` is `https://w3id.org/ktl/knowledge/`**, a persistent namespace the project controls. Every concept's `@id` is made under it, and the w3id rule redirects each one to the concept's page on the site, its JSON-LD or its Markdown file. KTL Federation names this bundle by it, so the namespace stays constant across releases, as `docs/federation.md` asks of a member.
 
-[^changelog.md]: CHANGELOG.md, 0.58.0, Added
+[^changelog-docent-holdout]: CHANGELOG.md, 0.58.0, Added
 [^repository-layout.md]: docs/repository-layout.md, the lines for `.github/workflows/docent-eval.yml`, `.github/docent-eval/`, `tests/`, `evals/` and `justfile`
-[^docs-threat-model.md]: docs/threat-model.md, The docent eval
+[^threat-model-docent-holdout]: docs/threat-model.md, The docent eval

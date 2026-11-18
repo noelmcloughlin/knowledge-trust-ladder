@@ -19,7 +19,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/glossary/lokf
 generated:
   by: process:ktl-librarian
-  at: "2026-11-14T10:17:06Z"
+  at: "2026-11-18T11:10:47Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -32,6 +32,6 @@ LOKF's vocabulary is a short list of classes and typed relations, kept small so 
 
 It sits in `.lokf/schema/`, beside a pinned copy of LOKF's `lokf.yaml`. The `schema :=` line in `.lokf/justfile` names it, and the recipes pass it to `lokf validate` as `--schema`. A file that imports `lokf` belongs in `.lokf/schema/`.
 
-A domain vocabulary is not a [domain schema](domain-schema.md), which models a domain in a LinkML project and never imports LOKF. `lokf adapt` reads a published release of a domain schema and writes a domain vocabulary from it, and the librarian writes one by hand when only the bundle needs it. LOKF's specification and the toolkit's messages call this file a *LOKF domain schema*.
+A domain vocabulary is not a [domain schema](domain-schema.md), which models a domain in a LinkML project and never imports LOKF. `lokf adapt` reads a published release of a domain schema and writes a domain vocabulary from it, and the librarian writes one by hand when only the bundle needs it. LOKF's specification uses the same two names from lokf 0.10.0; earlier releases called this file a *LOKF domain schema*.
 
 One domain vocabulary is released with the sidecar: `domain.yaml`, for a bundle that federates other bundles, as the curator's `domain-vocabularies.md` says. When bundles are federated, each domain vocabulary is released with its bundle.
