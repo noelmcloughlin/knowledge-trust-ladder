@@ -2,6 +2,12 @@
 
 ## 2026-11-18
 
+* **Changed**: ktl-website: `<SITE_URL>` fills `baseURL` from the preflight's `address` line, which reads the Pages API's `html_url`, as `skills/ktl-website/SKILL.md` and `references/deploy.md` now say.
+* **Changed**: Website: the local server's address follows `baseURL`'s path, as `website/README.md` now says. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: ktl-sidecar: the git versions an ingest entry needs cite the CHANGELOG passage that states them, under an id of their own, and rule 16 holds one id to one excerpt too, as `skills/ktl-sidecar/references/gate.md` says. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Releasing: check 15's claim cites the `docs/releasing.md` passage that states it, under an id of its own.
+* **Changed**: LOKF toolkit: the sidecar installs the `[shacl]` extra and the gate runs `--shacl` where `uv.lock` holds it, as `skills/ktl-sidecar/references/gate.md` says.
+* **Changed**: ktl-librarian: the apply job's `just lokf-check-refs` adds `--shacl` where `uv.lock` holds lokf's shacl extra, as `.lokf/justfile` now decides it. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: ktl-librarian: the apply job's `just lokf-check-refs` adds `--shacl` where lokf's shacl extra is installed, as `.lokf/justfile` now runs it. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: Domain bundle: a `MemberDomain` keeps a class IRI of its own, and the workspace lists it as a `dcat:Catalog`, as the sidecar's `domain.yaml` and the curator's `references/domain-bundle.md` now say.
 * **Changed**: Domain vocabulary: LOKF's specification uses the same two names from lokf 0.10.0, as ktl-librarian's `references/domain-vocabulary.md` now says.

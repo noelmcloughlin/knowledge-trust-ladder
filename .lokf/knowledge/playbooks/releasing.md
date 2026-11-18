@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-11-18T11:03:45Z"
+  at: "2026-11-18T11:50:44Z"
 status: draft
 dependsOn:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -21,6 +21,9 @@ sources:
   - resource: docs/releasing.md
     id: releasing-pending-publisher
     excerpt: An index holds only one pending publisher for those details at a time
+  - resource: docs/releasing.md
+    id: releasing-check-15
+    excerpt: Check 15 of `validate-repository.sh` requires the pin to name one of the two newest releases, and that tag to carry `skills/ktl-librarian` and the sync manifest.
   - resource: .github/workflows/semantic-release.yml
   - resource: .github/scripts/changelog-release.mjs
   - resource: .releaserc.json
@@ -53,7 +56,7 @@ An empty `[Unreleased]` passes `check` when that version is already promoted and
 - moves the `ktl` pin in the sidecar's `templates/pyproject.toml` to the newest tag, whose package `publish.yml` put on PyPI;
 - commits both directly as `chore(release): <version> - changelog promoted [skip ci]`.
 
-The template pins `ktl` one release behind, because the new changelog heading exists before its tag. Check 15 of `validate-repository.sh` requires the pin to name one of the two newest releases, and that tag to carry `skills/ktl-librarian` and the sync manifest.[^releasing-pending-publisher] `gh skill publish` stays this repository's only tag creator, for the reasons below.
+The template pins `ktl` one release behind, because the new changelog heading exists before its tag. Check 15 of `validate-repository.sh` requires the pin to name one of the two newest releases, and that tag to carry `skills/ktl-librarian` and the sync manifest.[^releasing-check-15] `gh skill publish` stays this repository's only tag creator, for the reasons below.
 
 Two qualifying merges to `main` between one `publish.yml` run and the next compute the *same* next version twice. The next version is computed from the last tag, and `gh skill publish` is a separate, later, human-triggered step. `promote` now checks whether the top released heading's version is still untagged. If so, it folds the new entries into it by `###` subsection instead of inserting a second heading for the same version. That was the bug that wrote two `## [0.19.0] - 2026-09-17` headings, orphaning the second merge's entries above an empty `[Unreleased]`. Check 14 in `playbooks/repository-validation.md` proves the fold and would have caught the original duplication. The fold leaves out an entry the pending section already holds, with the indented lines under it, and keeps an entry that differs below its first line, because a pull request stacked on another still carries the other's entries under `[Unreleased]`, and check 14 proves that each entry is listed once.
 
@@ -106,4 +109,5 @@ Before the first upload to each index, a maintainer registers a pending publishe
 [^changelog-major-release]: CHANGELOG.md, 0.57.0, Fixed
 [^knowledge-release.yaml]: .github/workflows/knowledge-release.yaml, the Pack the domain vocabulary step (quoted) and the Pack the Copilot skills step
 
-[^releasing-pending-publisher]: docs/releasing.md, The ktl package on PyPI (quoted), and for check 15 the section on what follows a releasing merge
+[^releasing-pending-publisher]: docs/releasing.md, The ktl package on PyPI (quoted)
+[^releasing-check-15]: docs/releasing.md, After a releasing merge to `knowledge-trust-ladder`, what follows (quoted)
