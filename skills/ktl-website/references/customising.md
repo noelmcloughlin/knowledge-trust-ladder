@@ -6,7 +6,7 @@ The site finds what it shows, so `site.toml` is short: four values every site ne
 
 | Value | Takes | Left out |
 | --- | --- | --- |
-| `baseURL` | the site's address, ending in `/`: `https://<owner>.github.io/<name>/` | required |
+| `baseURL` | the site's address, ending in `/`: the Pages API's `html_url`, which the preflight's `address` line gives; before Pages is on, `https://<owner>.github.io/<name>/` | required |
 | `title` | the site's title, in the header and on every social card | required |
 | `params.description` | one sentence, for search engines and link previews | required |
 | `params.repo` | the repository's address on GitHub; a link to a file that is not a page goes there | required |

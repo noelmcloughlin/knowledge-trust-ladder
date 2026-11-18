@@ -220,8 +220,8 @@ echo "Step 1: install the site"
   cd "$host"
   cp -R "$skill/templates/website" website
   mv website/gitignore website/.gitignore
-  substitute REPO_OWNER=acme REPO_NAME=acme-platform PROJ_NAME="Acme Platform" PROJ_DESC="The platform Acme runs." \
-    -- -e '<REPO_' -e '<PROJ_' website/site.toml website/README.md
+  substitute REPO_OWNER=acme REPO_NAME=acme-platform SITE_URL=https://acme.github.io/acme-platform/ PROJ_NAME="Acme Platform" PROJ_DESC="The platform Acme runs." \
+    -- -e '<REPO_' -e '<SITE_' -e '<PROJ_' website/site.toml website/README.md
   git add -A
   git commit -q -m "the site"
 )

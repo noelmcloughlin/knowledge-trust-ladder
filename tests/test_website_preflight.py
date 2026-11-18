@@ -8,6 +8,8 @@ no site, where every section has to cope with absence rather than fail. It:
   an mkdocs site as the one the site replaces;
 - warns of a changelog with no released version;
 - reads the owner and the name from the origin remote;
+- reads the site's address from the Pages API, a private site's own domain
+  included, and warns when site.toml's baseURL differs;
 - names the report script the sidecar must still install;
 - finds a LinkML schema at the root or under .linkml/, and a domain host's
   federation workflow;
@@ -24,6 +26,7 @@ script, check 12w: that is a fact about this repository's own pages.
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 
@@ -114,6 +117,48 @@ def test_reads_the_owner_and_the_name_from_the_remote(tmp_path):
     assert result and matches(result.out, r"^ok      git .*acme/acme-platform"), f"preflight misread the remote: {result.out}"
 
 
+FAKE_GH = """#!/usr/bin/env bash
+# gh as the preflight calls it: auth status, then one read of the Pages site.
+case "$1" in
+  auth) exit 0 ;;
+  api) [ -n "${FAKE_PAGES_URL:-}" ] || exit 1; printf '%s\\n%s\\n' "$FAKE_PAGES_URL" "Pages is on: built from workflow, private" ;;
+  *) exit 1 ;;
+esac
+"""
+
+
+def test_reads_the_site_s_address_from_the_pages_api(tmp_path):
+    """A private site is served from a domain GitHub gives it, which only the Pages API names, not from <owner>.github.io/<name>/."""
+    skeleton(tmp_path)
+    git = Git(tmp_path)
+    git.init()
+    git("remote", "add", "origin", "git@github.com:Acme/acme-platform.git")
+    write(tmp_path / "bin" / "gh", FAKE_GH)
+    (tmp_path / "bin" / "gh").chmod(0o755)
+    path = f"{tmp_path / 'bin'}{os.pathsep}{os.environ['PATH']}"
+
+    def address(pages_url):
+        result = bash(WEBSITE_PREFLIGHT, tmp_path, env={"PATH": path, "FAKE_PAGES_URL": pages_url})
+        assert result, result.out
+        return next((line for line in result.out.splitlines() if line.split()[1:2] == ["address"]), "")
+
+    private = "https://fluffy-adventure-q7r9.pages.github.io"
+    assert re.match(r"ok +address +https://fluffy-adventure-q7r9\.pages\.github\.io/, from the Pages API: Step 1's <SITE_URL>$", address(private)), address(private)
+    assert re.match(r"info +address +https://acme\.github\.io/acme-platform/, from the remote: .*Pages is not on yet", address("")), address("")
+    assert "evil" not in address('https://evil.example/" x'), "an address of another shape reached the screen"
+    site = install(tmp_path, "website", site_url="https://acme.github.io/acme-platform/")
+    assert re.match(r"warn +address +Pages serves the site at https://fluffy-adventure-q7r9\.pages\.github\.io/, "
+                    r"but website/site\.toml's baseURL is https://acme\.github\.io/acme-platform/ - set baseURL", address(private)), address(private)
+    write(site / "site.toml", read(site / "site.toml").replace("https://acme.github.io/acme-platform/", "https://Fluffy-Adventure-q7r9.pages.github.io/"))
+    assert re.match(r"ok +address +.* is website/site\.toml's baseURL$", address(private)), address(private)
+    assert address(private.replace("https:", "http:")).startswith("ok"), "https in site.toml stands for the http Pages gives an unforced domain"
+    write(site / "site.toml", read(site / "site.toml").replace("https://Fluffy", "http://Fluffy"))
+    assert address(private).startswith("warn"), "http in site.toml, where Pages serves https, went unwarned"
+    git("remote", "set-url", "origin", "https://github.com/Acme/Acme.github.io.git")
+    (site / "site.toml").unlink()
+    assert "https://acme.github.io/," in address(""), "a user site's address has no name after the domain"
+
+
 def test_prints_no_credential_a_remote_address_carries(tmp_path):
     """The line goes to the agent and to any job log."""
     skeleton(tmp_path)
@@ -172,7 +217,7 @@ def test_says_what_the_docs_folder_gives_the_home_page(tmp_path):
     assert result and matches(result.out, r"^ok      docs .*architecture\.md, the home page's Architecture button; 1 retelling"), result.out
 
 
-def install(root, folder):
+def install(root, folder, site_url="https://acme.github.io/acme/"):
     """The site as Step 1 leaves it, placeholders filled."""
     site = root / folder
     shutil.copytree(WEBSITE_TEMPLATES / "website", site)
@@ -181,6 +226,7 @@ def install(root, folder):
         text = (site / name).read_text(encoding="utf-8")
         for token in ("REPO_OWNER", "REPO_NAME", "PROJ_NAME", "PROJ_DESC"):
             text = text.replace(f"<{token}>", "acme")
+        text = text.replace("<SITE_URL>", site_url)
         (site / name).write_text(text, encoding="utf-8")
     return site
 

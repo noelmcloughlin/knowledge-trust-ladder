@@ -1,6 +1,6 @@
 # The <PROJ_NAME> website
 
-This folder builds the site that the Knowledge website workflow publishes to GitHub Pages at `https://<REPO_OWNER>.github.io/<REPO_NAME>/`. Every page comes from a file the repository already holds, so a change to the site is a change to that file.
+This folder builds the site that the Knowledge website workflow publishes to GitHub Pages at `<SITE_URL>`. Every page comes from a file the repository already holds, so a change to the site is a change to that file.
 
 ## Preview it
 
@@ -8,7 +8,7 @@ You need bash, git and [uv](https://docs.astral.sh/uv/). Run these from this fol
 
 ```bash
 scripts/build.sh          # dist/, with the search index, then checks every link between its pages
-scripts/build.sh serve    # http://localhost:1313/<REPO_NAME>/, rebuilt as you edit
+scripts/build.sh serve    # http://localhost:1313/ under baseURL's path, rebuilt as you edit
 scripts/build.sh preview  # the site as it will be published, at http://localhost:1313/
 ```
 

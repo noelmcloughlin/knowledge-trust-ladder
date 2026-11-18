@@ -53,7 +53,7 @@ The workflow and the sidecar's sync look in both folders, so neither needs to be
 
 ## Step 0: gather the facts
 
-**First, the preflight.** Run `bash scripts/website-preflight.sh <repo-root>` from this skill's directory and read its screen. It runs the sidecar's own preflight inside it, then checks the report script, the toolkit and its lock, and the origin remote and the default branch. It says whether another publisher already holds the repository's Pages, which folder the site is in or goes in, and which of the inputs above the site will find. Its `mkdocs` line says whether an mkdocs site is there for the website to replace. Its last line names what is missing and which steps that disables; repeat that line in the Step 6 hand-off. When the person cannot act on a `missing` or `warn` line, write them a request note from [references/prerequisites.md](references/prerequisites.md).
+**First, the preflight.** Run `bash scripts/website-preflight.sh <repo-root>` from this skill's directory and read its screen. It runs the sidecar's own preflight inside it, then says whether another publisher holds the repository's Pages, the address Pages serves the site at, which folder the site goes in, which of the inputs above the site will find, and whether an mkdocs site is there to replace. Its last line names what is missing and which steps that disables; repeat that line in the Step 6 hand-off. When the person cannot act on a `missing` or `warn` line, write them a request note from [references/prerequisites.md](references/prerequisites.md).
 
 Resolve every placeholder from real sources before writing anything; never leave a `<...>` token behind.
 
@@ -61,10 +61,11 @@ Resolve every placeholder from real sources before writing anything; never leave
 | --- | --- | --- |
 | `<REPO_OWNER>` | the repository's owner on GitHub, as its address spells it | `git remote get-url origin`: the part before the repository name (`noelmcloughlin` in `github.com/noelmcloughlin/ai-linkmo`); the preflight's `git` line prints both |
 | `<REPO_NAME>` | the repository's name on GitHub | the same remote, after the owner, without `.git` |
+| `<SITE_URL>` | the site's address, ending in `/` | the preflight's `address` line ([references/deploy.md](references/deploy.md#a-custom-domain-a-user-site-or-a-private-site)) |
 | `<PROJ_NAME>` | the project's human-readable name, which is the site's title | the bundle's `index.md` `title` without "Knowledge Bundle", the README's `#` title, or a manifest `name` |
 | `<PROJ_DESC>` | one sentence, the site's description | the bundle's `index.md` `description`, the quoted `>` line of `llms.txt`, or the README's first sentence |
 
-`<REPO_OWNER>` and `<REPO_NAME>` come from the remote, never from a person's name: Pages serves the site at `https://<REPO_OWNER>.github.io/<REPO_NAME>/`, and the sidecar's `<OWNER_SLUG>` is a different thing. Give `<PROJ_NAME>` and `<PROJ_DESC>` as plain text on one line: Step 1 escapes them for TOML.
+`<REPO_OWNER>` and `<REPO_NAME>` come from the remote, never from a person's name; the sidecar's `<OWNER_SLUG>` is a different thing. Give `<PROJ_NAME>` and `<PROJ_DESC>` as plain text on one line: Step 1 escapes them for TOML.
 
 **When the site replaces an mkdocs site**, which the `mkdocs` line names, read `mkdocs.yml` once, by eye, for the values [references/deploy.md](references/deploy.md#reading-mkdocsyml) lists.
 
@@ -77,15 +78,17 @@ cp -R <this skill>/templates/website website && mv website/gitignore website/.gi
 Only two files carry placeholders: `website/site.toml` and `website/README.md`. Substitute them through Python, never through sed:
 
 ```bash
-export REPO_OWNER REPO_NAME PROJ_NAME PROJ_DESC
+export REPO_OWNER REPO_NAME SITE_URL PROJ_NAME PROJ_DESC
 python3 -c '
-import json, os, sys
+import json, os, re, sys
 for path in sys.argv[1:]:
     text = open(path, encoding="utf-8").read()
-    for token in ("REPO_OWNER", "REPO_NAME", "PROJ_NAME", "PROJ_DESC"):
+    for token in ("REPO_OWNER", "REPO_NAME", "SITE_URL", "PROJ_NAME", "PROJ_DESC"):
         value = os.environ[token]
         if not value.isprintable():
             sys.exit(token + ": line break or unprintable character")
+        if token == "SITE_URL" and not re.fullmatch(r"https?://[^\s\x22\\<>]+/", value):
+            sys.exit("SITE_URL: not an http or https address ending with /")
         if path.endswith(".toml"):
             value = json.dumps(value, ensure_ascii=False)[1:-1]
         text = text.replace("<" + token + ">", value)
@@ -93,7 +96,7 @@ for path in sys.argv[1:]:
 ' website/site.toml website/README.md
 ```
 
-Then edit `website/site.toml` only for what the preflight settled: `branch` when the default branch is not `main`, `baseURL` for a custom domain or a user site, and a logo when the person names one of the repository's own. Set `browse` only when the person asks to publish the data, whose databases become public. When the site replaces an mkdocs site, write the redirects and `docsExclude` entries that Step 0 read. Everything else is found, not set. [references/customising.md](references/customising.md) describes each value.
+Then edit `website/site.toml` only for what the preflight settled: `branch` when the default branch is not `main`, and a logo when the person names one of the repository's own. Set `browse` only when the person asks to publish the data, whose databases become public. When the site replaces an mkdocs site, write the redirects and `docsExclude` entries that Step 0 read. Everything else is found, not set. [references/customising.md](references/customising.md) describes each value.
 
 **Repair or update.** The preflight's `website` line names each file that differs from its template or is missing. Copy those templates over, one file at a time, and never the three files the repository owns.
 
@@ -106,7 +109,7 @@ The build writes `website/dist/`, `website/generated/`, `website/resources/`, `w
 ## Step 3: verify
 
 ```bash
-grep -n -e '<REPO_' -e '<PROJ_' website/site.toml website/README.md
+grep -n -e '<REPO_' -e '<SITE_' -e '<PROJ_' website/site.toml website/README.md
 ```
 
 No match means every placeholder is resolved. The build refuses a `site.toml` that still holds one.
@@ -119,7 +122,7 @@ bash website/scripts/build.sh
 
 The script runs `scripts/prepare.sh` (`lokf export` and, for a schema, `gen-doc`, both from `.lokf/`'s own environment, and the report script), then Hugo and Pagefind, which uv installs from PyPI at the versions the site's `uv.lock` holds, then the raw-HTML cleaning and a check of every link between the pages. It needs the network once. Where PyPI or the CDN is blocked, [references/deploy.md](references/deploy.md#behind-a-proxy) says what to set.
 
-`bash website/scripts/build.sh serve` serves the site at `http://localhost:1313/<REPO_NAME>/` and rebuilds it on each edit. Commit `website/`. With no uv, report the build as skipped: the workflow builds in CI.
+`bash website/scripts/build.sh serve` serves the site at `http://localhost:1313/`, under `baseURL`'s path, and rebuilds it on each edit. Commit `website/`. With no uv, report the build as skipped: the workflow builds in CI.
 
 ## Step 5: install the deploy workflow (optional)
 

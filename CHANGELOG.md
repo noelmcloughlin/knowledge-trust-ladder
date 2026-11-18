@@ -25,6 +25,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **A concept may cite two passages of one file, each under an id of its own.**
 - **ktl-librarian uses LOKF 0.10.0's names for a domain vocabulary, and `adapt --beside`.**
 - **ktl-librarian's version check asks uv's index, and finds a tag's commit through `gh api`.**
+- **ktl-website's `baseURL` is the Pages API's `html_url`, which names a private site's own domain.**
 - **The sync's pull request checklist says how to clear a convention a release tightens.**
 
 ### Fixed
@@ -35,6 +36,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **Rule 9 names a blank line before the block and a spaced delimiter**, which LOKF 0.10.0 reads.
 - **The federation build reads a member page that opens after a byte order mark or blank lines.**
 - **`MemberDomain` keeps a class IRI of its own**, so no catalogue reads as a member and `moved.rq` finds member domains.
+- **The website preflight warns when `site.toml`'s `baseURL` is not where Pages serves the site.**
 - **The preflight reads a lokf floor whose extras hold a space, and its floor advice names `lokf[build,shacl]>=0.10.0`.**
 - **ktl-sidecar's Step 1 names an unset placeholder rather than failing with a traceback.**
 - **The federation's member reads and its MCP `read_document` survive frontmatter that does not parse.**

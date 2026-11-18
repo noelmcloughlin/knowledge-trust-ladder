@@ -41,10 +41,11 @@ SITE_TEMPLATES = WEBSITE_TEMPLATES / "website"
 PLACEHOLDERS = {
     "REPO_OWNER": "acme",
     "REPO_NAME": "acme-platform",
+    "SITE_URL": "https://acme.github.io/acme-platform/",
     "PROJ_NAME": "Acme Platform",
     "PROJ_DESC": "The platform Acme runs.",
 }
-PLACEHOLDER = re.compile(r"<(?:REPO|PROJ)_[A-Z]+>")
+PLACEHOLDER = re.compile(r"<(?:REPO|PROJ|SITE)_[A-Z]+>")
 BINARY = {".woff2", ".png"}
 OWNED = {"site.toml", "README.md", "assets/css/custom.css"}
 
@@ -59,7 +60,7 @@ def text_files():
 
 def step_one(host, folder="website", **values):
     """The snippet SKILL.md gives for the placeholders, run in the host as written, on the site's folder."""
-    found = re.search(r"```bash\n(export REPO_OWNER REPO_NAME PROJ_NAME PROJ_DESC\n.*?)```", read(WEBSITE / "SKILL.md"), re.S)
+    found = re.search(r"```bash\n(export REPO_OWNER REPO_NAME SITE_URL PROJ_NAME PROJ_DESC\n.*?)```", read(WEBSITE / "SKILL.md"), re.S)
     assert found, "SKILL.md's Step 1 still gives the snippet that fills the placeholders"
     script = found.group(1).replace("website/", f"{folder}/")
     path = f"{Path(sys.executable).parent}{os.pathsep}{os.environ['PATH']}"
@@ -164,6 +165,12 @@ def test_step_one_writes_a_value_as_a_toml_string_and_refuses_a_line_break(tmp_p
         refused = step_one(host, PROJ_DESC=value)
         assert not refused and "PROJ_DESC: line break or unprintable character" in refused.out, f"Step 1 took {name}: {refused.out}"
         assert read(host / "website" / "site.toml") == before and "<PROJ_NAME>" in read(host / "website" / "README.md"), "it wrote neither file"
+    for value in ("acme.github.io/acme-platform/", "https://acme.github.io/acme-platform", 'https://acme.github.io/"x"/'):
+        host = tmp_path / f"address-{len(value)}"
+        shutil.copytree(SITE_TEMPLATES, host / "website")
+        refused = step_one(host, SITE_URL=value)
+        assert not refused and "SITE_URL: not an http or https address ending with /" in refused.out, f"Step 1 took SITE_URL={value!r}: {refused.out}"
+        assert "<SITE_URL>" in read(host / "website" / "site.toml"), "it wrote site.toml"
 
 
 NPM_STUB = """#!/usr/bin/env bash
