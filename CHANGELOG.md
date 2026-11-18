@@ -4,10 +4,6 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
-### Fixed
-
-- **The pen keeps an ETag revision in single quotes, so the unattended gate still reads a person's confirmation.** It had written `"W/\"…\""`, which the gate refused.
-
 ## [0.69.1] - 2026-11-18
 
 ### Fixed
@@ -15,6 +11,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **The reader's conformance fixture writes its reified relation with `predicate`, the LOKF Relation slot, not `type`.** The registrar plugin's validator warned on it.
 - **The sync keeps a website script's executable bit, so a site it adds `uv-env.sh` and `vendor.sh` to still builds.** build.sh runs them directly; the sidecar copies already kept theirs.
 - **The federation build verifies a release made before its repository moved, under the old owner with the signer workflow still pinned.**
+- **The pen keeps an ETag revision in single quotes, so the unattended gate still reads a person's confirmation.** It had written `"W/\"…\""`, which the gate refused.
 
 ## [0.69.0] - 2026-11-18
 
