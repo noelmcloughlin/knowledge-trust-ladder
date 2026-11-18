@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/validate.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-11-18T08:06:44Z"
+  at: "2026-11-18T11:03:45Z"
 status: draft
 references:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
@@ -17,14 +17,14 @@ sources:
   - resource: .github/workflows/validate.yml
   - resource: scripts/validate-repository.sh
   - resource: CHANGELOG.md
-    id: changelog.md
+    id: changelog-docent-holdout
     excerpt: "`tests/docent-holdout.yaml` pairs the eight captured questions with the concept each answer should rest on"
   - resource: tests/test_website_preflight.py
   - resource: tests/test_website_template.py
     id: test_website_template.py
     excerpt: "def test_the_home_page_has_five_buttons_and_greys_the_one_it_cannot_find():"
   - resource: scripts/smoke-test-website.sh
-    id: smoke-test-website.sh
+    id: smoke-test-website-buttons
     excerpt: assert "the home page keeps its five buttons, with the schema's and the bundle's links and the architecture page's and the quick start's greyed, and does not lead with LOKF core"
   - resource: tests/test_federation.py
     id: test_federation.py
@@ -117,7 +117,7 @@ The tests run the scripts under `skills/ktl-sidecar/templates/`, `skills/ktl-pro
 - `test_changelog_release.py`: `changelog-release.mjs`, each of its commands in a throwaway repository, skipped without node (check 14).
 - `test_conformance.py`: `knowledge-report.sh` on the bundle in `tests/conformance/reader/`, which has one concept for each trust label a program can compute from the files alone. The test copies the bundle out of the repository, so git holds no history of it, and checks that the report gives what `expected.json` holds. Those values were worked out by hand from section 8 of `SPEC.md`.
 - `test_conventions.py`: `knowledge-conventions.sh` on a bundle that breaks each rule, and on a bundle that keeps every rule with CRLF line endings, through a link and without uv (check 11's synthetic bundle, and check 11c).
-- `test_docent_holdout.py`: the docent holdout in `tests/docent-holdout.yaml`, with no model call.[^changelog.md] It checks that each concept the holdout expects is still a file in the bundle, and that `evals/` has one case per question, each asking the same question. The holdout sits outside `.lokf/`, so the docent never reads a question beside its answer.[^test_docent_holdout.py]
+- `test_docent_holdout.py`: the docent holdout in `tests/docent-holdout.yaml`, with no model call.[^changelog-docent-holdout] It checks that each concept the holdout expects is still a file in the bundle, and that `evals/` has one case per question, each asking the same question. The holdout sits outside `.lokf/`, so the docent never reads a question beside its answer.[^test_docent_holdout.py]
 - `test_federation.py`: `knowledge-federate.py` on two fixture bundles and a domain that names them. It checks the lock, one named graph per bundle, and the same bytes from two builds. It also covers the checks that stop a build and keep the previous snapshot, and the gate on a target no member owns. It covers a member that is itself a domain, the diamond rule, the depth a build follows, a schema released beside a member's zip, the `mcp` server, `--verify-only` and `members`.
 
   It also covers which members join: a member is built as a person last confirmed it, a member no person confirmed waits outside the workspace, and a retired member or `Domain` concept is left out. The build runs lokf in its own process, and a test checks that a failing lokf command fails there as a separate process would and that the build's working directory is put back.
@@ -160,15 +160,15 @@ Every subprocess runs under an isolated git config, so a global `commit.gpgsign=
 - `lint-scripts` runs ShellCheck on the whole tree.
 - `lint-workflows` runs `actionlint`, pointed by path at this repository's workflows and at the workflow templates that get copied into other repositories: the sidecar's `knowledge-librarian.yaml`, `knowledge-registrar.yaml`, `knowledge-release.yaml`, `knowledge-federation.yaml`, `knowledge-sync.yaml` and `knowledge-ingest.yaml`, and ktl-website's `knowledge-website.yaml`. It would otherwise look only under `.github/workflows/`. It ignores the `copilot-requests` permission, which actionlint 1.7.12 predates. The job also checks that every `uses:` in this repository's workflows and those templates names a commit SHA or image digest rather than a floating tag or branch.
 - `smoke-test` installs the skills from the checkout into a throwaway consumer repository through `scripts/smoke-test-install.sh`. It checks that ktl-docent's two scripts come with the install. It also checks that, run from where the installer put them, they label a concept and record a gap in a reader's repository.
-- `smoke-test-website` builds the ktl-website template on a host made from the sidecar's dummy skeleton through `scripts/smoke-test-website.sh`, three times. One build has a README, docs pages, a changelog, a root `SPEC.md`, figures, a LinkML schema, retellings, the federation workflow, a mirrored source and data. Another has none of them, since the site finds each with no setting, and the third has a domain vocabulary alone. The fuller build's home page lights four of its five buttons, and the empty build's keeps all five, with the schema's and the bundle's links.[^smoke-test-website.sh] This repository's own site, which `knowledge-website.yaml` builds, proves a fuller `site.toml`.
+- `smoke-test-website` builds the ktl-website template on a host made from the sidecar's dummy skeleton through `scripts/smoke-test-website.sh`, three times. One build has a README, docs pages, a changelog, a root `SPEC.md`, figures, a LinkML schema, retellings, the federation workflow, a mirrored source and data. Another has none of them, since the site finds each with no setting, and the third has a domain vocabulary alone. The fuller build's home page lights four of its five buttons, and the empty build's keeps all five, with the schema's and the bundle's links.[^smoke-test-website-buttons] This repository's own site, which `knowledge-website.yaml` builds, proves a fuller `site.toml`.
 - `validate-markdown` runs markdownlint, lychee, and codespell. A failed lychee pass waits a minute and checks every link again, and only the second pass fails the job. Lychee itself retries a timeout or a 429 but never a failed connection.[^lychee.toml] Codespell skips `knowledge_bundle`, the link to `.lokf/knowledge`, which it already checks at its real path.
 
 The schedule runs weekly because otherwise link rot, an upstream `gh skill` change or drift in the install path would show up only on the next pull request that happens to run.
 
-[^changelog.md]: CHANGELOG.md, the entry for ktl-docent's holdout
+[^changelog-docent-holdout]: CHANGELOG.md, the entry for ktl-docent's holdout
 [^test_docent_holdout.py]: tests/test_docent_holdout.py, the module's docstring
 [^lychee.toml]: lychee.toml, the comment above max_retries, and .github/workflows/validate.yml's Check links step
 [^test_federation.py]: tests/test_federation.py, the private-address and proxy tests
 [^test_ingest.py]: tests/test_ingest.py, the tests of a git entry and of a confidential entry
 [^test_website_template.py]: tests/test_website_template.py, the test of the home page's five buttons
-[^smoke-test-website.sh]: scripts/smoke-test-website.sh, the home page's assertions
+[^smoke-test-website-buttons]: scripts/smoke-test-website.sh, the home page's assertions

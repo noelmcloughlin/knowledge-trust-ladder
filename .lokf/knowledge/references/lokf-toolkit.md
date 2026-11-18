@@ -7,7 +7,7 @@ genre: reference
 resource: https://pypi.org/project/lokf/
 generated:
   by: process:ktl-librarian
-  at: "2026-11-18T10:46:57Z"
+  at: "2026-11-18T11:10:47Z"
 status: draft
 definedBy:
   - https://w3id.org/ktl/knowledge/references/lokf-specification
@@ -20,6 +20,7 @@ sources:
   - resource: https://pypi.org/project/lokf/
   - resource: https://github.com/nicholsn/lokf/blob/ee37659ca2f78915f5a691da7bad9239da624c87/src/lokf/cli.py
   - resource: skills/ktl-librarian/SKILL.md
+  - resource: skills/ktl-sidecar/references/gate.md
   - resource: CHANGELOG.md
   - resource: docs/context-layer.md
   - resource: docs/federation.md
@@ -44,6 +45,8 @@ The toolkit is the implementation, not the specification. `lokf validate` checks
 `lokf registry init`, `add`, `list` and `resolve` keep a registry of bundles offline. A domain's federation build registers each member release with `lokf registry add` and exports it with `lokf export` (`docs/federation.md`). The build reads a member's schema first, and stops on one that imports anything but `lokf` and `linkml:` names, since LinkML would fetch or read any other import itself. The toolkit reserves `index.md` and `log.md` alone, so the website's build[^lokf-export.py] and the federation build[^knowledge-federate.py] run `lokf export` with a root `diataxis.md` read as no concept (`CHANGELOG.md`). The command line also carries `new`, `propose`, `vocab`, `adapt` and `skills`, and the package has a `[tables]` extra, which adds pandas and pyarrow, beside `[build]`. PyPI lists 0.9.0 as the latest release.
 
 `lokf validate --check-refs` finds typed-relation targets in the bundle's own namespace with no matching concept, and leaves targets outside its `base_iri` alone. This repository's own `just lokf-check-refs` recipe calls it, with `--check-excerpts`, which finds each `sources[].excerpt` in its local file and counts an excerpt on a URL without fetching it. It takes the relation slots from the schema, so a domain vocabulary's own slots are covered without the recipe restating a predicate list.
+
+From 0.10.0, `lokf validate` also warns, without failing, when concepts give one source `id` different excerpts: the id resolves against `base_iri` to one source node, which the SHACL shapes allow one excerpt. Conventions rule 16 fails the same case at the gate.
 
 Scaffolded bundles depend on `lokf[build]>=0.10.0`, a floor and not a pin. They also depend on `rust-just==1.47.0`, so that `uv.lock` checks the recipe runner by hash and `uv run just` runs it. They pin `ktl`, the package that carries the skills, at one release: the librarian workflow installs `ktl-librarian` from it, and the weekly sync moves the pin. The `[build]` extra installs the full `linkml` package: the whole generator suite, not just the runtime. So a scaffolded sidecar already has the LinkML generators for a domain vocabulary, with no extra installation.
 

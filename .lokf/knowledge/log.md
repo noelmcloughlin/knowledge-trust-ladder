@@ -2,6 +2,11 @@
 
 ## 2026-11-18
 
+* **Changed**: ktl-librarian: the apply job's `just lokf-check-refs` adds `--shacl` where lokf's shacl extra is installed, as `.lokf/justfile` now runs it. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Domain bundle: a `MemberDomain` keeps a class IRI of its own, and the workspace lists it as a `dcat:Catalog`, as the sidecar's `domain.yaml` and the curator's `references/domain-bundle.md` now say.
+* **Changed**: Domain vocabulary: LOKF's specification uses the same two names from lokf 0.10.0, as ktl-librarian's `references/domain-vocabulary.md` now says.
+* **Changed**: LOKF toolkit: from 0.10.0 `lokf validate` warns when concepts give one source id different excerpts, and conventions rule 16 fails it, as the toolkit's `cli.py` and `references/gate.md` say.
+* **Changed**: footnote ids that two concepts gave different excerpts are renamed after their passage, so each id names one passage across the bundle, as conventions rule 16 now requires after LOKF 0.10.0. `playbooks/knowledge-sources.md`, `playbooks/ktl-librarian-skill.md` and `playbooks/ktl-sidecar-skill.md` were edited since a person confirmed them; each label says so until the curator looks again.
 * **Changed**: Skills repositories: the docent now has a row for "which skill should I use?" and tells a skill's concept by its `SKILL.md` resource, and a fault in the host's own text is no longer listed as remaining, as `docs/skills-repositories.md` says. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: ktl-librarian: the version check asks the index `uv sync` reads through `uv lock --dry-run`, and the W012 note names the v0.10.0 commit and wheel, as `SKILL.md` and `references/audit.md` say. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: LOKF toolkit: the floor is 0.10.0, the no-Python schema and the cited `cli.py` move to the v0.10.0 commit, and the version check asks the index `uv sync` reads, as `skills/ktl-sidecar/templates/pyproject.toml` and ktl-librarian's `SKILL.md` say.
