@@ -17,7 +17,13 @@ A skill template is not a skill: a `SKILL.md` meant to be copied, such as one in
 
 ## What a skill's concept holds
 
-Give each authored skill one `Playbook` concept, with `genre: how-to`. It holds the claims a reader asks about and the facts `SKILL.md` has no field for:
+Give each authored skill one `Playbook` concept, with `genre: how-to`, and mark it the same way every time, so a reader can tell it from a how-to:
+
+- file it as `playbooks/<name>-skill.md`, where `<name>` is the skill's `name`;
+- set `resource` to the skill's `SKILL.md`, by its path in the repository, which no other concept does;
+- set `definedBy` to a `Reference` concept for the Agent Skills specification, `references/agent-skills-specification.md`, which the first skill's patch creates.
+
+ktl-docent tells a skill's concept from a how-to by its `resource`. The concept holds the claims a reader asks about and the facts `SKILL.md` has no field for:
 
 - what the skill is for and when to use it, from its `description`, carried as the source states it;
 - what it needs, from `compatibility` and `allowed-tools` where the skill sets them, and otherwise from its body, its scripts and any requirements file beside them;

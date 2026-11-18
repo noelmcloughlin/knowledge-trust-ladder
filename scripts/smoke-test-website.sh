@@ -73,7 +73,7 @@ open(path, "w", encoding="utf-8").write(text)
   cp "$sidecar/scripts/knowledge-report.sh" "$sidecar/scripts/knowledge-preflight.sh" .lokf/scripts/
   chmod +x .lokf/scripts/*.sh
   substitute PROJ_NAME="Acme Platform" PROJ_DESC="The platform Acme runs." PROJ_SLUG=acme-platform \
-    BASE_IRI=https://acme.example/knowledge/ OWNER_NAME=Acme OWNER_SLUG=acme TODAY=2026-01-01 \
+    BASE_IRI=https://acme.example/knowledge/ OWNER_NAME=Acme OWNER_SLUG=acme OWNER_TYPE=Organization TODAY=2026-01-01 \
     -- -e '<PROJ_' -e '<BASE_IRI>' -e '<OWNER_' -e '<TODAY>' .lokf
   printf '# Acme Platform\n\nThe platform Acme runs. See [the bundle](.lokf/knowledge/index.md), [the guide](docs/guide.md) and [the about page](/docs/about.md), the last from the root as GitHub reads it.\n' > README.md
   printf '\nThe rules are in [the specification](SPEC.md#1-rules).\n' >> README.md

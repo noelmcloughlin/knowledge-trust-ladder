@@ -1100,7 +1100,10 @@ class Bundle:
                 del lines[k]
                 if 0 < k < len(lines) and lines[k - 1] == "" and lines[k] == "":
                     del lines[k]  # the blank line on either side of it, now two in a row
-            return Bundle.joined([Bundle.unlink(line, link, path, where) if ref.search(line) else line for line in lines])
+            lines = [Bundle.unlink(line, link, path, where) if ref.search(line) else line for line in lines]
+            if section is not None:
+                lines = Bundle.drop_empty_section(lines, section[0])
+            return Bundle.joined(lines)
         if mine:
             for k in mine:
                 lines[k] = bullet
@@ -1125,6 +1128,36 @@ class Bundle:
             if last + 3 < len(lines) and lines[last + 3] != "":
                 lines.insert(last + 3, "")
         return Bundle.joined(lines)
+
+    @staticmethod
+    def drop_empty_section(lines: list, name: str) -> list:
+        """The lines without the heading named after a folder when nothing but blank lines is left under it."""
+        heads = Bundle.headings(lines)
+        for i, (k, level, text) in enumerate(heads):
+            if i == 0 or text.lower() != name.lower():
+                continue
+            end = next((k2 for k2, level2, _ in heads[i + 1 :] if level2 <= level), len(lines))
+            if any(line.strip() for line in lines[k + 1 : end]):
+                continue
+            while k > 0 and lines[k - 1] == "":
+                k -= 1
+            lines = lines[:k] + ([""] if end < len(lines) and k > 0 else []) + lines[end:]
+            break
+        return lines
+
+    def index_writes(self) -> list:
+        """Each index.md this patch changed, with None for a folder's index left holding only its heading and no concept beside it."""
+        out = []
+        for file, text in self.indexes.items():
+            if file != self.knowledge / "index.md" and len([line for line in text.split("\n") if line.strip()]) == 1 and HEADING_RE.match(text.strip()):
+                folder = file.parent.relative_to(self.knowledge).as_posix()
+                left = {f.relative_to(self.knowledge).as_posix() for f in file.parent.rglob("*.md") if f != file}
+                left -= {p for p, c in self.concepts.items() if c.deleted}
+                left |= {p for p, c in self.concepts.items() if not c.deleted and p.startswith(folder + "/")}
+                if not left:
+                    text = None
+            out.append((file, text))
+        return out
 
     @staticmethod
     def joined(lines: list) -> str:
@@ -1535,8 +1568,7 @@ def main(argv: list[str]) -> int:
         if not c.touched:
             continue
         writes.append((bundle.knowledge / path, None if c.deleted else c.text()))
-    for file, text in bundle.indexes.items():
-        writes.append((file, text))
+    writes.extend(bundle.index_writes())
     try:
         log_text = bundle.log_text()
     except (OSError, UnicodeDecodeError) as exc:

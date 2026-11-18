@@ -4,6 +4,27 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Added
+
+- **ktl-sidecar's `<OWNER_TYPE>` sets the publisher to `Person` or `Organization`.**
+- **ktl-docent answers "which skill should I use?" from a skill's concept.**
+- **Feedback starting `Host text:` records a fault in the host's own files.**
+- **ktl-librarian's bootstrap maps a plugin marketplace manifest.**
+
+### Changed
+
+- **A skill's concept is `playbooks/<name>-skill.md`, with its `SKILL.md` as `resource`.**
+- **ktl-sidecar commits Step 5's files, and keeps the KTL skills out of a host's own `skills/`.**
+- **ktl-librarian's first pull request follows the sidecar's.**
+- **ktl-librarian cites an installed skill's published copy, committed or not.**
+- **ktl-librarian's version check asks the index `uv sync` reads, and finds a tag's commit through `gh api` where `git ls-remote` is refused.**
+
+### Fixed
+
+- **The pen drops a folder's empty root section and `index.md` with its last concept.**
+- **The README aside no longer assumes `##` headings.**
+- **ktl-sidecar counts the six skills the preflight checks.**
+
 ## [0.68.0] - 2026-11-18
 
 ### Added

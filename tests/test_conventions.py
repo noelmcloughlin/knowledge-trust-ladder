@@ -574,6 +574,7 @@ SKELETON = {
     "BASE_IRI": "https://acme.example/knowledge/",
     "OWNER_NAME": "Ada",
     "OWNER_SLUG": "ada",
+    "OWNER_TYPE": "Person",
     "TODAY": "2026-09-14",
 }
 
@@ -612,10 +613,11 @@ def test_step_one_writes_a_value_as_a_quoted_string_and_refuses_what_is_not_one_
     spoken = 'Acme: the "platform" # with C:\\tools and <BASE_IRI>.'
     host = tmp_path / "quoted"
     k = skeleton(host)
-    filled = step_one(host, PROJ_NAME='The "Acme": Platform', PROJ_DESC=spoken, OWNER_NAME="Ada: #1")
+    filled = step_one(host, PROJ_NAME='The "Acme": Platform', PROJ_DESC=spoken, OWNER_NAME="Ada: #1", OWNER_TYPE="Organization")
     assert filled, filled.out
     index = yaml.safe_load(read(k / "index.md").split("\n---\n")[0].removeprefix("---\n"))
     assert index["title"] == 'The "Acme": Platform Knowledge Bundle' and index["description"] == spoken and index["publisher"]["name"] == "Ada: #1", index
+    assert index["publisher"]["type"] == "Organization" and index["publisher"]["id"] == "https://acme.example/knowledge/organization/ada", index
     service = yaml.safe_load(read(k / "services" / "example-service-a.md").split("\n---\n")[0].removeprefix("---\n"))
     assert service["description"].endswith('of The "Acme": Platform.'), service
     assert tomllib.loads(read(host / ".lokf" / "pyproject.toml"))["project"]["description"] == 'LOKF knowledge-bundle tooling for The "Acme": Platform.'
@@ -628,6 +630,7 @@ def test_step_one_writes_a_value_as_a_quoted_string_and_refuses_what_is_not_one_
         ("BASE_IRI", "https://acme.example/knowledge", "BASE_IRI: not of the form"),
         ("PROJ_SLUG", "acme platform", "PROJ_SLUG: not of the form"),
         ("TODAY", "today", "TODAY: not of the form"),
+        ("OWNER_TYPE", "Team", "OWNER_TYPE: not of the form"),
     ):
         host = tmp_path / f"refused-{token}"
         k = skeleton(host)

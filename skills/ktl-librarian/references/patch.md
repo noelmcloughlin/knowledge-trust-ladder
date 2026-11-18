@@ -144,3 +144,7 @@ Any one of these refuses the whole file, and nothing is written:
 In a live session, then run `just lokf-validate`, `just lokf-check-refs` and `bash scripts/knowledge-conventions.sh knowledge` as section 2 says. In a scheduled run the workflow runs them after the wrapper applies the file.
 
 The script writes a touched concept's frontmatter back with double quotes where a value needs quoting and keeps the blank line after the closing `---` as it found it, so the diff shows the change and not the rewrite. An operation that changes no frontmatter key, such as `resolve`, writes the block back as the file held it, comments and folded lines too. A value YAML would read as a number, a boolean or a time goes back as the text the file held: `1.10` stays `1.10`, and an unquoted time on a person's event stays as that person's commit wrote it. The script keeps the conventions it knows, and checks the schema of what it writes when `.lokf/.venv` holds the toolkit. The relation targets are the toolkit's to check.
+
+## A fault in the host's own text
+
+A feedback entry that starts `Host text:` names a fault in one of the host's own files, such as a guide that names a script the repository does not hold. Never edit that file. Handle the entry with a `question` on the concept that cites the file, naming the file and the fault, so the curator takes it to a person who can fix it. Where no concept cites the file, derive one as for a Miss and add the question there. Change a claim only where another source settles the fact.

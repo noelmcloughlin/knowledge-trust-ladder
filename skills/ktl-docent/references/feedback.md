@@ -66,6 +66,13 @@ Record the question the bundle could not answer, **where you found the answer**,
 
 Record the concept (its path), what it says, what its source says instead, and which one you answered from. Do not guess *why* they differ. The librarian checks whether the repository simply moved on (fix the concept) or whether the matter is genuinely unsettled (set `draft`, add an open question for the curator).
 
+### A fault in the host's own text
+
+A file of the host can be wrong where the bundle is not: a guide that names a script without its extension, a `SKILL.md` that names a file in the wrong case, a README that a config file contradicts. Only a person fixes the host's text, and the librarian passes it to one as an open question for ktl-curator. Record it with the kind that fits, and start the entry with `Host text:` so the librarian reads it as such:
+
+- a **Disagreement** with `--concept` when a concept repeats the fault, naming the concept, the faulty file and what the repository holds instead;
+- a **Miss** otherwise, naming the faulty file, what it says and what the repository holds instead.
+
 ## What not to record
 
 - Questions the bundle answered fine.

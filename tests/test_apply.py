@@ -900,6 +900,22 @@ def test_the_sidecars_two_examples_can_be_deleted_together_or_in_the_order_they_
     applies(tmp_path, lines("ops:", "  - op: delete", "    path: s/a.md", log, "  - op: delete", "    path: s/b.md", log))
 
 
+def test_deleting_a_folders_last_concept_removes_its_root_section_and_its_index(tmp_path):
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n\nIntro.\n\n# Services\n\n* [A](services/a.md) - A.\n* [B](services/b.md) - B.\n\n# Glossary\n\n* [T](glossary/t.md) - T.\n")
+    write(kk / "services" / "index.md", "# Services\n\n* [A](a.md) - A.\n* [B](b.md) - B.\n")
+    stamp = "generated:\n  by: process:ktl-librarian\n  at: 2026-01-01T00:00:00Z\nstatus: draft\n"
+    for name in ("a", "b"):
+        write(kk / "services" / f"{name}.md", f"---\ntype: Service\ntitle: {name.upper()}\ndescription: {name.upper()}.\n{stamp}---\n\n# {name}\n")
+    log = '    log: "**Removal**: an example."'
+    applies(tmp_path, lines("ops:", "  - op: delete", "    path: services/a.md", log))
+    assert "# Services" in read(kk / "index.md") and (kk / "services" / "index.md").exists(), "a section with a concept left lost its heading"
+    applies(tmp_path, lines("ops:", "  - op: delete", "    path: services/b.md", log))
+    root = read(kk / "index.md")
+    assert "# Services" not in root and "Intro.\n\n# Glossary\n\n* [T]" in root, f"the emptied section stayed, or the blank lines around it did not close up: {root}"
+    assert not (kk / "services" / "index.md").exists(), "the folder index outlived its last concept"
+
+
 def test_the_pen_and_the_report_read_the_same_relation_fields():
     pen = re.search(r"RELATION_FIELDS = \((.*?)\)", read(SCRIPTS / "knowledge-apply.py"), re.S).group(1)
     report = re.search(r'split\("([A-Za-z ]+)", relnames', read(SCRIPTS / "knowledge-report.sh")).group(1)

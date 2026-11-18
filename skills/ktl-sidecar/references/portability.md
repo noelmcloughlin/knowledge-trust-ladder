@@ -1,6 +1,6 @@
 # Portability: reusing the KTL skills on another host
 
-The skills are repository-agnostic. Run them in any directory tree, including an empty one. The bundle is the same on every host: `.lokf/knowledge/`, one Markdown file per concept, validated by the same toolkit. What varies is the shell, the version control, the forge (GitHub, GitLab, Codeberg, Forgejo, Gitea, or none), and what each of the four skills can do there.
+The skills are repository-agnostic. Run them in any directory tree, including an empty one. The bundle is the same on every host: `.lokf/knowledge/`, one Markdown file per concept, validated by the same toolkit. What varies is the shell, the version control, the forge (GitHub, GitLab, Codeberg, Forgejo, Gitea, or none), and what each skill can do there.
 
 **Run the preflight first.** Before the sidecar exists, run `bash <skill>/templates/scripts/knowledge-preflight.sh` from the repository's root, where `<skill>` is ktl-sidecar's directory. Afterwards, run `.lokf/scripts/knowledge-preflight.sh`. Its last line names your case, and the matching section below says what to do. If a line names something you cannot fix yourself, [prerequisites.md](prerequisites.md) says who can, and what to send them.
 
@@ -12,20 +12,20 @@ The skills are repository-agnostic. Run them in any directory tree, including an
 | Windows, PowerShell | the toolkit, git, the plugins | every script and command, which are bash | run them through Git for Windows' bash (below) |
 | GitLab, Codeberg, Forgejo, Gitea | the sidecar, librarian, docent; the curator with `glab` or the signing-key route | the GitHub Actions workflows, ktl-website's deploy included | the wrapper in that CI, the gate ported per the recipe below, or the forge-free gate |
 | No forge, git only | everything local | the gate, pull requests, the scheduled loop | review by the host's own mechanism; the forge-free gate for confirmations |
-| No git (a synced or shared folder) | the bundle, validation, all four skills' reading | `revision`, the gate, signed-commit checks, the scheduled loop | the platform's version history as the record; the curator's no-forge identity rule |
+| No git (a synced or shared folder) | the bundle, validation, every skill's reading | `revision`, the gate, signed-commit checks, the scheduled loop | the platform's version history as the record; the curator's no-forge identity rule |
 | Behind a package mirror or a proxy, or python3 older than 3.11 | everything | `uv run` of the sidecar's scripts; python3 for any script | `.lokf/.venv` after `uv sync`; a lock made where the gate installs from; uv told to trust the proxy's certificate; `uv run` for ktl-prose's check (below) |
 | An Obsidian vault as host | everything | - | open `knowledge_bundle` itself as a vault (below) |
 | Microsoft 365 Copilot (declarative agent) | the docent, from a snapshot of the bundle; the auditor once it exists | the other three skills, source checks, `feedback.md` | the `ktl-docent-m365-<tag>-<repository>.zip` a release carries once `KNOWLEDGE_M365_ENABLED` is `true`, or `.lokf/m365/knowledge-m365.sh` on the bundle folder ([m365.md](m365.md)) |
 
-## Install all four skills together
+## Install the skills together
 
-Install **all four** skills, `ktl-sidecar`, `ktl-librarian`, `ktl-curator` and `ktl-docent`, into one skill directory: `.claude/skills/` (Claude Code), `.github/skills/` (Copilot-style agents), `.agents/skills/` (a generic, tool-agnostic convention) or bare `skills/` (a repository that publishes the skills it also uses). Those are the directories the wrapper script searches for `ktl-librarian/SKILL.md`, in that order; any other directory goes into its `candidate` list ([automation.md](automation.md)). Each skill is a directory, `templates/` and `references/` included, and all four are generic: copy them unmodified, and the **librarian**'s first run discovers the project's knowledge sources itself.
+Install the four skills of the loop, `ktl-sidecar`, `ktl-librarian`, `ktl-curator` and `ktl-docent`, into one skill directory, with `ktl-prose` and `ktl-website` beside them if you use them: `.claude/skills/` (Claude Code), `.github/skills/` (Copilot-style agents), `.agents/skills/` (a generic, tool-agnostic convention) or bare `skills/` (a repository that publishes the KTL skills it also uses, never one whose `skills/` is its own collection). Those are the directories the wrapper script searches for `ktl-librarian/SKILL.md`, in that order; any other directory goes into its `candidate` list ([automation.md](automation.md)). Each skill is a directory, `templates/` and `references/` included, and all of them are generic: copy them unmodified, and the **librarian**'s first run discovers the project's knowledge sources itself.
 
 A skill installed for one user, under `~/.copilot/skills/`, `~/.claude/skills/` or `~/.agents/skills/`, serves that user's live sessions. The preflight lists it, but the scheduled librarian runs on a fresh runner and needs a copy in the repository.
 
 Two copies of a skill in two of those directories drift: an installer updates one and not the other, and whichever an agent reads wins. The preflight compares every pair it finds and warns when they differ. Keep one, or reinstall both from the same release.
 
-[`knowledge-trust-ladder`](https://github.com/noelmcloughlin/knowledge-trust-ladder) is the sole, canonical source of the skills, and the `ktl` package on PyPI carries each of its releases unchanged. Install with `uvx ktl skills install`, `gh skill install` or `npx skills add` rather than by copying files by hand, and pin all four to the same release. `ktl skills status` says whether each installed copy is still the release's.
+[`knowledge-trust-ladder`](https://github.com/noelmcloughlin/knowledge-trust-ladder) is the sole, canonical source of the skills, and the `ktl` package on PyPI carries each of its releases unchanged. Install with `uvx ktl skills install`, `gh skill install` or `npx skills add` rather than by copying files by hand, and pin all of them to the same release. `ktl skills status` says whether each installed copy is still the release's.
 
 ## Tooling
 
@@ -67,7 +67,7 @@ One difference to carry over: GitHub forbids approving one's own pull request, a
 
 Run the `justfile` recipes and the wrapper from a POSIX shell (on Windows, WSL or Git Bash), or bypass them and call `uv run lokf ...` directly; `uv` and the toolkit are cross-platform.
 
-**From PowerShell**, every command the four skills give is a bash command. Run it through the bash that Git for Windows installs, which is not on PowerShell's path by default:
+**From PowerShell**, every command the KTL skills give is a bash command. Run it through the bash that Git for Windows installs, which is not on PowerShell's path by default:
 
   ```powershell
   & "$env:ProgramFiles\Git\bin\bash.exe" -c "bash .lokf/scripts/knowledge-preflight.sh"

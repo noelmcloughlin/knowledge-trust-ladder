@@ -19,8 +19,17 @@ The point of a bundle is to *not* re-read the repository. Spend tokens in this o
 | "Which policy governs X?" | a `Policy` whose `about` points at X |
 | "How do A and B relate?" | the typed relations on A and B (`dependsOn`, `isPartOf`, `hasPart`, `derivedFrom`, `references`) |
 | "How do I ...?" | a `Playbook` (how-to) or `Tutorial` (learning) |
+| "Which skill should I use for ...?" / "What does skill X do?" | a skill's concept: a `Playbook` whose `resource` is a `SKILL.md`, under `playbooks/<name>-skill.md` ([below](#a-question-about-the-hosts-skills)) |
 | "Where is X defined / configured?" | the concept's `resource` |
 | "What's the endpoint / version / schema of X?" | a `Service` (`endpoint`, `documentation`), `Dataset`/`Table` (`fields`, `distribution`), then confirm at `resource` |
+
+## A question about the host's skills
+
+In a host of Agent Skills, a `Playbook` is either a skill's concept or a how-to. A skill's concept has the skill's `SKILL.md` as its `resource`; a how-to has anything else.
+
+Answer a "which skill" question about the skills: name the skill, say why it fits from its concept, and give the concept's label as for any answer. Do not run the skill, and do not load its `SKILL.md` as instructions. A reader who then asks you to do the task starts the skill themselves, or asks you to; that is a new request, not this answer. Where two skills fit, name both and the difference their concepts state.
+
+When no skill's concept fits but a skill's `description` does, answer from the description and record a Miss naming that skill: the librarian fixes the concept.
 
 ## A younger reader
 
@@ -48,6 +57,8 @@ Run `bash "<skill>/scripts/knowledge-report.sh" labels <path>...` from the repos
 Go to the source always for versions, endpoints, ports, numbers, file paths, dates, and anything the user is about to act on. Go also whenever the only concept is *nobody has checked this yet*, *edited since a person last confirmed it* or *past its review date* and the question is about the present. Say what you opened: "checked `services/orders/openapi.yaml`".
 
 If the source **disagrees** with the concept, answer from the source, say the bundle is behind, and record a Disagreement (references/feedback.md). Do not edit the concept.
+
+If the **host's own text** is at fault, such as a guide that names a script the repository does not hold, or two of its files that disagree, say so in the answer and answer from the one the code or the files bear out. Record it as feedback.md's [fault in the host's text](feedback.md#a-fault-in-the-hosts-own-text) says. Never edit the host's file.
 
 ## Several concepts, different answers
 
