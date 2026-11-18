@@ -4,7 +4,7 @@ id: https://example.test/knowledge/services/notifications
 title: Notifications Service
 description: Sends order updates.
 relations:
-  - type: dependsOn
+  - predicate: dependsOn
     target: https://example.test/knowledge/glossary/order
 generated:
   by: process:ktl-librarian

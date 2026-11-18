@@ -5,6 +5,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 ## [Unreleased]
 
 ### Fixed
+- **The reader's conformance fixture writes its reified relation with `predicate`, the LOKF Relation slot, not `type`.** The registrar plugin's validator warned on it.
 - **The sync keeps a website script's executable bit, so a site it adds `uv-env.sh` and `vendor.sh` to still builds.** build.sh runs them directly; the sidecar copies already kept theirs.
 
 ## [0.69.0] - 2026-11-18
