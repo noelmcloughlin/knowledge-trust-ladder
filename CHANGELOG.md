@@ -4,6 +4,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Fixed
+
+- **The pen keeps an ETag revision in single quotes, so the unattended gate still reads a person's confirmation.** It had written `"W/\"…\""`, which the gate refused.
+
 ## [0.69.1] - 2026-11-18
 
 ### Fixed

@@ -45,9 +45,10 @@ import sys
 
 import pytest
 
-from conftest import REPO, SCRIPTS, bash, esc, has_line, matches, mirror_uv, read, run, today_utc, tree_digest, write
+from conftest import REPO, SCRIPTS, Git, bash, esc, has_line, matches, mirror_uv, read, run, today_utc, tree_digest, write
 
 APPLY = SCRIPTS / "knowledge-apply.sh"
+PROVENANCE = SCRIPTS / "knowledge-provenance.sh"
 
 
 def lines(*parts):
@@ -1130,6 +1131,47 @@ def test_a_person_s_revision_keeps_its_quotes(applied):
     quotedrev = read(kb / "playbooks" / "quotedrev.md")
     for rev in ("1234e56", "7339a7009322e249bf9b04e485cef7e94747a39b"):
         assert f'revision: "{rev}"' in quotedrev, f"the pen dropped the quotes round {rev}: {quotedrev}"
+
+
+def test_a_person_s_etag_revision_passes_the_unattended_gate(applied):
+    """An ETag keeps single quotes round its own double quotes, so the gate still reads the event."""
+    kb = kb_of(applied)
+    write(
+        kb / "playbooks" / "etagrev.md",
+        lines(
+            "---",
+            "type: Playbook",
+            "id: https://acme.example/knowledge/playbooks/etagrev",
+            "title: Etagrev",
+            "description: er.",
+            "generated:",
+            "  by: process:ktl-librarian",
+            '  at: "2026-01-01T00:00:00Z"',
+            "verified:",
+            "  - by: human:ada",
+            '    at: "2026-02-02T00:00:00Z"',
+            '    revision: W/"86d3df74bb848e94e2e134f7de08a0a3"',
+            "  - by: human:ada",
+            '    at: "2026-02-03T00:00:00Z"',
+            "    revision: 'W/\"3c5e9a92c28460c3b16cece7faa1ac1e\"'",
+            "---",
+            "",
+            "# Overview",
+            "",
+            "Body.",
+        ),
+    )
+    write(kb / "playbooks" / "index.md", read(kb / "playbooks" / "index.md") + "* [Etagrev](etagrev.md) - er.\n")
+    git = Git(applied)
+    git.init()
+    git("add", "-A")
+    git("commit", "-q", "-m", "base")
+    applies(applied, lines("ops:", "  - {op: recheck, path: playbooks/etagrev.md}"))
+    etagrev = read(kb / "playbooks" / "etagrev.md")
+    for rev in ("86d3df74bb848e94e2e134f7de08a0a3", "3c5e9a92c28460c3b16cece7faa1ac1e"):
+        assert f"revision: 'W/\"{rev}\"'" in etagrev, f"the pen rewrote the ETag {rev}: {etagrev}"
+    gate = bash(PROVENANCE, "--unattended", cwd=applied)
+    assert gate.rc == 0, gate.out
 
 
 def test_asked_goes_with_from_feedback(applied):
