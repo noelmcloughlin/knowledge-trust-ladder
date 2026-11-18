@@ -16,7 +16,7 @@ tags:
   - audience-13-18
 generated:
   by: process:ktl-librarian
-  at: "2026-11-18T00:04:07Z"
+  at: "2026-11-18T08:53:06Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -51,6 +51,7 @@ The pen refuses:
 - a rewrite of text a person wrote;
 - the deletion of a concept a person confirmed or left a note on;
 - a `question` or a `delete` on a concept a person retired;
+- a change to the concept that replaced a retired one. Only a person names it;
 - a `log` line that starts with `**Curation**` or `**Deprecation**`. ktl-curator writes those two lines for a person.
 
 It also refuses a patch that would add, change or remove a person's record. That record is each entry whose `by` names a person, with every key it holds. So an exclusion a person decided keeps its `resource` and `reason`. The record is also each note a person left, with the lines under it and its place in the order.

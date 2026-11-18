@@ -124,6 +124,7 @@ Any one of these refuses the whole file, and nothing is written:
 - `patch`, `rewrite`, `set` or `delete` on a concept whose `generated.by` starts with `human:` (a person wrote that text; add a `question` instead);
 - `delete` on a concept with a `human:` event under `verified`, or with a person's note or a curator's send-back under `## Open questions` (add a `question` saying the source is gone; the curator retires it);
 - `question` or `delete` on a concept a person retired, one with `status: deprecated`: a question would set it back to a draft, and a retired concept stays for links and history;
+- `set` carrying `isReplacedBy` or `relations`, in any letter case, on a concept a person retired: its successor is that person's word;
 - a `log` line that starts with `**Curation**` or `**Deprecation**`, the two lines ktl-curator writes for a person;
 - `delete` on a concept that an `index.md` links in a sentence, or anywhere but in its own bullet or a comma-separated list of links (a person takes that link out, and the delete can then run);
 - a relation the patch adds that names no concept of the bundle, or a `delete` that leaves another concept's relation pointing at the deleted one (drop or repoint it in the same patch). An IRI outside the bundle, and a relation that was already broken, are left alone. So is a domain vocabulary's own slot, which only `--check-refs` can read;

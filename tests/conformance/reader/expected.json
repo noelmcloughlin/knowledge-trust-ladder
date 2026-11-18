@@ -1,7 +1,7 @@
 {
   "about": "What a program that reports trust must say of the bundle beside this file, under section 8 of SPEC.md. Every value was worked out by hand from the rules. Nothing here depends on git or on today's date, so the labels that need either are left out: a source that moved, a commit that is not signed, and a review date due soon.",
   "health": {
-    "total": 18,
+    "total": 19,
     "confirmed": 6,
     "automation_only": 1,
     "unchecked": 7,
@@ -9,7 +9,7 @@
     "reopened": 1,
     "past_review": 1,
     "edited_since": 2,
-    "retired": 2
+    "retired": 3
   },
   "labels": {
     "glossary/delivery.md": [
@@ -49,6 +49,9 @@
       "confirmed",
       "past-review"
     ],
+    "services/old-billing.md": [
+      "retired"
+    ],
     "services/old-export.md": [
       "retired"
     ],
@@ -73,7 +76,8 @@
     ]
   },
   "successor": {
-    "services/legacy-sync.md": "services/orders-api.md"
+    "services/legacy-sync.md": "services/orders-api.md",
+    "services/old-billing.md": "services/billing-worker.md"
   },
   "relied_on": {
     "glossary/order.md": 3,

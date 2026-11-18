@@ -19,7 +19,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 generated:
   by: process:ktl-librarian
-  at: "2026-11-17T22:28:06Z"
+  at: "2026-11-18T08:53:06Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T00:59:27Z"
@@ -42,7 +42,7 @@ SkillWiki turns trajectories, documents, API specifications, scripts, earlier sk
 Reading the paper in October 2026 changed the skills in four places, which `CHANGELOG.md` lists:
 
 - **A program counts reliance.** `knowledge-report.sh` prints how many other concepts rely on each one through a typed relation. It ranks the curator's queue, *Worth ten minutes today*, and `ktl-curator` quotes that queue.
-- **A retired concept names what replaced it.** A deprecated SkillWiki skill carries a `replacement_skill_id`. `ktl-curator` links the successor in the concept's `**Deprecation**` line in `log.md`, and the report's label reads *retired, replaced by* that path, and the docent opens the successor before it falls back to the repository. The log holds the link. lokf 0.9.0 adds `isReplacedBy`, the relation type for a successor that nicholsn/lokf#112 asked for, and the reliance count and the docent follow it.
+- **A retired concept names what replaced it.** A deprecated SkillWiki skill carries a `replacement_skill_id`. `ktl-curator` writes the successor in the concept's `isReplacedBy`, the relation type for a successor that lokf 0.9.0 added after nicholsn/lokf#112 asked for it, and links it in the `**Deprecation**` line in `log.md`. The report's label reads *retired, replaced by* that path, and the docent opens the successor before it falls back to the repository.
 - **A reader's dispute shows on the concept.** SkillWiki defines a *Degraded* state for a released skill that keeps failing while it stays usable. Until the librarian handles a docent's Disagreement, the concept's label adds *a reader disputed this* and the day.
 - **A confirming commit records the verdict.** SkillWiki's structured diff sorts a change by what it touches before review. Conventions rule 14 reads each commit of a pull request. A commit that records a person's confirmation may change what the concept says only when `generated.by` names that person.
 

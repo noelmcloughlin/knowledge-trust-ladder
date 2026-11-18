@@ -8,7 +8,7 @@ genre: reference
 resource: skills/ktl-curator/references/trust-fields.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-18T00:02:42Z"
+  at: "2026-11-18T08:53:06Z"
 definedBy: []
 about:
   - https://w3id.org/ktl/knowledge/glossary/knowledge-bundle
@@ -40,7 +40,7 @@ The labels restate OKF v0.2 section 5's trust fields in words a non-specialist c
 
 `knowledge-report.sh` reads `resource`, `sources[].resource` and git history for the label *a source moved since the confirmation*.
 
-It reads `.lokf/feedback.md` for the label *a reader disputed this*: a waiting `**Disagreement**` that names the concept, never on a retired concept. It reads the newest `**Deprecation**` line in `log.md` for the successor a retired concept names. It reads `derivedFrom` for the label *derived from a concept edited since its confirmation*.
+It reads `.lokf/feedback.md` for the label *a reader disputed this*: a waiting `**Disagreement**` that names the concept, never on a retired concept. It reads a retired concept's `isReplacedBy` for the successor it names, and the newest `**Deprecation**` line in `log.md` when that field names none. It reads `derivedFrom` for the label *derived from a concept edited since its confirmation*.
 
 A `revision` on an event (lokf 0.9.0 and later) is shown beside that event's date. Its absence means unrecorded, never unchanged, so it changes no label. When a confirmation carries a `revision` that names a commit this history holds, the script compares the concept's `resource` with that commit for the label *a source moved since the confirmation*. When the `revision` is a `sha256:` digest, the script compares it with the file as the newest commit holds it, so a `resource` changed after the person was shown it has moved, whichever commit changed it. It compares every other source with the commit that recorded the confirmation.
 

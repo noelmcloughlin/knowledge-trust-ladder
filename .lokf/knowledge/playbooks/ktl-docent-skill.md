@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-docent/SKILL.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-17T22:28:06Z"
+  at: "2026-11-18T08:53:06Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -57,7 +57,7 @@ The docent takes each label from its own copy of `knowledge-report.sh`, run from
 - *Checked by automation only*, and *nobody has checked this yet*.
 - *Still a draft*, for a draft no person has confirmed, and *Reopened*, for a draft a person has confirmed. For a reopened concept the docent says the confirmation first, then when it was reopened, by whom and how many questions wait.
 - *Past its review date*.
-- *Retired*, which carries no other label. Its label names the concept that replaced it when the newest `**Deprecation**` line in `log.md` links one, and the docent opens that successor before it falls back to the repository.
+- *Retired*, which carries no other label. Its label names the concept that replaced it when its `isReplacedBy` names one, or else when the newest `**Deprecation**` line in `log.md` links one, and the docent opens that successor before it falls back to the repository.
 - *A reader disputed this on* a day, which means a reader's Disagreement names the concept and waits for the librarian. The docent checks the source before it relies on that concept.
 
 The docent never states a bundle claim as plain fact when its label is anything other than *confirmed by a person*, or when the concept was edited since that confirmation. It carries the label into the sentence instead.

@@ -34,7 +34,7 @@ sources:
   - resource: .lokf/justfile
 generated:
   by: process:ktl-librarian
-  at: "2026-11-18T00:02:42Z"
+  at: "2026-11-18T08:53:06Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
 about:
@@ -87,7 +87,7 @@ It sweeps for unnamed files with `knowledge-report.sh coverage`, which counts, p
 
 ## The pen
 
-The skill never edits a file under `knowledge/` by hand. It describes each change as an operation in `.lokf/patch.yaml`, and `knowledge-apply.sh`, the sidecar's script called the pen, checks every operation and writes the files. The pen stamps `generated` from the clock, keeps a `description` equal to its two index bullets, and files each log line under the day's heading. It refuses an operation that would name a person as its actor, rewrite text a person wrote, or delete a concept a person confirmed or left a note on. It also refuses a patch that would add, change or remove a `human:` event or a person's note, however its operations spell it, and one that handles more than ten feedback entries. It refuses a relation the patch adds that names no concept of the bundle, and a `delete` that leaves another concept's relation pointing at the deleted one. It refuses a change to an exclusion a person decided, to its `resource` or its `reason`. It refuses a `question` or a `delete` on a concept a person retired, and a `log` line that starts with `**Curation**` or `**Deprecation**`, the two lines ktl-curator writes for a person.
+The skill never edits a file under `knowledge/` by hand. It describes each change as an operation in `.lokf/patch.yaml`, and `knowledge-apply.sh`, the sidecar's script called the pen, checks every operation and writes the files. The pen stamps `generated` from the clock, keeps a `description` equal to its two index bullets, and files each log line under the day's heading. It refuses an operation that would name a person as its actor, rewrite text a person wrote, or delete a concept a person confirmed or left a note on. It also refuses a patch that would add, change or remove a `human:` event or a person's note, however its operations spell it, and one that handles more than ten feedback entries. It refuses a relation the patch adds that names no concept of the bundle, and a `delete` that leaves another concept's relation pointing at the deleted one. It refuses a change to an exclusion a person decided, to its `resource` or its `reason`. It refuses a `question` or a `delete` on a concept a person retired, a `set` of its `isReplacedBy` or `relations`, and a `log` line that starts with `**Curation**` or `**Deprecation**`, the two lines ktl-curator writes for a person.
 
 It also runs `lokf validate` on every concept it would write, with `--dry-run` too, when `.lokf/.venv` holds the toolkit, and says `schema not checked` when it cannot run that check. It looks for each `sources[].excerpt` in its file before it writes, with `--dry-run` too. It refuses an excerpt the file does not hold, and one that is empty or longer than 500 characters. `--dry-run --diff` shows each change as a unified diff before anything is written (`CHANGELOG.md`). `references/patch.md` gives the eight operations, and `knowledge-apply.sh --format` prints the same block, so the scheduled wrapper's prompt names no file of the skill.
 

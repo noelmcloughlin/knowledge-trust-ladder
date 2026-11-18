@@ -161,11 +161,13 @@ This is the widest verb in the skill, and the only one that writes *content*. Th
 
 ```yaml
 status: deprecated
+isReplacedBy:
+  - <the successor's id>
 ```
 
-Nothing else changes in the concept. Retired concepts stay for links and history; the librarian leaves them alone.
+Ask what replaced it, if anything. When the person names another concept, write that concept's `id` under `isReplacedBy`, in place of any value already there, and link it in the log line below after "replaced by". When nothing replaced it, leave `isReplacedBy` out, remove any value an agent proposed, and say why in the log line in plain words, with no link. `knowledge-report.sh` then labels the retired concept *retired, replaced by* the successor's path, and ktl-docent opens the successor before it falls back to the repository.
 
-Ask what replaced it, if anything. When the person names another concept, the log line below links it after "replaced by". `knowledge-report.sh` then labels the retired concept *retired, replaced by* that path, and ktl-docent opens the successor before it falls back to the repository. When nothing replaced it, the line says why in plain words, with no link.
+Nothing else changes in the concept. Retired concepts stay for links and history; the librarian leaves them alone, and the pen refuses an agent's change to their `isReplacedBy`.
 
 ### Later
 
