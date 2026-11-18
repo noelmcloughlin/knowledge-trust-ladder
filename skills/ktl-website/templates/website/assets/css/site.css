@@ -162,8 +162,9 @@ pre:hover .copy, .copy:focus-visible { opacity: 1; }
 .alert { margin: 1rem 0; padding: .4rem 1rem; border-left: 4px solid var(--accent); border-radius: 0 6px 6px 0; background: var(--panel); }
 .alert__title { margin: .3rem 0; font-weight: 600; }
 .alert--warning, .alert--caution { border-color: var(--chart-edited); }
-/* The home page's five buttons, in one row of equal widths. One whose page the repository lacks keeps its place, greyed. */
-.actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: .6rem; margin: 0 0 1.5rem; }
+/* The home page's buttons, as near equal in width as the longest label allows, wrapping on a narrow screen. One whose page the repository lacks keeps its place, greyed. */
+.actions { display: flex; flex-wrap: wrap; gap: .6rem; margin: 0 0 1.5rem; }
+.actions > .button { flex: 1 1 0; max-width: 12rem; }
 .button { padding: .45rem .6rem; border: 1px solid var(--brand); border-radius: 999px; background: var(--brand); color: var(--bg); text-align: center; text-decoration: none; font-weight: 600; white-space: nowrap; }
 .button--secondary { background: none; color: var(--brand); }
 .button--missing { border-style: dashed; border-color: var(--rule); background: none; color: var(--muted); font-weight: 400; cursor: not-allowed; }
@@ -214,7 +215,8 @@ a[data-preview]:is(:hover, :focus-visible)::after { content: attr(data-preview) 
 .dot--nobody { border-style: dotted; }
 .dot--retired { border-style: dotted; opacity: .6; }
 .label, .chip { display: inline-block; padding: .1rem .6rem; border-radius: 999px; font-size: .85rem; }
-.label { margin: 0; color: var(--nobody-fg); background: var(--nobody-bg); }
+/* A long label, such as a successor's path, wraps inside its own width: a pill on one line, a rounded box on two. */
+.label { max-width: 100%; margin: 0; border-radius: 1.2em; overflow-wrap: break-word; color: var(--nobody-fg); background: var(--nobody-bg); }
 .label--person { color: var(--person-fg); background: var(--person-bg); }
 .label--edited { color: var(--edited-fg); background: var(--edited-bg); }
 .label--automation { color: var(--automation-fg); background: var(--automation-bg); }
