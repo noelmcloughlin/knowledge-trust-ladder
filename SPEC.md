@@ -231,7 +231,7 @@ The question is one line of at most 300 characters, with no character a reader c
 
 8. Every Markdown file's path in the bundle is lowercase: each segment starts with a letter or a digit and holds a-z, 0-9, `.`, `_`, `-`. Two paths that differ only by case collide on Windows, macOS and SharePoint, and sync clients name a conflict copy with a space, a parenthesis or an upper-case host name.
 
-9. Every concept is a file, not a symbolic link, and starts with a `---` frontmatter block that closes, with no byte order mark in front of it and no `---` inside it. A BOM or a file with no block would otherwise pass this script unread.
+9. Every concept is a file, not a symbolic link, and starts with a `---` frontmatter block that closes, with no byte order mark or blank line in front of it, no space or tab after a `---` delimiter and no other `---` inside it. LOKF reads a block in each of those cases where this script reads none or less of it, and lokf before 0.10.0 ends the block at any `---`.
 
 10. The fields the provenance gates read line by line are spelt so that a line reader and a parser read the same thing. They are `id`, `verified`, `generated`, and `by`, `at` and `revision` at any depth. Each carries no quoted or explicit key, space before the colon, escape or block scalar, and none is given twice in one mapping. No value spans lines or sits below its key, and no comment sits beside one, inside a flow form or between the events of a list. `resource` keeps the same spellings, though a comment may stand beside it, and `sources` and `exclusions` hold no flow form. The whole block holds no tag, anchor, alias or merge key, on any field or collection. The block is not indented whole or one flow mapping, and holds no line break but a line feed.
 
@@ -245,7 +245,7 @@ The question is one line of at most 300 characters, with no character a reader c
 
 15. Every concept names where it came from: a top-level `resource`, or a `sources` list with an entry.
 
-16. A footnote joins a claim to a source. Each footnote in a body uses the `id` of one of the concept's `sources` entries, and each id is cited and defined. Its definition line holds that entry's `resource`, and one id names one resource across the bundle. An id holds what rule 8 allows in a path segment.
+16. A footnote joins a claim to a source. Each footnote in a body uses the `id` of one of the concept's `sources` entries, and each id is cited and defined. Its definition line holds that entry's `resource`. Across the bundle one id names one resource, and the entries that give it an `excerpt` give the same one, since the id is one source node. An id holds what rule 8 allows in a path segment.
 
 17. A logged write has a file behind it: each `**Added**` and `**Deprecation**` bullet in log.md names a concept the bundle holds. The rule reads the bullets added since `--since <commit>`, or without it those under the newest day heading. A `**Removal**` bullet under the same or a newer day that names the same concept excuses one.
 
@@ -383,7 +383,7 @@ This section explains, and adds no rule. [The threat model](docs/threat-model.md
 
 ## 10. Conformance
 
-- **A bundle** conforms when the gate's two checks pass on it: `lokf validate --check-refs --check-excerpts`, with the bundle's domain vocabulary where it has one, and `knowledge-conventions.sh --strict`. On a pull request the second check is given the base and the last commit, as section 6 says.
+- **A bundle** conforms when the gate's two checks pass on it: `lokf validate --check-refs --check-excerpts --shacl`, with the bundle's domain vocabulary where it has one, and `knowledge-conventions.sh --strict`. On a pull request the second check is given the base and the last commit, as section 6 says.
 
 - **A program that writes a bundle** conforms when it writes only the records section 5 gives it, and changes or removes no person's record.
 

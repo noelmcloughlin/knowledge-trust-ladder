@@ -350,12 +350,12 @@ def test_warns_when_the_lock_was_made_against_another_index(tmp_path):
 @pytest.mark.skipif(shutil.which("uv") is None, reason="the toolkit lines need uv")
 def test_warns_when_the_floor_is_below_what_the_recipes_need(tmp_path):
     """The recipes pass --check-excerpts, and --schema to convert and serve, which lokf 0.8.0 rejects."""
-    pyproject = write(tmp_path / ".lokf" / "pyproject.toml", re.sub(r"lokf\[build\]>=[\d.]+", "lokf[build]>=0.8.0", (TEMPLATES / "pyproject.toml").read_text()))
+    pyproject = write(tmp_path / ".lokf" / "pyproject.toml", re.sub(r"lokf\[[a-z,]+\]>=[\d.]+", "lokf[build]>=0.8.0", (TEMPLATES / "pyproject.toml").read_text()))
     result = preflight(tmp_path)
     assert result and matches(result.out, r"^warn    toolkit +the floor is >=0\.8\.0 and the justfile's recipes need lokf 0\.9\.0"), (
         f"preflight did not warn about a 0.8.0 floor: {result.out}"
     )
-    write(pyproject, re.sub(r"lokf\[build\]>=[\d.]+", "lokf[build]>=0.10.0", (TEMPLATES / "pyproject.toml").read_text()))
+    write(pyproject, re.sub(r"lokf\[[a-z,]+\]>=[\d.]+", "lokf[build]>=0.10.0", (TEMPLATES / "pyproject.toml").read_text()))
     result = preflight(tmp_path)
     assert result and "the floor is" not in result.out, f"preflight read 0.10.0 as below 0.9.0: {result.out}"
 
@@ -381,6 +381,18 @@ def test_warns_when_the_pinned_core_schema_is_not_the_locked_lokfs(tmp_path, cop
     result = preflight(tmp_path)
     found = matches(result.out, rf"^warn    core +{re.escape(where)}/lokf\.yaml is lokf {re.escape(str(copy))}'s schema and the toolkit is lokf {re.escape(locked)} ")
     assert result and found == stale, f"preflight {'did not warn' if stale else 'warned'} about a {copy} copy under a lock on {locked}: {result.out}"
+
+
+@pytest.mark.skipif(shutil.which("uv") is None, reason="the toolkit lines need uv")
+@pytest.mark.parametrize("extra", [True, False], ids=["with the shacl extra", "without it"])
+def test_warns_when_the_lock_holds_no_pyshacl(tmp_path, extra):
+    """The gate's recipe checks LOKF's SHACL shapes only where uv.lock holds pyshacl."""
+    write(tmp_path / ".lokf" / "pyproject.toml", (TEMPLATES / "pyproject.toml").read_text())
+    shacl = '\n[[package]]\nname = "pyshacl"\nversion = "0.30.1"\nsource = { registry = "https://pypi.org/simple" }\n' if extra else ""
+    write(tmp_path / ".lokf" / "uv.lock", f'version = 1\n\n[[package]]\nname = "lokf"\nversion = "0.10.0"\nsource = {{ registry = "https://pypi.org/simple" }}\n{shacl}')
+    result = preflight(tmp_path)
+    warned = matches(result.out, r"^warn    toolkit +uv\.lock holds no pyshacl")
+    assert result and warned != extra, f"preflight {'warned' if extra else 'did not warn'} about pyshacl: {result.out}"
 
 
 def test_checks_each_copy_of_the_core_schema(tmp_path):

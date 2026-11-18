@@ -916,6 +916,31 @@ def test_deleting_a_folders_last_concept_removes_its_root_section_and_its_index(
     assert not (kk / "services" / "index.md").exists(), "the folder index outlived its last concept"
 
 
+def test_a_source_id_names_one_passage_across_the_bundle(tmp_path):
+    """The id resolves to one source node, which LOKF's shapes allow one excerpt."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(tmp_path / "notes.md", "First line.\nSecond line.\n")
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    stamp = "generated:\n  by: process:ktl-librarian\n  at: 2026-01-01T00:00:00Z\nstatus: draft\n"
+
+    def concept(name, excerpt):
+        return (f"---\ntype: Service\ntitle: {name.upper()}\n{stamp}sources:\n  - resource: notes.md\n    id: notes.md\n"
+                f"    excerpt: {excerpt}\n---\n\n# {name}\n\nA claim.[^notes.md]\n\n[^notes.md]: notes.md\n")
+
+    write(kk / "s" / "a.md", concept("a", "First line."))
+    write(kk / "s" / "c.md", concept("c", "Second line."))
+    create = ["ops:", "  - op: create", "    path: s/b.md", "    frontmatter:", "      type: Service", "      title: B",
+              "      description: B.", "      sources:", "        - resource: notes.md", "          id: notes.md"]
+    body = ["    body: \"# B\\n\\nA claim.[^notes.md]\\n\\n[^notes.md]: notes.md\\n\""]
+    refuses(tmp_path, lines(*create, "          excerpt: Third line.", *body), "an id that would carry a new excerpt",
+            "s/b.md: sources id notes.md quotes another passage in s/a.md")
+    refuses(tmp_path, lines(*create[:-1], "          id: notes.md", "          excerpt: First line.", *body).replace("resource: notes.md", "resource: other.md"),
+            "an id that would name a second resource", "s/b.md: sources id notes.md names other.md here and notes.md in s/a.md")
+    applies(tmp_path, lines("ops:", "  - op: patch", "    path: s/c.md", "    set: {description: C.}", '    log: "**Changed**: C."'))
+    write(kk / "s" / "c.md", concept("c", "First line."))
+    applies(tmp_path, lines(*create, "          excerpt: First line.", *body))
+
+
 def test_the_pen_and_the_report_read_the_same_relation_fields():
     pen = re.search(r"RELATION_FIELDS = \((.*?)\)", read(SCRIPTS / "knowledge-apply.py"), re.S).group(1)
     report = re.search(r'split\("([A-Za-z ]+)", relnames', read(SCRIPTS / "knowledge-report.sh")).group(1)

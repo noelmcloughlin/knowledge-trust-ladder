@@ -23,7 +23,9 @@
 #     too, when the sidecar's .venv holds the toolkit, and says when it cannot
 #     check them; that check also refuses a `sources[].excerpt` its local file
 #     does not hold;
-#   - refuses an excerpt that is empty or longer than 500 characters.
+#   - refuses an excerpt that is empty or longer than 500 characters, and a
+#     sources id the patch gives another resource or another excerpt than a
+#     concept already gives it, since the id is one node in the graph.
 #
 # Every concept it writes keeps a person's record as it was: each `human:`
 # event and each note in a person's name, as knowledge-provenance.sh
@@ -266,6 +268,16 @@ NOT_CONCEPTS = {"index.md", "log.md"}
 ROOT_MAP = "diataxis.md"
 SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:")
 WHOLE_IRI = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:\S+")
+
+
+def material(value):
+    """A resource as rule 16 compares it, as `lokf validate` does: `./docs/a.md`, `docs/a.md` and `docs/a.md/` name one material."""
+    if not isinstance(value, str) or not value.strip():
+        return None
+    key = value.strip()
+    while key.startswith("./"):
+        key = key[2:]
+    return key.rstrip("/") or key
 
 
 def relation_targets(fm: dict) -> set:
@@ -1054,6 +1066,62 @@ class Bundle:
                     findings.append(f"{path}: {field} still names {named}, which this patch deletes; drop or repoint the relation in this patch, or add a question to the concept if a person wrote it")
         return findings
 
+    def source_findings(self) -> list:
+        """Rule 16 across the bundle, for the `sources` entries this patch adds or changes: an id names one resource and one excerpt in every concept.
+
+        The id resolves against `base_iri` to one source node, so a second
+        resource or a second excerpt under it lands on that node too, and
+        LOKF's shapes allow it one excerpt. A clash this patch did not make
+        is the gate's to report, not this patch's fault.
+        """
+        def entries(fm) -> set:
+            found = fm.get("sources") if isinstance(fm, dict) else None
+            found = [found] if isinstance(found, dict) else found if isinstance(found, list) else []
+            return {(str(e["id"]), material(e.get("resource")), e.get("excerpt") if isinstance(e.get("excerpt"), str) else None)
+                    for e in found if isinstance(e, dict) and e.get("id") is not None}
+
+        added = {path: entries(c.fm) - entries(getattr(c, "fm_read", {})) for path, c in self.concepts.items() if c.touched and not c.deleted}
+        added = {path: found for path, found in added.items() if found}
+        if not added:
+            return []
+        uses: dict = {}
+        for path, fm in self.standing().items():
+            for label, resource, excerpt in entries(fm):
+                uses.setdefault(label, []).append((path, resource, excerpt))
+        findings = []
+        for path, found in sorted(added.items()):
+            for label, resource, excerpt in sorted(found, key=str):
+                for other, theirs, quoted in sorted(uses.get(label, []), key=str):
+                    if other == path:
+                        continue
+                    if theirs != resource:
+                        findings.append(f"{path}: sources id {label} names {resource} here and {theirs} in {other}; one id names one resource across the bundle, so give this entry an id of its own and use it in the footnote")
+                    elif excerpt is not None and quoted is not None and quoted != excerpt:
+                        findings.append(f"{path}: sources id {label} quotes another passage in {other}; one id is one source node across the bundle, which holds one excerpt, so give this entry an id named after its passage and use it in the footnote")
+                    else:
+                        continue
+                    break
+        return findings
+
+    def standing(self) -> dict:
+        """Each concept's frontmatter as the bundle would hold it after this patch, by path."""
+        standing = {}
+        for file in sorted(self.knowledge.rglob("*.md")):
+            path = file.relative_to(self.knowledge).as_posix()
+            if path in self.concepts or file.name in NOT_CONCEPTS or path == ROOT_MAP or ".obsidian" in path.split("/"):
+                continue
+            try:
+                split = split_frontmatter(file.read_text(encoding="utf-8"))
+                fm = read_yaml(split[0]) if split else None
+            except (OSError, UnicodeDecodeError, yaml.YAMLError):
+                continue  # a concept this script cannot read is refused when an operation names it
+            if isinstance(fm, dict):
+                standing[path] = fm
+        for path, c in self.concepts.items():
+            if not c.deleted:
+                standing[path] = c.fm
+        return standing
+
     # ---- index, log, feedback -------------------------------------------
     def index_text(self, file: Path, default: str) -> str:
         if file not in self.indexes:
@@ -1558,6 +1626,7 @@ def main(argv: list[str]) -> int:
                 if c.touched:
                     findings.extend(record_findings(path, c.record, Counter() if c.deleted else person_record(c.text())))
             findings.extend(bundle.relation_findings())
+            findings.extend(bundle.source_findings())
     for line in findings:
         print(line)
     if findings:

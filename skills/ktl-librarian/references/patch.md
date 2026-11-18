@@ -132,6 +132,7 @@ Any one of these refuses the whole file, and nothing is written:
 - a `resolve` target found in no open question or in several, or found in one another actor asked: a person's note is the curator's to clear, on that person's word;
 - a `patch`, `rewrite`, `delete` or `resolve` with no `log` line, its own or the patch's; a `title` with square brackets;
 - a `sources` entry whose `excerpt` is empty, is longer than 500 characters, or is not in its local file;
+- a `sources` entry the patch adds or changes whose `id` another concept gives another resource or another excerpt: the id is one source node across the bundle, so give the entry an id named after its passage. A clash the patch did not make is left to the gate (conventions rule 16);
 - a `from_feedback` line the feedback file does not hold, one that two operations name, or more than ten of them in one file; `asked` on an operation with no `from_feedback`, or with no printable text;
 - a `handoff` that is not a list, or holds more than ten lines, or a line that is empty or longer than 300 characters once the characters no reader sees are gone. Those are the controls, the format characters, such as a zero-width space, a bidirectional mark or a tag character, and the other characters Unicode calls default ignorable, such as a variation selector. The script takes them out of a reader's question too.
 

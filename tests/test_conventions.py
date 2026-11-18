@@ -252,6 +252,8 @@ def findings(tmp_path_factory) -> str:
     write(x / "qa-rootflow.md", '---\n{type: Service, id: "https://example.invalid/k/x/qa"}\n---\n')
     write(x / "qb-break.md", f"---\ntype: Service\nid: https://example.invalid/k/x/qb\nnote: x{chr(0x2028)}other: y\n---\n")
     write(x / "qd-dashes.md", "---\ntype: Service\nid: https://example.invalid/k/x/qd\ndescription: a---b\n---\n")
+    write(x / "qf-blank.md", "\n---\ntype: Service\nid: https://example.invalid/k/x/qf\n---\n")
+    write(x / "qg-spaced.md", "---\ntype: Service\nid: https://example.invalid/k/x/qg\n--- \nverified: [{by: human:x, at: '2026-01-01T00:00:00Z'}]\n---\n")
     os.symlink("qd-dashes.md", x / "qe-link.md")
     write(x / "qc-cr.md", "---\ntype: Service\nid: https://example.invalid/k/x/qc\nnote: x\rother: y\n---\n")
     # A comment beside such a field is valid YAML that a parser drops and a
@@ -346,6 +348,9 @@ def findings(tmp_path_factory) -> str:
     sourced(x, "fn-upper", "  - id: Pin\n    resource: pinned.md\n", "A claim.[^Pin]\n\n[^Pin]: pinned.md, line 1")
     sourced(x, "fn-two-a", "  - id: shared\n    resource: pinned.md\n", "A claim.[^shared]\n\n[^shared]: pinned.md, line 1")
     sourced(x, "fn-two-b", "  - id: shared\n    resource: https://example.invalid/other\n", "A claim.[^shared]\n\n[^shared]: https://example.invalid/other, section 2")
+    quoted = "  - id: {id}\n    resource: pinned.md\n    excerpt: {q}\n"
+    for name, label, quote in (("fn-quote-a", "quoted", "line one"), ("fn-quote-b", "quoted", "line two"), ("fn-same-a", "same", "line one"), ("fn-same-b", "same", "line one")):
+        sourced(x, name, quoted.format(id=label, q=quote), f"A claim.[^{label}]\n\n[^{label}]: pinned.md, line 1")
     sourced(x, "fn-ok", pin + other, "A claim.[^pin] Another.[^other]\n\n[^pin]: `pinned.md`, line 1\n[^other]: https://example.invalid/other, section 2")
     sourced(x, "fn-code", "  - resource: pinned.md\n", "Write `[^id]` after the claim.\n\n```markdown\nA claim.[^example]\n\n[^example]: docs/x.md, line 1\n```")
     return bash(CONVENTIONS, k).out
@@ -378,7 +383,9 @@ REPORTED = [
     "qa-rootflow.md: frontmatter uses a flow mapping for the whole frontmatter",
     "qb-break.md: frontmatter uses a line break a line reader does not see (U+2028)",
     "qc-cr.md: frontmatter uses a bare carriage return",
-    "qd-dashes.md: frontmatter holds '---'",
+    "qd-dashes.md: frontmatter holds '---', where lokf before 0.10.0 ends the block",
+    "qf-blank.md: blank lines stand before the frontmatter block",
+    "qg-spaced.md: a frontmatter delimiter has spaces or tabs after '---'",
     "qe-link.md: is a symbolic link",
     "t-tag.md: frontmatter uses a tag on",
     "t-anchor.md: frontmatter uses an anchor (&t)",
@@ -407,7 +414,12 @@ REPORTED = [
     "fn-uncited.md: sources[].id pin is cited by no footnote",
     'fn-upper.md: sources[].id "Pin" is not lowercase',
     "id shared names more than one resource",
+    "id quoted carries more than one excerpt",
 ]
+
+
+def test_rule_16_lets_concepts_share_an_id_for_the_same_passage(findings):
+    assert "id same carries" not in findings, f"rule 16 refused two concepts that quote one passage under one id:\n{findings}"
 
 
 @pytest.mark.parametrize("want", REPORTED, ids=lambda w: w.pattern if isinstance(w, re.Pattern) else w)

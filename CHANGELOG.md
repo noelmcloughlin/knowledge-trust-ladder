@@ -10,6 +10,9 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **ktl-docent answers "which skill should I use?" from a skill's concept.**
 - **Feedback starting `Host text:` records a fault in the host's own files.**
 - **ktl-librarian's bootstrap maps a plugin marketplace manifest.**
+- **The pen refuses a source id that another concept gives another resource or excerpt.**
+- **The gate checks LOKF's SHACL shapes where lokf's `shacl` extra is installed, which the sidecar now names.**
+- **The preflight warns when `uv.lock` holds no pyshacl.**
 
 ### Changed
 
@@ -18,13 +21,19 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **ktl-sidecar commits Step 5's files, and keeps the KTL skills out of a host's own `skills/`.**
 - **ktl-librarian's first pull request follows the sidecar's.**
 - **ktl-librarian cites an installed skill's published copy, committed or not.**
-- **ktl-librarian's version check asks the index `uv sync` reads, and finds a tag's commit through `gh api` where `git ls-remote` is refused.**
+- **Conventions rule 16 fails one source id with two excerpts, as LOKF 0.10.0's shapes do.**
+- **A concept may cite two passages of one file, each under an id of its own.**
+- **ktl-librarian uses LOKF 0.10.0's names for a domain vocabulary, and `adapt --beside`.**
+- **ktl-librarian's version check asks uv's index, and finds a tag's commit through `gh api`.**
 
 ### Fixed
 
 - **The pen drops a folder's empty root section and `index.md` with its last concept.**
 - **The README aside no longer assumes `##` headings.**
 - **ktl-sidecar counts the six skills the preflight checks.**
+- **Rule 9 names a blank line before the block and a spaced delimiter**, which LOKF 0.10.0 reads.
+- **The federation build reads a member page that opens after a byte order mark or blank lines.**
+- **`MemberDomain` keeps a class IRI of its own**, so no catalogue reads as a member and `moved.rq` finds member domains.
 
 ## [0.68.0] - 2026-11-18
 

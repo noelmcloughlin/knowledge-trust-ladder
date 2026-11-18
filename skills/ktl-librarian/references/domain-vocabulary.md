@@ -18,7 +18,7 @@ A *domain schema* is a LinkML schema that models a domain, and a LinkML project 
 
 `lokf adapt` reads a domain schema and writes a domain vocabulary. No step writes a schema from the bundle, so never add a `lokf` import to a file outside `.lokf/schema/`.
 
-A domain vocabulary is itself a LinkML file, so its folder is `schema/` and its flag is `--schema`. LOKF's specification and the toolkit's messages call it a *LOKF domain schema*.
+A domain vocabulary is itself a LinkML file, so its folder is `schema/` and its flag is `--schema`. LOKF's specification uses the same two names from lokf 0.10.0; earlier releases called the vocabulary a *LOKF domain schema*.
 
 ## What the validator expects
 
@@ -124,7 +124,7 @@ A domain vocabulary can take its classes from a published domain schema instead 
 cd .lokf/schema && uv run lokf adapt <schema>.yaml --root <TopClass> ...   # writes <schema>_lokf.yaml
 ```
 
-List `<schema>_lokf` under `imports:` with `lokf`. A schema whose root class carries an identifier, such as biolink-model's `entity`, needs no `--root`: `adapt` finds it. `--root` re-roots a class on `Concept` only, never on a LOKF class such as `Service`. LOKF's [domain schemas guide](https://lokf.nolan-nichols.com/guide/domain-schemas/) walks through biolink-model. Two rules remain:
+List `<schema>_lokf` under `imports:` with `lokf`. A schema whose root class carries an identifier, such as biolink-model's `entity`, needs no `--root`: `adapt` finds it. `--root` re-roots a class on `Concept` only, never on a LOKF class such as `Service`. LOKF's [domain vocabularies guide](https://lokf.nolan-nichols.com/guide/domain-vocabularies/) walks through biolink-model. When `.lokf/schema/` already holds another adapted copy, pass it with `--beside` (lokf 0.10.0): the new copy then shares none of its names, and `adapt` verifies the two imported together. Two rules remain:
 
 - **Name the class in frontmatter.** `type: SlsaSourceRepository` projects as `a slsa:SlsaSourceRepository`.
 - **List its slots on a class of your own.** Every class is closed, and a schema such as gist attaches few slots to its classes. Declare `GovernedRequirement: {is_a: Requirement, class_uri: gist:Requirement, slots: [is_governed_by]}` and write `type: GovernedRequirement`. A slot ranging over one of the schema's classes takes a concept IRI that `--check-refs` checks. One ranging over `Any` takes an IRI that `--check-refs` leaves alone.

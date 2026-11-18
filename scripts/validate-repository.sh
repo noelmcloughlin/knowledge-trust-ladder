@@ -214,7 +214,7 @@ fi
 #     list, and `target`, a reified relation's.
 say ""
 say "Checking the class list and the relation fields against the LOKF schema..."
-lokf_floor="$(sed -n 's/.*"lokf\[build\]>=\([0-9.]*\)".*/\1/p' "$templates/pyproject.toml" | head -n 1)"
+lokf_floor="$(sed -n 's/.*"lokf\[[a-z,]*\]>=\([0-9.]*\)".*/\1/p' "$templates/pyproject.toml" | head -n 1)"
 read -r -d '' vocab_py <<'PY' || true
 import json, sys
 d = json.load(sys.stdin)
@@ -657,7 +657,7 @@ rm -rf "$ds" "$dr"
 #      'refs/tags/v<floor>^{}'` prints the commit a tag names.
 say ""
 say "Checking the no-Python schema URL names a commit, not a tag..."
-lokf_floor="$(sed -n 's/.*"lokf\[build\]>=\([0-9.]*\)".*/\1/p' "$templates/pyproject.toml" | head -n 1)"
+lokf_floor="$(sed -n 's/.*"lokf\[[a-z,]*\]>=\([0-9.]*\)".*/\1/p' "$templates/pyproject.toml" | head -n 1)"
 schema_url_re='(raw\.githubusercontent\.com/nicholsn/lokf|github\.com/nicholsn/lokf/blob)/[^/[:space:]<>()]+/lokf\.yaml'
 mapfile -t schema_pages < <(grep -rlE "$schema_url_re" skills .lokf/README.md | sort)
 mapfile -t schema_refs < <(grep -rhoE "$schema_url_re" skills .lokf/README.md | sed -E 's#^.*/nicholsn/lokf/(blob/)?##; s#/lokf\.yaml$##' | sort -u)

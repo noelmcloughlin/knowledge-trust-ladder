@@ -909,6 +909,19 @@ def test_the_report_on_a_member_reads_no_git_configuration_from_it(tmp_path):
     assert not marker.exists(), "git ran the member's fsmonitor command"
 
 
+def test_a_member_page_opens_with_a_block_as_lokf_section_5_reads_one(tmp_path):
+    """A byte order mark or blank lines may stand before the block, as LOKF 0.10.0 reads a page; text may not."""
+    code = (
+        "import importlib.util\n"
+        f"spec = importlib.util.spec_from_file_location('kf', {str(SCRIPT)!r})\n"
+        "kf = importlib.util.module_from_spec(spec); spec.loader.exec_module(kf)\n"
+        "pages = ['---\\nbase_iri: x\\n---\\n', '\\ufeff---\\na: 1\\n---\\n', '\\n\\r\\n---\\na: 1\\n---\\n', '# Title\\n---\\n']\n"
+        "print([kf.opens_with_block(p) for p in pages])\n"
+    )
+    r = run(["uv", "run", "--project", REPO / ".lokf", "python", "-c", code], cwd=tmp_path)
+    assert r.rc == 0 and "[True, True, True, False]" in r.out, r.out
+
+
 def test_labels_rq_reads_review_dates_status_and_the_latest_confirmation(tmp_path):
     """labels.rq knew no review date and no status, so a retired concept read as confirmed, and it gave a row for each event."""
     a_iri, d_iri = "https://a.example/knowledge/", "https://d.example/federation/"
@@ -1359,6 +1372,25 @@ def test_the_domain_vocabulary_clears_public_or_internal_alone(tmp_path):
         k = make_bundle(tmp_path / word, "https://d.example/federation/", "D", {"domains/top.md": {"type": "Domain", "title": "Top", "description": "The domain.", "resource": "https://example.test/d", "sensitivity": word}})
         r = run(["uv", "run", "--project", REPO / ".lokf", "lokf", "validate", "--schema", "domain.yaml", str(k)], cwd=tmp_path)
         assert r.rc == rc, (word, r.out)
+
+
+def test_a_domain_and_a_member_domain_keep_lokfs_shapes(tmp_path):
+    """A member domain projects under a type of its own, which moved.rq matches, and no catalogue reads as a MemberBundle."""
+    found = run(["uv", "run", "--project", REPO / ".lokf", "python", "-c", "import lokf, pathlib; print(next(pathlib.Path(lokf.__file__).parent.rglob('lokf.yaml')))"],
+                stdout_only=True)
+    shutil.copy(found.out.strip(), tmp_path / "lokf.yaml")
+    shutil.copy(TEMPLATES / "domain.yaml", tmp_path / "domain.yaml")
+    zip_ = {"name": "s.zip", "access_url": "https://example.test/s.zip", "media_type": "application/zip", "checksum": {"algorithm": "sha256", "checksum_value": "0" * 64}}
+    k = make_bundle(tmp_path / "d", "https://d.example/federation/", "D", {
+        "domains/top.md": {"type": "Domain", "title": "Top", "description": "The domain.", "resource": "https://example.test/d"},
+        "members/s.md": {"type": "MemberDomain", "title": "S", "description": "A member domain.", "resource": "https://example.test/s",
+                         "base_iri": "https://s.example/knowledge/", "release": "https://example.test/s/v1", "distribution": [zip_]},
+    })
+    lokf = ["uv", "run", "--project", REPO / ".lokf", "lokf"]
+    r = run([*lokf, "validate", "--schema", "domain.yaml", "--shacl", str(k)], cwd=tmp_path)
+    assert r.rc == 0 and "RDF conforms to SHACL shapes" in r.out, r.out
+    r = run([*lokf, "convert", "--schema", "domain.yaml", str(k)], cwd=tmp_path)
+    assert re.search(r"members/s> a \S*MemberDomain\b", r.out), r.out
 
 
 def test_the_domain_vocabulary_takes_lokf_cores_checksum_and_exports(tmp_path):
