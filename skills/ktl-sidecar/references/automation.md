@@ -336,7 +336,7 @@ git commit -m "security(sidecar): sync workflows from <tag>" && git push
 
 Your push starts them, after you have read them. Without gh, the artifact is on the run's page. Merging without them leaves the workflows at the earlier release until the next sync holds them again.
 
-Or let the workflow push them once a person approves. Create an Environment, `knowledge-sync-review` say, with required reviewers and limited to the default branch, holding no secret, and set the repository variable `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` to its name. Each run that holds workflow changes then waits at `review`. The run's summary shows the held diff. Once a reviewer approves, `push-workflows` pushes the changes as a second commit on the branch. It checks first that the Environment has required reviewers, since one with none would approve itself, and pushes nothing otherwise. *Prevent self-review* helps where a second person can approve; on a repository with one maintainer it would stop every approval.
+Or let the workflow push them once a person approves. Create an Environment, `knowledge-sync-review` say, with required reviewers and limited to the default branch, holding no secret, and set the repository variable `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` to its name. Each run that holds workflow changes then waits at `review`. The run's summary shows the held diff. Once a reviewer approves, `push-workflows` pushes the changes as a second commit on the branch. It checks first that the Environment has required reviewers, since one with none would approve itself, and pushes nothing otherwise. A run that waits there blocks no later sync. When the pull request was merged or closed while it waited, it pushes nothing and says so; when the branch moved, it refuses. *Prevent self-review* helps where a second person can approve; on a repository with one maintainer it would stop every approval.
 
 **What a person decided holds.** A tag whose pull request a person closed without merging is not proposed again by the schedule. A run you start from the Actions tab may name a tag, and goes ahead in every case but one. A pull request that proposes that tag and is still open stops it, whether this workflow opened it or you did from a `sync-<tag>` branch. A pull request opened by hand for an older release is not seen, so merge or close it yourself.
 
@@ -350,7 +350,7 @@ The pin is under `.github/workflows/`, which the job's own `GITHUB_TOKEN` may no
 
 Without the secret the workflow still runs: `sync` attaches the change to the run as `sync.patch` and writes the summary, and `publish` says so and opens nothing. A pull request opened with the token is opened under the token's owner and starts this repository's checks, as one opened with `GITHUB_TOKEN` would not.
 
-The skills repository can ask for the sync as soon as a release is tagged. Its `publish.yml` dispatches this workflow in each host named in its `KNOWLEDGE_SYNC_HOSTS` variable, with a token that holds Actions write there. The variable is a list of `owner/repo` names, and `false` asks nobody, as unset does. A host it does not name, or cannot reach, syncs on its own schedule.
+The skills repository can ask for the sync once a release's `ktl` package is on PyPI. Its `publish.yml` dispatches this workflow in each host named in its `KNOWLEDGE_SYNC_HOSTS` variable, with a token that holds Actions write there. The variable is a list of `owner/repo` names, and `false` asks nobody, as unset does. A host it does not name, or cannot reach, syncs on its own schedule.
 
 ### By hand
 

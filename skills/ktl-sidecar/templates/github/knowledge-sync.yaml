@@ -89,10 +89,6 @@ on:
 
 permissions: {} # deny by default; each job requests only the scopes it needs
 
-concurrency:
-  group: knowledge-sync
-  cancel-in-progress: false
-
 jobs:
   earlier:
     name: Read the pin, the newest release and the last pull request (read-only)
@@ -368,6 +364,11 @@ jobs:
     if: needs.sync.outputs.changed == 'true'
     runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
+    # The two jobs that push take turns. A run waiting for the review
+    # Environment holds no turn, so it blocks no later sync.
+    concurrency:
+      group: knowledge-sync
+      cancel-in-progress: false
     # KNOWLEDGE_SYNC_TOKEN belongs in this Environment, limited to the
     # default branch, so a workflow on any other branch cannot read it. It
     # records no deployment.
@@ -622,6 +623,9 @@ jobs:
     needs: [earlier, publish, review]
     runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
+    concurrency:
+      group: knowledge-sync
+      cancel-in-progress: false
     environment:
       name: knowledge-sync
       deployment: false
@@ -678,6 +682,17 @@ jobs:
           if [ -n "${wrong//[$'\n\t ']/}" ]; then
             echo "::error::The held patch does more than edit and add workflows:"
             printf '%s\n' "$wrong" | sed '/^$/d; s/^/  /'
+            exit 1
+          fi
+          # A pull request merged, closed or refreshed while the approval
+          # waited leaves these changes stale; the next sync carries them.
+          tip="$(git ls-remote "https://x-access-token:${SYNC_TOKEN}@${GITHUB_SERVER_URL#https://}/${GITHUB_REPOSITORY}.git" refs/heads/knowledge-sync | cut -f1)"
+          if [ -z "$tip" ]; then
+            echo "::warning::The knowledge-sync branch is gone: its pull request was merged or closed while this approval waited. Nothing is pushed; the next sync proposes any workflow change still missing."
+            exit 0
+          fi
+          if [ "$tip" != "$LEASE" ]; then
+            echo "::error::The knowledge-sync branch moved from $LEASE to $tip while this approval waited, so these held changes are stale. Nothing is pushed; apply the ones the pull request lists now, or let the next sync propose them."
             exit 1
           fi
           git apply --index "$held"

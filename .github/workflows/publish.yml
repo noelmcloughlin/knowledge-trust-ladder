@@ -228,7 +228,8 @@ jobs:
       # and the schedule does the work. The variable is a list, not a
       # switch, but it reads like one: "false" asks nobody, as unset does,
       # and "true" names no host, which the step says. A host that cannot
-      # be dispatched is reported and the others go ahead.
+      # be dispatched is reported and the others go ahead. A host syncs from
+      # the ktl package on PyPI, so the step first waits for it there.
       - name: Ask the siblings to sync
         if: ${{ !cancelled() && steps.tagged.outcome == 'success' && vars.KNOWLEDGE_SYNC_HOSTS != '' }}
         env:
@@ -247,6 +248,19 @@ jobs:
           esac
           if [ -z "$GH_TOKEN" ]; then
             echo "::warning::KNOWLEDGE_SYNC_HOSTS names hosts, and KNOWLEDGE_SYNC_DISPATCH_TOKEN is not set, so none was asked to sync; each syncs on its own schedule."
+            exit 0
+          fi
+          wheel="ktl-${VERSION#v}-py3-none-any.whl"
+          found=""
+          for _ in $(seq 1 60); do
+            if curl -fsS -H 'Accept: application/vnd.pypi.simple.v1+json' -H 'Cache-Control: no-cache' https://pypi.org/simple/ktl/ \
+                | jq -e --arg f "$wheel" 'any(.files[]; .filename == $f)' >/dev/null 2>&1; then
+              found=1; break
+            fi
+            sleep 30
+          done
+          if [ -z "$found" ]; then
+            echo "::warning::$wheel is not on PyPI after 30 minutes, so no host was asked to sync; each syncs on its own schedule, or start its knowledge-sync.yaml once the package is there."
             exit 0
           fi
           failed=""
