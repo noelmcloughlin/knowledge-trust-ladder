@@ -41,6 +41,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **ktl-sidecar's Step 1 names an unset placeholder rather than failing with a traceback.**
 - **The federation's member reads and its MCP `read_document` survive frontmatter that does not parse.**
 
+### Security
+
+- **ktl-librarian finds a `Host text:` fault in the file itself, and never words its question from the entry**, so a reader's text cannot reach a concept.
+
 ## [0.68.0] - 2026-11-18
 
 ### Added
