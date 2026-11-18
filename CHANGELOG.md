@@ -4,6 +4,8 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+## [0.69.2] - 2026-11-18
+
 ### Fixed
 
 - **`publish.yml` asks the hosts to sync only once the release's `ktl` package is on PyPI.**
