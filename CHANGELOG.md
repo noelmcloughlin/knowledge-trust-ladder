@@ -4,6 +4,8 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+## [0.69.1] - 2026-11-18
+
 ### Fixed
 
 - **The reader's conformance fixture writes its reified relation with `predicate`, the LOKF Relation slot, not `type`.** The registrar plugin's validator warned on it.
