@@ -1214,7 +1214,7 @@ class Bundle:
         return lines
 
     def index_writes(self) -> list:
-        """Each index.md this patch changed, with None for a folder's index left holding only its heading and no concept beside it."""
+        """Each index.md this patch changed, with None for a folder's index left holding only its heading, no concept beside it and no link to it."""
         out = []
         for file, text in self.indexes.items():
             if file != self.knowledge / "index.md" and len([line for line in text.split("\n") if line.strip()]) == 1 and HEADING_RE.match(text.strip()):
@@ -1222,10 +1222,27 @@ class Bundle:
                 left = {f.relative_to(self.knowledge).as_posix() for f in file.parent.rglob("*.md") if f != file}
                 left -= {p for p, c in self.concepts.items() if c.deleted}
                 left |= {p for p, c in self.concepts.items() if not c.deleted and p.startswith(folder + "/")}
-                if not left:
+                if not left and not self.linked_from_an_index(file):
                     text = None
             out.append((file, text))
         return out
+
+    def linked_from_an_index(self, folder_index: Path) -> bool:
+        """Whether another index.md, as this patch leaves it, links the folder or its index.md, as a root that reaches a folder by a link does."""
+        others = set(self.knowledge.rglob("index.md")) | set(self.indexes)
+        for other in sorted(others):
+            if other == folder_index or ".obsidian" in other.relative_to(self.knowledge).parts:
+                continue
+            text = self.indexes.get(other)
+            if text is None:
+                try:
+                    text = other.read_text(encoding="utf-8")
+                except (OSError, UnicodeDecodeError):
+                    continue
+            rel = Path(os.path.relpath(folder_index.parent, other.parent)).as_posix()
+            if re.search(r"\]\((?:\./)?" + re.escape(rel) + r"(?:/(?:index\.md)?)?(?:#[^)]*)?\)", text):
+                return True
+        return False
 
     @staticmethod
     def joined(lines: list) -> str:

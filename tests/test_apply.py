@@ -916,6 +916,19 @@ def test_deleting_a_folders_last_concept_removes_its_root_section_and_its_index(
     assert not (kk / "services" / "index.md").exists(), "the folder index outlived its last concept"
 
 
+def test_a_folder_index_another_index_links_outlives_its_last_concept(tmp_path):
+    """A root that reaches a folder by a link to its index.md keeps a file to link to."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n\n## What we run\n\n"
+          "The [service catalogue](services/index.md) lists each one.\n\n* [A](services/a.md) - A.\n")
+    write(kk / "services" / "index.md", "# Services\n\n* [A](a.md) - A.\n")
+    write(kk / "services" / "a.md", "---\ntype: Service\ntitle: A\ndescription: A.\ngenerated:\n  by: process:ktl-librarian\n"
+          "  at: 2026-01-01T00:00:00Z\nstatus: draft\n---\n\n# a\n")
+    applies(tmp_path, lines("ops:", "  - op: delete", "    path: services/a.md", '    log: "**Removal**: an example."'))
+    assert "[service catalogue](services/index.md)" in read(kk / "index.md"), read(kk / "index.md")
+    assert read(kk / "services" / "index.md") == "# Services\n", "the pen deleted a folder index the root links, or kept its bullet"
+
+
 def test_a_source_id_names_one_passage_across_the_bundle(tmp_path):
     """The id resolves to one source node, which LOKF's shapes allow one excerpt."""
     kk = tmp_path / ".lokf" / "knowledge"

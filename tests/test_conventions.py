@@ -596,7 +596,8 @@ def step_one(host, **values):
     found = re.search(r"```bash\nmkdir -p \.lokf/knowledge/services\n(.*?)```", read(SCRIPTS.parent.parent / "SKILL.md"), re.S)
     assert found, "SKILL.md's Step 1 still gives the block that fills the placeholders"
     path = f"{Path(sys.executable).parent}{os.pathsep}{os.environ['PATH']}"
-    return run(["bash", "-c", found.group(1).replace("<skill>", str(SCRIPTS.parent.parent))], cwd=host, env={**SKELETON, **values, "PATH": path})
+    env = {k: v for k, v in {**SKELETON, **values}.items() if v is not None}
+    return run(["bash", "-c", found.group(1).replace("<skill>", str(SCRIPTS.parent.parent))], cwd=host, env={**env, "PATH": path})
 
 
 def skeleton(host):
@@ -635,7 +636,7 @@ def test_step_one_writes_a_value_as_a_quoted_string_and_refuses_what_is_not_one_
     assert tomllib.loads(read(host / ".lokf" / "pyproject.toml"))["project"]["description"] == 'LOKF knowledge-bundle tooling for The "Acme": Platform.'
     assert f"> {spoken}\n" in read(host / "llms.txt") and '# The "Acme": Platform Knowledge Bundle\n' in read(k / "index.md"), "a body takes the value as it is"
 
-    for token, value, said in (
+    for n, (token, value, said) in enumerate((
         ("PROJ_DESC", "The platform.\nlicense: none", "PROJ_DESC: empty, or a line break or unprintable character"),
         ("OWNER_NAME", "Ada" + chr(0x200B), "OWNER_NAME: empty, or a line break or unprintable character"),
         ("PROJ_NAME", " ", "PROJ_NAME: empty"),
@@ -643,8 +644,9 @@ def test_step_one_writes_a_value_as_a_quoted_string_and_refuses_what_is_not_one_
         ("PROJ_SLUG", "acme platform", "PROJ_SLUG: not of the form"),
         ("TODAY", "today", "TODAY: not of the form"),
         ("OWNER_TYPE", "Team", "OWNER_TYPE: not of the form"),
-    ):
-        host = tmp_path / f"refused-{token}"
+        ("OWNER_TYPE", None, "OWNER_TYPE: not set in the environment"),
+    )):
+        host = tmp_path / f"refused-{n}-{token}"
         k = skeleton(host)
         before = read(k / "index.md")
         refused = step_one(host, **{token: value})

@@ -3098,7 +3098,7 @@ def served_add(spec: str, knowledge: pathlib.Path, domain_iri: str, cache: pathl
         refuse_private(folder + "/index.md")
         text = http_get(folder + "/index.md", max_bytes=1_000_000, member=True).decode("utf-8")
         meta = frontmatter_of(text) if opens_with_block(text) else {}
-    except (OSError, http.client.HTTPException, Failed, UnicodeDecodeError, ValueError):
+    except (OSError, http.client.HTTPException, Failed, UnicodeDecodeError, ValueError, yaml.YAMLError):
         meta = {}
     if meta.get("base_iri") not in (None, base):
         meta = {}
@@ -4054,7 +4054,10 @@ def mcp_server(args) -> int:
         if got is None:
             return {"error": f"{owner['slug']} has no document at {rel}"}
         text, where = got
-        summary = trust.trust_summary(frontmatter_of(text)) if not rel.endswith("/index.md") and opens_with_block(text) else None
+        try:
+            summary = trust.trust_summary(frontmatter_of(text)) if not rel.endswith("/index.md") and opens_with_block(text) else None
+        except (ValueError, yaml.YAMLError):  # a block the toolkit cannot read: the page as it is, with no label
+            summary = None
         return {"iri": iri, "bundle": owner, "path": rel, "source_url": source, "read_from": where, "markdown": text, "trust": summary}
 
     warn(f"lokf-registry over {ws.source.label}: {len(ws.members)} bundles{ws.scope_note()}, "

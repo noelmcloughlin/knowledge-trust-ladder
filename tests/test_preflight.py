@@ -355,6 +355,9 @@ def test_warns_when_the_floor_is_below_what_the_recipes_need(tmp_path):
     assert result and matches(result.out, r"^warn    toolkit +the floor is >=0\.8\.0 and the justfile's recipes need lokf 0\.9\.0"), (
         f"preflight did not warn about a 0.8.0 floor: {result.out}"
     )
+    write(pyproject, re.sub(r"lokf\[[a-z,]+\]>=[\d.]+", "lokf[build, shacl]>=0.8.0", (TEMPLATES / "pyproject.toml").read_text()))
+    result = preflight(tmp_path)
+    assert result and "the floor is >=0.8.0" in result.out, f"preflight did not read a floor whose extras hold a space: {result.out}"
     write(pyproject, re.sub(r"lokf\[[a-z,]+\]>=[\d.]+", "lokf[build]>=0.10.0", (TEMPLATES / "pyproject.toml").read_text()))
     result = preflight(tmp_path)
     assert result and "the floor is" not in result.out, f"preflight read 0.10.0 as below 0.9.0: {result.out}"
