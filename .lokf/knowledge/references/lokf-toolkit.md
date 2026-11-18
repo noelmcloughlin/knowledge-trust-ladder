@@ -7,7 +7,7 @@ genre: reference
 resource: https://pypi.org/project/lokf/
 generated:
   by: process:ktl-librarian
-  at: "2026-11-17T21:14:13Z"
+  at: "2026-11-18T10:46:57Z"
 status: draft
 definedBy:
   - https://w3id.org/ktl/knowledge/references/lokf-specification
@@ -18,7 +18,7 @@ verified:
     at: "2026-11-18T00:02:42Z"
 sources:
   - resource: https://pypi.org/project/lokf/
-  - resource: https://github.com/nicholsn/lokf/blob/eab5fe35b99e154bec9aabc03656446b891311f8/src/lokf/cli.py
+  - resource: https://github.com/nicholsn/lokf/blob/ee37659ca2f78915f5a691da7bad9239da624c87/src/lokf/cli.py
   - resource: skills/ktl-librarian/SKILL.md
   - resource: CHANGELOG.md
   - resource: docs/context-layer.md
@@ -45,11 +45,11 @@ The toolkit is the implementation, not the specification. `lokf validate` checks
 
 `lokf validate --check-refs` finds typed-relation targets in the bundle's own namespace with no matching concept, and leaves targets outside its `base_iri` alone. This repository's own `just lokf-check-refs` recipe calls it, with `--check-excerpts`, which finds each `sources[].excerpt` in its local file and counts an excerpt on a URL without fetching it. It takes the relation slots from the schema, so a domain vocabulary's own slots are covered without the recipe restating a predicate list.
 
-Scaffolded bundles depend on `lokf[build]>=0.9.0`, a floor and not a pin. They also depend on `rust-just==1.47.0`, so that `uv.lock` checks the recipe runner by hash and `uv run just` runs it. They pin `ktl`, the package that carries the skills, at one release: the librarian workflow installs `ktl-librarian` from it, and the weekly sync moves the pin. The `[build]` extra installs the full `linkml` package: the whole generator suite, not just the runtime. So a scaffolded sidecar already has the LinkML generators for a domain vocabulary, with no extra installation.
+Scaffolded bundles depend on `lokf[build]>=0.10.0`, a floor and not a pin. They also depend on `rust-just==1.47.0`, so that `uv.lock` checks the recipe runner by hash and `uv run just` runs it. They pin `ktl`, the package that carries the skills, at one release: the librarian workflow installs `ktl-librarian` from it, and the weekly sync moves the pin. The `[build]` extra installs the full `linkml` package: the whole generator suite, not just the runtime. So a scaffolded sidecar already has the LinkML generators for a domain vocabulary, with no extra installation.
 
-Where Python is unavailable, the skills fall back to a structural cross-check against the raw schema, which is not a validation run. They read it from the commit tagged `v0.9.0`, which matches the `lokf` floor: `raw.githubusercontent.com/nicholsn/lokf/eab5fe35b99e154bec9aabc03656446b891311f8/lokf.yaml`. The URL names that commit, never a tag or `main`, because a tag can be moved. The pin moves with the floor, so the fallback cross-checks against the schema the installed toolkit enforces. That file is byte-identical to the schema inside the `lokf` 0.9.0 wheel, which `uv sync --locked` checks against `.lokf/uv.lock` wherever Python is present.
+Where Python is unavailable, the skills fall back to a structural cross-check against the raw schema, which is not a validation run. They read it from the commit tagged `v0.10.0`, which matches the `lokf` floor: `raw.githubusercontent.com/nicholsn/lokf/ee37659ca2f78915f5a691da7bad9239da624c87/lokf.yaml`. The URL names that commit, never a tag or `main`, because a tag can be moved. The pin moves with the floor, so the fallback cross-checks against the schema the installed toolkit enforces. That file is byte-identical to the schema inside the `lokf` 0.10.0 wheel, which `uv sync --locked` checks against `.lokf/uv.lock` wherever Python is present.
 
-ktl-librarian checks the toolkit's version in a live session. It compares the latest `lokf` on PyPI with the `>=` floor in `.lokf/pyproject.toml`. For a minor or patch release it raises the floor, runs `uv sync` and validates again. For a major release, or a breaking change in the changelog, it asks the person first. It never bumps `linkml` on its own.
+ktl-librarian checks the toolkit's version in a live session. It asks the index `uv sync` reads for a newer `lokf` than the `>=` floor in `.lokf/pyproject.toml`, through `uv lock --dry-run --upgrade-package lokf`. For a minor or patch release it raises the floor, runs `uv sync` and validates again. For a major release, or a changelog that breaks something or is out of reach, it asks the person first. It never bumps `linkml` on its own.
 
 [^lokf-export.py]: skills/ktl-website/templates/website/scripts/lokf-export.py, the module's docstring
 

@@ -34,7 +34,7 @@ sources:
   - resource: .lokf/justfile
 generated:
   by: process:ktl-librarian
-  at: "2026-11-18T08:53:06Z"
+  at: "2026-11-18T10:46:57Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-sidecar-skill
 about:
@@ -115,7 +115,7 @@ When the repository variable `KNOWLEDGE_RETRIEVAL` is `true`, a scheduled run th
 
 The patch is built with `--no-renames`, `publish` refuses a rename, a copy, a link or a mode change, and a missing gate script fails the run. What comes out is a pull request a person merges. On the way in, `knowledge-feedback.sh` holds each entry to one line and one of two kinds.
 
-**The no-Python schema, the Snyk W012 finding (addressed).** An audit without Python reads LOKF's schema from GitHub, at a URL that names the commit tagged `v0.9.0`, never a tag or `main`, so the file it serves cannot change. That file is byte-identical to the schema inside the `lokf` 0.9.0 wheel, which `uv sync --locked` checks against `.lokf/uv.lock` wherever Python is present. A check in this repository fails a tag or a branch in the URL. The skill reads the schema as data to compare against, never as instructions.
+**The no-Python schema, the Snyk W012 finding (addressed).** An audit without Python reads LOKF's schema from GitHub, at a URL that names the commit tagged `v0.10.0`, never a tag or `main`, so the file it serves cannot change. That file is byte-identical to the schema inside the `lokf` 0.10.0 wheel, which `uv sync --locked` checks against `.lokf/uv.lock` wherever Python is present. A check in this repository fails a tag or a branch in the URL. The skill reads the schema as data to compare against, never as instructions.
 
 Each job of the workflow hardens its runner with harden-runner, and the agent's job stops after 60 minutes. The agent's job saves no uv or npm cache, since the release would restore it and uv trusts the wheels it unpacked there, and the `publish` job holds its token in its push step alone. The wrapper snapshots `.git/config`, `.git/hooks/` and `.git/info/` before the agent call and puts them back afterwards, from an `EXIT` trap for every other way out. So a failing agent or a cancelled job leaves no rewritten config in the checkout for the workflow's next steps, and no exclude rule the agent added hides its writes from the write-scope check. The wrapper also applies and checks the patch with copies of the pen and the gate taken from HEAD before the agent ran, and refuses a run in which the agent moved HEAD or changed those copies. It also refuses an agent that tells git to stop watching a file, and compares files by git object id (`CHANGELOG.md`). `policies/security.md` has the detail.
 
@@ -123,7 +123,7 @@ Each job of the workflow hardens its runner with harden-runner, and the agent's 
 
 The librarian leaves the Obsidian affordances that KTL Registrar may write into a bundle alone. These are a marker-delimited `<!-- lokf:related -->` block in a concept body and a `diataxis.md` map at the bundle root. It never edits, moves or deletes them, and it treats the `diataxis.md` at the bundle root as reserved, as `index.md` and `log.md` are in every folder. A file of that name in a folder is a concept. The pen carries the block over on a `rewrite`.
 
-The tooling-version check, step 7 of a refresh, runs **only in interactive sessions**. It compares the latest `lokf` on PyPI, from `uvx --from pip pip index versions lokf`, with the floor in `.lokf/pyproject.toml`, since `uv pip` has no `index` subcommand. Unattended, the wrapper lets the agent write only `.lokf/patch.yaml`, so a scheduled run skips the step.
+The tooling-version check, step 7 of a refresh, runs **only in interactive sessions**. It runs `uv lock --dry-run --upgrade-package lokf` in `.lokf/`, which asks the index `uv sync` reads, a mirror included, and names a newer release that resolves. A floor above what that index serves would break `uv sync`. When the changelog is out of reach, the librarian asks the person before it raises the floor. Unattended, the wrapper lets the agent write only `.lokf/patch.yaml`, so a scheduled run skips the step.
 
 ## Reference pages
 
