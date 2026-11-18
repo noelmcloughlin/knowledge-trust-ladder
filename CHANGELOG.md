@@ -4,14 +4,6 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
-### Changed
-
-- **ktl-curator's *Retire* writes the successor in `isReplacedBy`, which the report and the docent read before the `**Deprecation**` line.**
-
-### Security
-
-- **The pen refuses a `set` of `isReplacedBy` or `relations` on a concept a person retired.**
-
 ## [0.68.0] - 2026-11-18
 
 ### Added
@@ -25,6 +17,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 - **The report script reads a later `revised.at` as the last edit**, so a concept another LOKF producer edited after its confirmation reads as edited since.
 - **The wording of conventions 1, 4, 5, 6, 8, 10, 13, 16, 17 and 18 says what the script checks**, and the trust-fields table says what the report computes.
+- **ktl-curator's *Retire* writes the successor in `isReplacedBy`, which the report and the docent read before the `**Deprecation**` line.**
 
 ### Fixed
 
@@ -39,6 +32,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **The pen refuses a `question` or a `delete` on a concept a person retired.**
 - **The pen refuses a log line that starts with `**Curation**` or `**Deprecation**`**, the two lines ktl-curator writes for a person.
 - **The pen reads a person's note in four more spellings, with the lines under it and the order it stands in.**
+- **The pen refuses a `set` of `isReplacedBy` or `relations` on a concept a person retired.**
 
 ## [0.67.0] - 2026-11-17
 
