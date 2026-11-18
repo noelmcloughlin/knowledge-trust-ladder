@@ -2267,7 +2267,8 @@ finally:
 # as the GitHub API answers a credential that can read the repository, and
 # with 404 when the file is not there, as it answers one that cannot.
 # FAKE_GH_REFUSES makes every such request answer 401, and FAKE_GH_LOG
-# keeps each one with the credentials gh was run with.
+# keeps each one with the credentials gh was run with. FAKE_GH_MOVED makes
+# `attestation verify --repo` answer 404, as for a repository that moved.
 FAKE_GH = """\
 #!/bin/sh
 [ "$1" = --version ] && { echo "gh version ${FAKE_GH_VERSION:-2.102.0} (2026-09-30)"; exit 0; }
@@ -2289,6 +2290,9 @@ if [ "$1 $2" = "attestation verify" ]; then
   case "$*" in
     *" --signer-workflow acme/"*"/.github/workflows/knowledge-release.yaml"*) ;;
     *) echo "gh: the attestation was not signed by the workflow named" >&2; exit 1 ;;
+  esac
+  case "$* ${FAKE_GH_MOVED:-}" in
+    *" --repo "*" 1") echo "Error: HTTP 404: Not Found (https://api.github.com/repositories/1/attestations/sha256:0)" >&2; exit 1 ;;
   esac
   [ "${GH_TOKEN:-}" = job-token ] && [ -z "${KNOWLEDGE_FEDERATE_TOKEN:-}" ] && exit 0
   echo "gh: To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment variable." >&2
@@ -2712,6 +2716,15 @@ def test_members_hands_the_job_token_to_gh_alone(released):
     assert r.rc == 0 and "matched loosely by gh 2.90.0" in r.out, r.out
     r = members_run(released, "--dry-run", attest=True, env={"KNOWLEDGE_FEDERATE_TOKEN": "job-token", "FAKE_GH_VERSION": "2.40.0"})
     assert "cannot pin the workflow that signed an attestation" in r.out, r.out
+
+
+def test_members_verifies_under_the_owner_a_moved_repository_left(released):
+    """A 404 under the repository retries under its owner, with the signer workflow still pinned, on gh that pins it exactly."""
+    env = {"KNOWLEDGE_FEDERATE_TOKEN": "job-token", "FAKE_GH_MOVED": "1"}
+    r = members_run(released, "--dry-run", attest=True, env=env)
+    assert r.rc == 0 and "attested by knowledge-release.yaml of acme/a, found under acme" in r.out, r.out
+    r = members_run(released, "--dry-run", attest=True, env={**env, "FAKE_GH_VERSION": "2.90.0"})
+    assert r.rc == 1 and "HTTP 404" in r.out and "found under acme" not in r.out, r.out
 
 
 @pytest.fixture
