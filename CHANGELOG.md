@@ -4,11 +4,6 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
-### Fixed
-
-- **The home page's six buttons fit on one line again, each as wide as its label needs.**
-- **The trust label on a concept card wraps inside its own width, as a rounded box on two lines**, so a retired concept's "replaced by" path stays readable on a phone.
-
 ## [0.68.0] - 2026-11-18
 
 ### Added
@@ -30,6 +25,8 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **Convention 5 finds a quoted `resource` with a comment beside it.**
 - **Convention 10 refuses a tag on a list or a mapping**, as it refuses one on a value.
 - **The report lists no retired concept as disputed by a reader**, and none as derived from an edited concept when its confirmation's time cannot be read.
+- **The home page's six buttons fit on one line again, each as wide as its label needs.**
+- **The trust label on a concept card wraps inside its own width, as a rounded box on two lines**, so a retired concept's "replaced by" path stays readable on a phone.
 
 ### Security
 
