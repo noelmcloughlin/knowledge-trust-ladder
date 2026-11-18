@@ -2,6 +2,13 @@
 
 ## 2026-11-18
 
+* **Changed**: Trust label says the report reads a retired concept's successor from its `isReplacedBy`, and from the `**Deprecation**` line in `log.md` when the field names none, from `skills/ktl-curator/references/trust-fields.md`. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: the docent playbook says a retired concept's label names the successor its `isReplacedBy` gives before the one the `**Deprecation**` line links, from `skills/ktl-docent/references/answering.md`. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: the SkillWiki explanation says ktl-curator writes a retired concept's successor in `isReplacedBy` as well as in the log line, as `docs/how-it-works.md` now does. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: The pen refuses a `set` of `isReplacedBy` or `relations` on a concept a person retired, from `skills/ktl-librarian/references/patch.md`.
+* **Changed**: the librarian playbook names the pen's refusal of a `set` of `isReplacedBy` or `relations` on a retired concept, from `references/patch.md`. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: the retelling of the pen for readers aged 13 to 18 carries its new refusal: a change to the concept that replaced a retired one.
+* **Open question**: ktl-curator skill: the Retire item says the `**Deprecation**` line in `log.md` links the successor. `skills/ktl-curator/references/review-session.md` now also writes the successor's `id` under the retired concept's `isReplacedBy`, which the report reads first, and the pen refuses an agent's change to that field. Should the item name the field?
 * **Prose**: reworded 2 concept bodies in plain English. No link, number or frontmatter changed.
 * **Changed**: the sentences on the specification's page and button stand in paragraphs of their own in the validation and website skill playbooks; no fact changed.
 * **Changed**: the retelling of the pen for readers aged 13 to 18 carries the refusals `glossary/the-pen.md` gained: a retired concept, the curator's two log labels, and a person's exclusion and note kept whole.

@@ -116,6 +116,8 @@ CURATOR_ACTOR = "process:ktl-curator"
 # so they belong to the script and the curator like the rest.
 DENIED_SET = {"id", "type", "generated", "verified", "revised", "refuted", "status", "stale_after", "timestamp", "by", "at", "revision"}
 DENIED_CREATE = {"generated", "verified", "revised", "refuted", "status", "stale_after", "timestamp", "by", "at", "revision"}
+# Where knowledge-report.sh reads a retired concept's successor, which ktl-curator writes on a person's word.
+SUCCESSOR_KEYS = {"isreplacedby", "relations"}
 RELATED_START, RELATED_END = "<!-- lokf:related -->", "<!-- /lokf:related -->"
 OPEN_Q = "## Open questions"
 # The longest `sources[].excerpt` the pen writes, counted with each run of
@@ -804,6 +806,9 @@ class Bundle:
         denied = sorted(k for k in sets if k.lower() in DENIED_SET)
         if denied:
             raise Refused(f"{c.path}: set may not touch {', '.join(denied)}; those belong to the script, the curator or the schema")
+        successor = sorted(k for k in sets if k.lower() in SUCCESSOR_KEYS)
+        if successor and c.retired():
+            raise Refused(f"{c.path}: a person retired this concept, so set may not touch {', '.join(successor)}: its successor is that person's word; name it in the hand-off instead")
         for k, v in sets.items():
             if k in ("title", "description"):
                 v = one_line(v, f"{c.path}: {k}")

@@ -35,8 +35,8 @@ layout, its notes or the plugin's block changed.
 `isolated` names what no relation joins to the rest of the bundle. The work
 list shows ten of them, taking turns by month with nothing stamped.
 
-A retired concept's label names its successor from the newest **Deprecation**
-line in log.md, and only one the bundle holds. A waiting Disagreement that
+A retired concept's label names its successor from its isReplacedBy, or else
+from the newest **Deprecation** line in log.md, and only one the bundle holds. A waiting Disagreement that
 names its concept right after the kind marks that concept, from its newest
 day.
 
@@ -976,6 +976,54 @@ def test_a_retired_concept_names_its_successor_and_a_disputed_one_its_newest_day
     root, _, _ = queue
     out = report(root, "labels", "x/old.md", "x/lost.md", "x/gone.md", "x/prior.md", "x/hub.md", "x/a.md", "x/e.md").out
     assert has_line(out, want), f"report script did not print '{want}': {out}"
+
+
+@pytest.fixture
+def slot(tmp_path):
+    """Retired concepts whose isReplacedBy names a successor in each spelling, one the log names, and a live concept that carries the slot."""
+    kk = tmp_path / ".lokf" / "knowledge"
+    write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
+    write(
+        kk / "log.md",
+        "# Log\n\n## 2026-02-01\n\n* **Deprecation**: [Both](../x/both.md) retired - replaced by [A](../x/a.md).\n* **Deprecation**: [Far](../x/far.md) retired - replaced by [A](../x/a.md).\n",
+    )
+    write(kk / "x" / "hub.md", "---\ntype: Dataset\ntitle: Hub\nverified:\n  - by: human:ada\n    at: \"2026-01-02T00:00:00Z\"\n---\n")
+    write(kk / "x" / "a.md", "---\ntype: Dataset\ntitle: A\n---\n")
+    gone = "type: Dataset\nstatus: deprecated\n"
+    # Slot: the field alone. Both: the field and a log line that disagree.
+    # Second: an IRI of another bundle first, then a relative path. Far: a
+    # target the bundle lacks, so the log line decides. Reified: `relations`.
+    write(kk / "x" / "slot.md", f"---\n{gone}title: Slot\nisReplacedBy: https://acme.example/knowledge/x/hub\n---\n")
+    write(kk / "x" / "both.md", f"---\n{gone}title: Both\nisReplacedBy: [https://acme.example/knowledge/x/hub]\n---\n")
+    write(kk / "x" / "second.md", f"---\n{gone}title: Second\nisReplacedBy:\n  - https://other.example/k/y\n  - x/a\n---\n")
+    write(kk / "x" / "far.md", f"---\n{gone}title: Far\nisReplacedBy: https://acme.example/knowledge/x/missing\n---\n")
+    write(kk / "x" / "reified.md", f"---\n{gone}title: Reified\nrelations:\n  - predicate: isReplacedBy\n    target: https://acme.example/knowledge/x/a\n---\n")
+    write(kk / "x" / "live.md", "---\ntype: Dataset\ntitle: Live\nisReplacedBy: https://acme.example/knowledge/x/hub\n---\n")
+    return tmp_path
+
+
+@pytest.mark.parametrize(
+    "want",
+    [
+        "- Slot (x/slot.md) - retired, replaced by x/hub.md",
+        "- Both (x/both.md) - retired, replaced by x/hub.md",
+        "- Second (x/second.md) - retired, replaced by x/a.md",
+        "- Far (x/far.md) - retired, replaced by x/a.md",
+        "- Reified (x/reified.md) - retired, replaced by x/a.md",
+        "- Live (x/live.md) - nobody has checked this yet",
+    ],
+)
+def test_a_retired_concepts_isreplacedby_names_its_successor_before_the_log(slot, want):
+    out = report(slot, "labels").out
+    assert has_line(out, want), f"report script did not print '{want}': {out}"
+
+
+def test_a_successor_the_slot_names_waits_for_a_person_like_one_the_log_names(slot):
+    """Hub carries a person's event and A does not, so only the retirements that A replaced wait."""
+    out = report(slot).out
+    assert has_line(out, "Retired, with a successor no person has confirmed: 3"), f"report script miscounted the waiting retirements: {out}"
+    for p in ("second", "far", "reified"):
+        assert re.search(rf"^- x/{p}\.md: x/a\.md - nobody has checked this yet$", out, re.M), f"report script did not list x/{p}.md: {out}"
 
 
 def test_an_exclusion_is_not_read_as_a_readers_dispute(tmp_path):

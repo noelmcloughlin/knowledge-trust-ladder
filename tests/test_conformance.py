@@ -97,7 +97,7 @@ def test_each_concept_carries_its_labels_and_no_other(whole, expected):
     assert found == expected["labels"]
 
 
-def test_a_retired_concept_names_the_successor_the_log_links(whole, expected):
+def test_a_retired_concept_names_its_successor(whole, expected):
     found = {}
     for path, (_, text) in concepts(whole).items():
         match = re.search(r"retired, replaced by (\S+)", text)

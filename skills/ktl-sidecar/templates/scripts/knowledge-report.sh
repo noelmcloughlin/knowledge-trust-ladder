@@ -44,8 +44,9 @@
 #                                concept waits in .lokf/feedback.md
 #   retired                      `status: deprecated`; no other label applies,
 #                                and it names the concept that replaced it
-#                                when the newest **Deprecation** line in
-#                                log.md links one
+#                                when its isReplacedBy names one, or else
+#                                the newest **Deprecation** line in log.md
+#                                links one
 #
 # The whole report also prints the queue of ktl-curator, Worth ten minutes
 # today, and what ranks it: review dates due within 30 days, confirmed
@@ -1139,11 +1140,61 @@ health() {  # [<the count of concepts not tied to a signed commit>]
   END { printf "Confirmed by a person: %d of %d · Checked by automation only: %d · Nobody has checked: %d · Drafts: %d · Reopened: %d · Past review date: %d · Edited since confirmed: %d · Retired: %d%s\n", confirmed, n, auto, none, drafts, reop, past, was, retired, (unsigned != "" ? " · Not tied to a signed commit: " unsigned : "") }'
 }
 
-# The concept that replaced a retired one, as S<TAB>retired<TAB>successor:
-# the link after "replaced by", in the `../` form that ktl-curator and the
-# KTL Curator plugin write, in the newest **Deprecation** line of log.md that
-# links the retired concept. A line with no such link names no successor.
+# The base_iri of the root index.md, or nothing.
+bundle_base() {
+  awk -v SQ="'" '{ sub(/\r$/, "") } NR == 1 { sub(/^\357\273\277/, "") } NR == 1 { if ($0 != "---") exit; next } $0 == "---" { exit }
+    /^base_iri:/ { v = $0; sub(/^base_iri:[ \t]*/, "", v); sub(/[ \t\r]+$/, "", v)
+      if (substr(v, 1, 1) == "\"" || substr(v, 1, 1) == SQ) v = substr(v, 2, length(v) - 2); print v; exit }' "$bundle/index.md" 2>/dev/null || true
+}
+
+# A relation target resolved to the path of a concept, as the KTL Curator
+# plugin resolves it:
+#   - an IRI under base_iri, by the path after it;
+#   - any other IRI, as written;
+#   - a relative path, from the root of the bundle and then from the folder
+#     of the citing concept.
+# A concept's id is its `id`, or base_iri and its path without `.md`. The
+# caller sets `base` and fills `order`, `nc` and `cid`, then calls ids().
+# shellcheck disable=SC2016 # awk's own fields, not the shell's
+resolve_fn='
+function ids(  i, p, id) { for (i = 1; i <= nc; i++) { p = order[i]; id = cid[p]; if (id == "") { id = p; sub(/\.md$/, "", id); id = base id }; byid[id] = p } }
+function cut(v,  i) { i = index(v, "#"); return i ? substr(v, 1, i - 1) : v }
+function find(id) { return (id in byid) ? byid[id] : "" }
+function resolve(v, from,  d, r) {
+  if (v in byid) return byid[v]
+  if (v ~ /^[A-Za-z][A-Za-z0-9+.-]*:/) {
+    if (base == "" || index(v, base) != 1) return ""
+    v = cut(substr(v, length(base) + 1)); sub(/\.md$/, "", v)
+    return find(base v)
+  }
+  if (base == "") return ""
+  v = cut(v); sub(/^\//, "", v); sub(/\.md$/, "", v)
+  r = find(base v); if (r != "") return r
+  d = from; if (sub(/\/[^\/]*$/, "", d)) return find(base d "/" v)
+  return ""
+}'
+
+# The concept that replaced a retired one, as S<TAB>retired<TAB>successor.
+# Its isReplacedBy decides: the first target, in the field or in `relations`,
+# that names a concept of the bundle. ktl-curator writes it on Retire. Where
+# it names none, the link after "replaced by" in the newest **Deprecation**
+# line of log.md that links the retired concept, in the `../` form that
+# ktl-curator and the KTL Curator plugin write; a retirement recorded before
+# the slot has only that line. A line with no such link names no successor.
+# The first S line for a concept is the one read.
 successors() {
+  printf '%s\n' "$all" | awk -F'\t' -v base="$(bundle_base)" "$resolve_fn"'
+  $1 == "C" { nc++; order[nc] = $2; st[$2] = $4 }
+  $1 == "I" { cid[$2] = $3 }
+  $1 == "L" && $3 == "isReplacedBy" { nl++; lp[nl] = $2; lt[nl] = $4 }
+  END {
+    ids()
+    for (i = 1; i <= nl; i++) {
+      p = lp[i]; if (st[p] != "deprecated" || (p in named)) continue
+      t = resolve(lt[i], p); if (t == "" || t == p) continue
+      named[p] = 1; print "S\t" p "\t" t
+    }
+  }'
   [ -f "$bundle/log.md" ] || return 0
   awk '
   function target(s,  a, b) {
@@ -1307,13 +1358,7 @@ repeats() {  # concepts the ledger names more than once: readers keep asking abo
 
 # ---- the curator's queue -----------------------------------------------------
 # A relation is one of the fourteen fields, `relations`, or a whole IRI in a
-# slot of a domain vocabulary. Its target is resolved as the KTL Curator
-# plugin resolves it:
-#   - an IRI under base_iri, by the path after it;
-#   - any other IRI, as written;
-#   - a relative path, from the root of the bundle and then from the folder
-#     of the citing concept.
-# A concept's id is its `id`, or base_iri and its path without `.md`.
+# slot of a domain vocabulary, and resolve_fn resolves its target.
 # Each concept that names another counts once for it, never for itself, and
 # every list here leaves retired concepts out. `queue` prints Worth ten
 # minutes today, in the order that ktl-curator/references/trust-fields.md
@@ -1325,27 +1370,10 @@ repeats() {  # concepts the ledger names more than once: readers keep asking abo
 # work list, moving on by ten each month, or the counts for the report.
 ranked() {  # queue | lists | isolated | isolated-worklist | isolated-count
   local base
-  base="$(awk -v SQ="'" '{ sub(/\r$/, "") } NR == 1 { sub(/^\357\273\277/, "") } NR == 1 { if ($0 != "---") exit; next } $0 == "---" { exit }
-    /^base_iri:/ { v = $0; sub(/^base_iri:[ \t]*/, "", v); sub(/[ \t\r]+$/, "", v)
-      if (substr(v, 1, 1) == "\"" || substr(v, 1, 1) == SQ) v = substr(v, 2, length(v) - 2); print v; exit }' "$bundle/index.md" 2>/dev/null || true)"
-  { printf '%s\n' "$all"; printf '%s\n' "$times"; } | awk -F'\t' -v mode="$1" -v today="$today" -v base="$base" "$label_fn"'
+  base="$(bundle_base)"
+  { printf '%s\n' "$all"; printf '%s\n' "$times"; } | awk -F'\t' -v mode="$1" -v today="$today" -v base="$base" "$label_fn$resolve_fn"'
   function jdn(d,  y, m, a) { y = substr(d, 1, 4) + 0; m = substr(d, 6, 2) + 0; a = int((14 - m) / 12); y += 4800 - a; m += 12 * a - 3
     return substr(d, 9, 2) + int((153 * m + 2) / 5) + 365 * y + int(y / 4) - int(y / 100) + int(y / 400) - 32045 }
-  function cut(v,  i) { i = index(v, "#"); return i ? substr(v, 1, i - 1) : v }
-  function find(id) { return (id in byid) ? byid[id] : "" }
-  function resolve(v, from,  d, r) {
-    if (v in byid) return byid[v]
-    if (v ~ /^[A-Za-z][A-Za-z0-9+.-]*:/) {
-      if (base == "" || index(v, base) != 1) return ""
-      v = cut(substr(v, length(base) + 1)); sub(/\.md$/, "", v)
-      return find(base v)
-    }
-    if (base == "") return ""
-    v = cut(v); sub(/^\//, "", v); sub(/\.md$/, "", v)
-    r = find(base v); if (r != "") return r
-    d = from; if (sub(/\/[^\/]*$/, "", d)) return find(base d "/" v)
-    return ""
-  }
   function also(s, t) { return s == "" ? t : s "; " t }
   function group(x) { while (up[x] != x) { up[x] = up[up[x]]; x = up[x] } return x }
   function relies(n) { return n == 1 ? "1 other concept relies on this" : n " other concepts rely on this" }
@@ -1362,7 +1390,7 @@ ranked() {  # queue | lists | isolated | isolated-worklist | isolated-count
   $1 == "M" && $2 == "c" { cmoved[$3] = 1 }
   $1 == "K" { held_back[$2] = 1 }
   END {
-    for (i = 1; i <= nc; i++) { p = order[i]; id = cid[p]; if (id == "") { id = p; sub(/\.md$/, "", id); id = base id }; byid[id] = p }
+    ids()
     for (i = 1; i <= nc; i++) {
       p = order[i]; $0 = row[p]
       if ($4 == "deprecated") continue

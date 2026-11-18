@@ -4,6 +4,14 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Changed
+
+- **ktl-curator's *Retire* writes the successor in `isReplacedBy`, which the report and the docent read before the `**Deprecation**` line.**
+
+### Security
+
+- **The pen refuses a `set` of `isReplacedBy` or `relations` on a concept a person retired.**
+
 ## [0.68.0] - 2026-11-18
 
 ### Added

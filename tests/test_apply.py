@@ -25,7 +25,8 @@ This was check 19 in scripts/validate-repository.sh:
 - reindex re-derives a bullet without touching the concept;
 - resolve withdraws the librarian's own question and never a person's note;
 - an exclusion a person decided keeps its resource and its reason;
-- a retired concept takes no question and is never deleted;
+- a retired concept takes no question, is never deleted, and keeps the
+  successor a person named;
 - no log line carries a label ktl-curator writes for a person;
 - a root index shaped by hand keeps its shape;
 - the hand-off reaches the file --handoff names as plain single lines, and
@@ -2153,6 +2154,23 @@ def test_an_exclusion_a_person_decided_keeps_its_resource_and_reason(decided):
 )
 def test_a_retired_concept_takes_no_question_and_is_never_deleted(decided, op, why):
     refuses(decided, lines("ops:", f"  - {op}"), "an operation that undoes a retirement", why)
+
+
+@pytest.mark.parametrize(
+    "op",
+    [
+        "{op: patch, path: playbooks/retired.md, set: {isReplacedBy: [https://acme.example/knowledge/playbooks/draft]}, log: x}",
+        "{op: patch, path: playbooks/retired.md, set: {isreplacedby: []}, log: x}",
+        "{op: rewrite, path: playbooks/retired.md, body: '# Overview', set: {relations: [{predicate: isReplacedBy, target: https://acme.example/knowledge/playbooks/draft}]}, log: x}",
+    ],
+)
+def test_a_retired_concepts_successor_is_a_persons_word(decided, op):
+    refuses(decided, lines("ops:", f"  - {op}"), "a successor an agent named", "its successor is that person's word")
+
+
+def test_a_live_concept_takes_isreplacedby(decided):
+    applies(decided, lines("ops:", "  - {op: patch, path: playbooks/draft.md, set: {isReplacedBy: [https://acme.example/knowledge/playbooks/retired]}, log: x}"))
+    assert "isReplacedBy" in read(kb_of(decided) / "playbooks" / "draft.md")
 
 
 @pytest.mark.parametrize(

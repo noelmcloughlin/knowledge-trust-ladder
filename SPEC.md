@@ -153,6 +153,8 @@ The pen refuses the whole file for any of the reasons [patch.md](skills/ktl-libr
 
 - `question` or `delete` on a concept a person retired, one with `status: deprecated`: a question would set it back to a draft, and a retired concept stays for links and history;
 
+- `set` carrying `isReplacedBy` or `relations`, in any letter case, on a concept a person retired: its successor is that person's word;
+
 - a `log` line that starts with `**Curation**` or `**Deprecation**`, the two lines ktl-curator writes for a person;
 
 ### 5.3 The curator's verdicts
@@ -164,7 +166,7 @@ A verdict is written only in a session a person attends. *Confirm* and *Correct 
 | Confirm | Appends a `human:<id>` event to `verified`, with `at` and, where the source's state is known, `revision`. Removes `status: draft`. Sets `stale_after` when the person accepts a date |
 | Wrong, send back | Sets `status: draft` and adds the person's note under `## Open questions`, under `human:<id>`, or under `process:ktl-curator` with no authenticated login. The content stays as it was. When the person wrote the text and releases it, `generated.by` becomes `process:ktl-curator` and the time stays |
 | Wrong, correct now | Makes the smallest edit that states the person's fact. Replaces `generated` with that person and the time, appends a `verified` event with the same time, and removes `status: draft` |
-| Retire | Sets `status: deprecated`, and changes nothing else in the concept |
+| Retire | Sets `status: deprecated`, and `isReplacedBy` to the successor's `id` when the person names one. Changes nothing else in the concept |
 | Later | Keeps or sets `status: draft`, and sets `stale_after` when the person names a date |
 
 A person's note is cleared only on that person's word. A session that changed something writes one `**Curation**` line in the root `log.md`, and one `**Deprecation**` line for each retirement, which links the successor when the person names one:
@@ -176,7 +178,7 @@ A person's note is cleared only on that person's word. A session that changed so
 * **Deprecation**: [Legacy Orders Sync](../services/legacy-orders-sync.md) retired - replaced by [Orders API](../services/orders-api.md).
 ```
 
-A program reads a retired concept's successor from the newest `**Deprecation**` line that links the concept, the first one in the file: the first link is the retired concept, and the link after the words `replaced by` is the successor. Only the curator writes these two lines, and the pen refuses a log line that starts with either label.
+A program reads a retired concept's successor from its `isReplacedBy`: the first target, in the field or under `relations`, that names a concept of the bundle. When it names none, the program reads the newest `**Deprecation**` line that links the concept, the first one in the file: the first link is the retired concept, and the link after the words `replaced by` is the successor. A retirement recorded before KTL wrote the field has that line alone. Only the curator writes these two lines and a retired concept's `isReplacedBy`. The pen refuses a log line that starts with either label, and a `set` that touches the field on a retired concept.
 
 [review-session.md](skills/ktl-curator/references/review-session.md) gives each edit in full.
 
@@ -303,7 +305,7 @@ The gate holds a person's `verified` and `generated` events, and no other record
 
 - a person's note under `## Open questions`;
 
-- `status` and `stale_after`.
+- `status`, `stale_after`, and a retired concept's `isReplacedBy`.
 
 The pen refuses each of those from an agent (5.2). A change by hand to one of them reaches the default branch on a reviewer's reading alone.
 
@@ -320,7 +322,7 @@ A program reports the labels below. It computes each one on every read and store
 | Nobody has checked this yet | no `verified` key, or one with no events | `verified` | - |
 | Still a draft | `status: draft`, and no `human:` `verified` event | `status`, `verified` | `schema:creativeWorkStatus` |
 | Reopened | `status: draft` on a concept with a `human:` `verified` event: the pen's `question` and the curator's *send back* set it. The label gives the earliest open question asked on or after the confirmation's day, or else the earliest of all, with its asker and how many wait in all. The confirmation still counts as one, so the rung stays | `status`, `verified`, `## Open questions` | same |
-| Retired | `status: deprecated`; names its successor when the newest `**Deprecation**` line in `log.md` links one | `status`, `log.md` | same |
+| Retired | `status: deprecated`; names its successor when its `isReplacedBy` names one, or else when the newest `**Deprecation**` line in `log.md` links one | `status`, `isReplacedBy`, `log.md` | same, and `dcterms:isReplacedBy` |
 | Edited since a person last confirmed it | `generated.at`, or a later `revised.at`, later than the latest `human:` `verified[].at` | `generated`, `revised`, `verified` | `prov:wasGeneratedBy` -> `prov:endedAtTime` |
 | A source moved since the confirmation | the source's last commit comes after the commit that recorded the latest `human:` event. The concept's `resource` is compared with the commit that event's `revision` names instead, when this history holds it, or with the `sha256:` digest that `revision` gives. A source that is gone has moved, and so has one with an uncommitted edit the concept does not share. The concept's own body counts too, as *its own body*, when it says something other than the commit of that event held. A concept edited since its confirmation is not listed, and a URL is never compared | `resource`, `sources[].resource` + git history | - |
 | Past its review date | `stale_after` <= today, the date in UTC | `stale_after` | `schema:expires` |
@@ -344,7 +346,7 @@ The parsing notes in [trust-fields.md](skills/ktl-curator/references/trust-field
 | A concept's frontmatter | `type`, `status`, `stale_after`, `generated`, `revised`, `verified`, `resource`, `sources`, and each relation |
 | A concept's body | the bullets under the `## Open questions` heading, outside a code fence |
 | The root `index.md` | `base_iri`, against which a relation target is resolved |
-| The root `log.md` | each `**Deprecation**` line, for a retired concept's successor (5.3) |
+| The root `log.md` | each `**Deprecation**` line, for the successor of a retired concept whose `isReplacedBy` names none (5.3) |
 | `.lokf/feedback.md` | the count of entries, and the path and day of each Disagreement that names a concept (5.4) |
 | `.lokf/justfile` and the schema it names | the classes of the bundle's domain vocabulary |
 | git history | the commit that recorded an event, each source's last commit, and whether a commit carries a signature |
