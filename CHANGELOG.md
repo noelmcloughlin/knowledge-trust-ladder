@@ -4,6 +4,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Fixed
+
+- **The federation build verifies a release made before its repository moved, under the old owner with the signer workflow still pinned.**
+
 ## [0.69.1] - 2026-11-18
 
 ### Fixed

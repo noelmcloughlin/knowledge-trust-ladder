@@ -910,13 +910,21 @@ def verify_attestation(path: pathlib.Path, owner: str, repo: str, workflow: str 
     signer = f"{owner}/{repo}/{workflow}"
     done = subprocess.run([gh, "attestation", "verify", str(path), "--repo", f"{owner}/{repo}", "--signer-workflow", signer],
                           capture_output=True, text=True, env=gh_env())
+    moved = ""
+    if done.returncode != 0 and "HTTP 404" in (done.stderr or done.stdout) and version >= GH_EXACT_SIGNER:
+        # A repository moved to another owner answers 404 for the attestations
+        # made before the move; its old owner still lists them.
+        done = subprocess.run([gh, "attestation", "verify", str(path), "--owner", owner, "--signer-workflow", signer],
+                              capture_output=True, text=True, env=gh_env())
+        moved = f", found under {owner}, as a repository that moved keeps its earlier attestations there"
     if done.returncode != 0:
         # A private repository's release workflow attests nothing unless it is told to.
         private = (f". The release of {owner}/{repo} was read through gh, as a private repository's is, and such a repository's release workflow attests "
                    "only where its variable KNOWLEDGE_ATTEST_PRIVATE is true, which needs GitHub Enterprise Cloud") if (owner, repo) in THROUGH_GH else ""
-        raise Failed(f"{path.name}: gh attestation verify failed for {signer}: {(done.stderr or done.stdout).strip()[:300]}{private}")
+        where = f", under {owner} too" if moved else ""
+        raise Failed(f"{path.name}: gh attestation verify failed for {signer}{where}: {(done.stderr or done.stdout).strip()[:300]}{private}")
     loose = "" if version >= GH_EXACT_SIGNER else f", matched loosely by gh {'.'.join(map(str, version))}; 2.102.0 matches it exactly"
-    return f"attested by {workflow.rsplit('/', 1)[-1]} of {owner}/{repo}{loose}"
+    return f"attested by {workflow.rsplit('/', 1)[-1]} of {owner}/{repo}{moved}{loose}"
 
 
 # ---------------------------------------------------------------------------
