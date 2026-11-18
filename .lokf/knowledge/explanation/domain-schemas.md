@@ -28,6 +28,8 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-10-13T01:19:37Z"
 status: deprecated
+isReplacedBy:
+  - https://w3id.org/ktl/knowledge/explanation/domain-vocabularies
 ---
 
 # Overview

@@ -2,6 +2,7 @@
 
 ## 2026-11-18
 
+* **Curation**: human:noelmcloughlin corrected 1 concept (the Revision paragraph of the ktl-curator skill now names the `sha256:` pin and says the report compares the resource only) and copied the successor of 1 retired concept, [When the built-in vocabulary stops fitting: domain vocabularies](../explanation/domain-schemas.md), from its `**Deprecation**` line into its `isReplacedBy`: [When the built-in vocabulary stops fitting: domain vocabularies](../explanation/domain-vocabularies.md).
 * **Changed**: Trust label says the report reads a retired concept's successor from its `isReplacedBy`, and from the `**Deprecation**` line in `log.md` when the field names none, from `skills/ktl-curator/references/trust-fields.md`. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: the docent playbook says a retired concept's label names the successor its `isReplacedBy` gives before the one the `**Deprecation**` line links, from `skills/ktl-docent/references/answering.md`. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: the SkillWiki explanation says ktl-curator writes a retired concept's successor in `isReplacedBy` as well as in the log line, as `docs/how-it-works.md` now does. Edited since a person confirmed it; the label says so until the curator looks again.

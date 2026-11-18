@@ -7,7 +7,7 @@ genre: how-to
 resource: skills/ktl-curator/SKILL.md
 generated:
   by: human:noelmcloughlin
-  at: "2026-11-17T20:54:54Z"
+  at: "2026-11-18T10:17:07Z"
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-librarian-skill
 about:
@@ -39,8 +39,10 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-11-17T20:54:54Z"
     revision: "bb4096add2376f3f391cf073f2500667db53d5f9"
+  - by: human:noelmcloughlin
+    at: "2026-11-18T10:17:07Z"
+    revision: "3ffcd780058ef0921d22eb0d11f76b6f09360f1d"
 stale_after: 2027-11-13
-status: draft
 ---
 
 # Overview
@@ -101,7 +103,7 @@ On a host with no forge, the id is the account the platform's version history sh
 
 There is no "confirm everything". After the session the skill prepends one `**Curation**` line with the counts to `log.md`, and prepares a pull request scoped to `.lokf/` that it opens only when the person says so. It commits the verdicts in a signed commit of their own, on top of the commit that changed the concepts and never amended into it, because conventions rule 14 reads each commit of the pull request and fails one that records a person's confirmation and also changes what the concept says; the squash merge afterwards is fine. Before the push it runs the conventions check as the gate does, with `--since` naming the merge-base with the pull request's base branch, since without `--since` the script skips rule 14 (0.55.1, `references/review-session.md`). Each named person must have approved that pull request or, when the pull request is their own, have signed its commits. An approval covers the concepts as they stood when it was given, so one given before a later push to a concept that carries their name is asked for again.
 
-**Revision.** Where the toolkit accepts it, a confirmation event also carries `revision`, the state of the source the person was shown. For a committed path it is the full commit hash of the last commit that touched the file. For a URL it is the ETag, else a `sha256:` digest. The field arrived in lokf 0.9.0, so the skill leaves it out on an older toolkit, when the file has uncommitted changes, and where the host has no version control. When a confirmation carries a `revision` that names a commit the history holds, the report compares each source with that commit, so a source changed while the pull request waited reads as moved (`references/trust-fields.md`).
+**Revision.** Where the toolkit accepts it, a confirmation event also carries `revision`, the state of the source the person was shown. For a committed path it is the full commit hash of the last commit that touched the file, and for a file the branch changed it is `sha256:` plus the digest of the file as committed, because a squash merge or a rebase replaces the commits of a branch. For a URL it is the ETag, else a `sha256:` digest. The field arrived in lokf 0.9.0, so the skill leaves it out on an older toolkit, when the file has uncommitted changes, and where the host has no version control. When a confirmation carries a `revision`, the report compares the concept's resource with the commit it names, where the history holds it, or with the file as the newest commit holds it, for a `sha256:` digest, so a resource changed while the pull request waited reads as moved (`references/trust-fields.md`).
 
 **A mirror.** A `resource` under `.lokf/mirror/` is a copy the ingest keeps of a page or document outside the repository. The skill quotes it as any source and shows the header above it: the origin, the version and the retrieval date. It offers the origin link to a person with access to it. The confirmation attests the concept against the copy as retrieved, and `revision` pins that state.
 
@@ -132,6 +134,5 @@ Accepting a member's move to a new release is the same confirm again. When the n
 
 ## Open questions
 
-- 2026-11-17, process:ktl-librarian: the Revision paragraph gives one rule for a committed path: the full hash of the last commit that touched the file. `skills/ktl-curator/references/review-session.md` now gives a second: for a committed file the branch changed, `sha256:` plus the digest of the file as committed, because a squash merge or a rebase replaces the commits of a branch. `skills/ktl-curator/references/trust-fields.md` now says the report compares such a digest with the file as the newest commit holds it. Should the paragraph name both?
 - 2026-11-18, process:ktl-librarian: the report's second item says the queue ranks within a group by reliance through the fourteen relation fields and `relations[].target`. `skills/ktl-curator/references/trust-fields.md` also counts a domain vocabulary's own slots, and orders a group by reliance, then the newest `generated.at`, then the path. Should the item name them?
 - 2026-11-18, process:ktl-librarian: the Retire item says the `**Deprecation**` line in `log.md` links the successor. `skills/ktl-curator/references/review-session.md` now also writes the successor's `id` under the retired concept's `isReplacedBy`, which the report reads first, and the pen refuses an agent's change to that field. Should the item name the field?
