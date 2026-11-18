@@ -4,6 +4,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Fixed
+
+- **The home page's six buttons fit on one line again, each as wide as its label needs.**
+
 ## [0.68.0] - 2026-11-18
 
 ### Added
