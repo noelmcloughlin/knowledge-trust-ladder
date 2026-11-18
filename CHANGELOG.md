@@ -4,6 +4,8 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+## [0.69.0] - 2026-11-18
+
 ### Added
 
 - **ktl-sidecar's `<OWNER_TYPE>` sets the publisher to `Person` or `Organization`.**
