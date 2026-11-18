@@ -1,0 +1,100 @@
+{
+  "about": "What a program that reports trust must say of the bundle beside this file, under section 8 of SPEC.md. Every value was worked out by hand from the rules. Nothing here depends on git or on today's date, so the labels that need either are left out: a source that moved, a commit that is not signed, and a review date due soon.",
+  "health": {
+    "total": 18,
+    "confirmed": 6,
+    "automation_only": 1,
+    "unchecked": 7,
+    "drafts": 2,
+    "reopened": 1,
+    "past_review": 1,
+    "edited_since": 2,
+    "retired": 2
+  },
+  "labels": {
+    "glossary/delivery.md": [
+      "unchecked",
+      "draft"
+    ],
+    "glossary/order.md": [
+      "unchecked",
+      "draft"
+    ],
+    "services/archived.md": [
+      "unchecked"
+    ],
+    "services/bare-mapping.md": [
+      "confirmed"
+    ],
+    "services/billing-worker.md": [
+      "automation-only"
+    ],
+    "services/derived-report.md": [
+      "confirmed"
+    ],
+    "services/disputed.md": [
+      "confirmed",
+      "disputed"
+    ],
+    "services/empty-verified.md": [
+      "unchecked"
+    ],
+    "services/legacy-sync.md": [
+      "retired"
+    ],
+    "services/mentions-open-questions.md": [
+      "unchecked"
+    ],
+    "services/notifications.md": [
+      "confirmed",
+      "past-review"
+    ],
+    "services/old-export.md": [
+      "retired"
+    ],
+    "services/orders-api.md": [
+      "confirmed"
+    ],
+    "services/payments-api.md": [
+      "edited-since"
+    ],
+    "services/same-day-edit.md": [
+      "edited-since"
+    ],
+    "services/search.md": [
+      "confirmed",
+      "reopened"
+    ],
+    "services/unchecked.md": [
+      "unchecked"
+    ],
+    "services/workflow.md": [
+      "unchecked"
+    ]
+  },
+  "successor": {
+    "services/legacy-sync.md": "services/orders-api.md"
+  },
+  "relied_on": {
+    "glossary/order.md": 3,
+    "services/payments-api.md": 1
+  },
+  "derived_from_edited": [
+    "services/derived-report.md"
+  ],
+  "vocabulary_misfit": [
+    "services/archived.md",
+    "services/workflow.md"
+  ],
+  "open_questions": [
+    "glossary/order.md",
+    "services/search.md"
+  ],
+  "queue": [
+    "services/payments-api.md",
+    "services/same-day-edit.md",
+    "services/notifications.md",
+    "glossary/order.md",
+    "services/search.md"
+  ]
+}

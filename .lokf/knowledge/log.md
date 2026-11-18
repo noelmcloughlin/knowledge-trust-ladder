@@ -2,6 +2,8 @@
 
 ## 2026-11-18
 
+* **Prose**: reworded 2 concept bodies in plain English. No link, number or frontmatter changed.
+* **Changed**: the sentences on the specification's page and button stand in paragraphs of their own in the validation and website skill playbooks; no fact changed.
 * **Changed**: the retelling of the pen for readers aged 13 to 18 carries the refusals `glossary/the-pen.md` gained: a retired concept, the curator's two log labels, and a person's exclusion and note kept whole.
 * **Changed**: KTL specification carries no version in its title, so the title matches its line above; the description and the body give version 0.2.
 * **Added**: KTL specification, from the root `SPEC.md`, version 0.2: the ladder, who writes each record, the eighteen conventions, a person's confirmation, the trust labels and conformance.
