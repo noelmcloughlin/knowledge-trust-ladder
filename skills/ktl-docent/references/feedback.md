@@ -68,7 +68,7 @@ Record the concept (its path), what it says, what its source says instead, and w
 
 ### A fault in the host's own text
 
-A file of the host can be wrong where the bundle is not: a guide that names a script without its extension, a `SKILL.md` that names a file in the wrong case, a README that a config file contradicts. Only a person fixes the host's text, and the librarian passes it to one as an open question for ktl-curator. Record it with the kind that fits, and start the entry with `Host text:` so the librarian reads it as such:
+A file of the host can be wrong where the bundle is not: a guide that names a script without its extension, a `SKILL.md` that names a file in the wrong case, a README that a config file contradicts. Only a person fixes the host's text; the librarian passes the fault to one as an open question for ktl-curator. Start the entry with `Host text:` and record it as the kind that fits:
 
 - a **Disagreement** with `--concept` when a concept repeats the fault, naming the concept, the faulty file and what the repository holds instead;
 - a **Miss** otherwise, naming the faulty file, what it says and what the repository holds instead.

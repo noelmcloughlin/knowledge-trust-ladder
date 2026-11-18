@@ -246,7 +246,7 @@ if have uv; then
   # The recipes pass --check-excerpts, and --schema to convert and serve,
   # which lokf 0.8.0 does not take.
   case "${floor:-}" in
-    0.[0-8]|0.[0-8].*) warn toolkit "the floor is >=$floor and the justfile's recipes need lokf 0.9.0 - raise it to \"lokf[build,shacl]>=0.10.0\" in .lokf/pyproject.toml, as the sidecar names it, and run uv lock there" ;;
+    0.[0-8]|0.[0-8].*) warn toolkit "the floor is >=$floor and the justfile's recipes need lokf 0.9.0 - raise it to \"lokf[build,shacl]>=0.10.0\" in .lokf/pyproject.toml and run uv lock there" ;;
   esac
   # The gate's recipe checks LOKF's SHACL shapes only where uv.lock holds
   # lokf's shacl extra.

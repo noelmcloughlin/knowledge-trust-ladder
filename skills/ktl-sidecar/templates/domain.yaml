@@ -38,15 +38,14 @@
 #   field section 11.5 names.
 #
 # MemberDomain: a MemberBundle whose bundle is itself a domain. It keeps a
-#   class IRI of its own: as dcat:Catalog, `is_a` would make every catalogue,
-#   the Domain too, a MemberBundle, which LOKF's SHACL shapes then check. The
-#   build's lock graph lists the domain as a dcat:Catalog inside a catalogue,
-#   as DCAT does. The build follows its members into the same workspace, and a
-#   person's confirmation of it attests that the domain belongs and who
-#   answers for it, not what its members say. Its distribution may also name
-#   the domain's released `workspace-<tag>.zip` with its checksum. For a
-#   member that waits in that domain, the build takes the release the lock
-#   inside that zip records.
+#   class IRI of its own: under dcat:Catalog, LOKF's SHACL shapes would check
+#   every catalogue, the Domain too, as a MemberBundle. The lock graph lists
+#   it as a dcat:Catalog inside a catalogue, as DCAT does. The build follows
+#   its members into the same workspace, and a person's confirmation of it
+#   attests that the domain belongs and who answers for it, not what its
+#   members say. Its distribution may also name the domain's released
+#   `workspace-<tag>.zip` with its checksum. For a member that waits in that
+#   domain, the build takes the release the lock inside that zip records.
 #
 # ReleaseDistribution: LOKF's Distribution with its `checksum` required, so
 #   each further distribution, a schema or a workspace, carries a checksum

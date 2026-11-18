@@ -47,10 +47,9 @@ lokf-serve:
 # resource. --check-excerpts (lokf 0.9.0 or later) finds each
 # `sources[].excerpt` in its local file, and counts an excerpt on a URL
 # without fetching it. --shacl checks the projected graph against LOKF's
-# shapes, which see a relation's target class and the node that one id
-# merges. It runs where uv.lock holds lokf's shacl extra, so a lock with
-# the extra and a broken install fails rather than skipping the shapes;
-# without the extra the recipe says so and checks the rest.
+# SHACL shapes, such as a relation's target class and one excerpt per source
+# node. It runs where uv.lock holds pyshacl, so a broken install fails
+# rather than skipping the shapes; without it the recipe says so.
 #
 # Audit: every typed-relation target must resolve to a concept, every local excerpt must match its file, and the graph must keep LOKF's shapes
 lokf-check-refs:

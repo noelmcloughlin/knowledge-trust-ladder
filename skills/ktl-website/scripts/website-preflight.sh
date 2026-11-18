@@ -233,16 +233,14 @@ elif [ -n "$site" ] && [ -f "$root/$site/site.toml" ]; then
 fi
 
 # ---- address: the site's baseURL ----------------------------------------------
-# The Pages API's html_url is the address Pages gives the site: a project
-# site's, a custom domain's, or the domain of its own that GitHub gives a
-# private site. Before Pages is on, or where gh cannot ask, the address of a
-# project site follows from the remote, and a user site has no path.
+# The Pages API's html_url is where Pages serves the site. Before Pages is
+# on, or where gh cannot ask, a project site's address follows from the
+# remote, and a user site's has no path.
 lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 same_address() {
-  # site.toml's address, then the Pages API's: the host compared without
-  # case, the path as written, a missing final slash forgiven, and https in
-  # site.toml taken for the http that Pages gives a domain it does not force
-  # onto https.
+  # site.toml's address, then the Pages API's. Hosts match without case and
+  # paths as written, with or without a final slash; https in site.toml
+  # matches the http Pages gives a domain without enforced https.
   local a="${1%/}" b="${2%/}"
   case "$a" in http://*) case "$b" in https://*) return 1 ;; esac ;; esac
   a="${a#*://}"; b="${b#*://}"

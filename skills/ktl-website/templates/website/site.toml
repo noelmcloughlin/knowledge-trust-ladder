@@ -2,10 +2,10 @@
 # this file holds everything that is the same on every site. The ktl-website
 # skill wrote this file once and never replaces it.
 
-# The site's address, ending in /: the address Pages serves the site at,
-# which the preflight's address line reads from the Pages API. A project
-# site's is "https://<owner>.github.io/<name>/"; a user site, a custom
-# domain and a private site's own domain have no name after the domain.
+# The site's address, ending in /, where Pages serves the site; the
+# preflight's address line reads it from the Pages API. A project site's is
+# "https://<owner>.github.io/<name>/"; a user site, a custom domain and a
+# private site's own domain have no name after the domain.
 baseURL = "<SITE_URL>"
 
 # The site's title, in the header and on every social card.

@@ -24,8 +24,8 @@
 #     check them; that check also refuses a `sources[].excerpt` its local file
 #     does not hold;
 #   - refuses an excerpt that is empty or longer than 500 characters, and a
-#     sources id the patch gives another resource or another excerpt than a
-#     concept already gives it, since the id is one node in the graph.
+#     sources id the patch gives another resource or excerpt than another
+#     concept gives it, since the id is one node in the graph.
 #
 # Every concept it writes keeps a person's record as it was: each `human:`
 # event and each note in a person's name, as knowledge-provenance.sh
@@ -1067,12 +1067,9 @@ class Bundle:
         return findings
 
     def source_findings(self) -> list:
-        """Rule 16 across the bundle, for the `sources` entries this patch adds or changes: an id names one resource and one excerpt in every concept.
+        """Rule 16 across the bundle, for the `sources` entries this patch adds or changes: one id names one resource and one excerpt.
 
-        The id resolves against `base_iri` to one source node, so a second
-        resource or a second excerpt under it lands on that node too, and
-        LOKF's shapes allow it one excerpt. A clash this patch did not make
-        is the gate's to report, not this patch's fault.
+        A clash the patch did not make is left to the gate.
         """
         def entries(fm) -> set:
             found = fm.get("sources") if isinstance(fm, dict) else None
@@ -1228,7 +1225,7 @@ class Bundle:
         return out
 
     def linked_from_an_index(self, folder_index: Path) -> bool:
-        """Whether another index.md, as this patch leaves it, links the folder or its index.md, as a root that reaches a folder by a link does."""
+        """Whether another index.md, as this patch leaves it, links to the folder or its index.md."""
         others = set(self.knowledge.rglob("index.md")) | set(self.indexes)
         for other in sorted(others):
             if other == folder_index or ".obsidian" in other.relative_to(self.knowledge).parts:

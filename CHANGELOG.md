@@ -11,12 +11,12 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 - **Feedback starting `Host text:` records a fault in the host's own files.**
 - **ktl-librarian's bootstrap maps a plugin marketplace manifest.**
 - **The pen refuses a source id that another concept gives another resource or excerpt.**
-- **The gate checks LOKF's SHACL shapes where `uv.lock` holds lokf's `shacl` extra, which the sidecar now names.**
+- **The gate checks LOKF's SHACL shapes where `uv.lock` holds lokf's `shacl` extra.**
 - **The preflight warns when `uv.lock` holds no pyshacl.**
 
 ### Changed
 
-- **The sidecar's lokf floor is 0.10.0, and the no-Python schema names its commit.**
+- **The sidecar names `lokf[build,shacl]>=0.10.0`, and the no-Python schema names its commit.**
 - **A skill's concept is `playbooks/<name>-skill.md`, with its `SKILL.md` as `resource`.**
 - **ktl-sidecar commits Step 5's files, and keeps the KTL skills out of a host's own `skills/`.**
 - **ktl-librarian's first pull request follows the sidecar's.**
@@ -31,15 +31,15 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 ### Fixed
 
 - **The pen drops a folder's empty root section and `index.md` with its last concept**, unless another index links it.
-- **The README aside no longer assumes `##` headings.**
-- **ktl-sidecar counts the six skills the preflight checks.**
-- **Rule 9 names a blank line before the block and a spaced delimiter**, which LOKF 0.10.0 reads.
+- **ktl-sidecar puts the README aside before the first heading of any level.**
+- **ktl-sidecar names all six skills, as the preflight does.**
+- **Conventions rule 9 fails a blank line before the frontmatter and a `---` with spaces after it**, which LOKF 0.10.0 reads.
 - **The federation build reads a member page that opens after a byte order mark or blank lines.**
 - **`MemberDomain` keeps a class IRI of its own**, so no catalogue reads as a member and `moved.rq` finds member domains.
 - **The website preflight warns when `site.toml`'s `baseURL` is not where Pages serves the site.**
-- **The preflight reads a lokf floor whose extras hold a space, and its floor advice names `lokf[build,shacl]>=0.10.0`.**
+- **The preflight reads a lokf floor whose extras hold a space.**
 - **ktl-sidecar's Step 1 names an unset placeholder rather than failing with a traceback.**
-- **The federation's member reads and its MCP `read_document` survive frontmatter that does not parse.**
+- **The federation build and its MCP `read_document` treat frontmatter that does not parse as none.**
 
 ### Security
 

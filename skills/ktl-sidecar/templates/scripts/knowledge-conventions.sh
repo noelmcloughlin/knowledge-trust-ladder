@@ -38,11 +38,10 @@
 #      and sync clients name a conflict copy with a space, a parenthesis or an
 #      upper-case host name.
 #   9. Every concept is a file, not a symbolic link, and starts with a `---`
-#      frontmatter block that closes, with no byte order mark or blank line in
-#      front of it, no space or tab after a `---` delimiter and no other `---`
-#      inside it. LOKF reads a block in each of those cases where this script
-#      reads none or less of it, and lokf before 0.10.0 ends the block at any
-#      `---`.
+#      frontmatter block that closes. No byte order mark or blank line stands
+#      in front of it, no space or tab follows a `---` delimiter, and no other
+#      `---` sits inside it. Otherwise LOKF, or lokf before 0.10.0, reads more
+#      or less of the file as frontmatter than this script does.
 #  10. The fields the provenance gates read line by line are spelt so that a
 #      line reader and a parser read the same thing. They are `id`, `verified`,
 #      `generated`, and `by`, `at` and `revision` at any depth. Each carries no
@@ -81,9 +80,8 @@
 #  16. A footnote joins a claim to a source. Each footnote in a body uses the
 #      `id` of one of the concept's `sources` entries, and each id is cited
 #      and defined. Its definition line holds that entry's `resource`. Across
-#      the bundle one id names one resource, and the entries that give it an
-#      `excerpt` give the same one, since the id is one source node. An id
-#      holds what rule 8 allows in a path segment.
+#      the bundle one id is one source node: it names one resource and at most
+#      one excerpt. An id holds what rule 8 allows in a path segment.
 #  17. A logged write has a file behind it: each `**Added**` and
 #      `**Deprecation**` bullet in log.md names a concept the bundle holds. The
 #      rule reads the bullets added since `--since <commit>`, or without it

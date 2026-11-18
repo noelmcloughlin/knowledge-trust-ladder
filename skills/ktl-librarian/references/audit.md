@@ -32,13 +32,13 @@ Without `uv` or the `lokf` package there is no substitute for the generated vali
 
 ## Raising the toolkit floor
 
-When SKILL.md's step 7 raises the `lokf` floor, two things move in the same change. A host with a domain vocabulary refreshes its pinned `lokf.yaml` ([domain-vocabulary.md](domain-vocabulary.md)). The no-Python fallback link in `.lokf/README.md` moves to the commit tagged `v<version>`, never to the tag itself. Either command prints that commit, the second where a proxy refuses git over HTTPS but lets the API through:
+Take the newest `lokf` from the index `uv sync` reads, never from GitHub: a floor above what that index serves breaks `uv sync` on the host, so wait until a mirror carries a release before raising the floor to it.
+
+When SKILL.md's step 7 raises the floor, two things change with it. A host with a domain vocabulary refreshes its pinned `lokf.yaml` ([domain-vocabulary.md](domain-vocabulary.md)). The no-Python fallback link in `.lokf/README.md` moves to the commit tagged `v<version>`, never to the tag itself. Either command prints that commit; use the second where a proxy blocks git over HTTPS but lets the API through:
 
 ```bash
 git ls-remote https://github.com/nicholsn/lokf 'refs/tags/v<version>^{}'
 gh api repos/nicholsn/lokf/commits/refs/tags/v<version> --jq .sha
 ```
 
-The API's `commits` endpoint gives the commit an annotated tag points at, as `^{}` does. Where both fail, leave the link as it is and name it in the hand-off: an older schema still serves a cross-check, and a guessed commit does not.
-
-Ask the index `uv sync` reads, never GitHub or `gh`, which version is newest. A floor above what that index serves breaks `uv sync` on the host, so a release on PyPI that its mirror does not yet carry is not yet one to raise the floor to.
+Both give the commit an annotated tag points at. Where both fail, leave the link as it is and say so in the hand-off: an older schema still serves a cross-check, and a guessed commit does not.
