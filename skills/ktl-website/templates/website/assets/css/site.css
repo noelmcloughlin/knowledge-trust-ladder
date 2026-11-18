@@ -215,7 +215,8 @@ a[data-preview]:is(:hover, :focus-visible)::after { content: attr(data-preview) 
 .dot--nobody { border-style: dotted; }
 .dot--retired { border-style: dotted; opacity: .6; }
 .label, .chip { display: inline-block; padding: .1rem .6rem; border-radius: 999px; font-size: .85rem; }
-.label { margin: 0; color: var(--nobody-fg); background: var(--nobody-bg); }
+/* A long label, such as a successor's path, wraps inside its own width: a pill on one line, a rounded box on two. */
+.label { max-width: 100%; margin: 0; border-radius: 1.2em; overflow-wrap: break-word; color: var(--nobody-fg); background: var(--nobody-bg); }
 .label--person { color: var(--person-fg); background: var(--person-bg); }
 .label--edited { color: var(--edited-fg); background: var(--edited-bg); }
 .label--automation { color: var(--automation-fg); background: var(--automation-bg); }

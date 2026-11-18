@@ -7,6 +7,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 ### Fixed
 
 - **The home page's six buttons fit on one line again, each as wide as its label needs.**
+- **The trust label on a concept card wraps inside its own width, as a rounded box on two lines**, so a retired concept's "replaced by" path stays readable on a phone.
 
 ## [0.68.0] - 2026-11-18
 
