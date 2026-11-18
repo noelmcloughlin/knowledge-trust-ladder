@@ -4,6 +4,11 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Fixed
+
+- **`publish.yml` asks the hosts to sync only once the release's `ktl` package is on PyPI.**
+- **A sync run waiting for its workflow review blocks no later sync, and a stale approval pushes nothing.** One waiting since a merged pull request had held each host's syncs for days.
+
 ## [0.69.1] - 2026-11-18
 
 ### Fixed
