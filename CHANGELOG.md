@@ -4,6 +4,8 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+## [0.70.4] - 2026-11-19
+
 ### Changed
 
 - **A sync no longer cuts a release in its host.** Its commit is typed `chore(sidecar)` and its changelog entry goes under Changed, so the host's next real release carries it.
