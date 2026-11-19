@@ -4,6 +4,8 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+## [0.70.3] - 2026-11-19
+
 ### Changed
 
 - **Each host checks for a new release once a day, by itself.** A release no longer notifies the hosts.
