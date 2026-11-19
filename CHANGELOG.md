@@ -4,6 +4,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Fixed
+
+- **A release upload is tried up to three times, so `gh`'s own retry of an upload that reached GitHub no longer fails the PyPI, release or federation job with "already exists".**
+
 ## [0.70.0] - 2026-11-19
 
 ### Changed
