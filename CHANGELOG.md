@@ -4,6 +4,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Fixed
+
+- **`publish.yml` asks the `lmodel` hosts to sync with their own token, `KNOWLEDGE_SYNC_DISPATCH_TOKEN_LMODEL`**, since the fine-grained `KNOWLEDGE_SYNC_DISPATCH_TOKEN` got HTTP 403 there.
+
 ## [0.69.2] - 2026-11-18
 
 ### Fixed
