@@ -2,6 +2,9 @@
 
 ## 2026-11-19
 
+* **Changed**: the sync runs each day, its steps are in `knowledge-sync.sh`, and the review jobs are gone; `knowledge-sync.yaml` and `automation.md` say so since 0.70.3. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: hosts check for a release each day and no workflow tells them about one; `docs/releasing.md` says so since 0.70.3.
+* **Changed**: no job pushes the held workflow changes, and the sync token reaches one step; `docs/threat-model.md` says so since 0.70.3. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: Domain schema says LOKF's specification uses both names from lokf 0.10.0, as the librarian's domain vocabulary page now says; only earlier releases called the bundle's file a LOKF domain schema.
 * **Changed**: LOKF toolkit names 0.10.0 as the latest release on PyPI, and says this repository's `lokf-check-refs` recipe adds `--shacl` where `uv.lock` holds pyshacl, as the sidecar's justfile does.
 * **Changed**: Three lines of defence says the gate now runs LOKF's SHACL shapes where the shacl extra is installed, as the gate reference says since the lokf 0.10.0 alignment. Edited since a person confirmed it; the label says so until the curator looks again.
