@@ -7,7 +7,7 @@ genre: reference
 resource: docs/threat-model.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-17T21:23:32Z"
+  at: "2026-11-19T21:15:57Z"
 verified:
   - by: process:ktl-librarian
     at: "2026-11-19T00:10:04Z"
@@ -78,7 +78,7 @@ ktl-docent runs none of them. It runs its own copies of `knowledge-report.sh` an
 
 **The sync workflow** keeps a host's sidecar and site copies, and its skill pin, at the newest release, and runs no agent. Its `sync` job moves the pin, runs `uv lock` against the host's own index, and installs that one `ktl` package at the lock's hash, unbuilt, into a temporary folder. Nothing from the package runs, and the job copies only what the package's `knowledge-sync.manifest` names. It refuses a copy path outside the host's tree or inside a `.git` folder, where a copy would be git's own configuration, which can name a command git runs. Its `publish` job runs the default branch's copy of `knowledge-sync.sh --apply`. That refuses a patch that touches anything but the sidecar's copies, the site's copies, the pin's two files and the changelog, or that moves the pin to another release than the run's. It runs `uv lock` from the default branch's lock and refuses a patch whose lock differs, so the hashes are the index's.[^docs-threat-model.md] It also refuses a path with a character outside the plain set the templates use, and a deletion, a rename, a link or an unusual mode. It keeps every workflow as the default branch has it.
 
-The branch the sync pushes carries no workflow the release wrote, since a workflow on the pushed branch would run before review, with the repository's secrets and a token it can raise. A person applies the held workflow changes after reading them, or approves them in a review Environment with required reviewers, after which a job pushes them. `KNOWLEDGE_SYNC_TOKEN`, scoped to Contents, Pull requests and Workflows for that repository alone and kept in the `knowledge-sync` Environment, reaches the `publish` and `push-workflows` jobs alone. It lets them push one branch, `knowledge-sync`, and open or edit one pull request, which a person reviews before the pin moves. Its force-push touches only that branch, leased to the commit the `earlier` job read, so a commit added since is never lost.
+The branch the sync pushes carries no workflow the release wrote, since a workflow on the pushed branch would run before review, with the repository's secrets and a token it can raise. A person applies the held workflow changes after reading them, and no job pushes them. `KNOWLEDGE_SYNC_TOKEN`, scoped to Contents, Pull requests and Workflows for that repository alone and kept in the `knowledge-sync` Environment, reaches only the last step of the `publish` job. It lets that step push one branch, `knowledge-sync`, and open or edit one pull request, which a person reviews before the pin moves. Its force-push touches only that branch, leased to the commit the `earlier` job read, so a commit added since is never lost.
 
 The `earlier` job first reads the committers on the branch, and leaves alone a branch a person added a commit to. A committer's name is a claim, so this check protects a person's work from the force-push and does not stop an attacker. A repository that gates merges on approvals should dismiss stale approvals when the branch changes.
 
