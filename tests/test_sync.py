@@ -24,7 +24,10 @@ two ktl wheels on a local file:// index, and run the script on a host whose
 8. a run that copies a longer script over its own file stops when main
    returns, and so does a copy that ends with a bare `main "$@"`;
 9. --apply takes the pin's line at the run's tag and a lock uv writes the
-   same from the index, and holds every workflow change.
+   same from the index, and holds every workflow change;
+10. --workflow runs the steps of knowledge-sync.yaml: read picks the
+    release, sync writes the patch, apply holds the workflow changes, and
+    publish pushes the branch and opens or refreshes the pull request.
 
 Every run skips the sidecar's checks (--no-checks): the preflight, the
 toolkit and the conventions script have modules of their own.
@@ -34,13 +37,16 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import json
+import os
 import re
 import shutil
+import sys
 import zipfile
 
 import pytest
 
-from conftest import REPO, SCRIPTS, TEMPLATES, WEBSITE_TEMPLATES, WORKFLOWS, Git, has_line, matches, read, run, write
+from conftest import REPO, SCRIPTS, TEMPLATES, WEBSITE_TEMPLATES, WORKFLOWS, Git, has_line, have, matches, read, run, write
 
 SYNC = SCRIPTS / "knowledge-sync.sh"
 LIBRARIAN = ".github/workflows/knowledge-librarian.yaml"
@@ -586,7 +592,7 @@ def test_every_synced_copy_passes_the_publish_jobs_path_check():
         assert not re.search(owned, copy), f"{copy} is a site file the host owns"
     for path in ("website/site.toml", "website/README.md", "website/assets/css/custom.css", "ktl-website/site.toml"):
         assert re.search(owned, path), path
-    assert "knowledge-sync.sh --apply" in read(WORKFLOW), "the publish job puts the patch on with the host's own script"
+    assert "knowledge-sync.sh --workflow apply" in read(WORKFLOW), "the publish job puts the patch on with the host's own script"
 
 
 def sync_patch(tmp_path, host, skills, tag):
@@ -774,3 +780,255 @@ def test_every_synced_template_is_in_step_5_and_the_manifest_is_the_one_list():
     assert "knowledge-sync.manifest" in read(PREFLIGHT), "the preflight does not read the manifest"
     assert "knowledge-sync.manifest" in read(CONTRACT), "contract check 11 does not read the manifest"
     assert "\npairs=(\n" not in read(SYNC), "the sync script carries a list of its own beside the manifest"
+
+
+# The steps of knowledge-sync.yaml, which the workflow runs as --workflow <step>.
+
+BOT = "knowledge-sync[bot]"
+SUBJECT = "security(sidecar): sync copies and skills pin from v1.1.0"
+needs_jq = pytest.mark.skipif(not have("jq"), reason="jq is not installed")
+GH = r"""#!{python}
+import json, os, subprocess, sys
+args = sys.argv[1:]
+here = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(here, "calls.txt"), "a") as f:
+    f.write(" ".join(args) + "\n")
+if args[:1] == ["api"]:
+    answers = json.load(open(os.path.join(here, "answers.json")))
+    answer = next((a for fragment, a in answers.items() if fragment in args[1]), None)
+    if answer is None:
+        sys.exit(1)
+    done = subprocess.run(["jq", "-r", args[args.index("--jq") + 1]], input=json.dumps(answer), text=True, capture_output=True)
+    sys.stdout.write(done.stdout)
+    sys.exit(done.returncode)
+if args[:2] == ["pr", "create"]:
+    print("https://github.test/acme/host/pull/7")
+if args[:2] == ["pr", "view"]:
+    print("https://github.test/acme/host/pull/" + args[2])
+"""
+
+
+def pull(number, state="open", merged=False, sha="a" * 40, repo="acme/host"):
+    """A pull request as GitHub lists it, with the fields the read step takes."""
+    return {"number": number, "state": state, "merged_at": "2026-01-02T00:00:00Z" if merged else None, "head": {"sha": sha, "repo": {"full_name": repo}}}
+
+
+def commits(*names):
+    return [{"commit": {"committer": {"name": name}}} for name in names]
+
+
+class Runner:
+    """A job of knowledge-sync.yaml: its environment, a gh that answers from a table, and the step's outputs."""
+
+    def __init__(self, tmp_path, skills, host, event="schedule"):
+        self.host = host
+        self.temp = tmp_path / "runner"
+        self.temp.mkdir()
+        self.bin = tmp_path / "ghbin"
+        write(self.bin / "gh", GH.replace("{python}", sys.executable)).chmod(0o755)
+        self.answers = {}
+        origin = Git(host)("remote", "get-url", "origin")
+        self.env = {
+            **skills.env,
+            "PATH": f"{self.bin}{os.pathsep}{os.environ['PATH']}",
+            "GITHUB_OUTPUT": self.temp / "output.txt",
+            "GITHUB_STEP_SUMMARY": self.temp / "summary.md",
+            "GITHUB_REPOSITORY": "acme/host",
+            "GITHUB_SERVER_URL": "https://github.test",
+            "GITHUB_RUN_ID": "42",
+            "GITHUB_EVENT_NAME": event,
+            "RUNNER_TEMP": self.temp,
+            "KNOWLEDGE_SYNC_INDEX_WAIT": "0",
+            # Send the push address, with token t, to the host's own origin.
+            "GIT_CONFIG_COUNT": "1",
+            "GIT_CONFIG_KEY_0": f"url.{origin}.insteadOf",
+            "GIT_CONFIG_VALUE_0": "https://x-access-token:t@github.test/acme/host.git",
+        }
+
+    def step(self, name, *tag, **env):
+        """Run one step. gh matches the answers in order, so the repository's own goes last."""
+        write(self.bin / "answers.json", json.dumps({**self.answers, "repos/acme/host": {"default_branch": "main"}}))
+        return run(["bash", ".lokf/scripts/knowledge-sync.sh", "--workflow", name, *tag], cwd=self.host, env={**self.env, **env})
+
+    @property
+    def outputs(self):
+        path = self.temp / "output.txt"
+        return dict(line.split("=", 1) for line in read(path).split("\n") if "=" in line) if path.exists() else {}
+
+    @property
+    def summary(self):
+        path = self.temp / "summary.md"
+        return read(path) if path.exists() else ""
+
+    @property
+    def calls(self):
+        path = self.bin / "calls.txt"
+        return read(path) if path.exists() else ""
+
+
+def pin_at(skills, version):
+    """pyproject.toml at a commit, as the contents API answers."""
+    return {"content": base64.b64encode(pyproject(skills, version).encode()).decode()}
+
+
+@needs_jq
+def test_the_read_step_takes_the_newest_release_and_stops_at_a_current_pin(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    job = Runner(tmp_path, skills, host)
+    job.answers = {"/pulls?head=": []}
+    result = job.step("read", "")
+    checks.ok(result.rc == 0 and has_line(result.out, "Syncing to v1.1.0, from v1.0.0."), "the newest release on the host's index is the tag", result.out)
+    out = job.outputs
+    checks.ok(out.get("tag") == "v1.1.0" and out.get("from") == "v1.0.0" and out.get("open") == "" and out.get("branch") == "", "the outputs say so", str(out))
+    write(host / PYPROJECT, pyproject(skills, "1.1.0"))
+    result = job.step("read", "")
+    checks.ok(result.rc == 0 and "::notice::The pin is at v1.1.0 and the newest release is v1.1.0" in result.out, "a pin at the newest release has nothing to sync", result.out)
+    checks.ok(job.outputs.get("tag") == "", "and the tag is empty", str(job.outputs))
+    named = job.step("read", "v1.0.0")
+    checks.ok(named.rc == 0 and job.outputs.get("tag") == "v1.0.0", "a tag a person names is taken as it is", named.out)
+    odd = job.step("read", "main")
+    checks.ok(odd.rc == 2 and "::error::'main' is not a release tag" in odd.out, "a name that is no tag is refused", odd.out)
+
+
+@needs_jq
+def test_the_read_step_stops_at_an_open_pull_request_for_the_same_release_and_refreshes_an_older_one(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    job = Runner(tmp_path, skills, host)
+    job.answers = {"head=acme:knowledge-sync&": [pull(5)], "head=acme:sync-": [], "/contents/": pin_at(skills, "1.1.0")}
+    result = job.step("read", "")
+    checks.ok(result.rc == 0 and "Pull request #5 from this workflow already proposes v1.1.0" in result.out and job.outputs.get("tag") == "", "the same release, still open, stops the run", result.out)
+    job.answers.update({"/contents/": pin_at(skills, "1.0.5"), "/pulls/5/commits": commits(BOT, BOT)})
+    result = job.step("read", "")
+    out = job.outputs
+    checks.ok(out.get("tag") == "v1.1.0" and out.get("open") == "5" and out.get("open_tag") == "v1.0.5" and out.get("branch") == "a" * 40, "an older release, with the workflow's commits alone, is refreshed and leased to its commit", f"{result.out}\n{out}")
+    job.answers["/pulls/5/commits"] = commits(BOT, "a person")
+    result = job.step("read", "")
+    checks.ok("carries a commit a person added" in result.out and job.outputs.get("tag") == "", "a person's commit on it stops the run", result.out)
+
+
+@needs_jq
+def test_the_read_step_leaves_a_declined_release_to_a_person_and_ignores_a_forks_branch(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    job = Runner(tmp_path, skills, host)
+    job.answers = {"head=acme:knowledge-sync&": [pull(5, state="closed")], "head=acme:sync-": [], "/contents/": pin_at(skills, "1.1.0")}
+    result = job.step("read", "")
+    checks.ok("A person closed pull request #5, which proposed v1.1.0, without merging" in result.out and job.outputs.get("tag") == "", "the schedule proposes it no more", result.out)
+    result = job.step("read", "v1.1.0", GITHUB_EVENT_NAME="workflow_dispatch")
+    checks.ok(job.outputs.get("tag") == "v1.1.0" and job.outputs.get("declined") == "5", "a run a person starts takes it up again", f"{result.out}\n{job.outputs}")
+    job.answers["head=acme:knowledge-sync&"] = [pull(6, repo="mallory/host")]
+    result = job.step("read", "")
+    checks.ok(job.outputs.get("tag") == "v1.1.0" and job.outputs.get("declined") == "", "a pull request from a fork's branch of that name does not count", f"{result.out}\n{job.outputs}")
+    job.answers = {"/pulls?head=": [], "/git/ref/heads/": {"object": {"sha": "b" * 40}}, "/compare/": {"commits": commits(BOT, "a person")}}
+    result = job.step("read", "")
+    checks.ok("holds a commit this workflow did not make" in result.out and job.outputs.get("tag") == "", "a branch with a person's commit and no pull request is left alone", result.out)
+    job.answers["/compare/"] = {"commits": commits(BOT)}
+    job.step("read", "")
+    checks.ok(job.outputs.get("tag") == "v1.1.0" and job.outputs.get("branch") == "b" * 40, "a branch of the workflow's own commits is leased to its tip", str(job.outputs))
+
+
+def test_the_sync_step_writes_the_patch_and_says_when_nothing_changed(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    job = Runner(tmp_path, skills, host)
+    result = job.step("sync", "v1.1.0")
+    checks.ok(result.rc == 0 and job.outputs.get("changed") == "true", "a sync that changed files says so", result.out)
+    patch = read(job.temp / "sync.patch")
+    checks.ok('+    "ktl==1.1.0",' in patch and "a line the next release adds" in patch, "the patch carries the pin and the copies", patch[:400])
+    checks.ok(job.summary.startswith("## Knowledge sync to v1.1.0\n\nBrings the sidecar copies"), "the report is the job's summary", job.summary[:200])
+    git = Git(host)
+    git("add", "-A")
+    git("commit", "-qm", "synced")
+    result = job.step("sync", "v1.1.0")
+    checks.ok(result.rc == 0 and job.outputs.get("changed") == "false" and "::notice::The copies and the pin match v1.1.0 already" in result.out, "a host at the release has nothing to hand on", result.out)
+    missing = job.step("sync", "v9.9.9")
+    checks.ok(missing.rc == 2 and "no release v9.9.9 of ktl on the index" in missing.out, "an unusable release fails the step", missing.out)
+    checks.ok(job.step("sync").rc == 2, "and so does a step with no tag")
+
+
+def synced(job, tag="v1.1.0"):
+    """The publish job's checkout: the sync step's patch in the runner's folder, and the tree as the default branch has it."""
+    result = job.step("sync", tag)
+    assert result.rc == 0, result.out
+    git = Git(job.host)
+    git("reset", "-q", "--hard")
+    git("clean", "-qfd")
+
+
+@needs_jq
+def test_the_publish_step_pushes_the_branch_without_a_workflow_and_opens_the_pull_request(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    job = Runner(tmp_path, skills, host)
+    synced(job)
+    result = job.step("apply", "v1.1.0")
+    checks.ok(result.rc == 0 and job.outputs.get("held") == "true", "the apply step holds the workflow the release adds", result.out)
+    result = job.step("publish", "v1.1.0", SYNC_TOKEN="t", SYNC_FROM="v1.0.0")
+    checks.ok(result.rc == 0 and has_line(result.out, "Opened https://github.test/acme/host/pull/7"), "exit 0, with the pull request opened", result.out)
+    origin = Git(Git(host)("remote", "get-url", "origin"))
+    checks.ok(origin("log", "-1", "--format=%cn|%s", "knowledge-sync") == f"{BOT}|{SUBJECT}", "the branch holds one commit, the bot's", origin("log", "--format=%cn|%s", "knowledge-sync"))
+    changed = origin("diff", "--name-only", "main", "knowledge-sync").split("\n")
+    checks.ok(PYPROJECT in changed and ".lokf/scripts/knowledge-report.sh" in changed, "the commit carries the pin and the copies", str(changed))
+    checks.ok(not [p for p in changed if p.startswith(".github/workflows/")], "and no workflow", str(changed))
+    checks.ok(f"pr create --title {SUBJECT} --body-file {job.temp / 'body.md'} --head knowledge-sync --base main" in job.calls, "the pull request goes from the branch to the default branch", job.calls)
+    body = read(job.temp / "body.md")
+    checks.ok("[v1.1.0](https://github.com/noelmcloughlin/knowledge-trust-ladder/compare/v1.0.0...v1.1.0), from v1.0.0." in body and "moves from v1.0.0 to v1.1.0" in body, "the body names the two releases", body)
+    checks.ok("- `.lokf/scripts/knowledge-report.sh`" in body and "CHANGELOG.md has the entry" in body, "and the copies and the entry", body)
+    checks.ok("### Workflow changes held for a person" in body and "- `.github/workflows/knowledge-sync.yaml`" in body, "and the held workflow, with its diff", body)
+    checks.ok("gh run download 42 --repo acme/host --name knowledge-sync-workflows" in body and "git switch knowledge-sync && git pull" in body, "and the commands that apply it on the branch", body)
+    checks.ok("### Workflow changes held for a person" in job.summary and "Pull request: https://github.test/acme/host/pull/7" in job.summary, "the summary shows both", job.summary)
+
+
+@needs_jq
+def test_the_publish_step_refreshes_an_open_pull_request_over_its_lease_alone(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    git = Git(host)
+    git("push", "-q", "origin", "main:knowledge-sync")
+    tip = git("rev-parse", "main")
+    job = Runner(tmp_path, skills, host)
+    synced(job)
+    assert job.step("apply", "v1.1.0").rc == 0
+    stale = job.step("publish", "v1.1.0", SYNC_TOKEN="t", SYNC_FROM="v1.0.0", SYNC_OPEN_PR="5", SYNC_OPEN_TAG="v1.0.5", SYNC_LEASE="c" * 40)
+    checks.ok(stale.rc == 1 and "::error::The push was refused" in stale.out, "a branch that moved since the run read it is not written over", stale.out)
+    git("checkout", "-q", "main")
+    git("branch", "-qD", "knowledge-sync")
+    synced(job)
+    assert job.step("apply", "v1.1.0").rc == 0
+    result = job.step("publish", "v1.1.0", SYNC_TOKEN="t", SYNC_FROM="v1.0.0", SYNC_OPEN_PR="5", SYNC_OPEN_TAG="v1.0.5", SYNC_LEASE=tip)
+    checks.ok(result.rc == 0 and has_line(result.out, "Refreshed https://github.test/acme/host/pull/5"), "the leased branch is written over", result.out)
+    checks.ok(f"pr edit 5 --title {SUBJECT}" in job.calls and "pr create" not in job.calls, "and the open pull request is edited, not opened again", job.calls)
+    checks.ok("This pull request proposed v1.0.5 before." in read(job.temp / "body.md"), "the body says what it proposed before", read(job.temp / "body.md"))
+
+
+def test_the_publish_step_opens_nothing_without_the_token_or_with_workflow_changes_alone(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills, changelog="# Changelog\n\n## [1.0.0] - 2026-01-01\n")
+    job = Runner(tmp_path, skills, host)
+    synced(job)
+    assert job.step("apply", "v1.1.0").rc == 0
+    result = job.step("publish", "v1.1.0", SYNC_FROM="v1.0.0")
+    checks.ok(result.rc == 0 and "::warning::KNOWLEDGE_SYNC_TOKEN is not set" in result.out, "no token is a warning, and the run ends green", result.out)
+    checks.ok("## No pull request opened" in job.summary and "pr create" not in job.calls, "nothing is opened", job.summary)
+    origin = Git(Git(host)("remote", "get-url", "origin"))
+    checks.ok("knowledge-sync" not in origin("branch", "--list"), "and nothing is pushed", origin("branch", "--list"))
+    # A host at the release that lacks only the sync workflow: the one change is held.
+    git = Git(host)
+    git("reset", "-q", "--hard")
+    git("clean", "-qfd")
+    assert sync(host, skills).rc == 0
+    (host / ".github" / "workflows" / "knowledge-sync.yaml").unlink()
+    git("add", "-A")
+    git("commit", "-qm", "synced, without the sync workflow")
+    synced(job)
+    result = job.step("apply", "v1.1.0")
+    checks.ok(result.rc == 0 and job.outputs.get("held") == "true", "the workflow is held", result.out)
+    result = job.step("publish", "v1.1.0", SYNC_TOKEN="t", SYNC_FROM="v1.1.0")
+    checks.ok(result.rc == 0 and "::notice::v1.1.0 changes nothing here but workflows" in result.out, "a run with workflow changes alone ends green", result.out)
+    checks.ok("so no pull request was opened" in job.summary and "git switch -c sync-workflows-v1.1.0" in job.summary, "and its summary says how to apply them on a branch of the person's own", job.summary)
+    checks.ok("pr create" not in job.calls and "knowledge-sync" not in origin("branch", "--list"), "nothing is pushed or opened", job.calls)
+
+
+def test_a_workflow_step_runs_only_inside_the_workflow(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    result = run(["bash", ".lokf/scripts/knowledge-sync.sh", "--workflow", "sync", "v1.1.0"], cwd=host, env=skills.env, unset=("GITHUB_OUTPUT",))
+    checks.ok(result.rc == 2 and "runs as a step of knowledge-sync.yaml, and GITHUB_OUTPUT is not set" in result.out, "a step with no job around it is refused", result.out)
+    job = Runner(tmp_path, skills, host)
+    odd = job.step("deploy", "v1.1.0")
+    checks.ok(odd.rc == 2 and "takes read, sync, apply or publish" in odd.out, "and so is a step the script does not have", odd.out)
+    checks.ok(not Git(host)("status", "--porcelain"), "the host is untouched")

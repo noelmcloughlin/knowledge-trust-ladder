@@ -12,13 +12,9 @@
 
 ## Checklist
 
-- [ ] `bash scripts/validate-repository.sh` passes locally, and so does `pytest` (`tests/conftest.py` says how to run it)
-- [ ] `gh skill publish --dry-run` passes locally (or CI's `validate-skills` job is green)
-- [ ] If a file the sibling repositories deep-link moved (check 9 lists them), their links change too, and this side merges first
-- [ ] A changed template is copied over this repository's own copy (check 11)
-- [ ] `CHANGELOG.md` has a line or two under `[Unreleased]` if this changes skill behavior
-- [ ] If the commits would release, this pull request's title carries `feat:`, `fix:`, `perf:` or `security:` too, or is a revert's `Revert "..."`
-- [ ] For a curation pull request (confirmations under `.lokf/knowledge/`), the approver opened the sources named by every confirmation they approve
+- [ ] `bash scripts/validate-repository.sh` and `pytest` pass locally.
+- [ ] `CHANGELOG.md` has an entry under `[Unreleased]` if this changes what a skill does.
+- [ ] To release, the title starts with `feat:`, `fix:`, `perf:` or `security:`, or is a `Revert "..."`.
 
 ## AI Assistance
 

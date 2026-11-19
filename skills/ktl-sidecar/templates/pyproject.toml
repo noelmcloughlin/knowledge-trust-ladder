@@ -17,7 +17,7 @@ dependencies = [
     # by hash; keep the version in step with the workflows' uvx fallback.
     "rust-just==1.47.0",
     # The skills: the librarian workflow installs ktl-librarian from this
-    # package, and the weekly sync moves the pin to each release.
+    # package, and the daily sync moves the pin to each release.
     "ktl==0.70.1",
 ]
 

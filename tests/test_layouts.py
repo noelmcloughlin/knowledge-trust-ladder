@@ -875,11 +875,11 @@ def test_a_librarian_that_is_not_switched_on_runs_no_job():
         assert not re.search(r"always\(\)|failure\(\)|cancelled\(\)", condition), f"{name} runs after a skipped earlier: {condition}"
 
 
-@pytest.mark.parametrize("yaml_path", [LIBRARIAN_YAML, WORKFLOWS / "knowledge-sync.yaml"], ids=["librarian", "sync"])
-def test_each_push_goes_to_the_server_the_workflow_runs_on(yaml_path):
-    """A push address that names github.com fails on GitHub Enterprise Server."""
-    pushes = [line for line in read(yaml_path).split("\n") if "git push" in line and "x-access-token" in line]
-    assert pushes, f"{yaml_path.name} has no push with the job token"
+@pytest.mark.parametrize("path", [LIBRARIAN_YAML, SCRIPTS / "knowledge-sync.sh"], ids=["librarian", "sync"])
+def test_each_push_goes_to_the_server_the_workflow_runs_on(path):
+    """A push address that names github.com fails on GitHub Enterprise Server. The sync workflow's push is in its script."""
+    pushes = [line for line in read(path).split("\n") if "git push" in line and "x-access-token" in line]
+    assert pushes, f"{path.name} has no push with a token"
     for line in pushes:
         assert "@${GITHUB_SERVER_URL#https://}/${GITHUB_REPOSITORY}.git" in line and "github.com" not in line, line
     url = run(

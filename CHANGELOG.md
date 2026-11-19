@@ -4,6 +4,23 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Changed
+
+- **Each host checks for a new release once a day, by itself.** A release no longer notifies the hosts.
+- **The sync workflow's logic moved into the script `knowledge-sync.sh`, and the workflow file calls it.** A fix to the sync reaches a host next sync pull request.
+- **The pull request templates for a sync and an ingest keep only the checks most reviews need.**
+
+### Fixed
+
+- **The PyPI workflow no longer fails after a release has been published in full.** Its last step tried to notify the hosts and failed, and that step is gone.
+- **A sync whose only changes are to workflow files finishes successfully and explains how to apply them.** It used to fail with nothing to commit.
+- **The sync's commit is always made under the name `knowledge-sync[bot]`**, even on a runner that sets its own git identity.
+
+### Removed
+
+- **`sync-hosts.yml`, the `KNOWLEDGE_SYNC_HOSTS` variable and the two `KNOWLEDGE_SYNC_DISPATCH_TOKEN` secrets.** To sync a host right after a release, start its `knowledge-sync.yaml` by hand.
+- **The optional approval step for workflow changes: the `review` and `push-workflows` jobs, the `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` variable and `ktl gh enable sync-review`.** A person applies workflow changes by hand, and a host can delete its `knowledge-sync-review` Environment.
+
 ## [0.70.2] - 2026-11-19
 
 ### Fixed

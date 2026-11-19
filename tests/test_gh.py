@@ -875,17 +875,20 @@ def test_apply_switches_protected_branches_only_to_the_named_branch(tmp_path, at
 
 
 def test_a_review_environment_without_a_reviewer_is_noted_and_kept_as_it_is(tmp_path, at):
-    """Reviewers are off until a host wants the gate: the sync then holds the workflow changes for a person."""
-    at(host(tmp_path, *BUNDLE))
+    """A reviewer a catalogue marks optional is noted for a person, and apply adds none."""
+    catalogue = {"format": 1, "settings": [
+        {"kind": "environment", "name": "review", "named_by": "REVIEW_ENVIRONMENT", "workflows": ["gated.yml"], "branches": ["{default}"], "reviewers": 1, "reviewers_level": "optional", "why": "w"},
+        {"kind": "variable", "name": "REVIEW_ENVIRONMENT", "workflows": ["gated.yml"], "level": "optional", "job_level": True, "why": "w"},
+    ]}
+    workflow = "on: push\njobs:\n  a:\n    runs-on: ubuntu-latest\n    environment: ${{ vars.REVIEW_ENVIRONMENT }}\n    steps:\n      - run: echo ok\n"
+    at(host(tmp_path, extra={"gated.yml": workflow}, files={".github/repository-settings.json": json.dumps(catalogue)}))
     fake = FakeGitHub()
-    fake.variables["KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT"] = "knowledge-sync-review"
-    fake.environment("knowledge-sync-review", branches=["main"], wait=2)
-    fake.environment("knowledge-sync", branches=["main"])
-    fake.environment("knowledge-librarian", branches=["main"])
+    fake.variables["REVIEW_ENVIRONMENT"] = "review"
+    fake.environment("review", branches=["main"], wait=2)
     assert ktl(fake, "check") == 0
-    assert any("knowledge-sync-review has no required reviewer" in t for t in texts(planned(fake), "person"))
+    assert any("review has no required reviewer" in t for t in texts(planned(fake), "person"))
     assert ktl(fake, "apply", "--yes", "--recommended", "--reviewer", "second") == 0
-    review = fake.environments["knowledge-sync-review"]
+    review = fake.environments["review"]
     assert review["reviewers"] == [] and review["wait"] == 2 and review["refs"] == [("branch", "main")]
 
 
@@ -1148,15 +1151,14 @@ def test_a_domain_host_leaves_the_website_switch_off(tmp_path, at, capsys):
     assert any("should be off" in t for t in texts(planned(fake), "person"))
 
 
-def test_enable_sync_review_gives_the_environment_a_reviewer_before_naming_it(tmp_path, at):
+def test_enable_curation_gives_the_environment_a_reviewer_before_naming_it(tmp_path, at):
     at(host(tmp_path, *BUNDLE))
     fake = FakeGitHub()
-    assert ktl(fake, "enable", "sync-review", "--yes") == 0
-    review = fake.environments["knowledge-sync-review"]
-    assert review["reviewers"] == [101] and review["refs"] == [("branch", "main")]
-    assert fake.variables["KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT"] == "knowledge-sync-review"
+    assert ktl(fake, "enable", "curation", "--yes") == 0
+    assert fake.environments["knowledge-curation"]["reviewers"] == [101]
+    assert fake.variables["KNOWLEDGE_CURATION_ENVIRONMENT"] == "knowledge-curation"
     paths = [c[1] for c in fake.changes]
-    assert paths.index("repos/acme/host/environments/knowledge-sync-review") < paths.index("repos/acme/host/actions/variables")
+    assert paths.index("repos/acme/host/environments/knowledge-curation") < paths.index("repos/acme/host/actions/variables")
 
 
 def test_a_switch_compares_as_a_workflow_does_ignoring_case(tmp_path, at):

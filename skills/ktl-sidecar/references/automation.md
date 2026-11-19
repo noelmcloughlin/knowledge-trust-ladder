@@ -42,9 +42,8 @@ Every variable below is a **repository variable**: Settings, Secrets and variabl
 | `UV_INDEX_KNOWLEDGE_USERNAME` | secret, in `knowledge-sync` and `knowledge-librarian` | `knowledge-sync.yaml`, `knowledge-librarian.yaml` | optional: the user name for a private package index that `.lokf/pyproject.toml` names `knowledge` ([below](#in-a-locked-down-organisation)) |
 | `UV_INDEX_KNOWLEDGE_PASSWORD` | secret, in `knowledge-sync` and `knowledge-librarian` | `knowledge-sync.yaml`, `knowledge-librarian.yaml` | optional: that index's password or token |
 | `KNOWLEDGE_RUNNER` | variable | every workflow | optional: the label of the runner every job runs on, `ubuntu-latest` unless set ([Customising](#customising)) |
-| `KNOWLEDGE_SYNC_TOKEN` | secret, in `knowledge-sync` | `knowledge-sync.yaml` | a fine-grained personal access token for this repository, with Contents, Pull requests and Workflows set to read and write ([below](#knowledge-syncyaml-keeping-the-sidecar-current)). The workflow pushes under `.github/workflows/` and opens the pull request with it. Unset, each run attaches its change and opens nothing |
+| `KNOWLEDGE_SYNC_TOKEN` | secret, in `knowledge-sync` | `knowledge-sync.yaml` | a fine-grained personal access token for this repository, with Contents, Pull requests and Workflows set to read and write ([below](#knowledge-syncyaml-keeping-the-sidecar-current)). The workflow pushes its branch and opens the pull request with it. Unset, each run attaches its change and opens nothing |
 | `KNOWLEDGE_INGEST_ENABLED` | variable | `knowledge-ingest.yaml` | `true` turns the ingest on; unset or anything else, the workflow does nothing ([below](#knowledge-ingestyaml-knowledge-outside-the-repository)) |
-| `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` | variable | `knowledge-sync.yaml` | optional: the Environment whose reviewers approve the workflow changes a release brings, so the workflow pushes them ([below](#workflow-changes-wait-for-a-person)) |
 | `KNOWLEDGE_INGEST_*` | secrets, in `knowledge-ingest` | `knowledge-ingest.yaml` | the credentials `.lokf/ingest.yaml` names, one secret per name; the workflow hands these names over and no other secret |
 | `KNOWLEDGE_CURATION_ENVIRONMENT` | variable | `knowledge-registrar.yaml` | optional: the Environment whose required reviewers may attest a curation no signature backs ([gate.md](gate.md#if-you-cannot-sign-the-attestation-job)) |
 
@@ -59,7 +58,7 @@ Do this on every host, for every secret above. A repository secret can be read b
 | Environment | Its secrets | Read by |
 | --- | --- | --- |
 | `knowledge-librarian` | `AGENT_API_KEY`, `AGENT_CLI` when it is a secret, and a private index's `UV_INDEX_KNOWLEDGE_` pair | `knowledge-librarian.yaml`'s `refresh` job |
-| `knowledge-sync` | `KNOWLEDGE_SYNC_TOKEN`, and a private index's `UV_INDEX_KNOWLEDGE_` pair | `knowledge-sync.yaml`'s `publish` and `push-workflows` jobs; `earlier` and `sync` read the index pair alone |
+| `knowledge-sync` | `KNOWLEDGE_SYNC_TOKEN`, and a private index's `UV_INDEX_KNOWLEDGE_` pair | `knowledge-sync.yaml`'s `publish` job; `earlier` and `sync` read the index pair alone |
 | `knowledge-ingest` | every `KNOWLEDGE_INGEST_` secret | `knowledge-ingest.yaml`'s `ingest` job |
 
 For each one, under Settings, Environments:
@@ -311,17 +310,15 @@ To set it up:
 
 A release of the skills repository changes the templates, and a host carries copies of them. The host pins the release in `.lokf/pyproject.toml` as `ktl==X.Y.Z`, the package that carries the skills, and `.lokf/uv.lock` holds its hashes. The copies and the pin move together, because the skill a release installs is written against that release's wrapper, gate and preflight. The pin also decides which instructions the scheduled librarian follows unattended. This workflow moves them.
 
-It runs weekly (Mondays 04:10 UTC) and on demand, in three jobs, and two more a host may turn on:
+It runs each day at 04:10 UTC and on demand, in three jobs. The workflow file holds only the triggers and each job's permissions, Environment and secrets. The steps' logic is in `.lokf/scripts/knowledge-sync.sh` (`--workflow <step>`), so a fix to it reaches the host in its next sync pull request, and the workflow file seldom changes.
 
 - **`earlier`** reads the pin, asks the host's package index for the newest `ktl` with `uv pip compile`, and reads what became of this workflow's last pull request and of its branch. Its token reads the repository and its pull requests, and it reads no pull request's title, body or comment. When the pin is at the newest release, the run stops there.
 - **`sync`** is read-only, and runs no code from the release. It runs the host's own `.lokf/scripts/knowledge-sync.sh`, which moves the pin and runs `uv lock`, then installs that `ktl` package, at the lock's hash and unbuilt, into a temporary folder and reads its `knowledge-sync.manifest`: each template a host may carry, its copy, and the rule for it. The script writes the release's templates over the host's copies, adds a template a file here needs, and writes the changelog entry under `## [Unreleased]` and `### Security`. Its report names a copy that differed from its template at the old pin as a local edit the sync overwrote, and a host script or workflow that no line of the manifest lists. The change goes to `publish` as a patch, and to the run as an artifact.
-- **`publish`** runs the default branch's own copy of the script with `--apply`. That takes a patch that edits or adds plain files among the sidecar's copies, the site's copies, `CHANGELOG.md` and the pin's two files, with the pin at the run's release. It runs `uv lock` from the default branch's lock and takes the patch's lock only when the two match, so the hashes are the index's. It holds every workflow change for a person ([below](#workflow-changes-wait-for-a-person)).
+- **`publish`** runs the default branch's own copy of the script. Its `apply` step takes a patch that edits or adds plain files among the sidecar's copies, the site's copies, `CHANGELOG.md` and the pin's two files, with the pin at the run's release. It runs `uv lock` from the default branch's lock and takes the patch's lock only when the two match, so the hashes are the index's. It holds every workflow change for a person ([below](#workflow-changes-wait-for-a-person)).
 
-  Then `publish` commits as `knowledge-sync[bot]`, pushes the branch `knowledge-sync`, leased to the commit `earlier` read, and opens the pull request, or refreshes the open one. It writes the body from the patch it applied, not from anything `sync` wrote. Then comes the default branch's `.github/PULL_REQUEST_TEMPLATE/knowledge-sync.md`, whose checklist is the reviewer's. The pull request's own checks run the synced scripts and site files with a read-only token, as they run on any change.
+  Then `publish` commits as `knowledge-sync[bot]`, pushes the branch `knowledge-sync`, leased to the commit `earlier` read, and opens the pull request, or refreshes the open one. It writes the body from the patch it applied, not from anything `sync` wrote. Then comes the default branch's `.github/PULL_REQUEST_TEMPLATE/knowledge-sync.md`, whose checklist is the reviewer's. Only that last step gets the sync token. The pull request's own checks run the synced scripts and site files with a read-only token, as they run on any change.
 
-- **`review`** and **`push-workflows`** run only when `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` names an Environment with a required reviewer, as [below](#workflow-changes-wait-for-a-person).
-
-**One pull request at a time, refreshed until it is merged.** While this workflow's pull request is open, a later run that finds a newer release replaces the branch's commits with a sync to that release, and sets the title and body to say so. The week's releases fold into one pull request, and a reviewer reads the diff as it is when they merge. A pull request a person added a commit to is left alone: merge or close it first. So is the branch, when it holds a commit of a person's and no pull request.
+**One pull request at a time, refreshed until it is merged.** While this workflow's pull request is open, a later run that finds a newer release replaces the branch's commits with a sync to that release, and sets the title and body to say so. Releases made while it is open are combined in one pull request, and a reviewer reads the diff as it is when they merge. A pull request a person added a commit to is left alone: merge or close it first. So is the branch, when it holds a commit of a person's and no pull request.
 
 ### Workflow changes wait for a person
 
@@ -336,21 +333,21 @@ git commit -m "security(sidecar): sync workflows from <tag>" && git push
 
 Your push starts them, after you have read them. Without gh, the artifact is on the run's page. Merging without them leaves the workflows at the earlier release until the next sync holds them again.
 
-Or let the workflow push them once a person approves. Create an Environment, `knowledge-sync-review` say, with required reviewers and limited to the default branch, holding no secret, and set the repository variable `KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT` to its name. Each run that holds workflow changes then waits at `review`. The run's summary shows the held diff. Once a reviewer approves, `push-workflows` pushes the changes as a second commit on the branch. An Environment with no required reviewer counts as unset: the changes wait for a person, neither job runs, and the pull request says so. Reviewers are off until you want this second gate; `ktl gh plan` notes the Environment until then, and `ktl gh enable sync-review` adds one. A run that waits there blocks no later sync. When the pull request was merged or closed while it waited, it pushes nothing and says so; when the branch moved, it refuses. *Prevent self-review* helps where a second person can approve; on a repository with one maintainer it would stop every approval.
+No job waits for an approval, so one run never holds up the next. When a release changes only workflows here, the run opens no pull request: it attaches the held changes, and its summary says how to apply them on a branch of your own.
 
 **What a person decided holds.** A tag whose pull request a person closed without merging is not proposed again by the schedule. A run you start from the Actions tab may name a tag, and goes ahead in every case but one. A pull request that proposes that tag and is still open stops it, whether this workflow opened it or you did from a `sync-<tag>` branch. A pull request opened by hand for an older release is not seen, so merge or close it yourself.
 
 ### Setting it up
 
-The pin is under `.github/workflows/`, which the job's own `GITHUB_TOKEN` may not push. So `publish` pushes and opens the pull request with one secret, kept in the `knowledge-sync` Environment ([above](#keep-each-secret-in-its-environment)):
+A pull request opened with the job's own `GITHUB_TOKEN` starts no checks. So `publish` pushes and opens the pull request with one secret, kept in the `knowledge-sync` Environment ([above](#keep-each-secret-in-its-environment)):
 
 | Secret, in the `knowledge-sync` Environment | Value |
 | --- | --- |
-| `KNOWLEDGE_SYNC_TOKEN` | a fine-grained personal access token (Settings, Developer settings, Personal access tokens, Fine-grained tokens) for this repository alone, with the repository permissions Contents, Pull requests and Workflows set to read and write, and an expiry you will renew. A GitHub App's installation token, made in a step of your own before `publish` pushes, serves the same |
+| `KNOWLEDGE_SYNC_TOKEN` | a fine-grained personal access token (Settings, Developer settings, Personal access tokens, Fine-grained tokens) for this repository alone, with the repository permissions Contents, Pull requests and Workflows set to read and write, and an expiry you will renew. Workflows is needed although the branch carries no workflow change of its own: refreshing an open pull request moves the branch across any workflow change merged since, and GitHub refuses that push without it. A GitHub App's installation token, made in a step of your own before `publish` pushes, serves the same |
 
 Without the secret the workflow still runs: `sync` attaches the change to the run as `sync.patch` and writes the summary, and `publish` says so and opens nothing. A pull request opened with the token is opened under the token's owner and starts this repository's checks, as one opened with `GITHUB_TOKEN` would not.
 
-The skills repository can ask for the sync once a release's `ktl` package is on PyPI. Its `sync-hosts.yml`, started by its PyPI workflow's last job, dispatches this workflow in each host named in its `KNOWLEDGE_SYNC_HOSTS` variable, with a token that holds Actions write there. The variable is a list of `owner/repo` names, and `false` asks nobody, as unset does. A host it does not name, or cannot reach, syncs on its own schedule.
+The skills repository never starts this workflow. Each host checks its own package index, so a release reaches it within a day. To sync sooner, start the workflow by hand: `gh workflow run knowledge-sync.yaml -f tag=<tag>`, or with no tag for the newest release. A run waits up to ten minutes for a release the index does not show yet, since an index's cache lags an upload by a minute or so.
 
 ### By hand
 

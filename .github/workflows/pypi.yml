@@ -40,8 +40,8 @@ name: PyPI
 # adds each file's checksum to the GitHub release, where anyone can compare a
 # file from PyPI, or one they rebuild from the tag, against it. Beside the
 # checksums goes the files' signed build provenance, as
-# provenance-<tag>-packages.intoto.jsonl. Last, it starts sync-hosts.yml,
-# which asks the hosts to sync to the release now on PyPI.
+# provenance-<tag>-packages.intoto.jsonl. No job tells a host about the
+# release: each host's knowledge-sync.yaml asks its own index each day.
 on:
   workflow_dispatch:
     inputs:
@@ -210,7 +210,6 @@ jobs:
       contents: write # gh release upload
       id-token: write # sign the build-provenance attestation
       attestations: write # store the attestation
-      actions: write # start sync-hosts.yml
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
@@ -259,16 +258,3 @@ jobs:
             [ "$attempt" = 3 ] || { echo "::warning::The upload to $TAG failed (attempt $attempt); trying again."; sleep 15; }
           done
           exit 1
-
-      # The package is on PyPI, so the hosts can sync to it. sync-hosts.yml
-      # runs on the default branch, where the dispatch tokens are; a
-      # workflow_run trigger there never fired for this run on a tag.
-      - name: Ask the hosts to sync
-        if: ${{ !cancelled() && vars.KNOWLEDGE_SYNC_HOSTS != '' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.tag }}
-        run: |
-          branch="$(gh api "repos/${GITHUB_REPOSITORY}" --jq .default_branch)"
-          gh workflow run sync-hosts.yml --ref "$branch" -f tag="$TAG" \
-            || { echo "::error::The package is on PyPI, but the hosts were not asked to sync. Start the workflow by hand: gh workflow run sync-hosts.yml -f tag=$TAG"; exit 1; }

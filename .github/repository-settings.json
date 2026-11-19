@@ -20,8 +20,7 @@
       "name": "release",
       "workflows": [
         "semantic-release.yml",
-        "publish.yml",
-        "sync-hosts.yml"
+        "publish.yml"
       ],
       "branches": [
         "{default}"
@@ -110,39 +109,6 @@
       },
       "why": "testpypi uploads each release to TestPyPI, and true to PyPI. Unset, a release builds and checks the packages and uploads nothing.",
       "docs": "releasing/#the-ktl-package-on-pypi"
-    },
-    {
-      "kind": "variable",
-      "name": "KNOWLEDGE_SYNC_HOSTS",
-      "workflows": [
-        "sync-hosts.yml"
-      ],
-      "level": "optional",
-      "check": "repositories",
-      "why": "The hosts asked to sync as soon as a release is tagged, as owner/name separated by spaces.",
-      "docs": "releasing/#after-a-releasing-merge-to-knowledge-trust-ladder-what-follows"
-    },
-    {
-      "kind": "secret",
-      "name": "KNOWLEDGE_SYNC_DISPATCH_TOKEN",
-      "environment": "release",
-      "workflows": [
-        "sync-hosts.yml"
-      ],
-      "level": "optional",
-      "why": "A token with Actions write on each sync host outside lmodel. A fine-grained token reaches one owner's repositories alone.",
-      "docs": "releasing/#after-a-releasing-merge-to-knowledge-trust-ladder-what-follows"
-    },
-    {
-      "kind": "secret",
-      "name": "KNOWLEDGE_SYNC_DISPATCH_TOKEN_LMODEL",
-      "environment": "release",
-      "workflows": [
-        "sync-hosts.yml"
-      ],
-      "level": "optional",
-      "why": "A fine-grained token with Actions write on each sync host under lmodel, which KNOWLEDGE_SYNC_DISPATCH_TOKEN cannot reach.",
-      "docs": "releasing/#after-a-releasing-merge-to-knowledge-trust-ladder-what-follows"
     },
     {
       "kind": "variable",
