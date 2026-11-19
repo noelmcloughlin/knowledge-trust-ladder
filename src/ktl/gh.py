@@ -55,7 +55,7 @@ COMMON = {"kind", "name", "workflows", "level", "why", "docs"}
 KEYS = {
     "variable": COMMON | {"switch", "job_level", "pattern", "check"},
     "secret": COMMON | {"environment", "repository_copy", "names_from", "unless"},
-    "environment": COMMON | {"branches", "tags", "reviewers", "named_by"},
+    "environment": COMMON | {"branches", "tags", "reviewers", "reviewers_level", "named_by"},
     "setting": COMMON | {"value", "report_only", "visibility"},
     "ruleset": COMMON | {"target", "include", "rules"},
     "workflow": COMMON | {"uses", "inputs", "visibility"},
@@ -160,6 +160,8 @@ def problems_of(data: object, path: str) -> list:
             problems.append(f"{where}: every entry has a name and a why")
         if entry.get("level", "required") not in LEVELS:
             problems.append(f"{where}: level is one of {', '.join(LEVELS)}")
+        if entry.get("reviewers_level", "required") not in LEVELS:
+            problems.append(f"{where}: reviewers_level is one of {', '.join(LEVELS)}")
         if kind == "setting" and entry.get("name") not in SETTINGS:
             problems.append(f"{where}: unknown setting; this ktl knows {', '.join(SETTINGS)}")
         if kind == "workflow":
@@ -720,7 +722,8 @@ def merge(entries: list) -> list:
         if key not in merged:
             merged[key] = dict(entry, workflows=list(entry.get("workflows", [])))
             if entry.get("reviewers"):
-                merged[key]["reviewers_level"] = entry["level"]
+                merged[key]["reviewers_level"] = entry.get("reviewers_level", entry["level"])
+                merged[key]["reviewers_optional"] = entry.get("reviewers_level") == "optional"
             continue
         into = merged[key]
         into["workflows"] = sorted(set(into["workflows"]) | set(entry.get("workflows", [])))
@@ -734,9 +737,11 @@ def merge(entries: list) -> list:
         if entry.get("reviewers"):
             # A reviewer keeps the level of the entries that ask for one, so
             # a required Environment does not make a recommended reviewer
-            # required too.
+            # required too. An entry's own reviewers_level counts first.
+            asked = entry.get("reviewers_level", entry["level"])
             was = into.get("reviewers_level", "optional")
-            into["reviewers_level"] = entry["level"] if RANK[entry["level"]] < RANK[was] else was
+            into["reviewers_level"] = asked if RANK[asked] < RANK[was] else was
+            into["reviewers_optional"] = into.get("reviewers_optional", True) and entry.get("reviewers_level") == "optional"
     return list(merged.values())
 
 
@@ -877,13 +882,17 @@ class Planner:
             if name:
                 self.environment(entry, name)
 
-    def environment(self, entry: dict, name: str) -> list:
+    def environment(self, entry: dict, name: str, want_reviewer: bool = False) -> list:
         """Add the findings for one Environment, and return the calls that
         make it so, which enable also makes for an Environment a switch names."""
         level = entry["level"]
         branches = [b.replace("{default}", self.state.default_branch) for b in entry.get("branches", [])]
         tags = list(entry.get("tags", []))
         need = entry.get("reviewers") or 0
+        # A reviewer the catalogue marks reviewers_level optional is noted
+        # when missing and never added, except by enable, where a person
+        # asked for the gate it guards.
+        noted = bool(entry.get("reviewers_optional")) and not want_reviewer
         reviewer_level = entry.get("reviewers_level", entry["level"])
         if reviewer_level == "optional":
             reviewer_level = "recommended"
@@ -903,7 +912,7 @@ class Planner:
         rules = [Op("POST", f"{path}/deployment-branch-policies", {"name": b, "type": "branch"}) for b in branches]
         rules += [Op("POST", f"{path}/deployment-branch-policies", {"name": t, "type": "tag"}) for t in tags]
         if env is None:
-            add = self.wanted_reviewers() if need and self.state.reviewers_available and reviewer_level == level else []
+            add = self.wanted_reviewers() if need and self.state.reviewers_available and (reviewer_level == level or want_reviewer) and not noted else []
             made = [Op("PUT", path, self.env_body(None, custom if rules else None, add)), *rules]
             limited = f", limited to {refs_text(branches, tags)}" if rules else ""
             who = f", with {', '.join(p['login'] for p in add)} as required reviewer" if add else ""
@@ -932,6 +941,8 @@ class Planner:
         if need and len(reviewers) < need:
             if not self.state.reviewers_available:
                 self.add("note", level, f"Environment {name}: a private repository needs GitHub Enterprise for required reviewers", entry)
+            elif noted:
+                self.add("person", "optional", f"Environment {name} has no required reviewer, so it holds nothing; add one when you want its approval step", entry)
             else:
                 add = self.wanted_reviewers()
                 ops = [Op("PUT", path, self.env_body(env, "keep", add))]
@@ -1700,7 +1711,7 @@ def cmd_enable(github: GitHub, args: argparse.Namespace) -> int:
         env_entry = planner.named_environment(entry["name"])
         if env_entry:
             before = len(planner.findings)
-            ops += planner.environment(env_entry, value)
+            ops += planner.environment(env_entry, value, want_reviewer=True)
             lines += [f.text for f in planner.findings[before:] if f.verb == "apply"]
     if sw.value != value:
         path = f"repos/{planner.repo.slug}/actions/variables"

@@ -7,6 +7,13 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 ### Fixed
 
 - **A release upload is tried up to three times, so `gh`'s own retry of an upload that reached GitHub no longer fails the PyPI, release or federation job with "already exists".**
+- **A host whose review Environment has no required reviewer holds a release's workflow changes for a person and stays green**, instead of approving them itself and failing at the push; `ktl gh` notes the missing reviewer and no longer requires it, since reviewers are off until a host wants that second gate.
+- **A host asked to sync right after a release waits up to ten minutes for its index to show the `ktl` package**, since a sync forty seconds after the upload still found no release.
+- **The hosts are asked to sync by `sync-hosts.yml`, once the PyPI run has uploaded**, however long its upload waited for a reviewer, and once the index shows the wheel and the sdist in its fresh and its cached view; `publish.yml` polled for thirty minutes and then asked nobody.
+- **`push-workflows` waits in a concurrency group of its own**, so two approvals waiting behind one publish no longer lose the older; a transient error reading the review Environment is said as such, not as "no reviewers".
+- **The sync script refuses to write through a link, and refuses a `sync-<tag>` branch that origin already holds**, and runs a host's preflight whether or not its copy is executable.
+- **A main that moves while `semantic-release.yml` promotes the changelog gets the promotion rebased onto it**, up to three times, instead of a red run.
+- **`knowledge-release.yaml` holds its tag input to the shape of a tag, and `publish.yml` checks a tag is free against the tags alone**, so a branch named like a release no longer reads as an existing tag.
 
 ## [0.70.0] - 2026-11-19
 

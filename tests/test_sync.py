@@ -374,6 +374,19 @@ def test_what_is_refused(tmp_path, skills, checks):
     checks.ok(unpinned.rc == 1 and 'uv add --project .lokf "ktl==1.1.0"' in unpinned.out, "a host with no pin is told the command that adds it", unpinned.out)
 
 
+def test_a_sync_told_to_wait_asks_the_index_again_for_a_release_it_does_not_show(tmp_path, skills, checks):
+    host = make_host(tmp_path, skills)
+    index = skills.index / "ktl" / "index.html"
+    write(index, "\n".join(line for line in read(index).splitlines() if "ktl-1.1.0" not in line) + "\n")
+    env = {**skills.env, "KNOWLEDGE_SYNC_INDEX_WAIT": "1"}
+    result = run(["bash", ".lokf/scripts/knowledge-sync.sh", "--no-checks", "v1.1.0"], cwd=host, env=env)
+    checks.ok(result.rc == 2 and "publish the release first" in result.out, "a release the index never shows is missing", result.out)
+    checks.ok(has_line(result.out, "   waiting  the index does not show the release yet; asking again in 1 s"), "after it was asked for again", result.out)
+    checks.ok(not Git(host)("status", "--porcelain"), "the pin and the lock are as they were")
+    result = run(["bash", ".lokf/scripts/knowledge-sync.sh", "--no-checks", "v1.1.0"], cwd=host, env={**skills.env, "KNOWLEDGE_SYNC_INDEX_WAIT": "soon"})
+    checks.ok(result.rc == 2 and "not a number of seconds" in result.out, "a wait that is not a number is refused", result.out)
+
+
 def test_the_hosts_own_copy_reads_the_release_from_the_index_its_pyproject_names(tmp_path, skills, checks):
     host = make_host(tmp_path, skills)
     result = run(["bash", ".lokf/scripts/knowledge-sync.sh", "--no-checks", "v1.1.0"], cwd=host, env=skills.env)

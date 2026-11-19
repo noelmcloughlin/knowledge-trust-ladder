@@ -52,7 +52,7 @@ jobs:
             echo "::error::'$VERSION' is not vMAJOR.MINOR.PATCH."
             exit 1
           fi
-          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
             echo "::error::Tag '$VERSION' already exists."
             exit 1
           fi
@@ -145,7 +145,7 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
         run: |
-          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
             echo "::error::Tag '$VERSION' already exists."
             exit 1
           fi
@@ -209,7 +209,8 @@ jobs:
       # The same skills go to PyPI as the `ktl` package, for a machine that
       # reaches a package index and no git host. pypi.yml builds from the tag
       # and uploads where PYPI_RELEASE_ENABLED says; unset, it builds and
-      # checks the package and uploads nothing.
+      # checks the package and uploads nothing. Once it has uploaded,
+      # sync-hosts.yml asks the hosts to sync.
       - name: Publish the ktl package
         if: ${{ !cancelled() && steps.tagged.outcome == 'success' }}
         env:
@@ -219,76 +220,3 @@ jobs:
           gh workflow run pypi.yml --ref "$VERSION" -f tag="$VERSION" \
             || { echo "::error::The skills published under $VERSION, but the ktl package was not requested. Run the PyPI workflow by hand on the tag: gh workflow run pypi.yml --ref $VERSION -f tag=$VERSION"; exit 1; }
 
-      # Each sibling's knowledge-sync.yaml syncs it to the newest release on
-      # its own schedule. This step asks the ones named in the
-      # KNOWLEDGE_SYNC_HOSTS repository variable, as owner/repo separated by
-      # spaces, to do it now. The dispatch needs a token with Actions write
-      # on each of them; the job's own token reaches no other repository.
-      # A fine-grained token reaches one owner alone, so a host under lmodel
-      # takes KNOWLEDGE_SYNC_DISPATCH_TOKEN_LMODEL and any other host
-      # KNOWLEDGE_SYNC_DISPATCH_TOKEN. A host whose token is unset is
-      # skipped and syncs on its schedule. The variable is a list, not a
-      # switch, but it reads like one: "false" asks nobody, as unset does,
-      # and "true" names no host, which the step says. A host that cannot
-      # be dispatched is reported and the others go ahead. A host syncs from
-      # the ktl package on PyPI, so the step first waits for it there.
-      - name: Ask the siblings to sync
-        if: ${{ !cancelled() && steps.tagged.outcome == 'success' && vars.KNOWLEDGE_SYNC_HOSTS != '' }}
-        env:
-          TOKEN_DEFAULT: ${{ secrets.KNOWLEDGE_SYNC_DISPATCH_TOKEN }}
-          TOKEN_LMODEL: ${{ secrets.KNOWLEDGE_SYNC_DISPATCH_TOKEN_LMODEL }}
-          HOSTS: ${{ vars.KNOWLEDGE_SYNC_HOSTS }}
-          VERSION: ${{ inputs.version }}
-        run: |
-          set -euo pipefail
-          case "$(printf '%s' "$HOSTS" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')" in
-            false|off|no|0|none)
-              echo "::notice::KNOWLEDGE_SYNC_HOSTS is '$HOSTS', so no host was asked to sync; each syncs on its own schedule. The variable names hosts as owner/repo, and unset means the same as this."
-              exit 0 ;;
-            true|on|yes|1)
-              echo "::warning::KNOWLEDGE_SYNC_HOSTS is '$HOSTS', which names no host, so none was asked to sync. Set it to the hosts to ask, as owner/repo separated by spaces, or leave it unset."
-              exit 0 ;;
-          esac
-          if [ -z "$TOKEN_DEFAULT" ] && [ -z "$TOKEN_LMODEL" ]; then
-            echo "::warning::KNOWLEDGE_SYNC_HOSTS names hosts, and neither KNOWLEDGE_SYNC_DISPATCH_TOKEN nor KNOWLEDGE_SYNC_DISPATCH_TOKEN_LMODEL is set, so none was asked to sync; each syncs on its own schedule."
-            exit 0
-          fi
-          wheel="ktl-${VERSION#v}-py3-none-any.whl"
-          found=""
-          for _ in $(seq 1 60); do
-            if curl -fsS -H 'Accept: application/vnd.pypi.simple.v1+json' -H 'Cache-Control: no-cache' https://pypi.org/simple/ktl/ \
-                | jq -e --arg f "$wheel" 'any(.files[]; .filename == $f)' >/dev/null 2>&1; then
-              found=1; break
-            fi
-            sleep 30
-          done
-          if [ -z "$found" ]; then
-            echo "::warning::$wheel is not on PyPI after 30 minutes, so no host was asked to sync; each syncs on its own schedule, or start its knowledge-sync.yaml once the package is there."
-            exit 0
-          fi
-          failed=""; unset_for=""
-          for host in $HOSTS; do
-            if ! printf '%s\n' "$host" | grep -qE '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'; then
-              echo "::warning::'$host' in KNOWLEDGE_SYNC_HOSTS is not owner/repo, so it was not asked to sync."
-              continue
-            fi
-            case "${host%%/*}" in
-              lmodel) token="$TOKEN_LMODEL" ;;
-              *) token="$TOKEN_DEFAULT" ;;
-            esac
-            if [ -z "$token" ]; then
-              unset_for="${unset_for}${unset_for:+ }$host"
-              continue
-            fi
-            if GH_TOKEN="$token" gh workflow run knowledge-sync.yaml -R "$host" -f tag="$VERSION"; then
-              echo "Asked $host to sync to $VERSION."
-            else
-              failed="${failed}${failed:+ }$host"
-            fi
-          done
-          if [ -n "$unset_for" ]; then
-            echo "::warning::No dispatch token is set for these hosts' owner, so each syncs on its own schedule: $unset_for"
-          fi
-          if [ -n "$failed" ]; then
-            echo "::warning::These hosts could not be asked to sync, so each syncs on its own schedule: $failed"
-          fi

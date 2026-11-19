@@ -874,17 +874,19 @@ def test_apply_switches_protected_branches_only_to_the_named_branch(tmp_path, at
     assert fake.environments["knowledge-sync"]["refs"] == [("branch", "main")]
 
 
-def test_a_review_environment_a_variable_names_gets_a_reviewer_and_keeps_its_other_rules(tmp_path, at):
+def test_a_review_environment_without_a_reviewer_is_noted_and_kept_as_it_is(tmp_path, at):
+    """Reviewers are off until a host wants the gate: the sync then holds the workflow changes for a person."""
     at(host(tmp_path, *BUNDLE))
     fake = FakeGitHub()
     fake.variables["KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT"] = "knowledge-sync-review"
     fake.environment("knowledge-sync-review", branches=["main"], wait=2)
     fake.environment("knowledge-sync", branches=["main"])
     fake.environment("knowledge-librarian", branches=["main"])
-    assert ktl(fake, "check") == 1
-    assert ktl(fake, "apply", "--yes", "--reviewer", "second") == 0
+    assert ktl(fake, "check") == 0
+    assert any("knowledge-sync-review has no required reviewer" in t for t in texts(planned(fake), "person"))
+    assert ktl(fake, "apply", "--yes", "--recommended", "--reviewer", "second") == 0
     review = fake.environments["knowledge-sync-review"]
-    assert review["reviewers"] == [102] and review["wait"] == 2 and review["refs"] == [("branch", "main")]
+    assert review["reviewers"] == [] and review["wait"] == 2 and review["refs"] == [("branch", "main")]
 
 
 def test_apply_makes_the_recommended_changes_only_when_asked(tmp_path, at):

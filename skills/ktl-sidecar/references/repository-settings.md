@@ -58,7 +58,7 @@ Every entry has a `kind`, a `name` and a `why`, and may have `docs`. `workflows`
 | `variable` | `job_level` when a job's `if:`, `runs-on:` or `environment:` reads it; `pattern`, which the whole value must match; `check: repositories` for a list of `owner/name` that must be current; `switch` |
 | `switch`, in a variable | `name`, for `enable`; `values`, `["true"]` unless given; `environment`, when the switch names an Environment, which then needs a reviewer first; `run`, the workflow `--run` starts; `requires` |
 | `secret` | `environment`, or none for a repository secret; `repository_copy: true` where a repository copy may stay beside it; `unless`, a requirement under which it is not needed; `names_from: ingest`, for one secret per name `.lokf/ingest.yaml` gives |
-| `environment` | `branches`, where `{default}` is the default branch; `tags`; `reviewers`, the least number, where `0` asks for none since each run would wait; `named_by`, the variable that holds its name |
+| `environment` | `branches`, where `{default}` is the default branch; `tags`; `reviewers`, the least number, where `0` asks for none since each run would wait; `reviewers_level`, `optional` where a missing reviewer is noted and never added, except by `enable`; `named_by`, the variable that holds its name |
 | `setting` | `value`; `visibility`, the visibilities it applies to; `report_only` |
 | `ruleset` | `target`, `branch` or `tag`; `include`, refs as GitHub writes them, `~DEFAULT_BRANCH` among them; `rules`, the rule types |
 | `workflow` | `uses`, the action as `owner/name`, which a workflow under `.github/workflows/` must use; `inputs`, each input that workflow must give and its value; `visibility`. It names no `workflows`, since it asks for whichever file does the work |
