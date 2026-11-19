@@ -8,6 +8,10 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 - **The report, the docent and the M365 docent read a retired concept's successor from its `isReplacedBy` alone; a `**Deprecation**` line in `log.md` is history.** Phase two of [lokf#112](https://github.com/nicholsn/lokf/issues/112): 0.68.0 wrote the slot, and the KTL Curator plugin reads it from 1.7.6.
 
+### Fixed
+
+- **`publish.yml` asks the `lmodel` hosts to sync with their own token, `KNOWLEDGE_SYNC_DISPATCH_TOKEN_LMODEL`**, since the fine-grained `KNOWLEDGE_SYNC_DISPATCH_TOKEN` got HTTP 403 there.
+
 ## [0.69.2] - 2026-11-18
 
 ### Fixed
