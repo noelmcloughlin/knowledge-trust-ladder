@@ -35,8 +35,8 @@ layout, its notes or the plugin's block changed.
 `isolated` names what no relation joins to the rest of the bundle. The work
 list shows ten of them, taking turns by month with nothing stamped.
 
-A retired concept's label names its successor from its isReplacedBy, or else
-from the newest **Deprecation** line in log.md, and only one the bundle holds. A waiting Disagreement that
+A retired concept's label names its successor from its isReplacedBy alone,
+never from log.md, and only one the bundle holds. A waiting Disagreement that
 names its concept right after the kind marks that concept, from its newest
 day.
 
@@ -798,13 +798,12 @@ def queue(tmp_path):
     later = (now + timedelta(days=40)).strftime("%Y-%m-%d")
     write(tmp_path / "src" / "c.md", "c\n")
     write(kzk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
-    # Old: the newest line names Hub, an earlier one named A; the newest wins.
-    # Lost: its successor Missing is not in the bundle. Gone: the newest line
-    # names no successor though an earlier one did. Prior: its successor
-    # Origin is in the bundle, and no person has confirmed it.
+    # Old: the slot names Hub, the log A. Lost: its successor Missing is not
+    # in the bundle. Gone: log lines name A and its slot nothing. Prior: its
+    # successor Origin is in the bundle, and no person has confirmed it.
     write(
         kzk / "log.md",
-        "# Change Log\n\n## 2026-02-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [Hub](../x/hub.md).\n* **Deprecation**: [Lost](../x/lost.md) retired - replaced by [Missing](../x/missing.md).\n* **Deprecation**: [Gone](../x/gone.md) retired, with no replacement.\n* **Deprecation**: [Prior](../x/prior.md) retired - replaced by [Origin](../x/origin.md).\n\n## 2026-01-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [A](../x/a.md).\n* **Deprecation**: [Gone](../x/gone.md) retired - replaced by [A](../x/a.md).\n",
+        "# Change Log\n\n## 2026-02-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [Hub](../x/hub.md).\n* **Deprecation**: [Lost](../x/lost.md) retired - replaced by [Missing](../x/missing.md).\n* **Deprecation**: [Gone](../x/gone.md) retired - replaced by [A](../x/a.md).\n* **Deprecation**: [Prior](../x/prior.md) retired - replaced by [Origin](../x/origin.md).\n\n## 2026-01-01\n\n* **Deprecation**: [Old](../x/old.md) retired - replaced by [A](../x/a.md).\n* **Deprecation**: [Gone](../x/gone.md) retired - replaced by [A](../x/a.md).\n",
     )
     write(
         tmp_path / ".lokf" / "feedback.md",
@@ -866,11 +865,11 @@ def queue(tmp_path):
     zc(
         "old",
         "Service",
-        "id: https://acme.example/knowledge/x/old\ntitle: Old\nstatus: deprecated\ndependsOn:\n- https://acme.example/knowledge/x/hub\n",
+        "id: https://acme.example/knowledge/x/old\ntitle: Old\nstatus: deprecated\nisReplacedBy: x/hub\ndependsOn:\n- https://acme.example/knowledge/x/hub\n",
     )
-    zc("lost", "Service", "id: https://acme.example/knowledge/x/lost\ntitle: Lost\nstatus: deprecated\n")
+    zc("lost", "Service", "id: https://acme.example/knowledge/x/lost\ntitle: Lost\nstatus: deprecated\nisReplacedBy: x/missing\n")
     zc("gone", "Service", "id: https://acme.example/knowledge/x/gone\ntitle: Gone\nstatus: deprecated\n")
-    zc("prior", "Service", "id: https://acme.example/knowledge/x/prior\ntitle: Prior\nstatus: deprecated\n")
+    zc("prior", "Service", "id: https://acme.example/knowledge/x/prior\ntitle: Prior\nstatus: deprecated\nisReplacedBy: x/origin\n")
     zc("no-id", "Service", "title: No id\n")
     zc(
         "e",
@@ -937,7 +936,7 @@ def test_a_concept_never_relies_on_itself_a_retired_one_counts_for_nothing_and_a
 
 
 def test_a_retirement_waits_only_while_no_person_has_confirmed_a_successor_the_bundle_holds(queue):
-    """Old's successor Hub carries a person's event, Lost's is not in the bundle, and Gone names none."""
+    """Old's successor Hub carries a person's event, Lost's is not in the bundle, and Gone's slot names none."""
     root, _, _ = queue
     out = report(root).out
     assert not re.search(r"^- x/(old|lost|gone)\.md: ", out, re.M), (
@@ -945,10 +944,10 @@ def test_a_retirement_waits_only_while_no_person_has_confirmed_a_successor_the_b
     )
 
 
-def test_a_retirement_log_md_links_no_successor_to_waits_on_none(moved):
+def test_a_retirement_whose_slot_names_no_successor_waits_on_none(moved):
     out = report(moved).out
     assert has_line(out, "Retired, with a successor no person has confirmed: none"), (
-        f"report script listed a successor for a retirement log.md does not link: {out}"
+        f"report script listed a successor for a retirement whose isReplacedBy names none: {out}"
     )
 
 
@@ -980,7 +979,7 @@ def test_a_retired_concept_names_its_successor_and_a_disputed_one_its_newest_day
 
 @pytest.fixture
 def slot(tmp_path):
-    """Retired concepts whose isReplacedBy names a successor in each spelling, one the log names, and a live concept that carries the slot."""
+    """Retired concepts whose isReplacedBy names a successor in each spelling, one the log names alone, and a live concept that carries the slot."""
     kk = tmp_path / ".lokf" / "knowledge"
     write(kk / "index.md", "---\nbase_iri: https://acme.example/knowledge/\n---\n\n# Acme\n")
     write(
@@ -992,7 +991,7 @@ def slot(tmp_path):
     gone = "type: Dataset\nstatus: deprecated\n"
     # Slot: the field alone. Both: the field and a log line that disagree.
     # Second: an IRI of another bundle first, then a relative path. Far: a
-    # target the bundle lacks, so the log line decides. Reified: `relations`.
+    # target the bundle lacks, and a log line that names A. Reified: `relations`.
     write(kk / "x" / "slot.md", f"---\n{gone}title: Slot\nisReplacedBy: https://acme.example/knowledge/x/hub\n---\n")
     write(kk / "x" / "both.md", f"---\n{gone}title: Both\nisReplacedBy: [https://acme.example/knowledge/x/hub]\n---\n")
     write(kk / "x" / "second.md", f"---\n{gone}title: Second\nisReplacedBy:\n  - https://other.example/k/y\n  - x/a\n---\n")
@@ -1008,21 +1007,21 @@ def slot(tmp_path):
         "- Slot (x/slot.md) - retired, replaced by x/hub.md",
         "- Both (x/both.md) - retired, replaced by x/hub.md",
         "- Second (x/second.md) - retired, replaced by x/a.md",
-        "- Far (x/far.md) - retired, replaced by x/a.md",
+        "- Far (x/far.md) - retired",
         "- Reified (x/reified.md) - retired, replaced by x/a.md",
         "- Live (x/live.md) - nobody has checked this yet",
     ],
 )
-def test_a_retired_concepts_isreplacedby_names_its_successor_before_the_log(slot, want):
+def test_a_retired_concepts_isreplacedby_names_its_successor_and_the_log_does_not(slot, want):
     out = report(slot, "labels").out
     assert has_line(out, want), f"report script did not print '{want}': {out}"
 
 
-def test_a_successor_the_slot_names_waits_for_a_person_like_one_the_log_names(slot):
+def test_a_successor_the_slot_names_waits_for_a_person(slot):
     """Hub carries a person's event and A does not, so only the retirements that A replaced wait."""
     out = report(slot).out
-    assert has_line(out, "Retired, with a successor no person has confirmed: 3"), f"report script miscounted the waiting retirements: {out}"
-    for p in ("second", "far", "reified"):
+    assert has_line(out, "Retired, with a successor no person has confirmed: 2"), f"report script miscounted the waiting retirements: {out}"
+    for p in ("second", "reified"):
         assert re.search(rf"^- x/{p}\.md: x/a\.md - nobody has checked this yet$", out, re.M), f"report script did not list x/{p}.md: {out}"
 
 
