@@ -3,6 +3,8 @@ type: Service
 id: https://example.test/knowledge/services/legacy-sync
 title: Legacy Orders Sync
 description: The nightly copy the Orders API replaced.
+isReplacedBy:
+  - https://example.test/knowledge/services/orders-api
 dependsOn:
   - https://example.test/knowledge/glossary/order
 generated:
@@ -16,4 +18,4 @@ status: deprecated
 
 # Legacy Orders Sync
 
-Retired, with a successor the log names. Its relation counts for nothing.
+Retired, with a successor its `isReplacedBy` names and the log also links. Its relation counts for nothing.

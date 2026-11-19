@@ -181,7 +181,7 @@ The concept had followed six edits to `docs/three-lines.md`, and each edit match
 
 ## After the session
 
-The agent prepended two lines to `log.md` under the day's heading. The report reads the successor of a retired concept from the second line.
+The agent prepended two lines to `log.md` under the day's heading. The second records the retirement; the report reads the successor from the concept's `isReplacedBy`.
 
 ```markdown
 * **Curation**: human:noelmcloughlin confirmed 3 concepts, corrected 1, sent 2 back, retired 1 and left 1 for later. They cleared their "rewrite as needed" notes on Domain schemas and the ktl-curator skill.
