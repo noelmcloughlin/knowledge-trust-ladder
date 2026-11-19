@@ -8,7 +8,7 @@ two ktl wheels on a local file:// index, and run the script on a host whose
 1. it moves the pin and relocks, copies the templates the release changed,
    adds a template a file the host carries needs, reports one ktl-sidecar's
    Step 5 decides, and writes the changelog entry under "## [Unreleased]"
-   and "### Security";
+   and "### Changed";
 2. a host at the release has nothing to sync, and the entry is written once;
 3. the entry joins a Security section the changelog already has, at its end,
    and a section is added last when there is none;
@@ -246,7 +246,7 @@ def test_a_sync_copies_adds_reports_pins_and_writes_the_entry(tmp_path, skills, 
     checks.ok(f"sha256:{skills.hash('1.1.0')}" in read(host / LOCK), "the lock holds the release's hash from the index")
     checks.ok("a line the next release adds" in read(host / ".lokf" / "scripts" / "knowledge-report.sh"), "the copy carries the release's bytes")
     changelog = read(host / "CHANGELOG.md")
-    checks.ok("## [Unreleased]\n\n### Security\n\n" + ENTRY_START in changelog, "the entry sits under Unreleased and Security", changelog)
+    checks.ok("## [Unreleased]\n\n### Changed\n\n" + ENTRY_START in changelog, "the entry sits under Unreleased and Changed", changelog)
     checks.ok("compare/v1.0.0...v1.1.0" in changelog, "the entry links the comparison between the two pins", changelog)
     checks.ok("`.lokf/scripts/knowledge-report.sh`" in changelog and "No plugin change" not in changelog, "the entry names the files and says nothing of a plugin", changelog)
     listed = read(changed).split("\n")
@@ -257,7 +257,7 @@ def test_a_sync_copies_adds_reports_pins_and_writes_the_entry(tmp_path, skills, 
     checks.ok(body.startswith("Brings the sidecar copies and the skills pin of this repository to Knowledge Trust Ladder [v1.1.0]("), "the report opens with the release", body)
     checks.ok("- `.lokf/scripts/knowledge-report.sh`" in body and "skipped (--no-checks)" in body, "the report lists the copies and the checks", body)
     checks.ok("does not know their rule:\n\n- `mirror docs/example.md`" in body, "the report names the rule the script does not know, so the pull request shows it", body)
-    checks.ok(matches(out, r"^   git commit -m \"security\(sidecar\): sync copies and skills pin from v1\.1\.0\"$"), "the commit command is printed", out)
+    checks.ok(matches(out, r"^   git commit -m \"chore\(sidecar\): sync copies and skills pin from v1\.1\.0\"$"), "the commit command is printed", out)
     checks.ok((host / ".lokf" / "scripts" / "knowledge-sync.sh").stat().st_mode & 0o111, "an added script is executable")
 
 
@@ -305,22 +305,22 @@ def test_a_host_with_a_site_gets_the_site_templates_in_whichever_folder_holds_it
         checks.ok(sorted(p.name for p in (host / "website").iterdir()) == ["index.html"], "another site's website/ is left alone")
 
 
-def test_the_entry_joins_an_existing_security_section_at_its_end(tmp_path, skills, checks):
-    changelog = "# Changelog\n\n## [Unreleased]\n\n### Changed\n\n- Something.\n\n### Security\n\n- Earlier line.\n\n## [1.0.0] - 2026-01-01\n"
+def test_the_entry_joins_an_existing_changed_section_at_its_end(tmp_path, skills, checks):
+    changelog = "# Changelog\n\n## [Unreleased]\n\n### Added\n\n- Something.\n\n### Changed\n\n- Earlier line.\n\n## [1.0.0] - 2026-01-01\n"
     host = make_host(tmp_path, skills, changelog=changelog)
     sync(host, skills)
     text = read(host / "CHANGELOG.md")
     checks.ok("- Earlier line.\n" + ENTRY_START in text, "the entry follows the section's last line", text)
-    checks.ok(text.count("### Security") == 1, "no second Security section", text)
+    checks.ok(text.count("### Changed") == 1, "no second Changed section", text)
     checks.ok(text.endswith("\n\n## [1.0.0] - 2026-01-01\n"), "the released section is untouched", text)
 
 
-def test_a_security_section_is_added_last_in_unreleased(tmp_path, skills, checks):
-    changelog = "# Changelog\n\n## [Unreleased]\n\n### Changed\n\n- Something.\n\n## [1.0.0] - 2026-01-01\n"
+def test_a_changed_section_is_added_last_in_unreleased(tmp_path, skills, checks):
+    changelog = "# Changelog\n\n## [Unreleased]\n\n### Added\n\n- Something.\n\n## [1.0.0] - 2026-01-01\n"
     host = make_host(tmp_path, skills, changelog=changelog)
     sync(host, skills)
     text = read(host / "CHANGELOG.md")
-    checks.ok("- Something.\n\n### Security\n\n" + ENTRY_START in text, "the section follows the last line of Unreleased", text)
+    checks.ok("- Something.\n\n### Changed\n\n" + ENTRY_START in text, "the section follows the last line of Unreleased", text)
     checks.ok(text.endswith("\n\n## [1.0.0] - 2026-01-01\n"), "one blank line before the next release heading", text)
 
 
@@ -351,7 +351,7 @@ def test_commit_mode_works_on_its_own_branch(tmp_path, skills, checks):
     checks.ok(result.rc == 0, "exit 0", result.out)
     checks.ok(has_line(result.out, "   branch   sync-v1.1.0, from origin/main"), "the branch starts from origin's default branch", result.out)
     checks.ok(git("branch", "--show-current") == "sync-v1.1.0", "the host is on the sync branch")
-    checks.ok(git("log", "-1", "--format=%s") == "security(sidecar): sync copies and skills pin from v1.1.0", "the commit carries the subject")
+    checks.ok(git("log", "-1", "--format=%s") == "chore(sidecar): sync copies and skills pin from v1.1.0", "the commit carries a subject that releases nothing")
     checks.ok(git("rev-list", "--count", "main..sync-v1.1.0") == "1", "one commit on the branch")
     checks.ok(git("rev-parse", "main") == before, "main is where it was")
     checks.ok(not git("status", "--porcelain"), "the tree is clean after the commit")
@@ -452,7 +452,7 @@ def test_a_changelog_with_crlf_endings_keeps_them(tmp_path, skills, checks):
     checks.ok(result.rc == 0, "exit 0", result.out)
     raw = (host / "CHANGELOG.md").read_bytes()
     checks.ok(b"\n" not in raw.replace(b"\r\n", b""), "every line still ends with CRLF")
-    checks.ok(b"## [Unreleased]\r\n\r\n### Security\r\n\r\n" + ENTRY_START.encode() in raw, "the entry sits under Unreleased and Security", raw.decode())
+    checks.ok(b"## [Unreleased]\r\n\r\n### Changed\r\n\r\n" + ENTRY_START.encode() in raw, "the entry sits under Unreleased and Changed", raw.decode())
 
 
 def test_a_sync_to_an_older_release_says_so(tmp_path, skills, checks):
@@ -785,7 +785,7 @@ def test_every_synced_template_is_in_step_5_and_the_manifest_is_the_one_list():
 # The steps of knowledge-sync.yaml, which the workflow runs as --workflow <step>.
 
 BOT = "knowledge-sync[bot]"
-SUBJECT = "security(sidecar): sync copies and skills pin from v1.1.0"
+SUBJECT = "chore(sidecar): sync copies and skills pin from v1.1.0"
 needs_jq = pytest.mark.skipif(not have("jq"), reason="jq is not installed")
 GH = r"""#!{python}
 import json, os, subprocess, sys
