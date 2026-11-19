@@ -162,7 +162,7 @@ def test_the_release_checks_main_just_before_it_publishes_and_the_tag_just_after
     assert names[at + 1] == "Check the tag names the commit verify checked" and steps[at + 1]["id"] == "tagged", names
     assert "git ls-remote origin refs/heads/main" in steps[at - 1]["run"]
     after = steps[at + 2:]
-    assert [s["name"] for s in after] == ["Attach the knowledge bundle", "Publish the ktl package", "Ask the siblings to sync"]
+    assert [s["name"] for s in after] == ["Attach the knowledge bundle", "Publish the ktl package"]
     for s in after:
         assert "steps.tagged.outcome == 'success'" in s["if"], f"{s['name']} runs for a tag on a commit no check ran on"
 

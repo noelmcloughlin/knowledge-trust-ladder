@@ -214,4 +214,13 @@ jobs:
           fi
           git add CHANGELOG.md "$pinned"
           git commit -m "chore(release): $VERSION - changelog promoted [skip ci]"
-          git push origin HEAD:main
+          # A merge that lands during the run moves main; the promotion is
+          # put back on top of it. One it cannot rebase onto fails here, and
+          # the run that merge queued promotes again.
+          for attempt in 1 2 3; do
+            git push origin HEAD:main && break
+            if [ "$attempt" = 3 ]; then echo "::error::main kept moving during this run; the next push to main promotes again."; exit 1; fi
+            echo "::warning::main moved during this run; rebasing the promotion onto it (attempt $attempt)."
+            git fetch --quiet origin main
+            git rebase --quiet origin/main || { git rebase --abort; echo "::error::The promotion does not rebase onto the new main; the next push to main promotes again."; exit 1; }
+          done

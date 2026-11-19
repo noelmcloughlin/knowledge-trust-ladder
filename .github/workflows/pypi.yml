@@ -250,4 +250,10 @@ jobs:
           done
           cat sums/*.sha256
           cp -- "$BUNDLE" "sums/provenance-$TAG-packages.intoto.jsonl"
-          gh release upload "$TAG" sums/*.sha256 "sums/provenance-$TAG-packages.intoto.jsonl" --clobber --repo "$GITHUB_REPOSITORY"
+          # gh retries a slow upload itself, and a retry of one that reached
+          # GitHub fails with "already exists"; --clobber makes a new attempt safe.
+          for attempt in 1 2 3; do
+            gh release upload "$TAG" sums/*.sha256 "sums/provenance-$TAG-packages.intoto.jsonl" --repo "$GITHUB_REPOSITORY" --clobber && exit 0
+            [ "$attempt" = 3 ] || { echo "::warning::The upload to $TAG failed (attempt $attempt); trying again."; sleep 15; }
+          done
+          exit 1

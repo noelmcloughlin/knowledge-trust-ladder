@@ -105,7 +105,8 @@
       "workflows": ["knowledge-sync.yaml"],
       "branches": ["{default}"],
       "reviewers": 1,
-      "why": "Its reviewers approve the workflow changes a release brings. With none it approves itself, and push-workflows pushes nothing.",
+      "reviewers_level": "optional",
+      "why": "Its reviewers approve the workflow changes a release brings. With none, those changes wait for a person and the review jobs do not run; add a reviewer when you want that approval step.",
       "docs": "automation.md#workflow-changes-wait-for-a-person"
     },
     {

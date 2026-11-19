@@ -20,7 +20,8 @@
       "name": "release",
       "workflows": [
         "semantic-release.yml",
-        "publish.yml"
+        "publish.yml",
+        "sync-hosts.yml"
       ],
       "branches": [
         "{default}"
@@ -114,7 +115,7 @@
       "kind": "variable",
       "name": "KNOWLEDGE_SYNC_HOSTS",
       "workflows": [
-        "publish.yml"
+        "sync-hosts.yml"
       ],
       "level": "optional",
       "check": "repositories",
@@ -126,7 +127,7 @@
       "name": "KNOWLEDGE_SYNC_DISPATCH_TOKEN",
       "environment": "release",
       "workflows": [
-        "publish.yml"
+        "sync-hosts.yml"
       ],
       "level": "optional",
       "why": "A token with Actions write on each sync host outside lmodel. A fine-grained token reaches one owner's repositories alone.",
@@ -137,7 +138,7 @@
       "name": "KNOWLEDGE_SYNC_DISPATCH_TOKEN_LMODEL",
       "environment": "release",
       "workflows": [
-        "publish.yml"
+        "sync-hosts.yml"
       ],
       "level": "optional",
       "why": "A fine-grained token with Actions write on each sync host under lmodel, which KNOWLEDGE_SYNC_DISPATCH_TOKEN cannot reach.",
