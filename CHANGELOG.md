@@ -4,6 +4,8 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+## [0.70.2] - 2026-11-19
+
 ### Fixed
 
 - **`sync-hosts.yml` is started by the PyPI run's last job, with the tag as its input**, since a `workflow_run` trigger on that workflow never fired for its run on a tag, and no host was asked to sync to 0.70.1.
