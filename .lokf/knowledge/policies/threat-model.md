@@ -13,6 +13,9 @@ verified:
     at: "2026-11-19T00:10:04Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:15:05Z"
+  - by: human:noelmcloughlin
+    at: "2026-11-19T21:45:54Z"
+    revision: "9c26b363f49c00834b20581e068e9221345285df"
 references:
   - https://w3id.org/ktl/knowledge/policies/security
   - https://w3id.org/ktl/knowledge/policies/ai-covenant
@@ -31,7 +34,7 @@ sources:
   - resource: skills/ktl-sidecar/templates/scripts/knowledge-conventions.sh
   - resource: .github/workflows/codeql.yml
   - resource: .github/workflows/scorecard.yml
-status: draft
+stale_after: 2027-11-19
 ---
 
 # Overview

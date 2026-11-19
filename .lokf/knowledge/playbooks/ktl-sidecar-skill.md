@@ -59,7 +59,10 @@ verified:
   - by: human:noelmcloughlin
     at: "2026-11-13T15:24:57Z"
     revision: "38892f8d2d5af8495e2b17d503f1f6dba9fd45ba"
-stale_after: 2027-11-13
+  - by: human:noelmcloughlin
+    at: "2026-11-19T21:45:54Z"
+    revision: "9c26b363f49c00834b20581e068e9221345285df"
+stale_after: 2027-11-19
 ---
 # Overview
 
