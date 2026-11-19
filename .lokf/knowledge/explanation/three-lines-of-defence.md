@@ -7,8 +7,7 @@ genre: explanation
 resource: docs/three-lines.md
 generated:
   by: process:ktl-librarian
-  at: "2026-11-17T22:28:06Z"
-  revision: "sha256:24177c9c025e3dfe4e13081173fc746a64223080018478c8007f594ce31c288f"
+  at: "2026-11-19T00:10:04Z"
 about: []
 relatedTo:
   - https://w3id.org/ktl/knowledge/policies/ai-covenant
@@ -35,6 +34,9 @@ sources:
   - resource: skills/ktl-sidecar/references/gate.md
     id: gate.md
     excerpt: only while each changed concept that carries the person's name is byte for byte what the approved commit held
+  - resource: skills/ktl-sidecar/references/gate.md
+    id: gate-shacl
+    excerpt: the projected graph must keep LOKF's SHACL shapes
 references:
   - https://w3id.org/ktl/knowledge/policies/knowledge-curation
 ---
@@ -63,7 +65,7 @@ An auditor's questions each have a fixed place to look:
 - When it must be looked at again, and by what rule: `stale_after`, proposed from `policies/knowledge-curation.md`.
 - What changed, and why: `log.md` and git.
 - Which words of the source a claim rests on: `sources[].excerpt`, joined to the claim by a footnote. The gate finds each one in its file on every change, and fetches no URL.
-- Whether the checker is independent of the checked: the JSON Schema, which is generated from the upstream `lokf.yaml` rather than written by the bundle's authors. The toolkit also generates SHACL shapes, which no KTL check runs yet. The bundle projects to RDF and answers SPARQL.
+- Whether the checker is independent of the checked: the JSON Schema, which is generated from the upstream `lokf.yaml` rather than written by the bundle's authors. The toolkit also generates SHACL shapes, which the gate's `just lokf-check-refs` runs where `uv.lock` holds lokf's `shacl` extra.[^gate-shacl] The bundle projects to RDF and answers SPARQL.
 - Whether a second person re-checked it: the `check` column of `knowledge-report.sh evidence`, where `second-person` marks a `human:` event by anyone but the first person to confirm.
 
 `knowledge-report.sh evidence` prints every `generated` record and `verified` event as one tab-separated table. `knowledge-release.yaml` attaches that table beside the bundle's zip as `evidence-<tag>-<name>.tsv`, with a checksum and a signed build provenance.
@@ -104,7 +106,10 @@ The page then lists what remains and who owns it, in four lines:
 
 [^gate.md]: skills/ktl-sidecar/references/gate.md, the paragraph on when an approval stands
 
+[^gate-shacl]: skills/ktl-sidecar/references/gate.md, the first of the two checks the gate runs
+
 ## Open questions
 
 - 2026-11-13, human:noelmcloughlin: check if <https://github.com/GoogleCloudPlatform/open-knowledge-format/issues/45> and <https://github.com/GoogleCloudPlatform/open-knowledge-format/issues/46> are required for What remains to do
 - 2026-11-14, process:ktl-librarian: OKF issues 45 and 46 propose `digest` and `revision` on a `sources` entry. LOKF's `Source` class carries neither, and the Upstream line of `docs/three-lines.md` names only the fields LOKF already carries as its own, `revision` on an event and `excerpt`. So the page as it stands does not need them. Whether What remains should name them is the maintainer's choice for `docs/three-lines.md`, and this concept follows the page.
+- 2026-11-19, process:ktl-librarian: docs/three-lines.md still says in its auditor table that no KTL check runs the SHACL shapes yet; skills/ktl-sidecar/references/gate.md says lokf-check-refs runs them with --shacl where uv.lock holds the shacl extra. This concept follows gate.md; the page needs a person to update it.

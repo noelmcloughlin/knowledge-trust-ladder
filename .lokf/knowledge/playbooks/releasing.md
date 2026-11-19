@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-11-18T11:50:44Z"
+  at: "2026-11-19T00:10:04Z"
 status: draft
 dependsOn:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -38,6 +38,9 @@ sources:
   - resource: https://github.com/conventional-changelog/conventional-changelog/blob/conventional-changelog-conventionalcommits-v8.0.0/packages/conventional-changelog-conventionalcommits/src/parser.js
   - resource: .github/workflows/pypi.yml
   - resource: .pypi
+  - resource: docs/releasing.md
+    id: releasing-sync-after-pypi
+    excerpt: after 30 minutes without it, it asks nobody
 verified:
   - by: process:ktl-librarian
     at: "2026-11-18T00:02:42Z"
@@ -84,7 +87,7 @@ On a public repository the release also carries the files' signed build provenan
 
 The dispatch is needed because GitHub starts no workflow from a release made with `GITHUB_TOKEN`, so that workflow's own release trigger never fires here. If the dispatch fails, the job fails and names the manual run to make.
 
-`publish.yml` then asks the hosts named in the `KNOWLEDGE_SYNC_HOSTS` repository variable, as `owner/repo` separated by spaces, to run their `knowledge-sync.yaml` for the new tag. The dispatch needs the `KNOWLEDGE_SYNC_DISPATCH_TOKEN` secret, a token with Actions write on each host. Unset, or set to `false`, the variable asks nobody, and each host syncs on its own schedule. A host that cannot be asked is reported, and the others go ahead. A fine-grained token reaches one owner's repositories alone, so a host under another owner is reported and syncs on its schedule. `ktl gh plan` names a host that was renamed.
+`publish.yml` then asks the hosts named in the `KNOWLEDGE_SYNC_HOSTS` repository variable, as `owner/repo` separated by spaces, to run their `knowledge-sync.yaml` for the new tag, once the release's `ktl` package is on PyPI. After 30 minutes without the package, it asks nobody.[^releasing-sync-after-pypi] The dispatch needs the `KNOWLEDGE_SYNC_DISPATCH_TOKEN` secret, a token with Actions write on each host. Unset, or set to `false`, the variable asks nobody, and each host syncs on its own schedule. A host that cannot be asked is reported, and the others go ahead. A fine-grained token reaches one owner's repositories alone, so a host under another owner is reported and syncs on its schedule. `ktl gh plan` names a host that was renamed.
 
 `docs/releasing.md` states this release-process detail for the three KTL repositories in one place. All six skills are released together under one tag, so a consumer can pin them to a single release. Required reviewers on the `release` Environment wait until releases have downstream users, so until then a qualifying merge is released unattended. A maintainer then adds them in each repository's settings, or with `ktl gh apply --recommended`, and `ktl gh check --strict` names a repository without one. Changes reach `main` by pull request, but no ruleset enforces it, and "Require signed commits" as a branch rule is off and must stay off.
 
@@ -111,3 +114,5 @@ Before the first upload to each index, a maintainer registers a pending publishe
 
 [^releasing-pending-publisher]: docs/releasing.md, The ktl package on PyPI (quoted)
 [^releasing-check-15]: docs/releasing.md, After a releasing merge to `knowledge-trust-ladder`, what follows (quoted)
+
+[^releasing-sync-after-pypi]: docs/releasing.md, the paragraph on asking the siblings to sync (quoted)

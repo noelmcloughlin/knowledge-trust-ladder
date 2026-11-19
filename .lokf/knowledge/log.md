@@ -1,5 +1,15 @@
 # Change Log
 
+## 2026-11-19
+
+* **Changed**: Domain schema says LOKF's specification uses both names from lokf 0.10.0, as the librarian's domain vocabulary page now says; only earlier releases called the bundle's file a LOKF domain schema.
+* **Changed**: LOKF toolkit names 0.10.0 as the latest release on PyPI, and says this repository's `lokf-check-refs` recipe adds `--shacl` where `uv.lock` holds pyshacl, as the sidecar's justfile does.
+* **Changed**: Three lines of defence says the gate now runs LOKF's SHACL shapes where the shacl extra is installed, as the gate reference says since the lokf 0.10.0 alignment. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: Three lines of defence asks for `docs/three-lines.md` to be brought in line with the gate on SHACL.
+* **Changed**: Releasing says `publish.yml` asks the hosts to sync only once the release's `ktl` package is on PyPI, and asks nobody after 30 minutes without it, as `docs/releasing.md` says since #394.
+* **Changed**: Domain bundle says how to check a member's attestation by hand, and that a release made before its repository moved to another owner is verified under the old owner, as the build does since #392.
+* **Changed**: The ktl-sidecar playbook follows the skill on the owner type placeholder, the optional ktl-prose and ktl-website, a host whose `skills/` is its own collection, and a sync run that waits for review, which no longer blocks a later sync (#394). Edited since a person confirmed it; the label says so until the curator looks again.
+
 ## 2026-11-18
 
 * **Changed**: ktl-website: `<SITE_URL>` fills `baseURL` from the preflight's `address` line, which reads the Pages API's `html_url`, as `skills/ktl-website/SKILL.md` and `references/deploy.md` now say.

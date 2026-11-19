@@ -28,7 +28,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/domain-vocabularies
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-17T22:28:06Z"
+    at: "2026-11-19T00:10:04Z"
 ---
 
 # Overview
