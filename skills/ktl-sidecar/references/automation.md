@@ -343,7 +343,7 @@ A pull request opened with the job's own `GITHUB_TOKEN` starts no checks. So `pu
 
 | Secret, in the `knowledge-sync` Environment | Value |
 | --- | --- |
-| `KNOWLEDGE_SYNC_TOKEN` | a fine-grained personal access token (Settings, Developer settings, Personal access tokens, Fine-grained tokens) for this repository alone, with the repository permissions Contents, Pull requests and Workflows set to read and write, and an expiry you will renew. A GitHub App's installation token, made in a step of your own before `publish` pushes, serves the same |
+| `KNOWLEDGE_SYNC_TOKEN` | a fine-grained personal access token (Settings, Developer settings, Personal access tokens, Fine-grained tokens) for this repository alone, with the repository permissions Contents, Pull requests and Workflows set to read and write, and an expiry you will renew. Workflows is needed although the branch carries no workflow change of its own: refreshing an open pull request moves the branch across any workflow change merged since, and GitHub refuses that push without it. A GitHub App's installation token, made in a step of your own before `publish` pushes, serves the same |
 
 Without the secret the workflow still runs: `sync` attaches the change to the run as `sync.patch` and writes the summary, and `publish` says so and opens nothing. A pull request opened with the token is opened under the token's owner and starts this repository's checks, as one opened with `GITHUB_TOKEN` would not.
 
