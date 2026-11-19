@@ -9,6 +9,9 @@ sources:
   - resource: skills/ktl-curator/references/domain-bundle.md
   - resource: skills/ktl-sidecar/templates/domain.yaml
   - resource: docs/federation.md
+  - resource: skills/ktl-curator/references/domain-bundle.md
+    id: domain-bundle-moved-owner
+    excerpt: For a release made before its repository moved to another owner, use `--owner <old-owner>`
 dependsOn:
   - https://w3id.org/ktl/knowledge/playbooks/ktl-curator-skill
 relatedTo:
@@ -18,7 +21,7 @@ about:
   - https://w3id.org/ktl/knowledge/glossary/context-layer
 generated:
   by: process:ktl-librarian
-  at: "2026-11-18T11:22:41Z"
+  at: "2026-11-19T00:10:04Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -68,7 +71,7 @@ isPartOf:
 
 Confirming a member concept is the curator's ordinary confirm, in a signed commit the registrar's `provenance` job backs. It attests that the bundle belongs under the domain's admission rule, and that any claim the domain makes across bundles holds. It does not vouch for the member's own concepts, whose labels come from their own events. It does admit the addresses the member claims: the build routes each explicit `id` outside the member's `base_iri` to that member, and lokf refuses one inside another member's namespace or LOKF's own. A claim across bundles is the domain owner's arbitration, so the librarian proposes it as a question. A confirmation belongs to the concept's `id`, so a concept moved to a new id waits for one of its own.
 
-Before confirming, open the release the concept names. Check that the zip and its `.sha256` are attached, that the digest is the concept's `checksum_value`, and that the release's repository is the one the `base_iri` belongs to. Check a `MemberDomain`'s `workspace-<tag>.zip` the same way, and a served member's file by its digest. When the bundle's subject is not public, set its `sensitivity` first. `knowledge-federate.py build --verify-only` checks the zip again and runs the gate before the merge.
+Before confirming, open the release the concept names. Check that the zip and its `.sha256` are attached, that the digest is the concept's `checksum_value`, and that the release's repository is the one the `base_iri` belongs to. Check a `MemberDomain`'s `workspace-<tag>.zip` the same way, and a served member's file by its digest. When the bundle's subject is not public, set its `sensitivity` first. `knowledge-federate.py build --verify-only` checks the zip again and runs the gate before the merge. `gh attestation verify <zip> --repo <owner>/<repo>` checks an attestation by hand. For a release made before its repository moved to another owner, use `--owner <old-owner>` with `--signer-workflow <old-owner>/<repo>/.github/workflows/knowledge-release.yaml`, as the build does when `--repo` answers 404.[^domain-bundle-moved-owner]
 
 The domain's policy concept states its admission rule. A member is released with the sidecar's release workflow, validates on LOKF core or on a schema it publishes, and has one accountable owner. Its `base_iri` is stable, under an authority its publisher controls, so that no two members' namespaces nest.
 
@@ -104,3 +107,5 @@ podman run -d -p 7878:7878 -v oxigraph-data:/data:ro ghcr.io/oxigraph/oxigraph:0
 ```
 
 `docker` takes the same arguments, and the endpoint is then `http://localhost:7878/query`. `GRAPH ?g` names the asserting bundle, and `--union-default-graph` lets a query without it see every bundle. Nothing is hosted by default: hosting is the team's decision.
+
+[^domain-bundle-moved-owner]: skills/ktl-curator/references/domain-bundle.md, the paragraph on `--verify-only` (quoted)
