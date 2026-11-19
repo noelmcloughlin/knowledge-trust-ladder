@@ -3,11 +3,12 @@ name: Ask the hosts to sync
 # Each host's knowledge-sync.yaml syncs it to the newest release of the
 # skills on its own schedule. This workflow asks the hosts named in the
 # KNOWLEDGE_SYNC_HOSTS repository variable, as owner/repo separated by
-# spaces, to do it now. It runs when a PyPI run completes, so the release's
-# ktl package is on PyPI first, however long the upload waited for a
-# reviewer, and it runs from the default branch, where the `release`
-# Environment holds its tokens. A run on another ref, a run that uploaded
-# nothing, or a failed one asks nobody.
+# spaces, to do it now. pypi.yml's last job starts it once the release's
+# ktl package is on PyPI, however long the upload waited for a reviewer, so
+# a run that uploaded nothing never starts it. It runs on the default
+# branch, where the `release` Environment holds its tokens. A workflow_run
+# trigger on the PyPI workflow never fired for its run on a tag, so the
+# start is an explicit dispatch, which a person can make too.
 #
 # The dispatch needs a token with Actions write on each host; the job's own
 # token reaches no other repository and is not raised. A fine-grained token
@@ -24,20 +25,23 @@ name: Ask the hosts to sync
 # fresh and cached, before it asks. A host asked anyway asks its index
 # again for a while.
 on:
-  workflow_run:
-    workflows: [PyPI]
-    types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "The release tag whose ktl package is on PyPI, e.g. v0.70.1"
+        required: true
+        type: string
 
 permissions: {}
 
 concurrency:
-  group: sync-hosts-${{ github.event.workflow_run.head_branch }}
+  group: sync-hosts-${{ inputs.tag }}
   cancel-in-progress: false
 
 jobs:
   ask:
     name: Ask the hosts to sync
-    if: github.event.workflow_run.conclusion == 'success' && vars.PYPI_RELEASE_ENABLED == 'true' && vars.KNOWLEDGE_SYNC_HOSTS != ''
+    if: vars.KNOWLEDGE_SYNC_HOSTS != ''
     runs-on: ${{ vars.KNOWLEDGE_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 30
     environment: release
@@ -53,13 +57,12 @@ jobs:
           TOKEN_DEFAULT: ${{ secrets.KNOWLEDGE_SYNC_DISPATCH_TOKEN }}
           TOKEN_LMODEL: ${{ secrets.KNOWLEDGE_SYNC_DISPATCH_TOKEN_LMODEL }}
           HOSTS: ${{ vars.KNOWLEDGE_SYNC_HOSTS }}
-          VERSION: ${{ github.event.workflow_run.head_branch }}
+          VERSION: ${{ inputs.tag }}
         run: |
           set -euo pipefail
-          # The PyPI run stands on the release tag, which this run reads as its branch name.
           if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::notice::The PyPI run was on '$VERSION', not a release tag, so no host was asked to sync."
-            exit 0
+            echo "::error::'$VERSION' is not vMAJOR.MINOR.PATCH."
+            exit 1
           fi
           case "$(printf '%s' "$HOSTS" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')" in
             false|off|no|0|none)

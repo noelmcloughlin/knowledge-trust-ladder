@@ -350,7 +350,7 @@ The pin is under `.github/workflows/`, which the job's own `GITHUB_TOKEN` may no
 
 Without the secret the workflow still runs: `sync` attaches the change to the run as `sync.patch` and writes the summary, and `publish` says so and opens nothing. A pull request opened with the token is opened under the token's owner and starts this repository's checks, as one opened with `GITHUB_TOKEN` would not.
 
-The skills repository can ask for the sync once a release's `ktl` package is on PyPI. Its `sync-hosts.yml` runs when its PyPI workflow completes and dispatches this workflow in each host named in its `KNOWLEDGE_SYNC_HOSTS` variable, with a token that holds Actions write there. The variable is a list of `owner/repo` names, and `false` asks nobody, as unset does. A host it does not name, or cannot reach, syncs on its own schedule.
+The skills repository can ask for the sync once a release's `ktl` package is on PyPI. Its `sync-hosts.yml`, started by its PyPI workflow's last job, dispatches this workflow in each host named in its `KNOWLEDGE_SYNC_HOSTS` variable, with a token that holds Actions write there. The variable is a list of `owner/repo` names, and `false` asks nobody, as unset does. A host it does not name, or cannot reach, syncs on its own schedule.
 
 ### By hand
 
