@@ -2,6 +2,7 @@
 
 ## 2026-11-19
 
+* **Curation**: human:noelmcloughlin confirmed 2 concepts, the ktl-sidecar skill playbook and the threat model, as they read after the daily sync; the threat model is no longer a draft.
 * **Changed**: the sync runs each day, its steps are in `knowledge-sync.sh`, and the review jobs are gone; `knowledge-sync.yaml` and `automation.md` say so since 0.70.3. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: hosts check for a release each day and no workflow tells them about one; `docs/releasing.md` says so since 0.70.3.
 * **Changed**: no job pushes the held workflow changes, and the sync token reaches one step; `docs/threat-model.md` says so since 0.70.3. Edited since a person confirmed it; the label says so until the curator looks again.
