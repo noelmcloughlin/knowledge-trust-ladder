@@ -2,6 +2,8 @@
 
 ## 2026-11-19
 
+* **Changed**: the docent playbook says a retired concept's label names its successor only from `isReplacedBy`; `skills/ktl-docent/references/answering.md` no longer names a `log.md` fallback. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: the trust label entry says the report finds a retired concept's successor in `isReplacedBy` alone, as `skills/ktl-curator/references/trust-fields.md` says. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Curation**: human:noelmcloughlin confirmed 2 concepts, the ktl-sidecar skill playbook and the threat model, as they read after the daily sync; the threat model is no longer a draft.
 * **Changed**: the sync runs each day, its steps are in `knowledge-sync.sh`, and the review jobs are gone; `knowledge-sync.yaml` and `automation.md` say so since 0.70.3. Edited since a person confirmed it; the label says so until the curator looks again.
 * **Changed**: hosts check for a release each day and no workflow tells them about one; `docs/releasing.md` says so since 0.70.3.
