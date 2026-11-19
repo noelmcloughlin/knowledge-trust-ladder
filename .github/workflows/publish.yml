@@ -186,7 +186,7 @@ jobs:
           git fetch --quiet origin "refs/tags/$VERSION:refs/tags/$VERSION"
           tagged="$(git rev-parse "refs/tags/$VERSION^{commit}")"
           if [ "$tagged" != "$GITHUB_SHA" ]; then
-            echo "::error::Tag $VERSION names $tagged, and this run checked $GITHUB_SHA: main moved as the release was made. The release exists, and no bundle zip, ktl package or sync was requested for it. Check the tagged commit, then request each by hand, or remove the release and its tag."
+            echo "::error::Tag $VERSION names $tagged, and this run checked $GITHUB_SHA: main moved as the release was made. The release exists, and no bundle zip or ktl package was requested for it. Check the tagged commit, then request each by hand, or remove the release and its tag."
             exit 1
           fi
 
@@ -194,9 +194,9 @@ jobs:
       # workflow from an event that token causes, so knowledge-release.yaml's
       # release trigger never fires here. A dispatch is the one exception, so
       # this step asks for the bundle zip directly, built from the tag. This
-      # step and the two after it each run once the tag names the checked
-      # commit, whether or not the one before them failed: a failed request
-      # fails the job and names itself, and the others still go out.
+      # step and the one after it each run once the tag names the checked
+      # commit, whether or not the first failed: a failed request fails the
+      # job and names itself, and the other still goes out.
       - name: Attach the knowledge bundle
         if: ${{ !cancelled() && steps.tagged.outcome == 'success' }}
         env:
@@ -209,8 +209,8 @@ jobs:
       # The same skills go to PyPI as the `ktl` package, for a machine that
       # reaches a package index and no git host. pypi.yml builds from the tag
       # and uploads where PYPI_RELEASE_ENABLED says; unset, it builds and
-      # checks the package and uploads nothing. Once it has uploaded,
-      # sync-hosts.yml asks the hosts to sync.
+      # checks the package and uploads nothing. Each host finds the release
+      # on its index within a day.
       - name: Publish the ktl package
         if: ${{ !cancelled() && steps.tagged.outcome == 'success' }}
         env:

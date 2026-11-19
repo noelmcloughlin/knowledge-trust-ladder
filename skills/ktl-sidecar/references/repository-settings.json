@@ -100,17 +100,6 @@
     },
     {
       "kind": "environment",
-      "name": "knowledge-sync-review",
-      "named_by": "KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT",
-      "workflows": ["knowledge-sync.yaml"],
-      "branches": ["{default}"],
-      "reviewers": 1,
-      "reviewers_level": "optional",
-      "why": "Its reviewers approve the workflow changes a release brings. With none, those changes wait for a person and the review jobs do not run; add a reviewer when you want that approval step.",
-      "docs": "automation.md#workflow-changes-wait-for-a-person"
-    },
-    {
-      "kind": "environment",
       "name": "knowledge-curation",
       "named_by": "KNOWLEDGE_CURATION_ENVIRONMENT",
       "workflows": ["knowledge-registrar.yaml"],
@@ -263,16 +252,6 @@
       },
       "why": "true turns the weekly ingest on.",
       "docs": "automation.md#setting-it-up-2"
-    },
-    {
-      "kind": "variable",
-      "name": "KNOWLEDGE_SYNC_REVIEW_ENVIRONMENT",
-      "workflows": ["knowledge-sync.yaml"],
-      "level": "optional",
-      "job_level": true,
-      "switch": {"name": "sync-review", "environment": "knowledge-sync-review"},
-      "why": "Names the Environment whose reviewers approve the workflow changes a release brings, so that the sync pushes them. Unset, a person applies them by hand.",
-      "docs": "automation.md#workflow-changes-wait-for-a-person"
     },
     {
       "kind": "variable",
