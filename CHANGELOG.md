@@ -8,6 +8,7 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 - **Each host checks for a new release once a day, by itself.** A release no longer notifies the hosts.
 - **The sync workflow's logic moved into the script `knowledge-sync.sh`, and the workflow file calls it.** A fix to the sync reaches a host next sync pull request.
+- **The pull request templates for a sync and an ingest keep only the checks most reviews need.**
 
 ### Fixed
 
