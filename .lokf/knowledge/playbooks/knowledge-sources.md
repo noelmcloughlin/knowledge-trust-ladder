@@ -7,7 +7,7 @@ genre: how-to
 resource: .
 generated:
   by: process:ktl-librarian
-  at: "2026-11-18T11:03:45Z"
+  at: "2026-11-23T16:04:59Z"
 verified:
   - by: human:noelmcloughlin
     at: "2026-09-10T00:00:00Z"
@@ -46,6 +46,9 @@ sources:
   - resource: CHANGELOG.md
     id: changelog-docent-holdout
     excerpt: "`tests/docent-holdout.yaml` pairs the eight captured questions with the concept each answer should rest on"
+  - resource: CHANGELOG.md
+    id: changelog-daily-sync
+    excerpt: Each host checks for a new release once a day, by itself.
   - resource: docs/architecture.en-simple.md
   - resource: website
   - resource: skills/ktl-website/templates/website
@@ -74,6 +77,9 @@ sources:
   - resource: docs/young-readers.md
   - resource: docs/first-bundle.md
   - resource: skills/ktl-sidecar/scripts/fill-placeholders.py
+exclusions:
+  - resource: uv.lock
+    reason: a generated dependency lock mirroring pyproject.toml, not knowledge about the repository.
 ---
 
 # Sources swept for this bootstrap discovery pass
@@ -84,7 +90,7 @@ sources:
 | `skills/*/references/*.md`, `skills/ktl-prose/scripts/prose-check.py`, `skills/ktl-prose/assets/voa-word-book.txt`, `skills/ktl-docent/scripts/*.sh`, `skills/ktl-sidecar/scripts/fill-placeholders.py` | detail behind each skill Playbook; the prose skill's check script, which `playbooks/ktl-prose-skill.md` describes; and ktl-docent's own copies of `knowledge-report.sh` and `knowledge-feedback.sh`, which `playbooks/ktl-docent-skill.md` describes; the references include the librarian's `agent-skills.md` and `retellings.md` and the prose skill's `young-readers.md`; `voa-word-book.txt` is the word list `prose-check.py` reads under a band of readers; `fill-placeholders.py` is the script ktl-sidecar's Step 1 runs to fill its templates' placeholders | diff against the claims in the corresponding concept body; check 11a holds the docent's two scripts byte-identical to their templates |
 | `skills/ktl-sidecar/templates/` | what the sidecar skill actually writes: the toolkit dependency and its `[build]` extra, the `justfile` with its `schema` variable for a domain vocabulary, `.gitattributes`, `gitignore`, `llms.txt`, `queries.http`, the two READMEs, the `knowledge/` skeleton, the scripts (preflight, conventions and its Python half, librarian wrapper, apply and its Python half, report, provenance gate, feedback recorder, the federation build `knowledge-federate.py`, the sync `knowledge-sync.sh` and the ingest `knowledge-ingest.sh` and its Python half), the workflows (registrar, librarian and release; `knowledge-federation.yaml` with a domain host's `domain.yaml`; `knowledge-sync.yaml`; `knowledge-ingest.yaml`; the last two each with a pull request template), `knowledge-sync.manifest`, the list of what a sync keeps current, `ingest.yaml`, the ingest's manifest, and `m365/`: the Copilot skills' builder and the docent's instructions for Copilot | diff `pyproject.toml` (the `lokf` floor and the `ktl` pin), the `justfile` recipes against `explanation/domain-vocabularies.md`, and the template lists in the skill's Step 1 and Step 5 tables |
 | `skills/ktl-website/templates/`, `skills/ktl-website/scripts/website-preflight.sh` | what the website skill lays down in a host: the Hugo site under `templates/website/`, which this repository's own `website/` copies, and the deploy workflow `knowledge-website.yaml`; and the preflight it runs in place. `playbooks/ktl-website-skill.md` carries them | diff the step list, the rule for the site's folder, the four placeholders and the three files a host owns against the concept; the site's code, its layouts, content adapters, assets, static files and scripts, is consciously excluded as concepts, as under `website/`; the template's `README.md` and `site.toml` hold the placeholders Step 1 substitutes, and every other file is copied to `website/` byte for byte, which check 11w holds |
-| `skills/ktl-sidecar/templates/knowledge-sync.manifest`, `skills/ktl-sidecar/templates/scripts/knowledge-sync.sh`, `skills/ktl-sidecar/templates/github/knowledge-sync.yaml`, `knowledge-sync-pull-request.md` | how a host keeps its sidecar current by itself: the manifest that lists each template, its copy and the rule for it, which the sync script, the preflight and contract check 11 read; the sync script, which a host's own `knowledge-sync.yaml` or a person runs; and the weekly workflow that keeps one pull request refreshed to the newest release. `playbooks/releasing.md` and `playbooks/repository-validation.md` describe them | diff the manifest's rules against check 11 in `playbooks/repository-validation.md`, and the workflow's schedule and the script's steps against `playbooks/releasing.md`; this repository has nothing to sync itself to, so it carries no copy |
+| `skills/ktl-sidecar/templates/knowledge-sync.manifest`, `skills/ktl-sidecar/templates/scripts/knowledge-sync.sh`, `skills/ktl-sidecar/templates/github/knowledge-sync.yaml`, `knowledge-sync-pull-request.md` | how a host keeps its sidecar current by itself: the manifest that lists each template, its copy and the rule for it, which the sync script, the preflight and contract check 11 read; the sync script, which a host's own `knowledge-sync.yaml` or a person runs; and the workflow, which now runs each day,[^changelog-daily-sync] that keeps one pull request refreshed to the newest release. `playbooks/releasing.md` and `playbooks/repository-validation.md` describe them | diff the manifest's rules against check 11 in `playbooks/repository-validation.md`, and the workflow's schedule and the script's steps against `playbooks/releasing.md`; this repository has nothing to sync itself to, so it carries no copy |
 | `docs/ingest.md`, `docs/ingest-reference.md`, `skills/ktl-librarian/references/ingest.md`, `skills/ktl-sidecar/templates/ingest.yaml`, `skills/ktl-sidecar/templates/scripts/knowledge-ingest.sh`, `knowledge-ingest.py`, `skills/ktl-sidecar/templates/github/knowledge-ingest.yaml`, `knowledge-ingest-pull-request.md` | the ingest that mirrors knowledge from outside the repository: the manifest `.lokf/ingest.yaml`, the script that writes each source as Markdown under `.lokf/mirror/` with `.lokf/ingest.lock.yaml` recording what was fetched, the workflow that opens one pull request with what changed, and the librarian's page on reading and citing the mirror; the ingest restores a lost mirror file and prunes on a schedule. `playbooks/knowledge-outside-the-repository.md` carries it | diff the four kinds of source, the manifest's refusals, the workflow's jobs and secrets and the librarian's rules for the mirror against that concept; this repository has no `.lokf/ingest.yaml`, so it carries no copy |
 | `README.md`, `docs/architecture.md`, `docs/install.md`, `docs/repository-layout.md` | project identity: the README is a doorway that keeps the poem, the opening paragraph, the agents note and the cast table, and points to the website at `https://w3id.org/ktl/` and to the site's pages for the quick start and `docs/architecture.md`, which holds the four-role narrative, the trust ladder, the reading list and the credits; the install commands, prerequisites table and pinning rule, on their own page with the quick start; the repository tree, likewise on its own page | diff the roles table and the `Read on` table on `docs/architecture.md`; diff `docs/install.md` against `references/gh-skill-cli.md` and `references/open-skills-cli.md`; diff the tree against the working copy |
 | `SPEC.md` | the KTL specification, version 0.2: the rules KTL adds to a LOKF bundle, which are the ladder, who writes each record, the eighteen conventions, what counts as a person's confirmation and how each trust label is computed. `references/ktl-specification.md` carries it | diff the version line, the section list and section 12's table of copies against the concept; contract check 24 holds the copies of its rules in the scripts and the skills' pages to it, so re-check `glossary/trust-label.md` and `glossary/the-pen.md` when a rule changes |
@@ -130,3 +136,5 @@ sources:
 [^changelog-docent-holdout]: CHANGELOG.md, 0.58.0, Added
 [^repository-layout.md]: docs/repository-layout.md, the lines for `.github/workflows/docent-eval.yml`, `.github/docent-eval/`, `tests/`, `evals/` and `justfile`
 [^threat-model-docent-holdout]: docs/threat-model.md, The docent eval
+
+[^changelog-daily-sync]: CHANGELOG.md, 0.70.3, Changed

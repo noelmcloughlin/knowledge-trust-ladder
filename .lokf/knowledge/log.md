@@ -1,5 +1,13 @@
 # Change Log
 
+## 2026-11-23
+
+* **Changed**: a sibling's sync pull request now moves within a day, as `CONTRIBUTING.md` has said since 0.70.1.
+* **Changed**: a repository's sync now moves the `ktl` pin each day, not weekly, as `CHANGELOG.md` has said since 0.70.3.
+* **Changed**: the pin a sidecar sets for `ktl` now moves each day, not weekly, as `CHANGELOG.md` has said since 0.70.3.
+* **Changed**: the source map now calls the sidecar sync workflow daily, not weekly, as `CHANGELOG.md` has said since 0.70.3, and lists `uv.lock`, the root dependency lock, as excluded. Edited since a person confirmed it; the label says so until the curator looks again.
+* **Changed**: a host's sync pull request files its changelog entry under `### Changed`, not `### Security`, and its commit is typed `chore(sidecar)` so it cuts no release in the host, as `docs/releasing.md` has said since #402.
+
 ## 2026-11-19
 
 * **Changed**: the docent playbook says a retired concept's label names its successor only from `isReplacedBy`; `skills/ktl-docent/references/answering.md` no longer names a `log.md` fallback. Edited since a person confirmed it; the label says so until the curator looks again.

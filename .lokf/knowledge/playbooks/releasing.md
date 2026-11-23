@@ -7,7 +7,7 @@ genre: how-to
 resource: .github/workflows/publish.yml
 generated:
   by: process:ktl-librarian
-  at: "2026-11-19T21:15:57Z"
+  at: "2026-11-23T16:04:59Z"
 status: draft
 dependsOn:
   - https://w3id.org/ktl/knowledge/references/gh-skill-cli
@@ -41,6 +41,9 @@ sources:
   - resource: docs/releasing.md
     id: releasing-hosts-poll
     excerpt: No workflow here tells a sibling about a release.
+  - resource: docs/releasing.md
+    id: releasing-sync-commit
+    excerpt: the changelog entry under ... `### Changed`. The commit is typed `chore(sidecar)`, so a sync cuts no release in the sibling
 verified:
   - by: process:ktl-librarian
     at: "2026-11-18T00:02:42Z"
@@ -93,7 +96,7 @@ No workflow here tells a host about a release.[^releasing-hosts-poll] Each host'
 
 The sibling repositories (the two Obsidian plugins) carry byte-identical copies of the sidecar templates and their own skills pin. Only the first line of `.lokf/justfile`, which names the host, and its `schema :=` line are a sibling's own.
 
-Each sibling keeps itself current. Its `knowledge-sync.yaml` reads the `ktl` pin in `.lokf/pyproject.toml` and asks its package index for the newest release each day. When the pin is behind, it runs the sibling's own `.lokf/scripts/knowledge-sync.sh`, which reads what to copy from the release's `templates/knowledge-sync.manifest`, and opens one pull request with the diff: the copies, the pin, and the changelog entry under `## [Unreleased]` and `### Security`. A later run refreshes that one pull request to the newest release until it is merged. The branch the sync pushes carries no workflow a release wrote (`CHANGELOG.md`). `publish` keeps every workflow as the default branch has it, and holds the release's workflow changes for a person to apply. The header of `knowledge-sync.sh` says what a sync copies, adds and refuses.
+Each sibling keeps itself current. Its `knowledge-sync.yaml` reads the `ktl` pin in `.lokf/pyproject.toml` and asks its package index for the newest release each day. When the pin is behind, it runs the sibling's own `.lokf/scripts/knowledge-sync.sh`, which reads what to copy from the release's `templates/knowledge-sync.manifest`, and opens one pull request with the diff: the copies, the pin, and the changelog entry under `## [Unreleased]` and `### Changed`. The commit is typed `chore(sidecar)`, so a sync cuts no release in the sibling.[^releasing-sync-commit] A later run refreshes that one pull request to the newest release until it is merged. The branch the sync pushes carries no workflow a release wrote (`CHANGELOG.md`). `publish` keeps every workflow as the default branch has it, and holds the release's workflow changes for a person to apply. The header of `knowledge-sync.sh` says what a sync copies, adds and refuses.
 
 A new template goes in the manifest and in ktl-sidecar's Step 5 table, and nowhere else, because the preflight and contract check 11 read the manifest.
 
@@ -116,3 +119,5 @@ Before the first upload to each index, a maintainer registers a pending publishe
 [^releasing-check-15]: docs/releasing.md, After a releasing merge to `knowledge-trust-ladder`, what follows (quoted)
 
 [^releasing-hosts-poll]: docs/releasing.md, the paragraph on keeping the siblings current (quoted)
+
+[^releasing-sync-commit]: docs/releasing.md, the paragraph on each sibling keeping itself current (quoted)
