@@ -3,5 +3,5 @@
 # by the command in its header; the workflows install it with --require-hashes.
 pytest==9.2.0
 pytest-xdist==3.8.0
-pyyaml==6.0.3
-pypdf==7.1.0
+pyyaml==6.0.4
+pypdf==7.1.1
