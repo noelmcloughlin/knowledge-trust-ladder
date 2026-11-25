@@ -7,7 +7,7 @@ genre: reference
 resource: https://pypi.org/project/lokf/
 generated:
   by: process:ktl-librarian
-  at: "2026-11-19T00:10:04Z"
+  at: "2026-11-23T16:04:59Z"
 status: draft
 definedBy:
   - https://w3id.org/ktl/knowledge/references/lokf-specification
@@ -22,6 +22,8 @@ sources:
   - resource: skills/ktl-librarian/SKILL.md
   - resource: skills/ktl-sidecar/references/gate.md
   - resource: CHANGELOG.md
+    id: changelog-daily-sync
+    excerpt: Each host checks for a new release once a day, by itself.
   - resource: docs/context-layer.md
   - resource: docs/federation.md
   - resource: docs/context-layer-technology.md
@@ -48,7 +50,7 @@ The toolkit is the implementation, not the specification. `lokf validate` checks
 
 From 0.10.0, `lokf validate` also warns, without failing, when concepts give one source `id` different excerpts: the id resolves against `base_iri` to one source node, which the SHACL shapes allow one excerpt. Conventions rule 16 fails the same case at the gate.
 
-Scaffolded bundles depend on `lokf[build,shacl]>=0.10.0`, a floor and not a pin. They also depend on `rust-just==1.47.0`, so that `uv.lock` checks the recipe runner by hash and `uv run just` runs it. They pin `ktl`, the package that carries the skills, at one release: the librarian workflow installs `ktl-librarian` from it, and the weekly sync moves the pin. The `[build]` extra installs the full `linkml` package: the whole generator suite, not just the runtime. So a scaffolded sidecar already has the LinkML generators for a domain vocabulary, with no extra installation.
+Scaffolded bundles depend on `lokf[build,shacl]>=0.10.0`, a floor and not a pin. They also depend on `rust-just==1.47.0`, so that `uv.lock` checks the recipe runner by hash and `uv run just` runs it. They pin `ktl`, the package that carries the skills, at one release: the librarian workflow installs `ktl-librarian` from it, and the sync, which now runs each day, moves the pin.[^changelog-daily-sync] The `[build]` extra installs the full `linkml` package: the whole generator suite, not just the runtime. So a scaffolded sidecar already has the LinkML generators for a domain vocabulary, with no extra installation.
 
 Where Python is unavailable, the skills fall back to a structural cross-check against the raw schema, which is not a validation run. They read it from the commit tagged `v0.10.0`, which matches the `lokf` floor: `raw.githubusercontent.com/nicholsn/lokf/ee37659ca2f78915f5a691da7bad9239da624c87/lokf.yaml`. The URL names that commit, never a tag or `main`, because a tag can be moved. The pin moves with the floor, so the fallback cross-checks against the schema the installed toolkit enforces. That file is byte-identical to the schema inside the `lokf` 0.10.0 wheel, which `uv sync --locked` checks against `.lokf/uv.lock` wherever Python is present.
 
@@ -57,3 +59,5 @@ ktl-librarian checks the toolkit's version in a live session. It asks the index 
 [^lokf-export.py]: skills/ktl-website/templates/website/scripts/lokf-export.py, the module's docstring
 
 [^knowledge-federate.py]: skills/ktl-sidecar/templates/scripts/knowledge-federate.py, the docstring of `leave_out_root_map`
+
+[^changelog-daily-sync]: CHANGELOG.md, 0.70.3, Changed
