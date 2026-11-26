@@ -26,7 +26,7 @@ Install the skills:
 gh skill install noelmcloughlin/knowledge-trust-ladder --all --scope user
 ```
 
-Or install [`ktl`](https://pypi.org/project/ktl/) from PyPI via `uv/pipx`, or with pip inside a virtual environment. Default is GitHub Copilot, unless `--agent` is passed:
+Or [`ktl`](https://pypi.org/project/ktl/) via `uv/pipx`, or pip in a virtual environment. Default is GitHub Copilot, unless `--agent` is passed:
 
 ```bash
 uvx ktl skills install --scope user
