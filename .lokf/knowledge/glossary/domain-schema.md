@@ -21,7 +21,7 @@ generated:
 status: draft
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-14T22:54:18Z"
+    at: "2026-11-26T02:26:42Z"
 ---
 
 # Overview

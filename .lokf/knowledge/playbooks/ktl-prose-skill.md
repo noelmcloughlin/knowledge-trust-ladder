@@ -27,7 +27,7 @@ definedBy:
   - https://w3id.org/ktl/knowledge/references/agent-skills-specification
 generated:
   by: process:ktl-librarian
-  at: "2026-11-17T20:29:12Z"
+  at: "2026-11-26T02:26:42Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -45,7 +45,7 @@ A museum edits its labels before the exhibition opens. `ktl-prose` does that for
 2. Give every sentence a verb.
 3. Keep one idea to a sentence and one topic to a paragraph, and split a sentence past forty words or a paragraph past 150.
 4. Say the step, then the reason.
-5. Use no dash as punctuation.
+5. Do not use a dash as punctuation.
 6. Turn a long aside into a sentence of its own.
 7. Turn a run of conditions into a list.
 8. Use the same word for the same thing.
@@ -85,7 +85,7 @@ A concept with no `generated.by` is reworded only when a person names it. Naming
 # Steps
 
 0. **Preflight**: run the preflight and the conventions script first, as every skill that touches the bundle does. The skill never opens `.lokf/feedback.md`.
-1. **Report**, always and read-only. `prose-check.py --bundle .lokf/knowledge` says which files may be reworded. The style checks `dash`, `long`, `paragraph`, `sentences` and `words` run over those, with `unseen` for a character no reader sees. `sentences` reports a paragraph of more than eight sentences, and the listed words include "outright" and "at all". Under rule 11 the words also include "stops without", which states a need as what happens without the thing; the script skips it before "notice", "warning" or a word ending in "ing". The script runs through `uv run`, or a python3 of 3.11 or later, never bare `python`. Then the agent reads every one of those files, cleared or not. Only a reader sees a late verb, a reason before its step, two names for one thing, a figure the script does not list, a sentence the page already says, or a count only the author knows. The report quotes in full every sentence the agent would cut, so that the person answers once.
+1. **Report**, always and read-only. `prose-check.py --bundle .lokf/knowledge` says which files may be reworded. The style checks `dash`, `long`, `paragraph`, `sentences` and `words` run over those, with `unseen` for a character no reader sees. `sentences` reports a paragraph of more than eight sentences, and the listed words include "outright" and "at all". Under rule 11 the words also include "stops without", which states a need as what happens without the thing; the script skips it before "notice", "warning" or a word ending in "ing". Rule 11 also asks for a negative on its verb, so the script reports "adds no rule" and suggests "does not add a rule". It leaves "has no" and "there is no" alone. The script runs through `uv run`, or a python3 of 3.11 or later, never bare `python`. Then the agent reads every one of those files, cleared or not. Only a reader sees a late verb, a reason before its step, two names for one thing, a figure the script does not list, a sentence the page already says, or a count only the author knows. The report quotes in full every sentence the agent would cut, so that the person answers once.
 2. **Reword**, only in a live session on a request addressed to the skill. Keep the earlier text, work one file at a time, change the wording only, lay out what it rewords the way the file's project does, and leave what cannot be fixed.
 3. **Check** what a script can, with `prose-check.py --against HEAD` or `--before <copy>`. A finding names something a rewording never changes, such as a number, a link, a code span or a claim that turned over, and the agent undoes it. A note asks the agent to look again, and never changes the exit status. `references/limits.md` lists every finding and note, and what no script sees.
 4. **Log** one **Prose** line in `log.md`.

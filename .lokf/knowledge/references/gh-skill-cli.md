@@ -20,7 +20,7 @@ sources:
   - resource: .github/workflows/publish.yml
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-23T16:04:59Z"
+    at: "2026-11-26T02:26:42Z"
 ---
 
 # Overview

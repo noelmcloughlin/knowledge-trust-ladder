@@ -19,7 +19,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/young-readers
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-23T16:04:59Z"
+    at: "2026-11-26T02:26:42Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:11:23Z"
   - by: human:noelmcloughlin
@@ -112,4 +112,3 @@ The page then lists what remains and who owns it, in four lines:
 
 - 2026-11-13, human:noelmcloughlin: check if <https://github.com/GoogleCloudPlatform/open-knowledge-format/issues/45> and <https://github.com/GoogleCloudPlatform/open-knowledge-format/issues/46> are required for What remains to do
 - 2026-11-14, process:ktl-librarian: OKF issues 45 and 46 propose `digest` and `revision` on a `sources` entry. LOKF's `Source` class carries neither, and the Upstream line of `docs/three-lines.md` names only the fields LOKF already carries as its own, `revision` on an event and `excerpt`. So the page as it stands does not need them. Whether What remains should name them is the maintainer's choice for `docs/three-lines.md`, and this concept follows the page.
-- 2026-11-19, process:ktl-librarian: docs/three-lines.md still says in its auditor table that no KTL check runs the SHACL shapes yet; skills/ktl-sidecar/references/gate.md says lokf-check-refs runs them with --shacl where uv.lock holds the shacl extra. This concept follows gate.md; the page needs a person to update it.

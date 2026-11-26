@@ -46,7 +46,7 @@ sources:
     excerpt: the changelog entry under ... `### Changed`. The commit is typed `chore(sidecar)`, so a sync cuts no release in the sibling
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-18T00:02:42Z"
+    at: "2026-11-26T02:26:42Z"
 ---
 
 # Overview

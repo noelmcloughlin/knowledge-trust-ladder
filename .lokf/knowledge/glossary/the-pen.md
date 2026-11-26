@@ -17,7 +17,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/why-a-registrar-role
 generated:
   by: process:ktl-librarian
-  at: "2026-11-18T08:53:06Z"
+  at: "2026-11-26T02:26:42Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -44,4 +44,4 @@ In the scheduled run, the wrapper applies the patch file after the agent has fin
 
 The pen exits 0 when it applied the patch, or with `--dry-run` would apply it. It exits 1 with its findings, and writes nothing. It exits 2 when there is no bundle, no patch file, a file that is not YAML or no runner, and on a run without `--dry-run` in the agent's step of a scheduled run.
 
-The pen is the librarian's only way to write the bundle, and the bundle has other writers: a person writes the curator's verdicts through ktl-curator or the KTL Curator plugin. The architecture page names the pen as the registrar for the librarian.
+The pen is the librarian's only way to write the bundle, and the bundle has three other writers, as `docs/how-it-works.md` says. A person writes the curator's verdicts through ktl-curator or the KTL Curator plugin. ktl-prose rewords the body of a concept that an agent wrote and no person confirmed. The KTL Registrar plugin writes a `<!-- lokf:related -->` block into a concept's body, and the root `diataxis.md`. The docent does not write in the bundle. The architecture page names the pen as the registrar for the librarian.
