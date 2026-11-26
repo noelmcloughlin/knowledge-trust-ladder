@@ -4,6 +4,8 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+## [0.71.0] - 2026-11-26
+
 ### Added
 
 - **ktl-prose asks for a negative on its verb, as a new part of rule 11.** Its check script reports "adds no rule" and suggests "does not add a rule", and leaves "has no" and "there is no" alone.
