@@ -1,6 +1,6 @@
 # Sources: where the rules come from
 
-This page is for whoever wants the reasons behind [rules.md](rules.md), or weighs a change to a rule. It says what the rules left out and why, what the sources say about line breaks, and how each source was read. No step of a rewording needs it.
+This page is for whoever wants the reasons behind [rules.md](rules.md), or weighs a change to a rule. It says what the rules left out and why, what the sources say about line breaks, and how each source was read. The steps of a rewording do not need it.
 
 ## What was left out, and why
 
@@ -16,7 +16,7 @@ This page is for whoever wants the reasons behind [rules.md](rules.md), or weigh
 
 [rules.md](rules.md#line-breaks-in-the-source) says which layout to use. This section gives the reasons.
 
-No Markdown specification asks for a wrapped line. CommonMark reads a line ending inside a paragraph as a soft line break, which a browser shows as a space, so a standard renderer draws every layout alike. The choice concerns only the source, and three layouts are in wide use:
+Markdown specifications do not ask for a wrapped line. CommonMark reads a line ending inside a paragraph as a soft line break, which a browser shows as a space, so a standard renderer draws every layout alike. The choice concerns only the source, and three layouts are in wide use:
 
 - **One line per paragraph.** The editor wraps each line on screen. The Plone documentation guide asks for it.
 - **One sentence per line.** A line ends where a sentence ends. Brian Kernighan advised it in 1974, Semantic Line Breaks specifies it, Asciidoctor recommends it, and GitLab asks for each new sentence on a new line.
@@ -27,9 +27,9 @@ Each layout has a benefit and a cost:
 - **A line break gives line-based tools a finer grain.** A diff, `git blame`, a review comment, a suggested change and a merge each work line by line, so they reach one sentence only when it has a line of its own. Google keeps its column partly because "Code Search doesn't soft wrap". Microsoft keeps its column because it "improves the readability of git diffs and history".
 - **A fixed column reflows.** Reword one sentence and every later line of the paragraph moves, so the diff marks lines whose words did not change. Kernighan, Semantic Line Breaks and Asciidoctor each give this as the reason to break at sentences instead.
 - **One sentence per line keeps line-level review without reflow.** A changed sentence is a changed line, and a long sentence shows as a long line.
-- **One line per paragraph is the cheapest to write, and it reads the same wherever a line break shows.** GitHub shows a single line break as a break in issues, pull requests and discussions, and Obsidian's Live Preview shows each source line as a line. No phrase spans two lines, so `grep`, the pen's `replace` and an agent's exact edit find it. No wrapped line can start a list, a heading or a block quote by accident (rule 5 of [rules.md](rules.md)). Its cost is the coarse diff: one changed word marks the whole paragraph. GitHub's rendered prose diff and `git diff --word-diff` mark the changed words.
+- **One line per paragraph is the cheapest to write, and it reads the same wherever a line break shows.** GitHub shows a single line break as a break in issues, pull requests and discussions, and Obsidian's Live Preview shows each source line as a line. A phrase does not span two lines, so `grep`, the pen's `replace` and an agent's exact edit find it. Wrapping cannot start a list, a heading or a block quote by accident (rule 5 of [rules.md](rules.md)). Its cost is the coarse diff: one changed word marks the whole paragraph. GitHub's rendered prose diff and `git diff --word-diff` mark the changed words.
 
-The sources agree on no single layout. They agree that a project picks one and keeps every file to it, and that a tool keeps the project's choice: Prettier leaves a file's wrapping as it is unless told otherwise.
+The sources do not agree on a single layout. They agree that a project picks one and keeps every file to it, and that a tool keeps the project's choice: Prettier leaves a file's wrapping as it is unless told otherwise.
 
 ## Sources, and how each was read
 
@@ -49,6 +49,10 @@ The addresses sit in a fenced block so that a link checker does not fetch sites 
 | Steven Pinker, *The Sense of Style* | Secondary pages that quote the book | Rule 10: an intensifier reads as a hedge, because an unmodified word is read as absolute. |
 | Emily Thrush, "Plain English? A study of plain English vocabulary and international audiences" (2001) | The abstract | Rule 9's quiet figures: a non-native reader can misread a phrasal verb. |
 | Microsoft Writing Style Guide, "Writing tips" for global communications | In full | Rule 9: avoid idioms for a worldwide audience, include "that" and "who", and place "only" with care. Rule 2: limit sentence fragments. |
+| The Editor's Manual, "No, Not A, Not Any" | In full | Rule 11's negative on the verb: "No is more emphatic than not any", and what "I am no expert" says beside "I am not an expert". |
+| Claire Childs, Christopher Harvey, Karen Corrigan and Sali Tagliamonte, "Transatlantic perspectives on variation in negative expressions" (2020) | The abstract | Rule 11: which verbs keep "no" in speech. |
+| The OKF specification, version 0.3 | In full | Rule 11: a specification that puts the negative on the verb, and the counts. |
+| Digital.gov, "Plain language guide", the page on style | The sections on positive language and double negatives | Rule 11: a negative restated with "only", as in "only if" for "is not ... unless". |
 | Diátaxis, "How-to guides" and "Reference" | Both pages in full | What the genre asks: a how-to guide is a sequence that does not explain, and reference describes and is austere. |
 | George Lakoff and Mark Johnson, *Metaphors We Live By* | Not read for this page; the term is theirs | Rule 9's quiet figures: a program as a place, and its parts as things that travel. |
 | ASD-STE100, Simplified Technical English | The standard's FAQ, and secondary summaries of its rules | Rules 3 and 8: one topic to a paragraph, at most six sentences, and one meaning to a word. The counts come from the summaries, not the standard. |
@@ -103,6 +107,10 @@ https://digitalcommons.memphis.edu/facpubs/3866
 https://learn.microsoft.com/en-us/style-guide/global-communications/writing-tips
 https://asd-ste100.org/STE_faq.html
 https://plainlanguage.gov/guidelines/concise/use-positive-language/
+https://editorsmanual.com/articles/no-not-a-not-any/
+https://doi.org/10.1017/S1360674318000199
+https://github.com/open-knowledge-format/open-knowledge-format/blob/main/SPEC.md
+https://digital.gov/guides/plain-language/writing/style
 https://diataxis.fr/how-to-guides/
 https://diataxis.fr/reference/
 ```

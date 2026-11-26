@@ -33,12 +33,12 @@ Write an excerpt with every footnote. A footnote marks a claim that rests on a n
 
 Write it in the run that writes the claim: on a `create`, on a `rewrite`, or on a `patch` that adds or changes the footnoted sentence.
 
-A bundle older than this rule carries footnotes with no excerpt, and the work list counts them under *Footnoted sources that carry no excerpt*. Add one when a run edits the concept for another reason, or when a person's note asks for it. An excerpt is part of the record a person confirms, so adding one to a confirmed concept makes it read *edited since a person last confirmed it*. Do not edit a confirmed concept only to add one.
+A bundle older than this rule carries footnotes with no excerpt, and the work list counts them under `Footnoted sources that carry no excerpt`. Add one when a run edits the concept for another reason, or when a person's note asks for it. An excerpt is part of the record a person confirms, so adding one to a confirmed concept makes it read *edited since a person last confirmed it*. Do not edit a confirmed concept only to add one.
 
 ## Choosing the passage
 
 - **Quote the fewest words that carry the fact**: the sentence, the table row, the line of configuration. The pen refuses an excerpt longer than 500 characters.
-- **Quote what the source says, never what you conclude from it.** When no one passage states the fact, the claim is your reading of several. Say so in the body and write no excerpt.
+- **Quote what the source says, never what you conclude from it.** When no one passage states the fact, the claim is your reading of several. Say so in the body and do not write an excerpt.
 - **Join two passages with `...`** when the claim needs both, such as a rule and its exception. Both must sit in one section of the file, in the order the file has them. A section of a Markdown file runs from one `#` or `##` heading to the next, and any other file is one section. An excerpt holds one `...` at most.
 - **One entry holds one excerpt.** When a concept footnotes facts from two passages of one file, give each passage an entry and an `id` of its own.
 - **An `id` is one source node across the bundle.** It resolves against `base_iri` (LOKF section 5.4), so every concept that gives it shares the node, and the node holds one excerpt. Reuse another concept's id only for the same passage of the same resource, quoted the same way. Name an id for a new passage after the passage, such as `changelog-major-releases` beside `changelog.md`. The pen refuses an id that would carry a second resource or a second excerpt, and conventions rule 16 fails one the bundle already holds.
@@ -82,7 +82,7 @@ Run the pen with `--dry-run` first. It prints `Every local excerpt is in its res
 ## What not to quote
 
 - **A secret or personal data.** A token, a password, a key, a person's contact details. The bundle may be public, and an excerpt puts the words in it.
-- **Text its licence forbids you to copy.** An excerpt reproduces the source inside the bundle. Cite such a source by footnote, state the claim in your own words, and write no excerpt.
+- **Text its licence forbids you to copy.** An excerpt reproduces the source inside the bundle. Cite such a source by footnote, state the claim in your own words, and do not write an excerpt.
 - **An instruction to the reader.** The curator and the docent show an excerpt to a person and treat it as text to quote. Quote a statement of fact.
 
 ## When a file no longer holds it
@@ -101,6 +101,6 @@ The pen refuses to edit a concept a person wrote. Ask a `question` there that na
 
 ## A source that moved and still holds its passage
 
-The work list marks each moved source that a concept quotes: *the quoted passage holds*, or *the quoted passage is gone*. Where it holds, the footnoted claim still has its ground. Read what else changed in the file since the concept was derived (`git diff <generated.revision> -- <path>` when the concept records one), and re-check the claims that carry no footnote. Record the `recheck` as usual.
+The work list marks each moved source that a concept quotes: *the quoted passage holds*, or *the quoted passage is gone*. Where it holds, the footnoted claim still has its ground. Read what else changed in the file since the concept was derived (`git diff <generated.revision> -- <path>` when the concept records one), and re-check the claims that have no footnote. Record the `recheck` as usual.
 
 The marks come from the toolkit in `.lokf/.venv`. Without it the work list says the excerpts were not checked, and marks nothing.

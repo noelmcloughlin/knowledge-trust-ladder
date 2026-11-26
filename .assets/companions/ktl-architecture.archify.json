@@ -7,75 +7,365 @@
     "quality_profile": "showcase",
     "locale": "en",
     "translations": {
-      "diagram.description.architecture": "Three writers, each in one way only: the librarian, an agent, writes only patch.yaml, which the pen applies to the bundle; the curator, a named person, writes a verified event in that person's name; the docent writes nothing in the bundle, and the feedback script records a reader's miss. Two programs check what is written: the registrar's gate on each pull request, the report script on each read."
+      "diagram.description.architecture": "Every write goes one of four ways: the librarian writes only patch.yaml, which the pen applies; the curator writes a verdict directly; ktl-prose rewords; the KTL Registrar plugin writes a related block. The docent does not write in the bundle; knowledge-feedback.sh records a reader's entry in feedback.md. The gate checks each pull request, and the report computes every label on each read."
     },
     "repository": {
       "url": "https://github.com/noelmcloughlin/knowledge-trust-ladder.git",
       "provider": "github",
       "link_mode": "web",
-      "revision": "f488b192183e2261cac6a92c2c36edd228ce2d3a"
+      "revision": "2df7b5d1a6ca43c340ea4d7efc0a94af2bdcb06a"
     },
     "legend": {
       "entries": {
-        "backend": { "label": "an agent derives it" },
-        "security": { "label": "deterministic tools check it" },
-        "external": { "label": "a named person vouches for it" },
-        "database": { "label": "the knowledge bundle" }
+        "backend": {
+          "label": "an agent derives it"
+        },
+        "security": {
+          "label": "deterministic tools check it"
+        },
+        "external": {
+          "label": "a named person vouches for it"
+        },
+        "database": {
+          "label": "the bundle, and a file beside it"
+        }
       }
     }
   },
   "components": [
-    { "id": "librarian", "type": "backend", "label": "Librarian", "sublabel": "an agent, ktl-librarian", "pos": [40, 40], "size": [170, 64],
+    {
+      "id": "librarian",
+      "type": "backend",
+      "label": "Librarian",
+      "sublabel": "writes only patch.yaml",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        140,
+        64
+      ],
       "sources": [
-        { "path": "skills/ktl-librarian/SKILL.md", "line": 55, "label": "writes only through the pen" },
-        { "path": "docs/architecture.md", "line": 40, "label": "the librarian's role" }
-      ] },
-    { "id": "curator", "type": "external", "label": "Curator", "sublabel": "a named person", "pos": [270, 40], "size": [170, 64],
+        {
+          "path": "SPEC.md",
+          "line": 97,
+          "label": "a patch file, which the pen applies"
+        }
+      ]
+    },
+    {
+      "id": "curator",
+      "type": "external",
+      "label": "Curator",
+      "sublabel": "a verdict, directly",
+      "pos": [
+        203,
+        40
+      ],
+      "size": [
+        140,
+        64
+      ],
       "sources": [
-        { "path": "skills/ktl-curator/SKILL.md", "line": 87, "label": "Confirm adds a verified event" },
-        { "path": "skills/ktl-curator/SKILL.md", "line": 77, "label": "one authenticated id" },
-        { "path": "docs/architecture.md", "line": 44, "label": "the curator is always a person" }
-      ] },
-    { "id": "docent", "type": "backend", "label": "Docent", "sublabel": "an agent, ktl-docent", "pos": [500, 40], "size": [170, 64],
+        {
+          "path": "SPEC.md",
+          "line": 98,
+          "label": "a verdict, written directly"
+        },
+        {
+          "path": "SPEC.md",
+          "line": 160,
+          "label": "the five verdicts"
+        }
+      ]
+    },
+    {
+      "id": "prose",
+      "type": "backend",
+      "label": "Copy editor",
+      "sublabel": "ktl-prose, the wording",
+      "pos": [
+        366,
+        40
+      ],
+      "size": [
+        140,
+        64
+      ],
       "sources": [
-        { "path": "skills/ktl-docent/SKILL.md", "line": 18, "end_line": 19, "label": "read-only; writes only feedback.md" },
-        { "path": "docs/architecture.md", "line": 42, "label": "the docent's role" }
-      ] },
-    { "id": "pen", "type": "security", "label": "The pen", "sublabel": "knowledge-apply.sh", "pos": [40, 200], "size": [170, 64],
+        {
+          "path": "SPEC.md",
+          "line": 99,
+          "label": "the wording of a body an agent wrote"
+        }
+      ]
+    },
+    {
+      "id": "plugin",
+      "type": "security",
+      "label": "KTL Registrar",
+      "sublabel": "the plugin, in Obsidian",
+      "pos": [
+        529,
+        40
+      ],
+      "size": [
+        140,
+        64
+      ],
       "sources": [
-        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-apply.sh", "line": 2, "end_line": 5, "label": "checks each operation or writes nothing" },
-        { "path": "docs/architecture.md", "line": 59, "label": "refuses a forged confirmation" }
-      ] },
-    { "id": "feedback", "type": "security", "label": "Feedback", "sublabel": "knowledge-feedback.sh", "pos": [500, 200], "size": [170, 64],
+        {
+          "path": "SPEC.md",
+          "line": 100,
+          "label": "a related block, and diataxis.md"
+        }
+      ]
+    },
+    {
+      "id": "pen",
+      "type": "security",
+      "label": "The pen",
+      "sublabel": "knowledge-apply.sh",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        140,
+        64
+      ],
       "sources": [
-        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-feedback.sh", "line": 2, "end_line": 5, "label": "records a reader's Miss or Disagreement" }
-      ] },
-    { "id": "bundle", "type": "database", "label": ".lokf/knowledge/, the bundle", "sublabel": "one Markdown concept per file", "pos": [40, 360], "size": [630, 64],
+        {
+          "path": "SPEC.md",
+          "line": 41,
+          "label": "the one program an agent writes through"
+        },
+        {
+          "path": "SPEC.md",
+          "line": 142,
+          "label": "refuses a person's record"
+        }
+      ]
+    },
+    {
+      "id": "bundle",
+      "type": "database",
+      "label": ".lokf/knowledge/, the bundle",
+      "sublabel": "one Markdown file per concept, with index.md and log.md",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        630,
+        64
+      ],
       "sources": [
-        { "path": "docs/architecture.md", "line": 27, "label": "a folder of Markdown concepts" },
-        { "path": "docs/architecture.md", "line": 31, "label": "written in LOKF" }
-      ] },
-    { "id": "registrar", "type": "security", "label": "The registrar's gate", "sublabel": "knowledge-registrar.yaml, in CI", "pos": [100, 520], "size": [200, 64],
+        {
+          "path": "SPEC.md",
+          "line": 77,
+          "label": "one Markdown file per concept"
+        },
+        {
+          "path": "SPEC.md",
+          "line": 78,
+          "label": "reserved in every folder"
+        }
+      ]
+    },
+    {
+      "id": "gate",
+      "type": "security",
+      "label": "The gate",
+      "sublabel": "knowledge-registrar.yaml",
+      "pos": [
+        40,
+        520
+      ],
+      "size": [
+        300,
+        64
+      ],
       "sources": [
-        { "path": "skills/ktl-sidecar/templates/github/knowledge-registrar.yaml", "line": 3, "end_line": 12, "label": "validates and checks provenance" },
-        { "path": "docs/architecture.md", "line": 57, "label": "the registrar's role" }
-      ] },
-    { "id": "report", "type": "security", "label": "The report script", "sublabel": "knowledge-report.sh", "pos": [400, 520], "size": [200, 64],
+        {
+          "path": "SPEC.md",
+          "line": 43,
+          "label": "lokf validate, conventions, provenance"
+        },
+        {
+          "path": "SPEC.md",
+          "line": 270,
+          "label": "approval or signature"
+        }
+      ]
+    },
+    {
+      "id": "report",
+      "type": "security",
+      "label": "The report",
+      "sublabel": "knowledge-report.sh",
+      "pos": [
+        370,
+        520
+      ],
+      "size": [
+        300,
+        64
+      ],
       "sources": [
-        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-report.sh", "line": 2, "end_line": 8, "label": "labels, health line, work list" }
-      ] }
+        {
+          "path": "SPEC.md",
+          "line": 316,
+          "label": "computed on every read, never stored"
+        }
+      ]
+    },
+    {
+      "id": "docent",
+      "type": "backend",
+      "label": "Docent",
+      "sublabel": "does not write in the bundle",
+      "pos": [
+        40,
+        680
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "sources": [
+        {
+          "path": "SPEC.md",
+          "line": 102,
+          "label": "does not write anything in the bundle"
+        }
+      ]
+    },
+    {
+      "id": "feedback",
+      "type": "security",
+      "label": "Feedback",
+      "sublabel": "knowledge-feedback.sh",
+      "pos": [
+        260,
+        680
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "sources": [
+        {
+          "path": "skills/ktl-sidecar/templates/scripts/knowledge-feedback.sh",
+          "line": 4,
+          "label": "records a Miss or a Disagreement"
+        }
+      ]
+    },
+    {
+      "id": "feedbackmd",
+      "type": "database",
+      "label": ".lokf/feedback.md",
+      "sublabel": "input for the librarian",
+      "pos": [
+        480,
+        680
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "sources": [
+        {
+          "path": "SPEC.md",
+          "line": 83,
+          "label": "input for the librarian, not the bundle"
+        }
+      ]
+    }
   ],
   "connections": [
-    { "id": "librarian-pen", "from": "librarian", "to": "pen", "label": "patch.yaml", "variant": "emphasis", "width": 2 },
-    { "id": "pen-bundle", "from": "pen", "to": "bundle", "label": "writes", "variant": "emphasis", "width": 2 },
-    { "id": "curator-bundle", "from": "curator", "to": "bundle", "label": "a verified event", "variant": "emphasis", "width": 2 },
-    { "id": "docent-feedback", "from": "docent", "to": "feedback", "label": "a reader's miss" },
-    { "id": "feedback-bundle", "from": "feedback", "to": "bundle", "label": "feedback.md" },
-    { "id": "bundle-registrar", "from": "bundle", "to": "registrar", "label": "each pull request", "variant": "security" },
-    { "id": "bundle-report", "from": "bundle", "to": "report", "label": "each read" }
+    {
+      "id": "librarian-pen",
+      "from": "librarian",
+      "to": "pen",
+      "label": "patch.yaml",
+      "variant": "emphasis",
+      "width": 2
+    },
+    {
+      "id": "pen-bundle",
+      "from": "pen",
+      "to": "bundle",
+      "label": "applies it",
+      "variant": "emphasis",
+      "width": 2
+    },
+    {
+      "id": "curator-bundle",
+      "from": "curator",
+      "to": "bundle",
+      "label": "a verdict",
+      "variant": "emphasis",
+      "width": 2
+    },
+    {
+      "id": "prose-bundle",
+      "from": "prose",
+      "to": "bundle",
+      "label": "the wording"
+    },
+    {
+      "id": "plugin-bundle",
+      "from": "plugin",
+      "to": "bundle",
+      "label": "a related block"
+    },
+    {
+      "id": "bundle-gate",
+      "from": "bundle",
+      "to": "gate",
+      "label": "each pull request",
+      "variant": "security"
+    },
+    {
+      "id": "bundle-report",
+      "from": "bundle",
+      "to": "report",
+      "label": "each read"
+    },
+    {
+      "id": "docent-feedback",
+      "from": "docent",
+      "to": "feedback",
+      "label": "a reader's entry"
+    },
+    {
+      "id": "feedback-file",
+      "from": "feedback",
+      "to": "feedbackmd",
+      "label": "Miss or Disagreement"
+    }
   ],
   "cards": [
-    { "dot": "emerald", "title": "Three writers, each in one way only", "items": ["The librarian writes only patch.yaml, and the pen applies it", "The curator records a person's verdict in that person's name", "The docent writes nothing in the bundle"] },
-    { "dot": "amber", "title": "Two programs check what is written", "items": ["The registrar's gate on each pull request", "The report script computes every trust label on each read"] }
+    {
+      "dot": "emerald",
+      "title": "Every write goes one of four ways",
+      "items": [
+        "The librarian writes only patch.yaml, and the pen applies it",
+        "The curator writes a person's verdict to the concept",
+        "ktl-prose rewords what an agent wrote; the KTL Registrar plugin writes a related block"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Programs check every write",
+      "items": [
+        "The gate on each pull request that touches the bundle",
+        "The report computes every trust label on each read, and never stores one",
+        "The pen moves each feedback entry the librarian handles into questions.md"
+      ]
+    }
   ]
 }

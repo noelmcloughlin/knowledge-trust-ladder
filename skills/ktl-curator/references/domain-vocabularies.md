@@ -6,7 +6,7 @@ LOKF has a small vocabulary: a short list of classes, the typed relations, and a
 
 ## The signs
 
-- The report's **vocabulary fit** line keeps growing. It counts concepts whose `type` isn't one of the core classes, tolerated as generic concepts (Golden Rule 7) but carrying no agreed meaning. Once a domain vocabulary is added to `just lokf-validate`, the line counts only what falls outside core *and* domain, and stops growing.
+- The report's **vocabulary fit** line keeps growing. It counts concepts whose `type` isn't one of the core classes, tolerated as generic concepts (Golden Rule 7) but with no agreed meaning. Once a domain vocabulary is added to `just lokf-validate`, the line counts only what falls outside core *and* domain, and stops growing.
 - Concepts sprout many producer-defined keys (`dosage`, `contraindication`, `jurisdiction`, `failure_mode`) that no validator checks and no other bundle understands.
 - The domain is one where a wrong or ambiguous field has consequences: medicine, law, finance, safety engineering, anything regulated.
 
@@ -16,7 +16,7 @@ Keep the OKF/LOKF mechanics: one Markdown file per concept, frontmatter, the tru
 
 ## You already have the tooling
 
-The scaffolded sidecar depends on `lokf[build]`. That `[build]` extra pulls in the `linkml` package: the full generator suite, not just the runtime. So a domain vocabulary costs no new installation. From `.lokf/schema/`, where its files sit:
+The scaffolded sidecar depends on `lokf[build]`. That `[build]` extra pulls in the `linkml` package: the full generator suite, not just the runtime. So a domain vocabulary does not need a new installation. From `.lokf/schema/`, where its files sit:
 
 ```bash
 uv run gen-json-schema domain.yaml > domain.schema.json   # what validators check

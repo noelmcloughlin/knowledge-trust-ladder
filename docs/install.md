@@ -24,13 +24,13 @@ gh skill install noelmcloughlin/knowledge-trust-ladder ktl-docent --scope user
 
 ### PyPI
 
-The [`ktl`](https://pypi.org/project/ktl/) package on PyPI carries releases of the six skills and a command to install them. It has no dependencies and needs Python 3.9 or later. Default is GitHub Copilot unless you add `--agent claude-code` or `--agent codex`, or give the agent folder with `--dest`:
+The [`ktl`](https://pypi.org/project/ktl/) package on PyPI carries releases of the six skills. It defaults to GitHub Copilot unless you add `--agent claude-code` or `--agent codex`, or give the agent folder with `--dest`:
 
 ```bash
 uvx ktl skills install --scope user
 ```
 
-Without uv, `pipx run ktl skills install --scope user` does the same. `python3 -m pip install --user ktl` works on some systems, but not on Debian, Ubuntu and Homebrew. To update, add `@latest`: `uvx ktl@latest skills install --scope user`.
+Without uv, `pipx run ktl skills install --scope user` does the same. pip works inside a virtual environment. `python3 -m pip install --user ktl` works on some systems, but not on Debian, Ubuntu and Homebrew. To update, add `@latest`: `uvx ktl@latest skills install --scope user`.
 
 `ktl skills status` says if the skills in each agent folder are the package's. `ktl skills path` prints the skills folder, which `gh skill install --from-local` and `npx skills add` take instead. The [package's page](https://pypi.org/project/ktl/) shows the Claude Code plugin route from the installed package.
 

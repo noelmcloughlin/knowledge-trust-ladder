@@ -4,7 +4,7 @@ This page is for **ktl-librarian** when it writes or refreshes a retelling: a co
 
 ## The rule that gives way
 
-Section 1 of the skill page says to carry each fact as its source states it: add no qualifier the source lacks, and drop none it has. For a retelling, the source is the adult concept it retells, and the rule gives way in one direction only. Say nothing the adult concept does not say. A retelling may leave a fact out, and it never adds one, rounds a number or brings in an analogy.
+Section 1 of the skill page says to carry each fact as its source states it, with exactly its qualifiers. For a retelling, the source is the adult concept it retells, and the rule gives way in one direction only. Say nothing the adult concept does not say. A retelling may leave a fact out, and it never adds one, rounds a number or brings in an analogy.
 
 ktl-prose's [young-readers.md](../../ktl-prose/references/young-readers.md) gives the two bands of age, their limits, the rules a retelling adds, and where an explanation or an example may come from. Read it before you write the first retelling of a session.
 

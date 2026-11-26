@@ -13,7 +13,7 @@ Install a **website** for the knowledge bundle in the repository this skill is i
 
 ## What the site finds by itself
 
-No setting names what the site shows: the build looks for each of these and shows what it finds.
+Nothing sets what the site shows: the build looks for each of these and shows what it finds.
 
 | The repository has | The site shows |
 | --- | --- |

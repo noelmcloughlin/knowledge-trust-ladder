@@ -1,5 +1,9 @@
 # Change Log
 
+## 2026-11-26
+
+* **Changed**: Trust ladder now describes the architecture page's redrawn figure, which names the three rungs and the four rules that move a concept on them.
+
 ## 2026-11-23
 
 * **Changed**: a sibling's sync pull request now moves within a day, as `CONTRIBUTING.md` has said since 0.70.1.

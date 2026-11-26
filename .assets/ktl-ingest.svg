@@ -1,70 +1,145 @@
-<svg width="720" height="420" viewBox="0 0 720 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<svg width="720" height="582" viewBox="0 0 720 582" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d" font-family="'Atkinson Hyperlegible Next', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
 <title id="t">Knowledge outside the repository</title>
-<desc id="d">Left, four kinds of source outside the repository: Confluence pages, pages and documents at an address, files in another repository, and the output of a command. Middle, the ingest: .lokf/ingest.yaml names each source with no token; knowledge-ingest.sh runs in a read-only job with the secrets by name and no agent, fetches what moved and converts it to Markdown; it writes .lokf/mirror/, one file per page with origin, version and digest in its header, and .lokf/ingest.lock.yaml with a status per item. Right, the review: a pull request each Sunday, refreshed until merged, whose diff is the page and which a person merges; then the librarian on Monday, whose work list names each mirror file that moved; then a concept whose resource is the mirror file and whose sources name the origin page, agent-derived until a person confirms it. Below: nothing fetched is knowledge yet.</desc>
-<rect width="720" height="420" fill="#E4E1D7"/>
-<!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#5F5E5A"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#7A4E0B"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#E4E1D7" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#0C447C" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#3B6D11" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#3B6D11" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#5F5E5A">Knowledge</text><text x="56" y="32.5" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#5F5E5A">Trust Ladder</text><!-- ktl-brand:end -->
-<text x="360" y="30" font-family="Arial, sans-serif" font-size="18" font-weight="700" text-anchor="middle" fill="#2C2C2A">Knowledge outside the repository</text>
-<rect x="20" y="48" width="680" height="350" rx="20" fill="#F1EFE8"/>
-<text x="40" y="76" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#2C2C2A">A copy comes in, is reviewed, and is cited like any tracked file</text>
-<text x="40" y="100" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#5F5E5A">Outside the repository</text>
-<rect x="40" y="108" width="176" height="40" rx="10" fill="#ffffff" stroke="#D3D1C7" stroke-width="1"/>
-<text x="52" y="124" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#2C2C2A">Confluence pages</text>
-<text x="52" y="138" font-family="Arial, sans-serif" font-size="9.5" fill="#5F5E5A">by label, space, page or tree</text>
-<rect x="40" y="156" width="176" height="40" rx="10" fill="#ffffff" stroke="#D3D1C7" stroke-width="1"/>
-<text x="52" y="172" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#2C2C2A">Pages and documents</text>
-<text x="52" y="186" font-family="Arial, sans-serif" font-size="9.5" fill="#5F5E5A">HTML, Markdown, text, PDF</text>
-<rect x="40" y="204" width="176" height="40" rx="10" fill="#ffffff" stroke="#D3D1C7" stroke-width="1"/>
-<text x="52" y="220" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#2C2C2A">Another repository</text>
-<text x="52" y="234" font-family="Arial, sans-serif" font-size="9.5" fill="#5F5E5A">a folder at a ref; a wiki</text>
-<rect x="40" y="252" width="176" height="40" rx="10" fill="#ffffff" stroke="#D3D1C7" stroke-width="1"/>
-<text x="52" y="268" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#2C2C2A">A command's output</text>
-<text x="52" y="282" font-family="Arial, sans-serif" font-size="9.5" fill="#5F5E5A">a client, a dump, an export</text>
-<line x1="230" y1="128" x2="230" y2="272" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round"/>
-<line x1="216" y1="128" x2="230" y2="128" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round"/>
-<line x1="216" y1="176" x2="230" y2="176" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round"/>
-<line x1="216" y1="224" x2="230" y2="224" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round"/>
-<line x1="216" y1="272" x2="230" y2="272" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round"/>
-<path d="M230 201 L248 201" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M241.4 196.5 L248 201 L241.4 205.5" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="248" y="100" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#5F5E5A">The ingest</text>
-<rect x="248" y="108" width="216" height="46" rx="10" fill="#ffffff" stroke="#D3D1C7" stroke-width="1"/>
-<text x="260" y="124" font-family="Menlo, Consolas, monospace" font-size="11" font-weight="700" fill="#2C2C2A">.lokf/ingest.yaml</text>
-<text x="260" y="140" font-family="Arial, sans-serif" font-size="9.5" fill="#5F5E5A">place, selector, owner, why; no token</text>
-<path d="M356 154 L356 168" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M351.5 161.4 L356 168 L360.5 161.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="248" y="168" width="216" height="66" rx="10" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
-<text x="260" y="184" font-family="Menlo, Consolas, monospace" font-size="11" font-weight="700" fill="#7A4E0B">knowledge-ingest.sh</text>
-<text x="260" y="199" font-family="Arial, sans-serif" font-size="9.5" fill="#7A4E0B">a read-only job, secrets by name</text>
-<text x="260" y="212" font-family="Arial, sans-serif" font-size="9.5" fill="#7A4E0B">no agent runs; fetches what moved</text>
-<text x="260" y="225" font-family="Arial, sans-serif" font-size="9.5" fill="#7A4E0B">and converts each page to Markdown</text>
-<path d="M356 234 L356 248" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M351.5 241.4 L356 248 L360.5 241.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="248" y="248" width="216" height="78" rx="10" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
-<text x="260" y="264" font-family="Menlo, Consolas, monospace" font-size="11" font-weight="700" fill="#27500A">.lokf/mirror/&lt;entry&gt;/</text>
-<text x="260" y="278" font-family="Arial, sans-serif" font-size="9.5" fill="#27500A">one file per page: origin, version, digest</text>
-<text x="260" y="296" font-family="Menlo, Consolas, monospace" font-size="11" font-weight="700" fill="#27500A">.lokf/ingest.lock.yaml</text>
-<text x="260" y="310" font-family="Arial, sans-serif" font-size="9.5" fill="#27500A">ok, gone, unlisted, failed, refused</text>
-<path d="M464 287 L480 287 L480 141 L496 141" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M489.4 136.5 L496 141 L489.4 145.5" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="496" y="100" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#5F5E5A">The review</text>
-<rect x="496" y="108" width="184" height="66" rx="10" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
-<text x="508" y="124" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#0C447C">Pull request</text>
-<text x="508" y="138" font-family="Arial, sans-serif" font-size="9.5" fill="#0C447C">each Sunday, refreshed until merged</text>
-<text x="508" y="151" font-family="Arial, sans-serif" font-size="9.5" fill="#0C447C">the diff is the page; a person merges</text>
-<text x="508" y="164" font-family="Arial, sans-serif" font-size="9.5" fill="#0C447C">no agent reads it before that</text>
-<path d="M588 174 L588 188" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M583.5 181.4 L588 188 L592.5 181.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="496" y="188" width="184" height="56" rx="10" fill="#ffffff" stroke="#D3D1C7" stroke-width="1"/>
-<text x="508" y="204" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#2C2C2A">The librarian, Monday</text>
-<text x="508" y="218" font-family="Arial, sans-serif" font-size="9.5" fill="#5F5E5A">the work list names each mirror</text>
-<text x="508" y="231" font-family="Arial, sans-serif" font-size="9.5" fill="#5F5E5A">file that moved; it derives from it</text>
-<path d="M588 244 L588 258" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M583.5 251.4 L588 258 L592.5 251.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="496" y="258" width="184" height="68" rx="10" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
-<text x="508" y="274" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#27500A">Concept</text>
-<text x="508" y="289" font-family="Menlo, Consolas, monospace" font-size="9.5" fill="#27500A">resource: the mirror file</text>
-<text x="508" y="303" font-family="Menlo, Consolas, monospace" font-size="9.5" fill="#27500A">sources: the origin page</text>
-<text x="508" y="318" font-family="Arial, sans-serif" font-size="9.5" fill="#27500A">agent-derived until a person confirms</text>
-<text x="40" y="356" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#5F5E5A">Nothing fetched is knowledge yet. The secrets stay in the read-only job, the write token in a job with no secret,</text>
-<text x="40" y="372" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#5F5E5A">and a mirror file holds the same place as any other repository content: reviewed before an agent reads it.</text>
+<desc id="d">A copy comes in, is reviewed, and is cited like any tracked file. Outside the repository there are four kinds of source: confluence, Confluence pages chosen by label, space, page, tree or CQL; http, pages and documents as HTML, Markdown, text or PDF; git, another repository, a path at a ref, or a wiki; and command, a command's output from a client, a dump or an export. The ingest: the manifest .lokf/ingest.yaml gives each source's place, selector, owner and reason, and does not hold a token. The script knowledge-ingest.sh fetches what moved and converts each page to Markdown, in a read-only job that holds the secrets and does not run an agent. It writes .lokf/mirror/&lt;entry id&gt;/, one Markdown file per page or document with its origin, version and digest, and .lokf/ingest.lock.yaml, which gives each item a state: ok, gone, unlisted, failed, refused or skipped. The review: one pull request, opened by the Sunday run and refreshed until a person merges it, in which the diff is the page. On Monday the librarian's work list names each concept whose mirror file moved. A concept cites both: resource is the mirror file, and sources is the origin page; it is agent-derived until confirmed. Nothing fetched is knowledge yet. The job that holds the secrets has no write token, and the job that writes has no secret. The scheduled librarian reads a mirror file only after a person merges it. A confidential entry is never committed.</desc>
+<rect width="720" height="582" fill="#FFFFFF"/>
+<!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#5F5E5A"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#7A4E0B"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#0C447C" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#3B6D11" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#3B6D11" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.9" fill="#4A4944">KNOWLEDGE</text><text x="56" y="32.5" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.9" fill="#4A4944">TRUST LADDER</text><!-- ktl-brand:end -->
+<line x1="150" y1="11" x2="150" y2="37" stroke="#C4C2B8" stroke-width="1"/>
+<text x="164" y="31" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="20" font-weight="700" fill="#1C1C1A">Knowledge outside the repository</text>
+<line x1="24" y1="48" x2="696" y2="48" stroke="#1C1C1A" stroke-width="1.5"/>
+<line x1="24" y1="53" x2="696" y2="53" stroke="#1C1C1A" stroke-width="0.75"/>
+<path d="M30 48 v5 M42 48 v5 M54 48 v5 M66 48 v5 M78 48 v5 M90 48 v5 M102 48 v5 M114 48 v5 M126 48 v5 M138 48 v5 M150 48 v5 M162 48 v5 M174 48 v5 M186 48 v5 M198 48 v5 M210 48 v5 M222 48 v5 M234 48 v5 M246 48 v5 M258 48 v5 M270 48 v5 M282 48 v5 M294 48 v5 M306 48 v5 M318 48 v5 M330 48 v5 M342 48 v5 M354 48 v5 M366 48 v5 M378 48 v5 M390 48 v5 M402 48 v5 M414 48 v5 M426 48 v5 M438 48 v5 M450 48 v5 M462 48 v5 M474 48 v5 M486 48 v5 M498 48 v5 M510 48 v5 M522 48 v5 M534 48 v5 M546 48 v5 M558 48 v5 M570 48 v5 M582 48 v5 M594 48 v5 M606 48 v5 M618 48 v5 M630 48 v5 M642 48 v5 M654 48 v5 M666 48 v5 M678 48 v5 M690 48 v5" stroke="#1C1C1A" stroke-width="0.75" fill="none"/>
+<text x="24" y="82" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="14.5" font-style="italic" fill="#1C1C1A">A copy comes in, is reviewed, and is cited like any tracked file</text>
+<line x1="24" y1="90" x2="696" y2="90" stroke="#C4C2B8" stroke-width="1"/>
+<text x="24" y="112" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#6E6D66">OUTSIDE THE REPOSITORY</text>
+<text x="254" y="112" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#6E6D66">THE INGEST</text>
+<text x="506" y="112" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#6E6D66">THE REVIEW</text>
+<rect x="24" y="146" width="190" height="46" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1.25"/>
+<rect x="23.38" y="132" width="84.17" height="14.6" fill="#5F5E5A"/>
+<path d="M29.6 134 v10 M36.4 134 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<text x="41.4" y="142.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">CONFLUENCE</text>
+<text x="36" y="165" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="700" fill="#1C1C1A">Confluence pages</text>
+<text x="36" y="182" font-size="10.5" fill="#6E6D66">label, space, page, tree, CQL</text>
+<rect x="24" y="214" width="190" height="46" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1.25"/>
+<rect x="23.38" y="200" width="49.27" height="14.6" fill="#5F5E5A"/>
+<path d="M29.6 202 v10 M36.4 202 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<text x="41.4" y="210.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">HTTP</text>
+<text x="36" y="233" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="700" fill="#1C1C1A">Pages and documents</text>
+<text x="36" y="250" font-size="10.5" fill="#6E6D66">HTML, Markdown, text, PDF</text>
+<rect x="24" y="282" width="190" height="46" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1.25"/>
+<rect x="23.38" y="268" width="43.45" height="14.6" fill="#5F5E5A"/>
+<path d="M29.6 270 v10 M36.4 270 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<text x="41.4" y="278.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">GIT</text>
+<text x="36" y="301" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="700" fill="#1C1C1A">Another repository</text>
+<text x="36" y="318" font-size="10.5" fill="#6E6D66">a path at a ref; a wiki</text>
+<rect x="24" y="350" width="190" height="46" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1.25"/>
+<rect x="23.38" y="336" width="66.72" height="14.6" fill="#5F5E5A"/>
+<path d="M29.6 338 v10 M36.4 338 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<text x="41.4" y="346.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">COMMAND</text>
+<text x="36" y="369" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="700" fill="#1C1C1A">A command's output</text>
+<text x="36" y="386" font-size="10.5" fill="#6E6D66">a client, a dump, an export</text>
+<path d="M214 169 L234 169" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<circle cx="214" cy="169" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M214 237 L234 237" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<circle cx="214" cy="237" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M214 305 L234 305" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<circle cx="214" cy="305" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M214 373 L234 373" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<circle cx="214" cy="373" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<line x1="234" y1="169" x2="234" y2="373" stroke="#6E6D66" stroke-width="1.25"/>
+<rect x="254" y="146" width="220" height="62" fill="#FFFFFF" stroke="#4A4944" stroke-width="1.25"/>
+<rect x="253.38" y="132" width="61.54" height="14.6" fill="#1C1C1A"/>
+<text x="260.4" y="142.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">MANIFEST</text>
+<text x="266" y="168" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="700" font-style="normal" fill="#1C1C1A">.lokf/ingest.yaml</tspan></text>
+<text x="266" y="185" font-size="10.5" fill="#6E6D66">place, selector, owner, why;</text>
+<text x="266" y="199" font-size="10.5" fill="#6E6D66">it does not hold a token</text>
+<rect x="254" y="244" width="220" height="78" fill="#FFFFFF" stroke="#8A5A0B" stroke-width="1.25"/>
+<rect x="253.38" y="230" width="171.43" height="14.6" fill="#8A5A0B"/>
+<path d="M259.6 232 v10 M266.4 232 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="259.6" y="238.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="259.6" y="235.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="271.4" y="240.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">SCRIPT · WITHOUT AN AGENT</text>
+<text x="266" y="266" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="700" font-style="normal" fill="#1C1C1A">knowledge-ingest.sh</tspan></text>
+<text x="266" y="283" font-size="10.5" fill="#6E6D66">fetches what moved, and converts</text>
+<text x="266" y="297" font-size="10.5" fill="#6E6D66">each page to Markdown, in a</text>
+<text x="266" y="311" font-size="10.5" fill="#6E6D66">read-only job with the secrets</text>
+<path d="M234 283 L249 283" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M254 283 L246 286.6 L246 279.4 Z" fill="#6E6D66"/>
+<path d="M446 208 L446 239" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M446 244 L442.4 236 L449.6 236 Z" fill="#6E6D66"/>
+<circle cx="446" cy="208" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<rect x="254" y="358" width="220" height="112" fill="#FFFFFF" stroke="#8A5A0B" stroke-width="1.25"/>
+<rect x="253.38" y="344" width="113.25" height="14.6" fill="#8A5A0B"/>
+<path d="M259.6 346 v10 M266.4 346 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="259.6" y="352.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="259.6" y="349.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="271.4" y="354.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">FOLDER AND LOCK</text>
+<text x="266" y="380" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="700" font-style="normal" fill="#1C1C1A">.lokf/mirror/&lt;entry id&gt;/</tspan></text>
+<text x="266" y="397" font-size="10.5" fill="#6E6D66">one Markdown file per page or</text>
+<text x="266" y="411" font-size="10.5" fill="#6E6D66">document: origin, version, digest</text>
+<text x="266" y="431.3" font-size="11.5" fill="#4A4944"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#1C1C1A">.lokf/ingest.lock.yaml</tspan></text>
+<text x="266" y="445.3" font-size="10.5" fill="#6E6D66">ok, gone, unlisted, failed,</text>
+<text x="266" y="459.3" font-size="10.5" fill="#6E6D66">refused or skipped</text>
+<path d="M446 322 L446 353" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M446 358 L442.4 350 L449.6 350 Z" fill="#6E6D66"/>
+<circle cx="446" cy="322" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<rect x="506" y="146" width="190" height="78" fill="#FFFFFF" stroke="#185FA5" stroke-width="1.25"/>
+<rect x="505.38" y="132" width="95.8" height="14.6" fill="#185FA5"/>
+<path d="M511.6 134 v10 M518.4 134 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="511.6" y="140.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="511.6" y="137.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="511.6" y="134.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="523.4" y="142.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">PULL REQUEST</text>
+<text x="518" y="168" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A">One pull request</text>
+<text x="518" y="185" font-size="10.5" fill="#6E6D66">opened by the Sunday run,</text>
+<text x="518" y="199" font-size="10.5" fill="#6E6D66">refreshed until a person</text>
+<text x="518" y="213" font-size="10.5" fill="#6E6D66">merges; the diff is the page</text>
+<path d="M474 414 L490 414 L490 185 L501 185" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M506 185 L498 188.6 L498 181.4 Z" fill="#6E6D66"/>
+<circle cx="474" cy="414" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<rect x="506" y="260" width="190" height="78" fill="#FFFFFF" stroke="#3B6D11" stroke-width="1.25"/>
+<rect x="505.38" y="246" width="107.44" height="14.6" fill="#3B6D11"/>
+<path d="M511.6 248 v10 M518.4 248 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="511.6" y="254.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="523.4" y="256.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">SKILL · MONDAY</text>
+<text x="518" y="282" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A">Librarian</text>
+<text x="518" y="299" font-size="10.5" fill="#6E6D66">its work list names each</text>
+<text x="518" y="313" font-size="10.5" fill="#6E6D66">concept whose mirror file</text>
+<text x="518" y="327" font-size="10.5" fill="#6E6D66">moved</text>
+<path d="M662 224 L662 255" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M662 260 L658.4 252 L665.6 252 Z" fill="#6E6D66"/>
+<circle cx="662" cy="224" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<rect x="506" y="374" width="190" height="78" fill="#FFFFFF" stroke="#3B6D11" stroke-width="1.25"/>
+<rect x="505.38" y="360" width="66.72" height="14.6" fill="#3B6D11"/>
+<path d="M511.6 362 v10 M518.4 362 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="511.6" y="368.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="523.4" y="370.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">CONCEPT</text>
+<text x="518" y="394" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="700" fill="#1C1C1A">A concept</text>
+<text x="518" y="411" font-size="11.5" fill="#4A4944"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#1C1C1A">resource:</tspan> the mirror file</text>
+<text x="518" y="425" font-size="11.5" fill="#4A4944"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#1C1C1A">sources:</tspan> the origin page</text>
+<text x="518" y="439" font-size="10.5" fill="#6E6D66">agent-derived until confirmed</text>
+<path d="M662 338 L662 369" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M662 374 L658.4 366 L665.6 366 Z" fill="#6E6D66"/>
+<circle cx="662" cy="338" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<text x="24" y="496" font-size="10.5" fill="#6E6D66">Nothing fetched is knowledge yet. The job that holds the secrets has no write token,</text>
+<text x="24" y="511" font-size="10.5" fill="#6E6D66">and the job that writes has no secret. The scheduled librarian reads a mirror file only</text>
+<text x="24" y="526" font-size="10.5" fill="#6E6D66">after a person merges it. A confidential entry is never committed.</text>
+<line x1="24" y1="548" x2="696" y2="548" stroke="#C4C2B8" stroke-width="1"/>
+<rect x="24" y="555.5" width="18" height="13" fill="#5F5E5A"/>
+<path d="M29.6 557 v10 M36.4 557 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<text x="49" y="566" font-size="11.5" fill="#4A4944">raw sources</text>
+<rect x="138" y="555.5" width="18" height="13" fill="#3B6D11"/>
+<path d="M143.6 557 v10 M150.4 557 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="143.6" y="563.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="163" y="566" font-size="11.5" fill="#4A4944">an agent derives it</text>
+<rect x="290" y="555.5" width="18" height="13" fill="#8A5A0B"/>
+<path d="M295.6 557 v10 M302.4 557 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="295.6" y="563.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="295.6" y="560.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="315" y="566" font-size="11.5" fill="#4A4944">deterministic tools check it</text>
+<rect x="500" y="555.5" width="18" height="13" fill="#185FA5"/>
+<path d="M505.6 557 v10 M512.4 557 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="505.6" y="563.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="505.6" y="560.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="505.6" y="557.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="525" y="566" font-size="11.5" fill="#4A4944">a named person vouches for it</text>
 </svg>

@@ -1,29 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg viewBox="0 -44 914 944" data-reader-fit="width-first" data-layout-contract="readable-v2" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="classic" data-quality-profile="showcase" data-node-ui="" style="--flow-cycle: 6.400s; width: 1143px; height: 1180px; min-width: 0px;" width="1143" height="1180" xmlns="http://www.w3.org/2000/svg" data-theme="light">
+<svg viewBox="0 -44 1046 944" data-reader-fit="width-first" data-layout-contract="readable-v2" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="classic" data-quality-profile="showcase" data-node-ui="" style="--flow-cycle: 7.048s; width: 1308px; height: 1180px; min-width: 0px;" width="1308" height="1180" xmlns="http://www.w3.org/2000/svg" data-theme="light">
 <!-- Drawn with Archify, https://github.com/tt-a1i/archify
 
-MIT License
-
+Archify
 Copyright (c) 2026 tt-a1i (Archify)
 Copyright (c) 2025 Cocoon AI
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Archify is distributed under the Apache License, Version 2.0 (LICENSE),
+except where a file, package manifest, or third-party notice specifies otherwise.
+The separately versioned DeepSeek Harness adapter remains MIT; its bundled
+Skill retains the license of the immutable source selected in release.json.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Code and contributions received under the MIT License through pre-transition
+commit 82c7e0f089a02a4d514714adf37dc2061682da5f remain available under their
+original terms. Previously published releases keep their existing licenses. The complete historical MIT
+copyright and permission notice is preserved in LICENSE-MIT. This transition
+does not revoke existing MIT grants or assert a new patent grant on behalf
+of historical contributors.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Archify originated from Cocoon-AI/architecture-diagram-generator:
+https://github.com/Cocoon-AI/architecture-diagram-generator
+
+Third-party components retain their own licenses; see THIRD_PARTY_NOTICES.md
+and the license files beside those components. Names and logos do not imply
+official endorsement, and the software license grants no general trademark
+permission.
+
+These software licenses cover Archify's embedded runtime and templates, not
+ownership of a user's authored content, business data, or source repository.
+
+Licensed under the Apache License, Version 2.0, https://www.apache.org/licenses/LICENSE-2.0;
+a copy is LICENSE at the root of https://github.com/noelmcloughlin/knowledge-trust-ladder.
 -->
 <style>svg .c-grid { stroke: transparent; } svg text[class*="t-edge-"] { font-weight: 700; }</style><style>
 /*
@@ -160,19 +167,23 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
   
 svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }
-:root, [data-theme="dark"] { --bg: #020617; --grid: #1e293b; --canvas-dot: rgba(148, 163, 184, 0.16); --text: #ffffff; --text-muted: #94a3b8; --text-dim: #475569; --text-faint: #7d8da1; --panel: rgba(15, 23, 42, 0.5); --panel-border: #1e293b; --lane-fill: rgba(15, 23, 42, 0.22); --lane-stroke: #334155; --arrow: #94a3b8; --arrow-emphasis: #34d399; --mask: #0f172a; --frontend-fill: rgba(8, 51, 68, 0.4); --frontend-stroke: #22d3ee; --backend-fill: rgba(6, 78, 59, 0.4); --backend-stroke: #34d399; --database-fill: rgba(76, 29, 149, 0.4); --database-stroke: #a78bfa; --cloud-fill: rgba(120, 53, 15, 0.3); --cloud-stroke: #fbbf24; --security-fill: rgba(136, 19, 55, 0.4); --security-stroke: #fb7185; --messagebus-fill: rgba(251, 146, 60, 0.3); --messagebus-stroke: #fb923c; --external-fill: rgba(30, 41, 59, 0.5); --external-stroke: #94a3b8; --toolbar-bg: rgba(15, 23, 42, 0.8); --toolbar-border: #334155; --toolbar-text: #e2e8f0; --toolbar-hover: rgba(15, 23, 42, 0.95); --toolbar-menu-bg: #0f172a; }
-[data-theme="light"] { --bg: #f4f5f7; --grid: #e9edf2; --canvas-dot: #e2e7ec; --text: #111827; --text-muted: #5b6474; --text-dim: #9aa3b2; --text-faint: #6b7280; --panel: #ffffff; --panel-border: #e5e7eb; --lane-fill: rgba(248, 250, 252, 0.65); --lane-stroke: #cbd5e1; --arrow: #64748b; --arrow-emphasis: #059669; --mask: #ffffff; --frontend-fill: rgba(34, 211, 238, 0.15); --frontend-stroke: #0891b2; --backend-fill: rgba(52, 211, 153, 0.18); --backend-stroke: #059669; --database-fill: rgba(167, 139, 250, 0.2); --database-stroke: #7c3aed; --cloud-fill: rgba(251, 191, 36, 0.18); --cloud-stroke: #d97706; --security-fill: rgba(251, 113, 133, 0.15); --security-stroke: #e11d48; --messagebus-fill: rgba(251, 146, 60, 0.15); --messagebus-stroke: #ea580c; --external-fill: rgba(148, 163, 184, 0.18); --external-stroke: #64748b; --toolbar-bg: rgba(255, 255, 255, 0.92); --toolbar-border: #cbd5e1; --toolbar-text: #334155; --toolbar-hover: #ffffff; --toolbar-menu-bg: #ffffff; }
-[data-preset="signal-flow"][data-theme="dark"] { --bg: #030711; --grid: #15233a; --panel: rgba(6, 14, 28, 0.78); --panel-border: #1d3350; --lane-fill: rgba(9, 22, 40, 0.5); --lane-stroke: #2c4564; --text: #f5fbff; --text-muted: #9eb0c7; --text-dim: #52667f; --text-faint: #7890ad; --mask: #07101e; --frontend-fill: rgba(6, 182, 212, 0.14); --frontend-stroke: #67e8f9; --backend-fill: rgba(16, 185, 129, 0.14); --backend-stroke: #5eead4; --database-fill: rgba(139, 92, 246, 0.16); --database-stroke: #c4b5fd; --cloud-fill: rgba(245, 158, 11, 0.13); --cloud-stroke: #fcd34d; --security-fill: rgba(244, 63, 94, 0.13); --security-stroke: #fda4af; --messagebus-fill: rgba(249, 115, 22, 0.13); --messagebus-stroke: #fdba74; --external-fill: rgba(71, 85, 105, 0.24); --external-stroke: #a5b4c7; --arrow: #7890ad; --arrow-emphasis: #2dd4bf; --toolbar-bg: rgba(7, 16, 30, 0.86); --toolbar-border: #29415f; --toolbar-menu-bg: #07101e; }
-[data-preset="signal-flow"][data-theme="light"] { --bg: #f4f9fc; --grid: #d4e5ee; --panel: rgba(255, 255, 255, 0.82); --panel-border: #bfd5e2; --lane-fill: rgba(232, 243, 248, 0.62); --lane-stroke: #a9c5d5; --text: #102638; --text-muted: #587287; --text-dim: #8aa2b4; --text-faint: #668397; --mask: #ffffff; --frontend-fill: rgba(6, 182, 212, 0.09); --frontend-stroke: #0789a1; --backend-fill: rgba(5, 150, 105, 0.09); --backend-stroke: #087f69; --database-fill: rgba(124, 58, 237, 0.09); --database-stroke: #7254c7; --cloud-fill: rgba(217, 119, 6, 0.08); --cloud-stroke: #b9670b; --security-fill: rgba(225, 29, 72, 0.08); --security-stroke: #c53a59; --messagebus-fill: rgba(234, 88, 12, 0.08); --messagebus-stroke: #c65f27; --external-fill: rgba(100, 116, 139, 0.1); --external-stroke: #607a8c; --arrow: #7b97aa; --arrow-emphasis: #0d9488; }
-[data-preset="blueprint"][data-theme="dark"] { --bg: #06131f; --grid: #17425a; --panel: rgba(7, 27, 43, 0.9); --panel-border: #27627f; --lane-fill: rgba(10, 43, 66, 0.36); --lane-stroke: #34799a; --text: #e3f6ff; --text-muted: #91b8ca; --text-dim: #557e92; --text-faint: #739caf; --mask: #0a2031; --frontend-fill: rgba(26, 157, 193, 0.14); --frontend-stroke: #66d9ef; --backend-fill: rgba(31, 155, 124, 0.13); --backend-stroke: #69dfbd; --database-fill: rgba(120, 105, 196, 0.14); --database-stroke: #b4a8ff; --cloud-fill: rgba(197, 145, 43, 0.13); --cloud-stroke: #ffd166; --security-fill: rgba(199, 76, 104, 0.13); --security-stroke: #ff8da1; --messagebus-fill: rgba(207, 112, 49, 0.13); --messagebus-stroke: #ffad66; --external-fill: rgba(84, 119, 139, 0.18); --external-stroke: #a7cad9; --arrow: #78a3b7; --arrow-emphasis: #64dfc1; --toolbar-bg: rgba(7, 28, 45, 0.92); --toolbar-border: #34799a; --toolbar-text: #d8f3ff; --toolbar-hover: rgba(18, 58, 83, 0.95); --toolbar-menu-bg: #0a2031; }
-[data-preset="blueprint"][data-theme="light"] { --bg: #edf7fa; --grid: #b5d5e1; --panel: rgba(249, 253, 255, 0.94); --panel-border: #78aabd; --lane-fill: rgba(210, 232, 240, 0.42); --lane-stroke: #83b2c4; --text: #123344; --text-muted: #4e7486; --text-dim: #86a6b4; --text-faint: #668c9d; --mask: #f9fdff; --frontend-fill: rgba(8, 145, 178, 0.08); --frontend-stroke: #087f9c; --backend-fill: rgba(5, 128, 101, 0.08); --backend-stroke: #08755f; --database-fill: rgba(100, 75, 180, 0.08); --database-stroke: #6757a8; --cloud-fill: rgba(181, 120, 15, 0.08); --cloud-stroke: #a86609; --security-fill: rgba(190, 48, 80, 0.07); --security-stroke: #b32f50; --messagebus-fill: rgba(196, 81, 22, 0.07); --messagebus-stroke: #b65120; --external-fill: rgba(79, 112, 128, 0.08); --external-stroke: #506f7e; --arrow: #6d93a5; --arrow-emphasis: #087f69; --toolbar-bg: rgba(247, 252, 254, 0.94); --toolbar-border: #8ab5c5; --toolbar-text: #294f61; --toolbar-hover: #ffffff; --toolbar-menu-bg: #f9fdff; }
-[data-preset="editorial"][data-theme="dark"] { --bg: #181611; --grid: #39342a; --panel: rgba(35, 31, 24, 0.96); --panel-border: #625a4a; --lane-fill: rgba(52, 46, 35, 0.46); --lane-stroke: #726957; --text: #f4eddf; --text-muted: #b9ae9b; --text-dim: #776e60; --text-faint: #9d917e; --mask: #231f18; --frontend-fill: rgba(43, 133, 142, 0.16); --frontend-stroke: #7fc6c7; --backend-fill: rgba(63, 132, 92, 0.16); --backend-stroke: #8fc29e; --database-fill: rgba(117, 91, 141, 0.17); --database-stroke: #c0a4d0; --cloud-fill: rgba(170, 119, 49, 0.16); --cloud-stroke: #d8ad68; --security-fill: rgba(157, 69, 65, 0.17); --security-stroke: #df9085; --messagebus-fill: rgba(174, 79, 42, 0.16); --messagebus-stroke: #df946f; --external-fill: rgba(126, 115, 96, 0.18); --external-stroke: #b8ad99; --arrow: #948978; --arrow-emphasis: #dd6b3d; --toolbar-bg: rgba(35, 31, 24, 0.92); --toolbar-border: #625a4a; --toolbar-text: #eee5d5; --toolbar-hover: #302a20; --toolbar-menu-bg: #231f18; }
-[data-preset="editorial"][data-theme="light"] { --bg: #f2eee5; --grid: #d8d0c2; --panel: rgba(251, 248, 241, 0.97); --panel-border: #c4b9a6; --lane-fill: rgba(229, 221, 207, 0.42); --lane-stroke: #b8aa94; --text: #242018; --text-muted: #6f6658; --text-dim: #a09788; --text-faint: #817767; --mask: #fbf8f1; --frontend-fill: rgba(31, 117, 126, 0.09); --frontend-stroke: #287e84; --backend-fill: rgba(42, 119, 75, 0.09); --backend-stroke: #397b53; --database-fill: rgba(105, 75, 130, 0.09); --database-stroke: #765d86; --cloud-fill: rgba(157, 103, 31, 0.1); --cloud-stroke: #9a671f; --security-fill: rgba(153, 58, 52, 0.09); --security-stroke: #9e463f; --messagebus-fill: rgba(182, 70, 27, 0.09); --messagebus-stroke: #ad4b25; --external-fill: rgba(101, 91, 75, 0.09); --external-stroke: #746b5e; --arrow: #8a806f; --arrow-emphasis: #bb4c23; --toolbar-bg: rgba(251, 248, 241, 0.94); --toolbar-border: #c4b9a6; --toolbar-text: #40392f; --toolbar-hover: #fffdf8; --toolbar-menu-bg: #fbf8f1; }
+:root, [data-theme="dark"] { color-scheme: dark; --bg: #020617; --grid: #1e293b; --canvas-dot: rgba(148, 163, 184, 0.16); --text: #ffffff; --text-muted: #94a3b8; --text-dim: #475569; --text-faint: #7d8da1; --panel: rgba(15, 23, 42, 0.5); --panel-border: #1e293b; --lane-fill: rgba(15, 23, 42, 0.22); --lane-stroke: #334155; --arrow: #94a3b8; --arrow-emphasis: #34d399; --arrow-security: #e28295; --arrow-dashed: #9d8df1; --edge-label: var(--arrow); --mask: #0f172a; --frontend-fill: rgba(8, 51, 68, 0.4); --frontend-stroke: #22d3ee; --backend-fill: rgba(6, 78, 59, 0.4); --backend-stroke: #34d399; --database-fill: rgba(76, 29, 149, 0.4); --database-stroke: #a78bfa; --cloud-fill: rgba(120, 53, 15, 0.3); --cloud-stroke: #fbbf24; --security-fill: rgba(136, 19, 55, 0.4); --security-stroke: #fb7185; --messagebus-fill: rgba(251, 146, 60, 0.3); --messagebus-stroke: #fb923c; --external-fill: rgba(30, 41, 59, 0.5); --external-stroke: #94a3b8; --toolbar-bg: rgba(15, 23, 42, 0.8); --toolbar-border: #334155; --toolbar-text: #e2e8f0; --toolbar-hover: rgba(15, 23, 42, 0.95); --toolbar-menu-bg: #0f172a; }
+[data-theme="light"] { color-scheme: light; --bg: #f4f5f7; --grid: #e9edf2; --canvas-dot: #e2e7ec; --text: #111827; --text-muted: #5b6474; --text-dim: #9aa3b2; --text-faint: #6b7280; --panel: #ffffff; --panel-border: #e5e7eb; --lane-fill: rgba(248, 250, 252, 0.65); --lane-stroke: #cbd5e1; --arrow: #64748b; --arrow-emphasis: #059669; --arrow-security: #b43b57; --arrow-dashed: #6d4fc2; --edge-label: var(--text-muted); --mask: #ffffff; --frontend-fill: rgba(34, 211, 238, 0.15); --frontend-stroke: #0891b2; --reader-accent: #077f9c; --backend-fill: rgba(52, 211, 153, 0.18); --backend-stroke: #059669; --database-fill: rgba(167, 139, 250, 0.2); --database-stroke: #7c3aed; --cloud-fill: rgba(251, 191, 36, 0.18); --cloud-stroke: #d97706; --security-fill: rgba(251, 113, 133, 0.15); --security-stroke: #e11d48; --messagebus-fill: rgba(251, 146, 60, 0.15); --messagebus-stroke: #ea580c; --external-fill: rgba(148, 163, 184, 0.18); --external-stroke: #64748b; --toolbar-bg: rgba(255, 255, 255, 0.92); --toolbar-border: #cbd5e1; --toolbar-text: #334155; --toolbar-hover: #ffffff; --toolbar-menu-bg: #ffffff; }
+[data-preset="signal-flow"][data-theme="dark"] { --bg: #030711; --grid: #15233a; --panel: rgba(6, 14, 28, 0.78); --panel-border: #1d3350; --lane-fill: rgba(9, 22, 40, 0.5); --lane-stroke: #2c4564; --text: #f5fbff; --text-muted: #9eb0c7; --text-dim: #52667f; --text-faint: #7890ad; --mask: #07101e; --frontend-fill: rgba(6, 182, 212, 0.14); --frontend-stroke: #67e8f9; --backend-fill: rgba(16, 185, 129, 0.14); --backend-stroke: #5eead4; --database-fill: rgba(139, 92, 246, 0.16); --database-stroke: #c4b5fd; --cloud-fill: rgba(245, 158, 11, 0.13); --cloud-stroke: #fcd34d; --security-fill: rgba(244, 63, 94, 0.13); --security-stroke: #fda4af; --messagebus-fill: rgba(249, 115, 22, 0.13); --messagebus-stroke: #fdba74; --external-fill: rgba(71, 85, 105, 0.24); --external-stroke: #a5b4c7; --arrow: #7890ad; --arrow-emphasis: #2dd4bf; --arrow-security: var(--security-stroke); --arrow-dashed: var(--database-stroke); --edge-label: var(--arrow); --toolbar-bg: rgba(7, 16, 30, 0.86); --toolbar-border: #29415f; --toolbar-menu-bg: #07101e; }
+[data-preset="signal-flow"][data-theme="light"] { --bg: #f4f9fc; --grid: #d4e5ee; --panel: rgba(255, 255, 255, 0.82); --panel-border: #bfd5e2; --lane-fill: rgba(232, 243, 248, 0.62); --lane-stroke: #a9c5d5; --text: #102638; --text-muted: #587287; --text-dim: #8aa2b4; --text-faint: #5d778a; --mask: #ffffff; --frontend-fill: rgba(6, 182, 212, 0.09); --frontend-stroke: #0789a1; --reader-accent: #067e95; --backend-fill: rgba(5, 150, 105, 0.09); --backend-stroke: #087f69; --database-fill: rgba(124, 58, 237, 0.09); --database-stroke: #7254c7; --cloud-fill: rgba(217, 119, 6, 0.08); --cloud-stroke: #b9670b; --security-fill: rgba(225, 29, 72, 0.08); --security-stroke: #c53a59; --messagebus-fill: rgba(234, 88, 12, 0.08); --messagebus-stroke: #c65f27; --external-fill: rgba(100, 116, 139, 0.1); --external-stroke: #607a8c; --arrow: #7b97aa; --arrow-emphasis: #0d9488; --arrow-security: var(--security-stroke); --arrow-dashed: var(--database-stroke); --edge-label: var(--text-muted); }
+[data-preset="blueprint"][data-theme="dark"] { --bg: #06131f; --grid: #17425a; --panel: rgba(7, 27, 43, 0.9); --panel-border: #27627f; --lane-fill: rgba(10, 43, 66, 0.36); --lane-stroke: #34799a; --text: #e3f6ff; --text-muted: #91b8ca; --text-dim: #557e92; --text-faint: #739caf; --mask: #0a2031; --frontend-fill: rgba(26, 157, 193, 0.14); --frontend-stroke: #66d9ef; --backend-fill: rgba(31, 155, 124, 0.13); --backend-stroke: #69dfbd; --database-fill: rgba(120, 105, 196, 0.14); --database-stroke: #b4a8ff; --cloud-fill: rgba(197, 145, 43, 0.13); --cloud-stroke: #ffd166; --security-fill: rgba(199, 76, 104, 0.13); --security-stroke: #ff8da1; --messagebus-fill: rgba(207, 112, 49, 0.13); --messagebus-stroke: #ffad66; --external-fill: rgba(84, 119, 139, 0.18); --external-stroke: #a7cad9; --arrow: #78a3b7; --arrow-emphasis: #64dfc1; --arrow-security: var(--security-stroke); --arrow-dashed: var(--database-stroke); --edge-label: var(--arrow); --toolbar-bg: rgba(7, 28, 45, 0.92); --toolbar-border: #34799a; --toolbar-text: #d8f3ff; --toolbar-hover: rgba(18, 58, 83, 0.95); --toolbar-menu-bg: #0a2031; }
+[data-preset="blueprint"][data-theme="light"] { --bg: #edf7fa; --grid: #b5d5e1; --panel: rgba(249, 253, 255, 0.94); --panel-border: #78aabd; --lane-fill: rgba(210, 232, 240, 0.42); --lane-stroke: #83b2c4; --text: #123344; --text-muted: #4e7486; --text-dim: #86a6b4; --text-faint: #577786; --mask: #f9fdff; --frontend-fill: rgba(8, 145, 178, 0.08); --frontend-stroke: #087f9c; --backend-fill: rgba(5, 128, 101, 0.08); --backend-stroke: #08755f; --database-fill: rgba(100, 75, 180, 0.08); --database-stroke: #6757a8; --cloud-fill: rgba(181, 120, 15, 0.08); --cloud-stroke: #a86609; --security-fill: rgba(190, 48, 80, 0.07); --security-stroke: #b32f50; --messagebus-fill: rgba(196, 81, 22, 0.07); --messagebus-stroke: #b65120; --external-fill: rgba(79, 112, 128, 0.08); --external-stroke: #506f7e; --arrow: #6d93a5; --arrow-emphasis: #087f69; --arrow-security: var(--security-stroke); --arrow-dashed: var(--database-stroke); --edge-label: var(--text-muted); --toolbar-bg: rgba(247, 252, 254, 0.94); --toolbar-border: #8ab5c5; --toolbar-text: #294f61; --toolbar-hover: #ffffff; --toolbar-menu-bg: #f9fdff; }
+[data-preset="editorial"][data-theme="dark"] { --bg: #181611; --grid: #39342a; --panel: rgba(35, 31, 24, 0.96); --panel-border: #625a4a; --lane-fill: rgba(52, 46, 35, 0.46); --lane-stroke: #726957; --text: #f4eddf; --text-muted: #b9ae9b; --text-dim: #776e60; --text-faint: #9d917e; --mask: #231f18; --frontend-fill: rgba(43, 133, 142, 0.16); --frontend-stroke: #7fc6c7; --backend-fill: rgba(63, 132, 92, 0.16); --backend-stroke: #8fc29e; --database-fill: rgba(117, 91, 141, 0.17); --database-stroke: #c0a4d0; --cloud-fill: rgba(170, 119, 49, 0.16); --cloud-stroke: #d8ad68; --security-fill: rgba(157, 69, 65, 0.17); --security-stroke: #df9085; --messagebus-fill: rgba(174, 79, 42, 0.16); --messagebus-stroke: #df946f; --external-fill: rgba(126, 115, 96, 0.18); --external-stroke: #b8ad99; --arrow: #948978; --arrow-emphasis: #dd6b3d; --arrow-security: var(--security-stroke); --arrow-dashed: var(--database-stroke); --edge-label: var(--arrow); --toolbar-bg: rgba(35, 31, 24, 0.92); --toolbar-border: #625a4a; --toolbar-text: #eee5d5; --toolbar-hover: #302a20; --toolbar-menu-bg: #231f18; }
+[data-preset="editorial"][data-theme="light"] { --bg: #f2eee5; --grid: #d8d0c2; --panel: rgba(251, 248, 241, 0.97); --panel-border: #c4b9a6; --lane-fill: rgba(229, 221, 207, 0.42); --lane-stroke: #b8aa94; --text: #242018; --text-muted: #6f6658; --text-dim: #a09788; --text-faint: #796f60; --mask: #fbf8f1; --frontend-fill: rgba(31, 117, 126, 0.09); --frontend-stroke: #287e84; --reader-accent: #267a80; --backend-fill: rgba(42, 119, 75, 0.09); --backend-stroke: #397b53; --database-fill: rgba(105, 75, 130, 0.09); --database-stroke: #765d86; --cloud-fill: rgba(157, 103, 31, 0.1); --cloud-stroke: #9a671f; --security-fill: rgba(153, 58, 52, 0.09); --security-stroke: #9e463f; --messagebus-fill: rgba(182, 70, 27, 0.09); --messagebus-stroke: #ad4b25; --external-fill: rgba(101, 91, 75, 0.09); --external-stroke: #746b5e; --arrow: #8a806f; --arrow-emphasis: #bb4c23; --arrow-security: var(--security-stroke); --arrow-dashed: var(--database-stroke); --edge-label: var(--text-muted); --toolbar-bg: rgba(251, 248, 241, 0.94); --toolbar-border: #c4b9a6; --toolbar-text: #40392f; --toolbar-hover: #fffdf8; --toolbar-menu-bg: #fbf8f1; }
 svg { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", "Noto Sans Mono CJK SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", monospace; width: 100%; min-width: min(900px, 100%); display: block; transform-origin: 0px 0px; transition: transform 0.18s; }
 @keyframes archify-lens-in { 
   0% { opacity: 0; transform: translateY(5px) scale(0.985); }
   100% { opacity: 1; transform: translateY(0px) scale(1); }
 }
+svg [data-node-id][data-node-drilldowns] { cursor: pointer; }
+svg a.archify-drilldown-link { text-decoration: none; color: inherit; cursor: pointer; }
+svg .archify-drilldown-mark-disc { fill: color-mix(in srgb, var(--backend-stroke) 88%, var(--panel)); stroke: color-mix(in srgb, var(--backend-stroke) 55%, var(--toolbar-border)); stroke-width: 1; }
+svg .archify-drilldown-mark-arrow { stroke: var(--panel); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 @keyframes archify-guide-in { 
   0% { opacity: 0; transform: translateY(-5px) scale(0.985); }
   100% { opacity: 1; transform: translateY(0px) scale(1); }
@@ -210,10 +221,11 @@ svg { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consol
 .t-security { fill: var(--security-stroke); }
 .t-messagebus { fill: var(--messagebus-stroke); }
 .t-external { fill: var(--external-stroke); }
-.t-edge-default { fill: var(--arrow); }
+.t-edge-default { fill: var(--edge-label); }
 .t-edge-emphasis { fill: var(--arrow-emphasis); }
-.t-edge-security { fill: var(--security-stroke); }
-.t-edge-dashed { fill: var(--database-stroke); }
+.t-edge-security { fill: var(--arrow-security); }
+.t-edge-dashed { fill: var(--arrow-dashed); }
+svg[data-preset="classic"] .c-grid { stroke: transparent; }
 svg .semantic-sigil { fill: none; stroke: currentcolor; stroke-width: 1.35; stroke-linecap: round; stroke-linejoin: round; opacity: 0.76; pointer-events: none; }
 svg .semantic-sigil &gt; * { vector-effect: non-scaling-stroke; }
 svg .semantic-sigil .sigil-fill { fill: currentcolor; stroke: none; }
@@ -235,12 +247,52 @@ svg[data-focus-active] [data-focus-match][data-detail], svg[data-focus-active] [
 svg[data-focus-active] [data-focus-match] [data-detail-anchor], svg[data-reach-active] [data-reach-match] [data-detail-anchor], svg[data-lens-active] [data-lens-match] [data-detail-anchor], svg[data-legend-preview-active] [data-legend-preview-match] [data-detail-anchor], svg[data-intent-trace-active] [data-intent-trace-match] [data-detail-anchor], svg[data-route-active] [data-route-match] [data-detail-anchor], svg [data-node-id]:hover [data-detail-anchor], svg [data-node-id]:focus-visible [data-detail-anchor] { transform: none; }
 .a-default { stroke: var(--arrow); fill: none; }
 .a-emphasis { stroke: var(--arrow-emphasis); fill: none; }
-.a-security { stroke: var(--security-stroke); fill: none; stroke-dasharray: 5, 5; }
-.a-dashed { stroke: var(--database-stroke); fill: none; stroke-dasharray: 4, 4; }
+.a-security { stroke: var(--arrow-security); fill: none; stroke-dasharray: 5, 5; }
+.a-dashed { stroke: var(--arrow-dashed); fill: none; stroke-dasharray: 4, 4; }
 .m-default { fill: var(--arrow); }
 .m-emphasis { fill: var(--arrow-emphasis); }
-.m-security { fill: var(--security-stroke); }
-.m-dashed { fill: var(--database-stroke); }
+.m-security { fill: var(--arrow-security); }
+.m-dashed { fill: var(--arrow-dashed); }
+.c-change-swatch-added { fill: var(--backend-fill); stroke: var(--backend-stroke); }
+.c-change-swatch-modified { fill: var(--cloud-fill); stroke: var(--cloud-stroke); }
+.c-change-swatch-removed { fill: var(--security-fill); stroke: var(--security-stroke); }
+.c-change-badge-added { fill: color-mix(in srgb, var(--backend-stroke) 18%, var(--mask)); stroke: var(--backend-stroke); }
+.c-change-badge-modified { fill: color-mix(in srgb, var(--cloud-stroke) 18%, var(--mask)); stroke: var(--cloud-stroke); }
+.c-change-badge-removed { fill: color-mix(in srgb, var(--security-stroke) 18%, var(--mask)); stroke: var(--security-stroke); }
+.c-change-swatch-removed { stroke-dasharray: 0.1, 2.6; stroke-linecap: round; stroke-width: 1.4; }
+.c-change-swatch-unchanged { fill: var(--mask); stroke: var(--text-dim); }
+.t-change-added, .t-change-badge-added { fill: var(--backend-stroke); }
+.t-change-modified, .t-change-badge-modified { fill: var(--cloud-stroke); }
+.t-change-removed, .t-change-badge-removed { fill: var(--security-stroke); }
+.m-change-added { fill: var(--backend-stroke); }
+.m-change-modified { fill: var(--cloud-stroke); }
+.m-change-removed { fill: var(--security-stroke); }
+svg [data-change="added"] &gt; :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask) { stroke: var(--backend-stroke); stroke-width: 1.75; }
+svg [data-change="modified"] &gt; :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask) { stroke: var(--cloud-stroke); stroke-width: 1.75; }
+svg [data-change="removed"] &gt; :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask) { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 0.1, 3.4; stroke-linecap: round; }
+svg rect[data-change="added"][data-graph-role], svg [data-change="added"] &gt; rect.c-lane-wash, svg [data-change="added"] &gt; rect.c-lane-rule { stroke: var(--backend-stroke); stroke-width: 1.25; stroke-dasharray: none; }
+svg rect[data-change="modified"][data-graph-role], svg [data-change="modified"] &gt; rect.c-lane-wash, svg [data-change="modified"] &gt; rect.c-lane-rule { stroke: var(--cloud-stroke); stroke-width: 1.25; stroke-dasharray: none; }
+svg rect[data-change="removed"][data-graph-role], svg [data-change="removed"] &gt; rect.c-lane-wash, svg [data-change="removed"] &gt; rect.c-lane-rule { stroke: var(--security-stroke); stroke-width: 1.4; stroke-dasharray: 0.1, 3.4; stroke-linecap: round; }
+svg path[data-change="added"][data-edge-from], svg [data-change="added"][data-edge-from] &gt; path { stroke: var(--backend-stroke); stroke-width: 1.75; }
+svg path[data-change="modified"][data-edge-from], svg [data-change="modified"][data-edge-from] &gt; path { stroke: var(--cloud-stroke); stroke-width: 1.75; }
+svg path[data-change="removed"][data-edge-from], svg [data-change="removed"][data-edge-from] &gt; path { stroke: var(--security-stroke); stroke-width: 1.6; stroke-dasharray: 0.1, 3.4; stroke-linecap: round; }
+svg [data-change]:not([data-change="unchanged"])[data-edge-from] &gt; text:not([data-detail]):not([class*="t-change-badge"]), svg [data-change]:not([data-change="unchanged"])[data-edge-from] &gt; g &gt; text:not([class*="t-change-badge"]) { fill: var(--text); }
+svg [data-change="removed"], svg text[data-change="removed"] { opacity: 0.62; }
+svg [data-change="removed"] &gt; text[data-node-label], svg [data-change="removed"][data-graph-role] &gt; text, svg [data-change="removed"][data-edge-from] text, svg text[data-change="removed"], svg [data-er-row][data-change="removed"] &gt; text, svg [data-class-row][data-change="removed"] &gt; text { text-decoration: line-through; }
+svg [data-emphasis] &gt; :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask), svg path[data-emphasis][data-edge-from], svg [data-emphasis][data-edge-from] &gt; path { stroke-width: 2.4; }
+svg [data-emphasis] &gt; text[data-node-label] { font-weight: 800; }
+svg [data-change-context="subdued"] { opacity: 0.48; }
+svg [data-change-context="subdued"] &gt; :is(rect, circle, ellipse, polygon, path)[class^="c-"]:not(.c-mask) { stroke-dasharray: none; }
+svg [data-node-id][data-change-context] &gt; :is(rect, circle, ellipse, polygon, path):not(.c-mask, .wf-solid, .wf-span, .wf-open, .tree-root, .tree-branch, .tree-leaf, .cl-type, .er-table):is(.c-frontend, .c-backend, .c-database, .c-cloud, .c-security, .c-messagebus, .c-external) { fill: color-mix(in srgb, var(--text-dim) 6%, var(--mask)) !important; stroke: color-mix(in srgb, var(--text-dim) 72%, var(--mask)) !important; }
+svg [data-node-id][data-change="added"] &gt; :is(rect, circle, ellipse, polygon, path):not(.c-mask, .wf-solid, .wf-span, .wf-open, .tree-root, .tree-branch, .tree-leaf, .cl-type, .er-table):is(.c-frontend, .c-backend, .c-database, .c-cloud, .c-security, .c-messagebus, .c-external) { fill: color-mix(in srgb, var(--backend-stroke) 11%, var(--mask)) !important; stroke: var(--backend-stroke) !important; }
+svg [data-node-id][data-change="modified"] &gt; :is(rect, circle, ellipse, polygon, path):not(.c-mask, .wf-solid, .wf-span, .wf-open, .tree-root, .tree-branch, .tree-leaf, .cl-type, .er-table):is(.c-frontend, .c-backend, .c-database, .c-cloud, .c-security, .c-messagebus, .c-external) { fill: color-mix(in srgb, var(--cloud-stroke) 12%, var(--mask)) !important; stroke: var(--cloud-stroke) !important; }
+svg [data-node-id][data-change="removed"] &gt; :is(rect, circle, ellipse, polygon, path):not(.c-mask, .wf-solid, .wf-span, .wf-open, .tree-root, .tree-branch, .tree-leaf, .cl-type, .er-table):is(.c-frontend, .c-backend, .c-database, .c-cloud, .c-security, .c-messagebus, .c-external) { fill: color-mix(in srgb, var(--security-stroke) 7%, var(--mask)) !important; stroke: var(--security-stroke) !important; }
+svg path[data-change-context][data-edge-from]:is(.a-emphasis, .a-security, .a-dashed), svg [data-change-context][data-edge-from] &gt; path:is(.a-emphasis, .a-security, .a-dashed) { stroke: var(--arrow); }
+svg [data-change-context][data-edge-from] text:is(.t-edge-emphasis, .t-edge-security, .t-edge-dashed) { fill: var(--edge-label); }
+svg g[data-composition-frame-kind]:is([data-change], [data-change-context]) &gt; [data-graph-role="structural-frame-label-mask"] { fill: var(--mask) !important; stroke: var(--lane-stroke) !important; }
+svg g[data-composition-frame-kind]:is([data-change], [data-change-context]) &gt; text[data-boundary-label] { fill: var(--text-muted); }
+svg rect[data-graph-role="structural-frame"][data-change-context]:is(.c-security-group, .c-region) { stroke: var(--lane-stroke); }
+.c-activation-review { fill: color-mix(in srgb, var(--text-dim) 14%, var(--mask)); stroke: color-mix(in srgb, var(--text-dim) 80%, var(--mask)); }
 svg [data-node-id] { cursor: pointer; transition: opacity 0.18s, fill-opacity 0.18s, stroke-opacity 0.18s, filter 0.18s; }
 svg [data-edge-from], svg [data-graph-role="automatic-crossover-underlay"] { transition: opacity 0.18s, filter 0.18s; }
 svg [data-node-id]:hover, svg [data-node-id]:focus-visible { filter: drop-shadow(0 0 7px var(--frontend-stroke)); outline: none; }
@@ -386,9 +438,8 @@ svg[data-preset="editorial"] { --flow-halo-peak: 0.07; --flow-glow-peak: 0.28; -
   55%, 100% { box-shadow: transparent 0px 0px 0px 0.32rem; }
 }
 @keyframes archify-intent-trace-flow { 
-  0% { opacity: 0.28; stroke-dashoffset: 0; }
-  12%, 78% { opacity: 0.94; }
-  100% { opacity: 0; stroke-dashoffset: -1; }
+  0% { opacity: 0.94; stroke-dashoffset: 0; }
+  100% { opacity: 0.94; stroke-dashoffset: -1; }
 }
 @keyframes archify-route-probe-flow { 
   0% { stroke-dashoffset: 0; opacity: 0.96; }
@@ -425,188 +476,205 @@ svg[data-preset="editorial"] { --flow-halo-peak: 0.07; --flow-glow-peak: 0.28; -
 }
 @keyframes archify-relay-ripple { 
   0% { r: 2px; opacity: var(--flow-peak, 0.6); }
-  11.719%, 100% { r: 20px; opacity: 0; }
+  10.641%, 100% { r: 20px; opacity: 0; }
 }
 @keyframes archify-relay-comet-0 { 
   0% { stroke-dashoffset: calc(var(--flow-len, 0px) + var(--flow-shift, 0px)); opacity: 0; animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  1.313% { opacity: var(--flow-peak, 0.9); }
-  6.562% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
-  9.062%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
+  1.192% { opacity: var(--flow-peak, 0.9); }
+  5.959% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
+  8.229%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
 }
 @keyframes archify-relay-wake-0 { 
-  0%, 1.969% { opacity: 0; }
-  6.562% { opacity: var(--flow-peak, 0.3); }
-  20.625%, 100% { stroke-dashoffset: 0px; opacity: 0; }
+  0%, 1.788% { opacity: 0; }
+  5.959% { opacity: var(--flow-peak, 0.3); }
+  18.728%, 100% { stroke-dashoffset: 0px; opacity: 0; }
 }
 @keyframes archify-relay-comet-1 { 
   0% { stroke-dashoffset: calc(var(--flow-len, 0px) + var(--flow-shift, 0px)); opacity: 0; animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  1.875% { opacity: var(--flow-peak, 0.9); }
-  9.653% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
-  12.153%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
+  1.703% { opacity: var(--flow-peak, 0.9); }
+  18.514% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
+  20.784%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
 }
 @keyframes archify-relay-wake-1 { 
-  0%, 2.896% { opacity: 0; }
-  9.653% { opacity: var(--flow-peak, 0.3); }
-  23.716%, 100% { stroke-dashoffset: 0px; opacity: 0; }
+  0%, 5.554% { opacity: 0; }
+  18.514% { opacity: var(--flow-peak, 0.3); }
+  31.283%, 100% { stroke-dashoffset: 0px; opacity: 0; }
 }
 @keyframes archify-relay-comet-2 { 
   0% { stroke-dashoffset: calc(var(--flow-len, 0px) + var(--flow-shift, 0px)); opacity: 0; animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  1.313% { opacity: var(--flow-peak, 0.9); }
-  6.562% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
-  9.062%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
+  1.192% { opacity: var(--flow-peak, 0.9); }
+  5.959% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
+  8.229%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
 }
 @keyframes archify-relay-wake-2 { 
   0% { stroke-dashoffset: var(--flow-len, 0px); opacity: var(--flow-peak, 0.3); animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  6.562% { stroke-dashoffset: 0px; opacity: var(--flow-peak, 0.3); }
-  20.625%, 100% { stroke-dashoffset: 0px; opacity: 0; }
+  5.959% { stroke-dashoffset: 0px; opacity: var(--flow-peak, 0.3); }
+  18.728%, 100% { stroke-dashoffset: 0px; opacity: 0; }
 }
 @keyframes archify-relay-comet-3 { 
   0% { stroke-dashoffset: calc(var(--flow-len, 0px) + var(--flow-shift, 0px)); opacity: 0; animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  1.875% { opacity: var(--flow-peak, 0.9); }
-  12.086% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
-  14.586%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
+  1.192% { opacity: var(--flow-peak, 0.9); }
+  5.959% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
+  8.229%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
 }
 @keyframes archify-relay-wake-3 { 
-  0%, 3.626% { opacity: 0; }
-  12.086% { opacity: var(--flow-peak, 0.3); }
-  26.149%, 100% { stroke-dashoffset: 0px; opacity: 0; }
+  0% { stroke-dashoffset: var(--flow-len, 0px); opacity: var(--flow-peak, 0.3); animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
+  5.959% { stroke-dashoffset: 0px; opacity: var(--flow-peak, 0.3); }
+  18.728%, 100% { stroke-dashoffset: 0px; opacity: 0; }
 }
 @keyframes archify-relay-comet-4 { 
   0% { stroke-dashoffset: calc(var(--flow-len, 0px) + var(--flow-shift, 0px)); opacity: 0; animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  1.313% { opacity: var(--flow-peak, 0.9); }
-  6.562% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
-  9.062%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
+  1.703% { opacity: var(--flow-peak, 0.9); }
+  11.583% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
+  13.853%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
 }
 @keyframes archify-relay-wake-4 { 
-  0% { stroke-dashoffset: var(--flow-len, 0px); opacity: var(--flow-peak, 0.3); animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  6.562% { stroke-dashoffset: 0px; opacity: var(--flow-peak, 0.3); }
-  20.625%, 100% { stroke-dashoffset: 0px; opacity: 0; }
+  0%, 3.475% { opacity: 0; }
+  11.583% { opacity: var(--flow-peak, 0.3); }
+  24.351%, 100% { stroke-dashoffset: 0px; opacity: 0; }
 }
 @keyframes archify-relay-comet-5 { 
   0% { stroke-dashoffset: calc(var(--flow-len, 0px) + var(--flow-shift, 0px)); opacity: 0; animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  1.529% { opacity: var(--flow-peak, 0.9); }
-  7.643% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
-  10.143%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
+  1.192% { opacity: var(--flow-peak, 0.9); }
+  5.959% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
+  8.229%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
 }
 @keyframes archify-relay-wake-5 { 
-  0%, 2.293% { opacity: 0; }
-  7.643% { opacity: var(--flow-peak, 0.3); }
-  21.705%, 100% { stroke-dashoffset: 0px; opacity: 0; }
+  0% { stroke-dashoffset: var(--flow-len, 0px); opacity: var(--flow-peak, 0.3); animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
+  5.959% { stroke-dashoffset: 0px; opacity: var(--flow-peak, 0.3); }
+  18.728%, 100% { stroke-dashoffset: 0px; opacity: 0; }
 }
 @keyframes archify-relay-comet-6 { 
   0% { stroke-dashoffset: calc(var(--flow-len, 0px) + var(--flow-shift, 0px)); opacity: 0; animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  1.313% { opacity: var(--flow-peak, 0.9); }
-  6.562% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
-  9.062%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
+  1.57% { opacity: var(--flow-peak, 0.9); }
+  7.852% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
+  10.122%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
 }
 @keyframes archify-relay-wake-6 { 
-  0% { stroke-dashoffset: var(--flow-len, 0px); opacity: var(--flow-peak, 0.3); animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  6.562% { stroke-dashoffset: 0px; opacity: var(--flow-peak, 0.3); }
-  20.625%, 100% { stroke-dashoffset: 0px; opacity: 0; }
+  0%, 2.356% { opacity: 0; }
+  7.852% { opacity: var(--flow-peak, 0.3); }
+  20.621%, 100% { stroke-dashoffset: 0px; opacity: 0; }
 }
 @keyframes archify-relay-comet-7 { 
   0% { stroke-dashoffset: calc(var(--flow-len, 0px) + var(--flow-shift, 0px)); opacity: 0; animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  1.313% { opacity: var(--flow-peak, 0.9); }
-  6.562% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
-  9.062%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
+  1.192% { opacity: var(--flow-peak, 0.9); }
+  5.959% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
+  8.229%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
 }
 @keyframes archify-relay-wake-7 { 
   0% { stroke-dashoffset: var(--flow-len, 0px); opacity: var(--flow-peak, 0.3); animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  6.562% { stroke-dashoffset: 0px; opacity: var(--flow-peak, 0.3); }
-  20.625%, 100% { stroke-dashoffset: 0px; opacity: 0; }
+  5.959% { stroke-dashoffset: 0px; opacity: var(--flow-peak, 0.3); }
+  18.728%, 100% { stroke-dashoffset: 0px; opacity: 0; }
 }
 @keyframes archify-relay-comet-8 { 
   0% { stroke-dashoffset: calc(var(--flow-len, 0px) + var(--flow-shift, 0px)); opacity: 0; animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  1.313% { opacity: var(--flow-peak, 0.9); }
-  6.562% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
-  9.062%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
+  1.192% { opacity: var(--flow-peak, 0.9); }
+  5.959% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
+  8.229%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
 }
 @keyframes archify-relay-wake-8 { 
   0% { stroke-dashoffset: var(--flow-len, 0px); opacity: var(--flow-peak, 0.3); animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  6.562% { stroke-dashoffset: 0px; opacity: var(--flow-peak, 0.3); }
-  20.625%, 100% { stroke-dashoffset: 0px; opacity: 0; }
+  5.959% { stroke-dashoffset: 0px; opacity: var(--flow-peak, 0.3); }
+  18.728%, 100% { stroke-dashoffset: 0px; opacity: 0; }
 }
 @keyframes archify-relay-comet-9 { 
   0% { stroke-dashoffset: calc(var(--flow-len, 0px) + var(--flow-shift, 0px)); opacity: 0; animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  1.875% { opacity: var(--flow-peak, 0.9); }
-  10.937% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
-  13.438%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
+  1.192% { opacity: var(--flow-peak, 0.9); }
+  5.959% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
+  8.229%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
 }
 @keyframes archify-relay-wake-9 { 
   0% { stroke-dashoffset: var(--flow-len, 0px); opacity: var(--flow-peak, 0.3); animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  10.937% { stroke-dashoffset: 0px; opacity: var(--flow-peak, 0.3); }
-  25%, 100% { stroke-dashoffset: 0px; opacity: 0; }
+  5.959% { stroke-dashoffset: 0px; opacity: var(--flow-peak, 0.3); }
+  18.728%, 100% { stroke-dashoffset: 0px; opacity: 0; }
 }
 @keyframes archify-relay-comet-10 { 
   0% { stroke-dashoffset: calc(var(--flow-len, 0px) + var(--flow-shift, 0px)); opacity: 0; animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  1.875% { opacity: var(--flow-peak, 0.9); }
-  10.937% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
-  13.438%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
+  1.703% { opacity: var(--flow-peak, 0.9); }
+  11.753% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
+  14.023%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
 }
 @keyframes archify-relay-wake-10 { 
   0% { stroke-dashoffset: var(--flow-len, 0px); opacity: var(--flow-peak, 0.3); animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
-  10.937% { stroke-dashoffset: 0px; opacity: var(--flow-peak, 0.3); }
-  25%, 100% { stroke-dashoffset: 0px; opacity: 0; }
+  11.753% { stroke-dashoffset: 0px; opacity: var(--flow-peak, 0.3); }
+  24.522%, 100% { stroke-dashoffset: 0px; opacity: 0; }
+}
+@keyframes archify-relay-comet-11 { 
+  0% { stroke-dashoffset: calc(var(--flow-len, 0px) + var(--flow-shift, 0px)); opacity: 0; animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
+  1.703% { opacity: var(--flow-peak, 0.9); }
+  9.931% { stroke-dashoffset: var(--flow-shift, 0px); opacity: var(--flow-peak, 0.9); }
+  12.201%, 100% { stroke-dashoffset: var(--flow-shift, 0px); opacity: 0; }
+}
+@keyframes archify-relay-wake-11 { 
+  0% { stroke-dashoffset: var(--flow-len, 0px); opacity: var(--flow-peak, 0.3); animation-timing-function: cubic-bezier(0.45, 0.05, 0.35, 1); }
+  9.931% { stroke-dashoffset: 0px; opacity: var(--flow-peak, 0.3); }
+  22.7%, 100% { stroke-dashoffset: 0px; opacity: 0; }
 }
 @keyframes archify-relay-node-0 { 
   0%, 100% { filter: var(--ambient-node-base-filter, none); }
   0% { filter: var(--ambient-node-base-filter, none); }
-  1.875%, 6.562% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
-  18.75% { filter: var(--ambient-node-base-filter, none); }
+  1.703%, 5.959% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
+  17.025% { filter: var(--ambient-node-base-filter, none); }
 }
 @keyframes archify-relay-node-1 { 
   0%, 100% { filter: var(--ambient-node-base-filter, none); }
-  10.937% { filter: var(--ambient-node-base-filter, none); }
-  12.812%, 17.5% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
-  29.687% { filter: var(--ambient-node-base-filter, none); }
+  11.753% { filter: var(--ambient-node-base-filter, none); }
+  13.455%, 17.711% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
+  28.778% { filter: var(--ambient-node-base-filter, none); }
 }
 @keyframes archify-relay-node-2 { 
   0%, 100% { filter: var(--ambient-node-base-filter, none); }
-  19.063% { filter: var(--ambient-node-base-filter, none); }
-  20.937%, 25.625% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
-  37.813% { filter: var(--ambient-node-base-filter, none); }
+  19.13% { filter: var(--ambient-node-base-filter, none); }
+  20.833%, 25.089% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
+  36.155% { filter: var(--ambient-node-base-filter, none); }
 }
 @keyframes archify-relay-node-3 { 
   0%, 100% { filter: var(--ambient-node-base-filter, none); }
-  27.187% { filter: var(--ambient-node-base-filter, none); }
-  29.062%, 33.75% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
-  45.938% { filter: var(--ambient-node-base-filter, none); }
+  26.508% { filter: var(--ambient-node-base-filter, none); }
+  28.21%, 32.467% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
+  43.533% { filter: var(--ambient-node-base-filter, none); }
 }
 @keyframes archify-relay-node-4 { 
   0%, 100% { filter: var(--ambient-node-base-filter, none); }
-  30.278% { filter: var(--ambient-node-base-filter, none); }
-  32.153%, 36.841% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
-  49.028% { filter: var(--ambient-node-base-filter, none); }
+  39.063% { filter: var(--ambient-node-base-filter, none); }
+  40.766%, 45.022% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
+  56.088% { filter: var(--ambient-node-base-filter, none); }
 }
 @keyframes archify-relay-node-5 { 
   0%, 100% { filter: var(--ambient-node-base-filter, none); }
-  27.187% { filter: var(--ambient-node-base-filter, none); }
-  29.062%, 33.75% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
-  45.938% { filter: var(--ambient-node-base-filter, none); }
+  26.508% { filter: var(--ambient-node-base-filter, none); }
+  28.21%, 32.467% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
+  43.533% { filter: var(--ambient-node-base-filter, none); }
 }
 @keyframes archify-relay-node-6 { 
   0%, 100% { filter: var(--ambient-node-base-filter, none); }
-  35.313% { filter: var(--ambient-node-base-filter, none); }
-  37.188%, 41.875% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
-  54.062% { filter: var(--ambient-node-base-filter, none); }
+  33.885% { filter: var(--ambient-node-base-filter, none); }
+  35.588%, 39.844% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
+  50.911% { filter: var(--ambient-node-base-filter, none); }
 }
 @keyframes archify-relay-node-7 { 
   0%, 100% { filter: var(--ambient-node-base-filter, none); }
-  43.438% { filter: var(--ambient-node-base-filter, none); }
-  45.313%, 50% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
-  62.188% { filter: var(--ambient-node-base-filter, none); }
+  41.263% { filter: var(--ambient-node-base-filter, none); }
+  42.966%, 47.222% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
+  58.288% { filter: var(--ambient-node-base-filter, none); }
 }
 @keyframes archify-relay-node-8 { 
   0%, 100% { filter: var(--ambient-node-base-filter, none); }
-  55.937% { filter: var(--ambient-node-base-filter, none); }
-  57.813%, 62.5% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
-  74.688% { filter: var(--ambient-node-base-filter, none); }
+  48.641% { filter: var(--ambient-node-base-filter, none); }
+  50.343%, 54.599% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
+  65.666% { filter: var(--ambient-node-base-filter, none); }
 }
 @keyframes archify-relay-node-9 { 
   0%, 100% { filter: var(--ambient-node-base-filter, none); }
-  64.063% { filter: var(--ambient-node-base-filter, none); }
-  65.938%, 70.625% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
-  82.813% { filter: var(--ambient-node-base-filter, none); }
+  59.991% { filter: var(--ambient-node-base-filter, none); }
+  61.693%, 65.95% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
+  77.016% { filter: var(--ambient-node-base-filter, none); }
+}
+@keyframes archify-relay-node-10 { 
+  0%, 100% { filter: var(--ambient-node-base-filter, none); }
+  67.368% { filter: var(--ambient-node-base-filter, none); }
+  69.071%, 73.327% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 10px var(--arrow-emphasis)); }
+  84.394% { filter: var(--ambient-node-base-filter, none); }
 }
 svg[data-node-ui] [data-node-id] &gt; rect:not(.c-mask) { stroke-width: 1.25px; }
 :is([data-theme="dark"] svg[data-node-ui], svg[data-node-ui][data-theme="dark"]) [data-node-id] &gt; rect:not(.c-mask).c-frontend { fill: color-mix(in srgb, var(--frontend-stroke) 13%, var(--mask)); stroke: color-mix(in srgb, var(--frontend-stroke) 72%, var(--mask)); }
@@ -627,10 +695,375 @@ svg[data-node-ui] .phase-chip { stroke: var(--lane-stroke); stroke-width: 0.75px
 svg[data-node-ui] g[data-edge-from] &gt; rect.c-mask { rx: 7px; stroke: var(--lane-stroke); stroke-width: 0.75px; }
 svg[data-node-ui][data-preset="blueprint"] :is([data-graph-role="structural-frame-label-mask"], g[data-edge-from] &gt; rect.c-mask, .phase-chip) { rx: 2px; }
 svg[data-node-ui][data-preset="editorial"] :is([data-graph-role="structural-frame-label-mask"], g[data-edge-from] &gt; rect.c-mask, .phase-chip) { rx: 3px; }
-:root, svg { --bg: #f4f5f7; --grid: #e9edf2; --canvas-dot: #e2e7ec; --text: #111827; --text-muted: #5b6474; --text-dim: #9aa3b2; --text-faint: #6b7280; --panel: #ffffff; --panel-border: #e5e7eb; --lane-fill: rgba(248, 250, 252, 0.65); --lane-stroke: #cbd5e1; --arrow: #64748b; --arrow-emphasis: #059669; --mask: #ffffff; --frontend-fill: rgba(34, 211, 238, 0.15); --frontend-stroke: #0891b2; --backend-fill: rgba(52, 211, 153, 0.18); --backend-stroke: #059669; --database-fill: rgba(167, 139, 250, 0.2); --database-stroke: #7c3aed; --cloud-fill: rgba(251, 191, 36, 0.18); --cloud-stroke: #d97706; --security-fill: rgba(251, 113, 133, 0.15); --security-stroke: #e11d48; --messagebus-fill: rgba(251, 146, 60, 0.15); --messagebus-stroke: #ea580c; --external-fill: rgba(148, 163, 184, 0.18); --external-stroke: #64748b; --toolbar-bg: rgba(255, 255, 255, 0.92); --toolbar-border: #cbd5e1; --toolbar-text: #334155; --toolbar-hover: #ffffff; --toolbar-menu-bg: #ffffff; --flow-cycle: ; --flow-halo-peak: ; --flow-glow-peak: ; --flow-tail-peak: ; --flow-head-peak: ; --flow-wake-peak: ; --flow-ripple-peak: ; --flow-peak: ; }
-</style><rect x="0" y="-44" width="914" height="944" fill="#f4f5f7"/><g transform="translate(0,-44)"><!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#5F5E5A"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#7A4E0B"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#f4f5f7" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#0C447C" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#3B6D11" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#3B6D11" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#5F5E5A">Knowledge</text><text x="56" y="32.5" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#5F5E5A">Trust Ladder</text><!-- ktl-brand:end --></g><text x="457" y="-14" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#2C2C2A">How the context workspace stays current</text>
-        <title id="archify-diagram-title">How the context workspace stays current</title>
-        <desc id="archify-diagram-description">A published release starts the refresh job, which runs no agent. It resolves the members into a lock, verifies each file, builds one named graph per bundle, gates the links between bundles and swaps the snapshot in whole. A failed check or gate stops the job; the old snapshot stays. A member whose file cannot be fetched is held at its last good state. Readers query it over SPARQL or MCP.</desc>
+:root, svg { --bg: #f4f5f7; --grid: #e9edf2; --canvas-dot: #e2e7ec; --text: #111827; --text-muted: #5b6474; --text-dim: #9aa3b2; --text-faint: #6b7280; --panel: #ffffff; --panel-border: #e5e7eb; --lane-fill: rgba(248, 250, 252, 0.65); --lane-stroke: #cbd5e1; --arrow: #64748b; --arrow-emphasis: #059669; --arrow-security: #b43b57; --arrow-dashed: #6d4fc2; --edge-label: #5b6474; --mask: #ffffff; --frontend-fill: rgba(34, 211, 238, 0.15); --frontend-stroke: #0891b2; --backend-fill: rgba(52, 211, 153, 0.18); --backend-stroke: #059669; --database-fill: rgba(167, 139, 250, 0.2); --database-stroke: #7c3aed; --cloud-fill: rgba(251, 191, 36, 0.18); --cloud-stroke: #d97706; --security-fill: rgba(251, 113, 133, 0.15); --security-stroke: #e11d48; --messagebus-fill: rgba(251, 146, 60, 0.15); --messagebus-stroke: #ea580c; --external-fill: rgba(148, 163, 184, 0.18); --external-stroke: #64748b; --toolbar-bg: rgba(255, 255, 255, 0.92); --toolbar-border: #cbd5e1; --toolbar-text: #334155; --toolbar-hover: #ffffff; --toolbar-menu-bg: #ffffff; --reader-accent: #077f9c; --flow-cycle: ; --flow-halo-peak: ; --flow-glow-peak: ; --flow-tail-peak: ; --flow-head-peak: ; --flow-wake-peak: ; --flow-ripple-peak: ; --flow-peak: ; }
+</style><rect x="0" y="-44" width="1046" height="944" fill="#f4f5f7"/><g transform="translate(0,-44)"><!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#5F5E5A"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#7A4E0B"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#f4f5f7" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#0C447C" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#3B6D11" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#3B6D11" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.9" fill="#4A4944">KNOWLEDGE</text><text x="56" y="32.5" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.9" fill="#4A4944">TRUST LADDER</text><!-- ktl-brand:end --></g><text x="523" y="-14" text-anchor="middle" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="18" font-weight="700" fill="#1C1C1A">How the workspace stays current</text><metadata id="archify-software-notices">NOTICE
+Archify
+Copyright (c) 2026 tt-a1i (Archify)
+Copyright (c) 2025 Cocoon AI
+
+Archify is distributed under the Apache License, Version 2.0 (LICENSE),
+except where a file, package manifest, or third-party notice specifies otherwise.
+The separately versioned DeepSeek Harness adapter remains MIT; its bundled
+Skill retains the license of the immutable source selected in release.json.
+
+Code and contributions received under the MIT License through pre-transition
+commit 82c7e0f089a02a4d514714adf37dc2061682da5f remain available under their
+original terms. Previously published releases keep their existing licenses. The complete historical MIT
+copyright and permission notice is preserved in LICENSE-MIT. This transition
+does not revoke existing MIT grants or assert a new patent grant on behalf
+of historical contributors.
+
+Archify originated from Cocoon-AI/architecture-diagram-generator:
+https://github.com/Cocoon-AI/architecture-diagram-generator
+
+Third-party components retain their own licenses; see THIRD_PARTY_NOTICES.md
+and the license files beside those components. Names and logos do not imply
+official endorsement, and the software license grants no general trademark
+permission.
+
+These software licenses cover Archify's embedded runtime and templates, not
+ownership of a user's authored content, business data, or source repository.
+
+LICENSE
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+LICENSE-MIT
+MIT License
+
+Copyright (c) 2026 tt-a1i (Archify)
+Copyright (c) 2025 Cocoon AI
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+THIRD_PARTY_NOTICES.md
+# Third-party notices
+
+Archify includes optional vector data for third-party brand marks. These marks
+are provided only to identify technologies and services in user-authored
+diagrams. Their inclusion does not imply sponsorship, endorsement, partnership,
+or affiliation with Archify.
+
+Archify's license and historical MIT grants are described in LICENSE, NOTICE,
+and LICENSE-MIT. The software license does not
+replace the copyright licenses, trademark policies, or brand guidelines that
+apply to third-party marks. Users are responsible for confirming that their
+particular use is permitted.
+
+## Simple Icons
+
+Most of the built-in vector paths and their metadata were generated from
+[Simple Icons 16.28.0](https://github.com/simple-icons/simple-icons/tree/16.28.0).
+Simple Icons makes its collection work available under
+[CC0 1.0 Universal](https://github.com/simple-icons/simple-icons/blob/16.28.0/LICENSE.md).
+
+As Simple Icons explains in its
+[disclaimer](https://github.com/simple-icons/simple-icons/blob/16.28.0/DISCLAIMER.md),
+CC0 for the collection does not mean that every underlying icon is CC0. License
+and brand-guideline metadata may be incomplete or change over time. The absence
+of an individual license entry is not a grant of permission.
+
+Archify embeds the selected icons as vector-path data and may render them in a
+user-selected color. The following individual licenses were recorded in the
+pinned Simple Icons 16.28.0 metadata:
+
+| Mark | Recorded source | Recorded license | Archify treatment |
+|---|---|---|---|
+| Angular | [Angular press kit](https://angular.dev/press-kit) | [`CC-BY-4.0`](https://creativecommons.org/licenses/by/4.0/) | Embedded as vector-path data; color may be changed by the authored diagram. |
+| Apache Airflow | [Apache logos](https://apache.org/logos) | [`Apache-2.0`](https://www.apache.org/licenses/LICENSE-2.0) | Embedded as vector-path data; Apache trademarks remain subject to the [ASF trademark policy](https://www.apache.org/foundation/marks/). |
+| Apache Kafka | [Apache logos](https://apache.org/logos) | [`Apache-2.0`](https://www.apache.org/licenses/LICENSE-2.0) | Embedded as vector-path data; Apache trademarks remain subject to the [ASF trademark policy](https://www.apache.org/foundation/marks/). |
+| .NET | [.NET brand repository](https://github.com/dotnet/brand/blob/c7d0f51b8ec59531332d05fb27a5b758a7a3d689/logo/dotnet-logo.svg) | [`CC0-1.0`](https://creativecommons.org/publicdomain/zero/1.0/) | Embedded as vector-path data; color may be changed by the authored diagram. |
+| JavaScript | [JS community logo](https://github.com/voodootikigod/logo.js/blob/1544bdeed6d618a6cfe4f0650d04ab8d9cfa76d9/js.svg) | [`MIT`](https://github.com/voodootikigod/logo.js/blob/1544bdeed6d618a6cfe4f0650d04ab8d9cfa76d9/LICENSE) | Embedded as vector-path data; color may be changed by the authored diagram. |
+| Jenkins | [Jenkins artwork source](https://get.jenkins.io/art/) | [`CC-BY-SA-3.0`](https://creativecommons.org/licenses/by-sa/3.0/) | Embedded as vector-path data; color may be changed by the authored diagram. Jenkins retains its trademark rights. |
+| Rust | [Rust project](https://www.rust-lang.org) | [`CC-BY-SA-4.0`](https://creativecommons.org/licenses/by-sa/4.0/) | Embedded as vector-path data; color may be changed by the authored diagram. See the [Rust media guide](https://www.rust-lang.org/policies/media-guide). |
+| Vue.js | [Vue logo source](https://github.com/vuejs/art/blob/a1c78b74569b70a25300925b4eacfefcc143b8f6/logo.svg) | [`CC-BY-NC-SA-4.0`](https://creativecommons.org/licenses/by-nc-sa/4.0/) | Embedded as vector-path data; color may be changed by the authored diagram. The non-commercial and share-alike conditions remain applicable; see the [Vue artwork terms](https://github.com/vuejs/art/blob/a1c78b74569b70a25300925b4eacfefcc143b8f6/README.md). |
+
+The source, guideline, and known license fields for every packaged mark are
+preserved in `renderers/shared/generated-brand-marks.mjs`.
+
+## OpenAI mark
+
+The OpenAI vector path is recorded from the
+[OpenAI brand guidelines](https://openai.com/brand/), not from Simple Icons.
+Use remains subject to those current guidelines and any applicable trademark
+rights. Its inclusion does not state or imply endorsement by OpenAI.
+
+## JetBrains Mono
+
+Delivered Archify viewer artifacts embed the JetBrains Mono variable font
+subsets served by Google Fonts. For characters covered by these subsets, font
+selection does not depend on a network request or a locally installed copy.
+Uncovered characters (including CJK) still use the system fallback stack;
+browser and operating-system rasterization can differ.
+JetBrains Mono is maintained at
+[github.com/JetBrains/JetBrainsMono](https://github.com/JetBrains/JetBrainsMono)
+and is distributed under the SIL Open Font License 1.1. The complete license
+text is preserved in `assets/JetBrainsMono-OFL.txt` in the packaged Skill and
+in the font CSS carried by standalone HTML and SVG exports.
+
+## Pele
+
+The explainer renders Mermaid chart fences with an unmodified subset of
+[Pele 1.3.0](https://github.com/obsidianmd/pele), copyright (c) 2026 kepano,
+distributed under the MIT License. The subset and its license text are in
+`explainer/vendor/pele/` in the packaged Skill. Charts are rendered to static
+SVG when a page is built; delivered pages contain no Pele code.
+
+## No additional rights granted
+
+Brand names, logos, and trademarks remain the property of their respective
+owners. This notice records provenance and known terms; it does not grant rights
+that Archify does not hold, and it does not state that every packaged mark has
+been cleared for every commercial, promotional, or redistributive use.
+
+## Story HTML parser
+
+The Node story scanner and builder include parse5 7.3.0 (MIT) and entities
+6.0.1 (BSD-2-Clause), bundled into `story/vendor/html-parser.mjs`. The parser is
+not embedded in generated HTML. Pinned sources, rebuild instructions and the
+complete licenses are in `story/vendor/`.
+
+## Code Analysis external diagnostics
+
+The Code Analysis module includes the unmodified
+[OASIS SARIF 2.1.0 schema](https://github.com/oasis-tcs/sarif-spec/blob/1742a253eb654bf8a4ed7c60eaef7412b2c23553/sarif-2.1/schema/sarif-schema-2.1.0.json)
+from revision `1742a253`. Its repository content is governed by the
+[OASIS license terms and policies](https://github.com/oasis-tcs/sarif-spec/blob/1742a253eb654bf8a4ed7c60eaef7412b2c23553/LICENSE.md),
+including RF on RAND Terms Mode. The original terms are preserved in
+`modules/code-analysis/import/vendor/OASIS-LICENSE.md` in the packaged Skill.
+
+The line-context fingerprint algorithm is adapted from
+[github/codeql-action](https://github.com/github/codeql-action/blob/592d162ba3b2f5a3411d2cbf01df9f82c492f269/src/fingerprints.ts),
+revision `592d162b`, copyright (c) 2020 GitHub, under the MIT License.
+The complete license is preserved in
+`modules/code-analysis/import/vendor/CODEQL-LICENSE.txt` in the packaged Skill.
+
+## Code Analysis Atlas 3D
+
+The Atlas 3D view includes the unmodified minified build of
+[three.js](https://github.com/mrdoob/three.js) r128 (`three@0.128.0` on npm,
+`build/three.min.js`), copyright 2010-2021 three.js authors, under the MIT
+License. It is embedded in the analysis page and runs only when Atlas 3D is
+opened. The complete license is preserved in
+`modules/code-analysis/overlay/vendor/THREE-LICENSE.txt` in the packaged Skill.</metadata>
+        <title id="archify-diagram-title">How the workspace stays current</title>
+        <desc id="archify-diagram-description">A release of the top domain starts the build, which does not run an agent. It resolves, verifies, registers and exports, loads one named graph per bundle, gates the links between bundles, and swaps by two renames. A failed check stops the job, and the old workspace stays. A member that cannot be fetched is held at its last good state. Readers use SPARQL or MCP.</desc>
         <!-- Definitions -->
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -675,24 +1108,24 @@ svg[data-node-ui][data-preset="editorial"] :is([data-graph-role="structural-fram
         
 
         <!-- Swimlanes -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-0" x="40" y="52" width="858" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-0" x="40" y="52" width="990" height="104" rx="10" class="c-lane" stroke-width="1"/>
         <text x="54" y="74" class="t-muted" font-size="10" font-weight="600">01 / Releases</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-1" x="40" y="176" width="858" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="exception-lane" data-composition-frame-id="lane-1-exception" x="46" y="182" width="846" height="92" rx="8" class="c-security-group" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-1" x="40" y="176" width="990" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="exception-lane" data-composition-frame-id="lane-1-exception" x="46" y="182" width="978" height="92" rx="8" class="c-security-group" stroke-width="1"/>
         <text x="54" y="198" class="t-security" font-size="10" font-weight="600">EX / Unreachable</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-2" x="40" y="300" width="858" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="322" class="t-muted" font-size="10" font-weight="600">03 / Refresh job</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-2" x="40" y="300" width="990" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="322" class="t-muted" font-size="10" font-weight="600">03 / The build</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-3" x="40" y="424" width="858" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="exception-lane" data-composition-frame-id="lane-3-exception" x="46" y="430" width="846" height="92" rx="8" class="c-security-group" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-3" x="40" y="424" width="990" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="exception-lane" data-composition-frame-id="lane-3-exception" x="46" y="430" width="978" height="92" rx="8" class="c-security-group" stroke-width="1"/>
         <text x="54" y="446" class="t-security" font-size="10" font-weight="600">EX / Check fails</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-4" x="40" y="548" width="858" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-4" x="40" y="548" width="990" height="104" rx="10" class="c-lane" stroke-width="1"/>
         <text x="54" y="570" class="t-muted" font-size="10" font-weight="600">05 / Workspace</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-5" x="40" y="672" width="858" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-5" x="40" y="672" width="990" height="104" rx="10" class="c-lane" stroke-width="1"/>
         <text x="54" y="694" class="t-muted" font-size="10" font-weight="600">06 / Readers</text>
 
         <!-- Phase headers -->
@@ -702,170 +1135,187 @@ svg[data-node-ui][data-preset="editorial"] :is([data-graph-role="structural-fram
 
 
         <!-- Edge paths -->
-        <path data-edge-from="verify" data-edge-to="held" data-edge-label="cannot fetch it" data-edge-key="0" data-edge-id="cannot-fetch" data-edge-role="branch" data-composition-points="303.6,341;303.6,269" d="M 303.6 341 L 303.6 269" class="a-dashed" data-animate="edge" style="--step: 5;" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="verify" data-edge-to="stopped" data-edge-label="a check fails" data-edge-key="1" data-edge-id="check-fails" data-edge-role="error" data-composition-points="303.6,393;303.6,491;381.59999999999997,491" d="M 303.6 393 L 303.6 483 Q 303.6 491 311.6 491 L 381.59999999999997 491" class="a-security" data-animate="edge" style="--step: 6;" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="verify" data-edge-to="build" data-edge-key="2" data-edge-id="checked" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="349.6,367;381.59999999999997,367" d="M 349.6 367 L 381.59999999999997 367" class="a-emphasis" data-animate="edge" style="--step: 1;" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="gate" data-edge-to="stopped" data-edge-label="a link fails" data-edge-key="3" data-edge-id="gate-fails" data-edge-role="error" data-composition-points="595.2,393;595.2,491;473.59999999999997,491" d="M 595.2 393 L 595.2 483 Q 595.2 491 587.2 491 L 473.59999999999997 491" class="a-security" data-animate="edge" style="--step: 8;" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="build" data-edge-to="gate" data-edge-label="named graphs" data-edge-key="4" data-edge-id="graphs" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="473.59999999999997,367;549.2,367" d="M 473.59999999999997 367 L 549.2 367" class="a-emphasis" data-animate="edge" style="--step: 2;" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="held" data-edge-to="build" data-edge-label="last good copy" data-edge-key="5" data-edge-id="last-good" data-edge-role="branch" data-composition-points="379.6,243;395.6,243;395.6,290;427.59999999999997,290;427.59999999999997,341" d="M 379.6 243 L 387.6 243 Q 395.6 243 395.6 251 L 395.6 282 Q 395.6 290 403.6 290 L 419.59999999999997 290 Q 427.59999999999997 290 427.59999999999997 298 L 427.59999999999997 341" class="a-dashed" data-animate="edge" style="--step: 10;" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="resolve" data-edge-to="verify" data-edge-label="the lock" data-edge-key="6" data-edge-id="lock" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="201.2,367;257.6,367" d="M 201.2 367 L 257.6 367" class="a-emphasis" data-animate="edge" style="--step: 0;" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="gate" data-edge-to="swap" data-edge-key="7" data-edge-id="passes" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="641.2,367;673.2,367" d="M 641.2 367 L 673.2 367" class="a-emphasis" data-animate="edge" style="--step: 3;" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="snapshot" data-edge-to="readers" data-edge-label="SPARQL or MCP" data-edge-key="8" data-edge-id="read" data-edge-role="" data-composition-points="719.2,641;719.2,713" d="M 719.2 641 L 719.2 713" class="a-emphasis" data-animate="edge" style="--step: 12;" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="release" data-edge-to="resolve" data-edge-label="publish event" data-edge-key="9" data-edge-id="starts" data-edge-role="" data-composition-points="155.2,145;155.2,341" d="M 155.2 145 L 155.2 341" class="a-emphasis" data-animate="edge" style="--step: 12;" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="swap" data-edge-to="snapshot" data-edge-key="10" data-edge-id="swapped" data-edge-role="" data-composition-points="719.2,393;719.2,589" d="M 719.2 393 L 719.2 589" class="a-emphasis" data-animate="edge" style="--step: 12;" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="verify" data-edge-to="held" data-edge-label="cannot fetch it" data-edge-key="0" data-edge-id="cannot-fetch" data-edge-role="branch" data-composition-points="315.2,341;315.2,269" d="M 315.2 341 L 315.2 269" class="a-dashed" data-animate="edge" style="--step: 6;" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="verify" data-edge-to="stopped" data-edge-label="a check fails" data-edge-key="1" data-edge-id="check-fails" data-edge-role="error" data-composition-points="315.2,393;315.2,491;585.5999999999999,491" d="M 315.2 393 L 315.2 483 Q 315.2 491 323.2 491 L 585.5999999999999 491" class="a-security" data-animate="edge" style="--step: 7;" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="verify" data-edge-to="register" data-edge-key="2" data-edge-id="checked" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="363.2,367;395.2,367" d="M 363.2 367 L 395.2 367" class="a-emphasis" data-animate="edge" style="--step: 1;" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="register" data-edge-to="load" data-edge-label="graph.nt" data-edge-key="3" data-edge-id="exported" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="519.2,367;575.5999999999999,367" d="M 519.2 367 L 575.5999999999999 367" class="a-emphasis" data-animate="edge" style="--step: 2;" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="gate" data-edge-to="stopped" data-edge-label="a link fails" data-edge-key="4" data-edge-id="gate-fails" data-edge-role="error" data-composition-points="823.2,393;823.2,491;689.5999999999999,491" d="M 823.2 393 L 823.2 483 Q 823.2 491 815.2 491 L 689.5999999999999 491" class="a-security" data-animate="edge" style="--step: 10;" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="load" data-edge-to="gate" data-edge-label="named graphs" data-edge-key="5" data-edge-id="graphs" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="699.5999999999999,367;775.2,367" d="M 699.5999999999999 367 L 775.2 367" class="a-emphasis" data-animate="edge" style="--step: 3;" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="held" data-edge-to="register" data-edge-label="last good copy" data-edge-key="6" data-edge-id="last-good" data-edge-role="branch" data-composition-points="391.2,243;407.2,243;407.2,290;457.2,290;457.2,341" d="M 391.2 243 L 399.2 243 Q 407.2 243 407.2 251 L 407.2 282 Q 407.2 290 415.2 290 L 449.2 290 Q 457.2 290 457.2 298 L 457.2 341" class="a-dashed" data-animate="edge" style="--step: 12;" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="resolve" data-edge-to="verify" data-edge-label="the lock" data-edge-key="7" data-edge-id="lock" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="210.8,367;267.2,367" d="M 210.8 367 L 267.2 367" class="a-emphasis" data-animate="edge" style="--step: 0;" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="gate" data-edge-to="swap" data-edge-key="8" data-edge-id="passes" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="871.2,367;903.2,367" d="M 871.2 367 L 903.2 367" class="a-emphasis" data-animate="edge" style="--step: 4;" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="snapshot" data-edge-to="readers" data-edge-label="SPARQL or MCP" data-edge-key="9" data-edge-id="read" data-edge-role="" data-composition-points="949.2,641;949.2,713" d="M 949.2 641 L 949.2 713" class="a-emphasis" data-animate="edge" style="--step: 12;" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="release" data-edge-to="resolve" data-edge-label="publish event" data-edge-key="10" data-edge-id="starts" data-edge-role="" data-composition-points="142.8,145;142.8,161;166.8,161;166.8,325;142.8,325;142.8,341" d="M 142.8 145 L 142.8 153 Q 142.8 161 150.8 161 L 158.8 161 Q 166.8 161 166.8 169 L 166.8 317 Q 166.8 325 158.8 325 L 150.8 325 Q 142.8 325 142.8 333 L 142.8 341" class="a-emphasis" data-animate="edge" style="--step: 12;" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="swap" data-edge-to="snapshot" data-edge-key="11" data-edge-id="swapped" data-edge-role="" data-composition-points="949.2,393;949.2,589" d="M 949.2 393 L 949.2 589" class="a-emphasis" data-animate="edge" style="--step: 12;" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Nodes -->
-        <g id="node-release" data-node-id="release" data-node-label="Release published" tabindex="0" role="button" aria-label="Focus Release published, the domain's, or a webhook, Releases" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="the domain's, or a webhook" data-node-context="Releases">
-          <title>Release published · the domain's, or a webhook · Releases</title>
-          <rect x="99.19999999999999" y="93" width="112" height="52" rx="8" class="c-mask"/>
-          <rect x="99.19999999999999" y="93" width="112" height="52" rx="8" class="c-cloud" data-animate="node" style="--step: 5; --flow-node-name: archify-relay-node-0;" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(105.19999999999999 99) scale(0.6875)">
+        <g id="node-release" data-node-id="release" data-node-label="Release published" tabindex="0" role="button" aria-label="Focus Release published, the top domain's, or a webhook, Releases" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="the top domain's, or a webhook" data-node-context="Releases">
+          <title>Release published · the top domain's, or a webhook · Releases</title>
+          <rect x="66.80000000000001" y="93" width="152" height="52" rx="8" class="c-mask"/>
+          <rect x="66.80000000000001" y="93" width="152" height="52" rx="8" class="c-cloud" data-animate="node" style="--step: 6; --flow-node-name: archify-relay-node-0;" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(72.80000000000001 99) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
-          <text data-node-label="" x="155.2" y="126.2" class="t-primary" font-size="10.1" font-weight="600" text-anchor="middle">Release published</text>
-          <text x="155.2" y="139.2" class="t-muted" font-size="6.6" text-anchor="middle">the domain's, or a webhook</text>
+          <text data-node-label="" x="142.8" y="125" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Release published</text>
+          <text x="142.8" y="137.3" class="t-muted" font-size="8" text-anchor="middle">the top domain's, or a webhook</text>
         </g>
 
-        <g id="node-held" data-node-id="held" data-node-label="Held at last good state" tabindex="0" role="button" aria-label="Focus Held at last good state, as the last workspace has it, Unreachable" aria-pressed="false" data-node-kind="security" data-node-sublabel="as the last workspace has it" data-node-context="Unreachable">
-          <title>Held at last good state · as the last workspace has it · Unreachable</title>
-          <rect x="227.60000000000002" y="217" width="152" height="52" rx="8" class="c-mask"/>
-          <rect x="227.60000000000002" y="217" width="152" height="52" rx="8" class="c-security" data-animate="node" style="--step: 6; --flow-node-name: archify-relay-node-3;" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="waiting" class="semantic-sigil s-security" transform="translate(233.60000000000002 223) scale(0.6875)">
+        <g id="node-held" data-node-id="held" data-node-label="Held at last good state" tabindex="0" role="button" aria-label="Focus Held at last good state, as the previous workspace holds it, Unreachable" aria-pressed="false" data-node-kind="security" data-node-sublabel="as the previous workspace holds it" data-node-context="Unreachable">
+          <title>Held at last good state · as the previous workspace holds it · Unreachable</title>
+          <rect x="239.2" y="217" width="152" height="52" rx="8" class="c-mask"/>
+          <rect x="239.2" y="217" width="152" height="52" rx="8" class="c-security" data-animate="node" style="--step: 7; --flow-node-name: archify-relay-node-3;" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="waiting" class="semantic-sigil s-security" transform="translate(245.2 223) scale(0.6875)">
             <path d="M4 2.5h8M4 13.5h8M5 3c0 2.8 2 3.2 3 5-1 1.8-3 2.2-3 5M11 3c0 2.8-2 3.2-3 5 1 1.8 3 2.2 3 5"/>
           </g>
-          <text data-node-label="" x="303.6" y="248.4" class="t-primary" font-size="10.4" font-weight="600" text-anchor="middle">Held at last good state</text>
-          <text x="303.6" y="260.6" class="t-muted" font-size="8" text-anchor="middle">as the last workspace has it</text>
+          <text data-node-label="" x="315.2" y="250.5" class="t-primary" font-size="10.4" font-weight="600" text-anchor="middle">Held at last good state</text>
+          <text x="315.2" y="264.1" class="t-muted" font-size="7" text-anchor="middle">as the previous workspace holds it</text>
         </g>
 
-        <g id="node-resolve" data-node-id="resolve" data-node-label="Resolve" tabindex="0" role="button" aria-label="Focus Resolve, members into a lock, Refresh job" aria-pressed="false" data-node-kind="security" data-node-sublabel="members into a lock" data-node-context="Refresh job">
-          <title>Resolve · members into a lock · Refresh job</title>
-          <rect x="109.19999999999999" y="341" width="92" height="52" rx="8" class="c-mask"/>
-          <rect x="109.19999999999999" y="341" width="92" height="52" rx="8" class="c-security" data-animate="node" style="--step: 0; --flow-node-name: archify-relay-node-1;" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(115.19999999999999 347) scale(0.6875)">
+        <g id="node-resolve" data-node-id="resolve" data-node-label="Resolve" tabindex="0" role="button" aria-label="Focus Resolve, members, as last confirmed, The build" aria-pressed="false" data-node-kind="security" data-node-sublabel="members, as last confirmed" data-node-context="The build">
+          <title>Resolve · members, as last confirmed · The build</title>
+          <rect x="74.80000000000001" y="341" width="136" height="52" rx="8" class="c-mask"/>
+          <rect x="74.80000000000001" y="341" width="136" height="52" rx="8" class="c-security" data-animate="node" style="--step: 0; --flow-node-name: archify-relay-node-1;" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(80.80000000000001 347) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" x="155.2" y="373" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Resolve</text>
-          <text x="155.2" y="384.6" class="t-muted" font-size="7.3" text-anchor="middle">members into a lock</text>
+          <text data-node-label="" x="142.8" y="362" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Resolve</text>
+          <text x="142.8" y="379" class="t-muted" font-size="8" text-anchor="middle">members, as last confirmed</text>
         </g>
 
-        <g id="node-verify" data-node-id="verify" data-node-label="Verify" tabindex="0" role="button" aria-label="Focus Verify, checksum, attestation, Refresh job" aria-pressed="false" data-node-kind="security" data-node-sublabel="checksum, attestation" data-node-context="Refresh job">
-          <title>Verify · checksum, attestation · Refresh job</title>
-          <rect x="257.6" y="341" width="92" height="52" rx="8" class="c-mask"/>
-          <rect x="257.6" y="341" width="92" height="52" rx="8" class="c-security" data-animate="node" style="--step: 1; --flow-node-name: archify-relay-node-2;" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(263.6 347) scale(0.6875)">
+        <g id="node-verify" data-node-id="verify" data-node-label="Verify" tabindex="0" role="button" aria-label="Focus Verify, checksum, attestation, The build" aria-pressed="false" data-node-kind="security" data-node-sublabel="checksum, attestation" data-node-context="The build">
+          <title>Verify · checksum, attestation · The build</title>
+          <rect x="267.2" y="341" width="96" height="52" rx="8" class="c-mask"/>
+          <rect x="267.2" y="341" width="96" height="52" rx="8" class="c-security" data-animate="node" style="--step: 1; --flow-node-name: archify-relay-node-2;" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(273.2 347) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" x="303.6" y="375.2" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Verify</text>
-          <text x="303.6" y="388.5" class="t-muted" font-size="6.6" text-anchor="middle">checksum, attestation</text>
+          <text data-node-label="" x="315.2" y="375.2" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Verify</text>
+          <text x="315.2" y="388.8" class="t-muted" font-size="6.9" text-anchor="middle">checksum, attestation</text>
         </g>
 
-        <g id="node-build" data-node-id="build" data-node-label="Build" tabindex="0" role="button" aria-label="Focus Build, register, export, load, Refresh job" aria-pressed="false" data-node-kind="security" data-node-sublabel="register, export, load" data-node-context="Refresh job">
-          <title>Build · register, export, load · Refresh job</title>
-          <rect x="381.59999999999997" y="341" width="92" height="52" rx="8" class="c-mask"/>
-          <rect x="381.59999999999997" y="341" width="92" height="52" rx="8" class="c-security" data-animate="node" style="--step: 2; --flow-node-name: archify-relay-node-5;" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(387.59999999999997 347) scale(0.6875)">
+        <g id="node-register" data-node-id="register" data-node-label="Register and export" tabindex="0" role="button" aria-label="Focus Register and export, with the lokf toolkit, The build" aria-pressed="false" data-node-kind="security" data-node-sublabel="with the lokf toolkit" data-node-context="The build">
+          <title>Register and export · with the lokf toolkit · The build</title>
+          <rect x="395.2" y="341" width="124" height="52" rx="8" class="c-mask"/>
+          <rect x="395.2" y="341" width="124" height="52" rx="8" class="c-security" data-animate="node" style="--step: 2; --flow-node-name: archify-relay-node-5;" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(401.2 347) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" x="427.59999999999997" y="375.2" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Build</text>
-          <text x="427.59999999999997" y="388.1" class="t-muted" font-size="6.3" text-anchor="middle">register, export, load</text>
+          <text data-node-label="" x="457.2" y="372.1" class="t-primary" font-size="10.1" font-weight="600" text-anchor="middle">Register and export</text>
+          <text x="457.2" y="384.2" class="t-muted" font-size="8" text-anchor="middle">with the lokf toolkit</text>
         </g>
 
-        <g id="node-gate" data-node-id="gate" data-node-label="Gate" tabindex="0" role="button" aria-label="Focus Gate, links between bundles, Refresh job" aria-pressed="false" data-node-kind="security" data-node-sublabel="links between bundles" data-node-context="Refresh job">
-          <title>Gate · links between bundles · Refresh job</title>
-          <rect x="549.2" y="341" width="92" height="52" rx="8" class="c-mask"/>
-          <rect x="549.2" y="341" width="92" height="52" rx="8" class="c-security" data-animate="node" style="--step: 3; --flow-node-name: archify-relay-node-6;" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(555.2 347) scale(0.6875)">
+        <g id="node-load" data-node-id="load" data-node-label="Load" tabindex="0" role="button" aria-label="Focus Load, a named graph per bundle, The build" aria-pressed="false" data-node-kind="security" data-node-sublabel="a named graph per bundle" data-node-context="The build">
+          <title>Load · a named graph per bundle · The build</title>
+          <rect x="575.5999999999999" y="341" width="124" height="52" rx="8" class="c-mask"/>
+          <rect x="575.5999999999999" y="341" width="124" height="52" rx="8" class="c-security" data-animate="node" style="--step: 3; --flow-node-name: archify-relay-node-6;" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(581.5999999999999 347) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" x="586" y="362" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Gate</text>
-          <text x="595.2" y="379" class="t-muted" font-size="6.6" text-anchor="middle">links between bundles</text>
+          <text data-node-label="" x="637.5999999999999" y="362" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Load</text>
+          <text x="637.5999999999999" y="379" class="t-muted" font-size="8" text-anchor="middle">a named graph per bundle</text>
         </g>
 
-        <g id="node-swap" data-node-id="swap" data-node-label="Swap" tabindex="0" role="button" aria-label="Focus Swap, in one atomic step, Refresh job" aria-pressed="false" data-node-kind="security" data-node-sublabel="in one atomic step" data-node-context="Refresh job">
-          <title>Swap · in one atomic step · Refresh job</title>
-          <rect x="673.2" y="341" width="92" height="52" rx="8" class="c-mask"/>
-          <rect x="673.2" y="341" width="92" height="52" rx="8" class="c-security" data-animate="node" style="--step: 4; --flow-node-name: archify-relay-node-7;" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(679.2 347) scale(0.6875)">
+        <g id="node-gate" data-node-id="gate" data-node-label="Gate" tabindex="0" role="button" aria-label="Focus Gate, links between bundles, The build" aria-pressed="false" data-node-kind="security" data-node-sublabel="links between bundles" data-node-context="The build">
+          <title>Gate · links between bundles · The build</title>
+          <rect x="775.2" y="341" width="96" height="52" rx="8" class="c-mask"/>
+          <rect x="775.2" y="341" width="96" height="52" rx="8" class="c-security" data-animate="node" style="--step: 4; --flow-node-name: archify-relay-node-7;" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(781.2 347) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" x="710" y="362" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Swap</text>
-          <text x="719.2" y="379" class="t-muted" font-size="7.7" text-anchor="middle">in one atomic step</text>
+          <text data-node-label="" x="816" y="362" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Gate</text>
+          <text x="823.2" y="379" class="t-muted" font-size="6.9" text-anchor="middle">links between bundles</text>
         </g>
 
-        <g id="node-stopped" data-node-id="stopped" data-node-label="The job stops" tabindex="0" role="button" aria-label="Focus The job stops, the old snapshot stays, Check fails" aria-pressed="false" data-node-kind="security" data-node-sublabel="the old snapshot stays" data-node-context="Check fails">
-          <title>The job stops · the old snapshot stays · Check fails</title>
-          <rect x="381.59999999999997" y="465" width="92" height="52" rx="8" class="c-mask"/>
-          <rect x="381.59999999999997" y="465" width="92" height="52" rx="8" class="c-security" data-animate="node" style="--step: 12; --flow-node-name: archify-relay-node-4;" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="stop" class="semantic-sigil s-security" transform="translate(387.59999999999997 471) scale(0.6875)">
+        <g id="node-swap" data-node-id="swap" data-node-label="Swap" tabindex="0" role="button" aria-label="Focus Swap, by two renames, The build" aria-pressed="false" data-node-kind="security" data-node-sublabel="by two renames" data-node-context="The build">
+          <title>Swap · by two renames · The build</title>
+          <rect x="903.2" y="341" width="92" height="52" rx="8" class="c-mask"/>
+          <rect x="903.2" y="341" width="92" height="52" rx="8" class="c-security" data-animate="node" style="--step: 5; --flow-node-name: archify-relay-node-8;" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(909.2 347) scale(0.6875)">
+            <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
+            <path d="m5.8 8 1.5 1.5 3-3"/>
+          </g>
+          <text data-node-label="" x="940" y="362" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Swap</text>
+          <text x="949.2" y="379" class="t-muted" font-size="8" text-anchor="middle">by two renames</text>
+        </g>
+
+        <g id="node-stopped" data-node-id="stopped" data-node-label="The job stops" tabindex="0" role="button" aria-label="Focus The job stops, the old workspace stays, Check fails" aria-pressed="false" data-node-kind="security" data-node-sublabel="the old workspace stays" data-node-context="Check fails">
+          <title>The job stops · the old workspace stays · Check fails</title>
+          <rect x="585.5999999999999" y="465" width="104" height="52" rx="8" class="c-mask"/>
+          <rect x="585.5999999999999" y="465" width="104" height="52" rx="8" class="c-security" data-animate="node" style="--step: 12; --flow-node-name: archify-relay-node-4;" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="stop" class="semantic-sigil s-security" transform="translate(591.5999999999999 471) scale(0.6875)">
             <circle cx="8" cy="8" r="5.3"/>
             <rect x="6.1" y="6.1" width="3.8" height="3.8" rx=".5" class="sigil-fill"/>
           </g>
-          <text data-node-label="" x="427.59999999999997" y="498.9" class="t-primary" font-size="10.7" font-weight="600" text-anchor="middle">The job stops</text>
-          <text x="427.59999999999997" y="511.7" class="t-muted" font-size="6.3" text-anchor="middle">the old snapshot stays</text>
+          <text data-node-label="" x="637.5999999999999" y="499.2" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">The job stops</text>
+          <text x="637.5999999999999" y="512.8" class="t-muted" font-size="6.9" text-anchor="middle">the old workspace stays</text>
         </g>
 
-        <g id="node-snapshot" data-node-id="snapshot" data-node-label="New snapshot" tabindex="0" role="button" aria-label="Focus New snapshot, one named graph per bundle, Workspace" aria-pressed="false" data-node-kind="database" data-node-sublabel="one named graph per bundle" data-node-context="Workspace">
-          <title>New snapshot · one named graph per bundle · Workspace</title>
-          <rect x="651.2" y="589" width="136" height="52" rx="8" class="c-mask"/>
-          <rect x="651.2" y="589" width="136" height="52" rx="8" class="c-database" data-animate="node" style="--step: 12; --flow-node-name: archify-relay-node-8;" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(657.2 595) scale(0.6875)">
+        <g id="node-snapshot" data-node-id="snapshot" data-node-label="New workspace" tabindex="0" role="button" aria-label="Focus New workspace, graph.nq, index.md, the lock, Workspace" aria-pressed="false" data-node-kind="database" data-node-sublabel="graph.nq, index.md, the lock" data-node-context="Workspace">
+          <title>New workspace · graph.nq, index.md, the lock · Workspace</title>
+          <rect x="877.2" y="589" width="144" height="52" rx="8" class="c-mask"/>
+          <rect x="877.2" y="589" width="144" height="52" rx="8" class="c-database" data-animate="node" style="--step: 12; --flow-node-name: archify-relay-node-9;" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(883.2 595) scale(0.6875)">
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" x="719.2" y="621" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">New snapshot</text>
-          <text x="719.2" y="633.3" class="t-muted" font-size="8" text-anchor="middle">one named graph per bundle</text>
+          <text data-node-label="" x="949.2" y="621" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">New workspace</text>
+          <text x="949.2" y="633.3" class="t-muted" font-size="8" text-anchor="middle">graph.nq, index.md, the lock</text>
         </g>
 
         <g id="node-readers" data-node-id="readers" data-node-label="Agents, copilots" tabindex="0" role="button" aria-label="Focus Agents, copilots, and the people who ask them, Readers" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="and the people who ask them" data-node-context="Readers">
           <title>Agents, copilots · and the people who ask them · Readers</title>
-          <rect x="649.2" y="713" width="140" height="52" rx="8" class="c-mask"/>
-          <rect x="649.2" y="713" width="140" height="52" rx="8" class="c-frontend" data-animate="node" style="--step: 12; --flow-node-name: archify-relay-node-9;" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="person" class="semantic-sigil s-frontend" transform="translate(655.2 719) scale(0.6875)">
+          <rect x="879.2" y="713" width="140" height="52" rx="8" class="c-mask"/>
+          <rect x="879.2" y="713" width="140" height="52" rx="8" class="c-frontend" data-animate="node" style="--step: 12; --flow-node-name: archify-relay-node-10;" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="person" class="semantic-sigil s-frontend" transform="translate(885.2 719) scale(0.6875)">
             <circle cx="8" cy="4.5" r="2.5"/><path d="M3 14v-2a5 5 0 0 1 10 0v2"/>
           </g>
-          <text data-node-label="" x="719.2" y="745" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Agents, copilots</text>
-          <text x="719.2" y="757.3" class="t-muted" font-size="8" text-anchor="middle">and the people who ask them</text>
+          <text data-node-label="" x="949.2" y="745" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Agents, copilots</text>
+          <text x="949.2" y="757.3" class="t-muted" font-size="8" text-anchor="middle">and the people who ask them</text>
         </g>
 
         <!-- Edge labels -->
         <g data-edge-from="verify" data-edge-to="held" data-edge-label="cannot fetch it" data-edge-key="0" data-edge-id="cannot-fetch">
-          <rect x="262.6" y="295" width="82" height="14" rx="3" class="c-mask"/>
-          <text x="303.6" y="305" class="t-edge-dashed" font-size="8" text-anchor="middle">cannot fetch it</text>
+          <rect x="274.2" y="295" width="82" height="14" rx="3" class="c-mask"/>
+          <text x="315.2" y="305" class="t-edge-dashed" font-size="8" text-anchor="middle">cannot fetch it</text>
         </g>
         <g data-edge-from="verify" data-edge-to="stopped" data-edge-label="a check fails" data-edge-key="1" data-edge-id="check-fails">
-          <rect x="306.40000000000003" y="471" width="72.4" height="14" rx="3" class="c-mask"/>
-          <text x="342.6" y="481" class="t-edge-security" font-size="8" text-anchor="middle">a check fails</text>
+          <rect x="414.2" y="471" width="72.4" height="14" rx="3" class="c-mask"/>
+          <text x="450.4" y="481" class="t-edge-security" font-size="8" text-anchor="middle">a check fails</text>
         </g>
 
-        <g data-edge-from="gate" data-edge-to="stopped" data-edge-label="a link fails" data-edge-key="3" data-edge-id="gate-fails">
-          <rect x="500.59999999999997" y="471" width="67.6" height="14" rx="3" class="c-mask"/>
-          <text x="534.4" y="481" class="t-edge-security" font-size="8" text-anchor="middle">a link fails</text>
+        <g data-edge-from="register" data-edge-to="load" data-edge-label="graph.nt" data-edge-key="3" data-edge-id="exported">
+          <rect x="523.1999999999999" y="347" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="547.4" y="357" class="t-edge-emphasis" font-size="8" text-anchor="middle">graph.nt</text>
         </g>
-        <g data-edge-from="build" data-edge-to="gate" data-edge-label="named graphs" data-edge-key="4" data-edge-id="graphs">
-          <rect x="477.59999999999997" y="347" width="67.6" height="14" rx="3" class="c-mask"/>
-          <text x="511.4" y="357" class="t-edge-emphasis" font-size="8" text-anchor="middle">named graphs</text>
+        <g data-edge-from="gate" data-edge-to="stopped" data-edge-label="a link fails" data-edge-key="4" data-edge-id="gate-fails">
+          <rect x="722.6" y="471" width="67.6" height="14" rx="3" class="c-mask"/>
+          <text x="756.4" y="481" class="t-edge-security" font-size="8" text-anchor="middle">a link fails</text>
         </g>
-        <g data-edge-from="held" data-edge-to="build" data-edge-label="last good copy" data-edge-key="5" data-edge-id="last-good">
-          <rect x="373" y="270" width="77.2" height="14" rx="3" class="c-mask"/>
-          <text x="411.6" y="280" class="t-edge-dashed" font-size="8" text-anchor="middle">last good copy</text>
+        <g data-edge-from="load" data-edge-to="gate" data-edge-label="named graphs" data-edge-key="5" data-edge-id="graphs">
+          <rect x="703.6" y="347" width="67.6" height="14" rx="3" class="c-mask"/>
+          <text x="737.4" y="357" class="t-edge-emphasis" font-size="8" text-anchor="middle">named graphs</text>
         </g>
-        <g data-edge-from="resolve" data-edge-to="verify" data-edge-label="the lock" data-edge-key="6" data-edge-id="lock">
-          <rect x="205.20000000000002" y="347" width="48.4" height="14" rx="3" class="c-mask"/>
-          <text x="229.4" y="357" class="t-edge-emphasis" font-size="8" text-anchor="middle">the lock</text>
+        <g data-edge-from="held" data-edge-to="register" data-edge-label="last good copy" data-edge-key="6" data-edge-id="last-good">
+          <rect x="393.59999999999997" y="270" width="77.2" height="14" rx="3" class="c-mask"/>
+          <text x="432.2" y="280" class="t-edge-dashed" font-size="8" text-anchor="middle">last good copy</text>
+        </g>
+        <g data-edge-from="resolve" data-edge-to="verify" data-edge-label="the lock" data-edge-key="7" data-edge-id="lock">
+          <rect x="214.8" y="347" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="239" y="357" class="t-edge-emphasis" font-size="8" text-anchor="middle">the lock</text>
         </g>
 
-        <g data-edge-from="snapshot" data-edge-to="readers" data-edge-label="SPARQL or MCP" data-edge-key="8" data-edge-id="read">
-          <rect x="683" y="667" width="72.4" height="14" rx="3" class="c-mask"/>
-          <text x="719.2" y="677" class="t-edge-emphasis" font-size="8" text-anchor="middle">SPARQL or MCP</text>
+        <g data-edge-from="snapshot" data-edge-to="readers" data-edge-label="SPARQL or MCP" data-edge-key="9" data-edge-id="read">
+          <rect x="913" y="667" width="72.4" height="14" rx="3" class="c-mask"/>
+          <text x="949.2" y="677" class="t-edge-emphasis" font-size="8" text-anchor="middle">SPARQL or MCP</text>
         </g>
-        <g data-edge-from="release" data-edge-to="resolve" data-edge-label="publish event" data-edge-key="9" data-edge-id="starts">
-          <rect x="118.99999999999999" y="233" width="72.4" height="14" rx="3" class="c-mask"/>
-          <text x="155.2" y="243" class="t-edge-emphasis" font-size="8" text-anchor="middle">publish event</text>
+        <g data-edge-from="release" data-edge-to="resolve" data-edge-label="publish event" data-edge-key="10" data-edge-id="starts">
+          <rect x="130.60000000000002" y="233" width="72.4" height="14" rx="3" class="c-mask"/>
+          <text x="166.8" y="243" class="t-edge-emphasis" font-size="8" text-anchor="middle">publish event</text>
         </g>
 
 
@@ -876,17 +1326,17 @@ svg[data-node-ui][data-preset="editorial"] :is([data-graph-role="structural-fram
             <rect x="20" y="812" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
             <text x="42" y="820" class="t-muted" font-size="7.5" font-weight="500">who reads it</text>
           </g>
-          <g data-legend-semantic-kind="security" data-legend-x="126" data-legend-baseline="820" data-legend-width="216">
+          <g data-legend-semantic-kind="security" data-legend-x="126" data-legend-baseline="820" data-legend-width="253">
             <rect x="126" y="812" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
-            <text x="148" y="820" class="t-muted" font-size="7.5" font-weight="500">built and gated by a script, no agent</text>
+            <text x="148" y="820" class="t-muted" font-size="7.5" font-weight="500">built and gated by a script, without an agent</text>
           </g>
-          <g data-legend-semantic-kind="database" data-legend-x="349" data-legend-baseline="820" data-legend-width="141">
-            <rect x="349" y="812" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
-            <text x="371" y="820" class="t-muted" font-size="7.5" font-weight="500">what the build writes</text>
+          <g data-legend-semantic-kind="database" data-legend-x="386" data-legend-baseline="820" data-legend-width="141">
+            <rect x="386" y="812" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+            <text x="408" y="820" class="t-muted" font-size="7.5" font-weight="500">what the build writes</text>
           </g>
-          <g data-legend-semantic-kind="cloud" data-legend-x="497" data-legend-baseline="820" data-legend-width="174">
-            <rect x="497" y="812" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
-            <text x="519" y="820" class="t-muted" font-size="7.5" font-weight="500">where releases are published</text>
+          <g data-legend-semantic-kind="cloud" data-legend-x="534" data-legend-baseline="820" data-legend-width="174">
+            <rect x="534" y="812" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
+            <text x="556" y="820" class="t-muted" font-size="7.5" font-weight="500">where releases are published</text>
           </g>
         </g>
       </svg>

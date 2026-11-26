@@ -43,7 +43,7 @@ The OKF repository's README names the places an OKF bundle can be consumed by re
 
 ## Agent-facing retrieval
 
-A workspace's agent surface is the sidecar's `lokf-registry` MCP server, or a store's own. GraphDB and Stardog, among others, bring an MCP server and a natural-language layer of their own, while Amazon Neptune's MCP server speaks openCypher and Gremlin, not SPARQL. Microsoft 365 Copilot takes the **docent** as a skill ([m365.md](m365.md)). Graph-building retrieval frameworks, such as Microsoft GraphRAG and Amazon Bedrock Knowledge Bases GraphRAG, extract a graph of their own from text and consume no bundle's graph. They can still read the bundle's Markdown as documents, as OKF expects.
+A workspace's agent surface is the sidecar's `lokf-registry` MCP server, or a store's own. GraphDB and Stardog, among others, bring an MCP server and a natural-language layer of their own, while Amazon Neptune's MCP server speaks openCypher and Gremlin, not SPARQL. Microsoft 365 Copilot takes the **docent** as a skill ([m365.md](m365.md)). Graph-building retrieval frameworks, such as Microsoft GraphRAG and Amazon Bedrock Knowledge Bases GraphRAG, extract a graph of their own from text and do not consume a bundle's graph. They can still read the bundle's Markdown as documents, as OKF expects.
 
 ## Sources
 

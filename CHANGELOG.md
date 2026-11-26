@@ -4,6 +4,22 @@ All notable changes to this repository are documented here, in the [Keep a Chang
 
 ## [Unreleased]
 
+### Added
+
+- **ktl-prose asks for a negative on its verb, as a new part of rule 11.** Its check script reports "adds no rule" and suggests "does not add a rule", and leaves "has no" and "there is no" alone.
+
+### Changed
+
+- **ktl-prose's own pages follow the new rule, so rule 5 now reads "Do not use a dash as punctuation".**
+- **The specification, the docs and the skills now put each negative on its verb**, as in "does not run an agent" for "runs no agent". No rule changed meaning.
+- **The ten figures in `.assets/` are redrawn in a new house style: index cards with tabs, serif headings and a ladder rule under each title.**
+- **The five Archify companions are drawn again with the same corrections, and each carries Archify's NOTICE in place of its old MIT notice**, since Archify is now under the Apache License 2.0. The line under each figure that links them is italic, not bold.
+
+### Fixed
+
+- **The figures show what the specification says today.** The ladder's first rung reads "nobody has checked this yet", the bundle has four writers, the curator's queue has four groups, the ingest lock has six states, and a workspace is rebuilt on a release of its top domain.
+- **The docs match the specification too: How it works names all four writers, the three lines page says the gate checks SHACL shapes, and the federation page names `graph.nq`.**
+
 ## [0.70.4] - 2026-11-19
 
 ### Changed

@@ -31,7 +31,7 @@ A text for a younger reader is a retelling, not a rewording: it leaves detail ou
 2. Give every sentence a verb, and start an instruction with it. Spell out `do not` in an instruction.
 3. Keep one idea to a sentence and one topic to a paragraph. Split a sentence past 40 words and a paragraph past 150, and look twice at a sentence past 30 or a paragraph past 100.
 4. Say the step, then the reason.
-5. Use no dash as punctuation. A colon introduces, commas or parentheses set an aside apart, and a full stop ends the thought.
+5. Do not use a dash as punctuation. A colon introduces, commas or parentheses set an aside apart, and a full stop ends the thought.
 6. Turn a long aside in parentheses into a sentence of its own.
 7. Turn a run of conditions or steps into a list, every item in the same form.
 8. Use the same word for the same thing every time.
@@ -57,7 +57,7 @@ Apply the first row that fits. Naming a concept unlocks only the eighth row.
 | A concept with no `generated.by` | Skip it and list it, because nobody recorded who wrote it. Reword it only when the person names it. |
 | Any other concept | Reword the body. |
 
-A confirmation is a person's time spent against a source, and a rewording must not spend it. No trust label would show the edit either: this skill leaves `generated.at` where it was, so the concept would still read as confirmed, and `knowledge-conventions.sh` fails that edit (its rule 13). So the rule has no exception, and the check script enforces it.
+A confirmation is a person's time spent against a source, and a rewording must not spend it. A trust label would not show the edit either: this skill leaves `generated.at` where it was, so the concept would still read as confirmed, and `knowledge-conventions.sh` fails that edit (its rule 13). So the rule has no exception, and the check script enforces it.
 
 ## What a rewording never changes
 
@@ -100,7 +100,7 @@ The check script is `scripts/prose-check.py` in this skill's directory, which th
 
 3. Read every one of those files, cleared or not. Ask the questions of [Reading a sentence](references/rules.md#reading-a-sentence) of each sentence. Only a reader sees a late verb, a second name for one thing, or a sentence the page already says. A concept's `genre` says what its page is for: [What the genre asks](references/rules.md#what-the-genre-asks).
 
-An `unseen` finding is a character no reader sees: [rules.md](references/rules.md#four-things-to-know-about-the-rules) says what to do with one.
+[rules.md](references/rules.md#four-things-to-know-about-the-rules) says what an `unseen` finding is, and what to do with one.
 
 Then print the report, with every sentence you would cut, so that the person answers once:
 
@@ -136,7 +136,7 @@ Take the concepts the person asked for: every one the report marks `rewrite`, or
 
 1. **Keep the earlier text.** Git holds it for a file with no uncommitted change. Copy any other file to a scratch directory before you touch it: a concept ktl-librarian wrote or changed in this session has no earlier version in git.
 2. **Work one file at a time.** Note the name the file uses for each thing before you change a word, and keep to it.
-3. **Change the wording only.** Add nothing. Remove words that carry no fact, and the sentences the person agreed to cut, and nothing else. Lay out what you reword the way the file's project does: in the bundle, one line for each paragraph and each list item, as ktl-librarian writes it. *Line breaks in the source*, in [references/rules.md](references/rules.md), gives the layout outside the bundle.
+3. **Change the wording only.** Add nothing. Remove only the words that do not carry a fact and the sentences the person agreed to cut. Lay out what you reword the way the file's project does: in the bundle, one line for each paragraph and each list item, as ktl-librarian writes it. *Line breaks in the source*, in [references/rules.md](references/rules.md), gives the layout outside the bundle.
 4. **Leave what you cannot fix.** A sentence you cannot parse, a vague quantity or a claim that looks wrong goes in the hand-off, unchanged. A wrong fact is ktl-librarian's to correct from the source.
 5. **Read each reworded paragraph again**, with the same questions.
 
@@ -170,7 +170,7 @@ Add one bullet under today's heading in `.lokf/knowledge/log.md`. Take the day f
 * **Prose**: reworded 12 concept bodies in plain English. No link, number or frontmatter changed.
 ```
 
-Write no line for a run that changed nothing. Commit the rewording apart from any librarian change.
+Skip the line for a run that changed nothing. Commit the rewording apart from any librarian change.
 
 ## Step 5: hand off
 

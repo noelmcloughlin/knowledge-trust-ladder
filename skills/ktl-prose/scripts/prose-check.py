@@ -188,6 +188,29 @@ WORD = re.compile(
     + r")(?![\w-])|(?<![A-Za-z])e\.g\.",
     re.I,
 )
+# A negative on a noun where the verb can carry it: "adds no rule" for "does
+# not add a rule", and "is no rule" for "is not a rule" (rule 11). "No" stays
+# after "there is", a form of have and "with", in a fixed phrase such as "no
+# longer", in a series, and where it opens a clause after a joining word.
+NO_ADVICE = 'put the negative on the verb, such as "does not add a rule" or "is not a rule"'
+BE = frozenset("am is are was were be been being".split())
+BE_OR_HAVE = BE | frozenset("has have had having".split())
+NO_STAYS_AFTER = frozenset("has have had having".split()) | frozenset(
+    "with there and or but nor that which who whom whose so when if where because while since until unless as"
+    " then than whether though although once after before why how what"
+    " still also yet now only just even simply"
+    " say says said saying answer answers answered mean means yes".split()
+)
+# "No harder than" compares, as "no more than" does.
+NO_PHRASE = r"(?!(?:longer|more|less|fewer|later|sooner|different|one|doubt|matter)\b|\w+er\s+than\b)"
+# What "no" stands before: a word, emphasis, a link or a masked code span.
+NO_NOUN = r"(?=[A-Za-z`*_\[" + MASK + r"])"
+NO_AFTER_WORD = re.compile(r"(?<![\w'’-])([A-Za-z]+)\s+no\s+" + NO_PHRASE + NO_NOUN)
+NO_AFTER_AND = re.compile(r",\s+(and\s+no)\s+" + NO_PHRASE + NO_NOUN)
+NO_OPENS = re.compile(r"[\s*_]*(No)\s+" + NO_PHRASE + NO_NOUN)
+NO_EARLIER = re.compile(r"(?<![\w-])no(?![\w-])", re.I)
+WORD_BEFORE = re.compile(r"([A-Za-z]+)\s+$")
+RELATIVE = frozenset({"that", "which", "who"})
 # The files read as scripts rather than as Markdown, by suffix. A file called
 # justfile is one too.
 SCRIPT_SUFFIXES = {".sh", ".bash", ".py", ".yaml", ".yml", ".toml"}
@@ -1062,6 +1085,40 @@ def spoken(hidden: str) -> list[list[str]]:
     return said
 
 
+def nouns_negated(sentence: str, cell: bool):
+    """Each "no" on a noun that the verb could carry, as (offset, the words to show) pairs.
+
+    A table cell is a label, so a "No" that opens one and an "and no" in one are not read.
+    """
+
+    def shown(found) -> str:
+        noun = re.match(r"[A-Za-z]+", sentence[found.end() :])
+        return " ".join((sentence[found.start(1) : found.end()] + (noun.group() if noun else "")).split())
+
+    for found in NO_AFTER_WORD.finditer(sentence):
+        before = found.group(1).lower()
+        if before in BE:
+            # "There is no gate" states an absence, and "is no rule" says what a thing is.
+            earlier = WORD_BEFORE.search(sentence[: found.start(1)])
+            if earlier is None or earlier.group(1).lower() in ("there", "here"):
+                continue
+        if before not in NO_STAYS_AFTER:
+            yield found.start(1), shown(found)
+    for found in () if cell else NO_AFTER_AND.finditer(sentence):
+        # The last "no" of a series belongs to the verb the first one follows.
+        if not NO_EARLIER.search(sentence[: found.start()]):
+            yield found.start(1), shown(found)
+    found = NO_OPENS.match(sentence)
+    if found and not cell and len(sentence.split()) >= 4:
+        subject = []
+        for word in re.findall(r"[A-Za-z]+", sentence[found.end() :])[:6]:
+            if word.lower() in RELATIVE:
+                break
+            subject.append(word.lower())
+        if not BE_OR_HAVE.intersection(subject):
+            yield found.start(1), shown(found)
+
+
 def style(
     doc: Doc,
     max_words: int,
@@ -1115,6 +1172,8 @@ def style(
                 advice = WORDS.get(" ".join(word.group().lower().split()))
                 if advice:
                     findings.append((block.line_at(start + word.start()), "words", f'"{word.group()}": {advice}'))
+            for at, said in nouns_negated(sentence, block.kind == "cell"):
+                findings.append((block.line_at(start + at), "words", f'"{said}": {NO_ADVICE}'))
             for word in BAND_WORD.finditer(sentence) if band_words else ():
                 found = word.group().lower()
                 advice = BAND_WORDS.get(found) or BAND_WORDS.get(found.rstrip(".")) or BAND_WORDS.get(found.rstrip(".") + ".")

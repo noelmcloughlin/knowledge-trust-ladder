@@ -19,10 +19,10 @@ The site finds what it shows, so `site.toml` is short: four values every site ne
 | `params.docsExclude` | folders under `docs/` that are not pages | `templates-linkml` and `elements`, which LinkML's `gen-doc` keeps there |
 | `params.docsGroups` | the docs pages in groups: a list of `label` and `pages`, each page by its path under `docs/` without `.md` | the pages at the top of `docs/` in one group, Guides, by title, and each folder a group named by its `index.md` or by the folder |
 | `params.redirects` | old addresses, each sent on to the page built from a repository file: `"about" = "docs/about.md"`. `"schema/*" = "schema/*"` stands for every page of the schema. Hugo lowercases a table's keys, so an address with capitals takes the list form, `[[params.redirects]]` with `from` and `to` | none; a site with a schema has `"elements/*" = "schema/*"` with no setting |
-| `params.browse`, `params.browseBuild` | a folder of SQLite databases, from the repository's root, to serve under `browse/` with a page that opens each in Datasette Lite, and the command that writes the folder when it holds no database | no data: the databases go on the public site, so none is served until this is set |
+| `params.browse`, `params.browseBuild` | a folder of SQLite databases, from the repository's root, to serve under `browse/` with a page that opens each in Datasette Lite, and the command that writes the folder when it has no database | no data: the databases go on the public site, so none is served until this is set |
 | `params.vendor.cytoscape.url`, `params.vendor.mermaid.url` | a mirror's address for a library the build fetches once and checks against the hash in `hugo.toml`; a copy in the site's folder, `assets/vendor/cytoscape.js` or `assets/vendor/mermaid.js`, is taken first and checked alike | the public CDN |
 
-With `docsGroups`, the build stops when a group names a page that is not there or a page is in no group, so a new page cannot go missing from the navigation. A retelling is in no group: the page it retells offers it.
+With `docsGroups`, the build stops when a group names a page that is not there or a page is in none of the groups, so a new page cannot go missing from the navigation. A retelling is not in a group: the page it retells offers it.
 
 A redirect whose file has no page stops the build.
 

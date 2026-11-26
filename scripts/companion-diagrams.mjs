@@ -8,7 +8,8 @@
 // .assets/companions/<name>.svg and <name>-dark.svg.
 //
 // Each export gains a band above the diagram with the KTL brand block and the
-// diagram's title, and carries Archify's MIT notice. It loses the background
+// diagram's title, and carries Archify's NOTICE. Archify is under the Apache
+// License 2.0, the same text as this repository's LICENSE. It loses the background
 // grid that Archify's SVG export keeps by mistake. Its connector labels are
 // bold, which makes no label wider, since the font is monospaced. It opens 25
 // per cent larger where Archify draws connector labels at 8 px.
@@ -36,8 +37,8 @@ const BAND = 44;
 // Archify draws connector labels at 8 px in these modes and at 10 or 11 px in
 // a lifecycle or a sequence; the larger size lifts an 8 px label to 10 px.
 const SCALE = { architecture: 1.25, workflow: 1.25, dataflow: 1.25, lifecycle: 1, sequence: 1 };
-const INK = { light: '#2C2C2A', dark: '#E6E4DC' };
-const CANVAS = { light: '#E4E1D7', dark: '#1C1C1A' };
+const INK = { light: '#1C1C1A', dark: '#ECEAE3' };
+const CANVAS = { light: '#FFFFFF', dark: '#16171A' };
 
 class Stop extends Error {}
 
@@ -76,9 +77,10 @@ function brandBlocks() {
   throw new Stop('no figure in .assets/ carries the KTL brand block with a -dark partner');
 }
 
-function mitNotice(license) {
-  const text = fs.readFileSync(license, 'utf8').trim().replace(/--/g, '- -');
-  return `<!-- Drawn with Archify, https://github.com/tt-a1i/archify\n\n${text}\n-->`;
+function archifyNotice(notice) {
+  const text = fs.readFileSync(notice, 'utf8').trim().replace(/--/g, '- -');
+  const license = 'Licensed under the Apache License, Version 2.0, https://www.apache.org/licenses/LICENSE-2.0;\na copy is LICENSE at the root of https://github.com/noelmcloughlin/knowledge-trust-ladder.';
+  return `<!-- Drawn with Archify, https://github.com/tt-a1i/archify\n\n${text}\n\n${license}\n-->`;
 }
 
 function finalize({ cli, work, name, type, quality }) {
@@ -162,7 +164,7 @@ function finish(exported, { theme, title, scale, brand, notice }) {
   const band = [
     `<rect x="0" y="-${BAND}" width="${box[1]}" height="${total}" fill="${paper}"/>`,
     `<g transform="translate(0,-${BAND})">${brand[theme].replace(`stroke="${CANVAS[theme]}"`, `stroke="${paper}"`)}</g>`,
-    `<text x="${centred ? width / 2 : 140}" y="${30 - BAND}"${centred ? ' text-anchor="middle"' : ''} font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="${INK[theme]}">${escapeXml(title)}</text>`,
+    `<text x="${centred ? width / 2 : 140}" y="${30 - BAND}"${centred ? ' text-anchor="middle"' : ''} font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="18" font-weight="700" fill="${INK[theme]}">${escapeXml(title)}</text>`,
   ].join('');
   body = body.replace(background[0], band);
 
@@ -184,7 +186,7 @@ async function main() {
   if (names.length === 0) throw new Stop('no .assets/companions/*.archify.json to render');
 
   const brand = brandBlocks();
-  const notice = mitNotice(path.join(archify, 'LICENSE'));
+  const notice = archifyNotice(path.join(archify, 'NOTICE'));
   const work = fs.mkdtempSync(path.join(os.tmpdir(), 'companion-diagrams-'));
   let browser;
   try {

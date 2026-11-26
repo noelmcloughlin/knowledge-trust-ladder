@@ -18,7 +18,7 @@ The two fallbacks this skill used to allow are gone, and it matters why:
 - **`git config user.name`** is an ordinary writable config value. Anything with shell access to the checkout can set it to a maintainer's slug before the session starts.
 - **Asking** takes the identity from the conversation, the one channel an attacker fully controls. A name typed at you is a claim, not an identity.
 
-**With no authenticated login**, *Confirm* and *Correct now* are unavailable for the session. Say so, and offer the three verbs that assert nothing about who checked what: *Wrong - send back*, *Retire*, *Later*. A send-back then releases no text a person wrote, because a release needs the id of the person who wrote it. Do not fall back, do not guess, and never write a `human:` event whose id you cannot name a source for.
+**With no authenticated login**, *Confirm* and *Correct now* are unavailable for the session. Say so, and offer the three verbs that assert nothing about who checked what: *Wrong - send back*, *Retire*, *Later*. A send-back then does not release a text that a person wrote, because a release needs the id of the person who wrote it. Do not fall back, do not guess, and never write a `human:` event whose id you cannot name a source for.
 
 **Other forges, and no forge** are covered in [portability.md](portability.md). The principle is the rule, not the tool: the id must be one that something outside the bundle can independently confirm.
 
@@ -43,7 +43,7 @@ What to say, and what not to do:
 - Show the three `git config` lines from ktl-sidecar's [`references/gate.md`](../../ktl-sidecar/references/gate.md), and the part that catches people out: the same key must also be added at `github.com/settings/keys` **as a signing key**, because the job reads GitHub's verdict, not the local one.
 - **Never run them yourself.** This skill records what a person says; it does not reconfigure their machine. A `--global` change would alter how they commit in every unrelated repository, and a wrong `user.signingkey` breaks `git commit` everywhere until they find it.
 - A committed `.gitconfig` is not an option, and it is worth saying so when someone suggests it: git reads only `.git/config`, `~/.gitconfig`, and system config, never a file in the working tree. Git refuses this because a config file arriving with a clone could otherwise run commands. A tracked one sits there doing nothing.
-- Then carry on regardless. It is their call. *Retire*, *Later* and a send-back without a release record no `human:` actor, so they pass the gate untouched. A release removes the person's `generated` record, so it needs their signature, as a confirmation does.
+- Then carry on regardless. It is their call. *Retire*, *Later* and a send-back without a release do not record a `human:` actor, so they pass the gate untouched. A release removes the person's `generated` record, so it needs their signature, as a confirmation does.
 
 ## Showing the evidence
 
@@ -58,7 +58,7 @@ For each entry that carries one:
 Say which of these holds, in plain words:
 
 - **The file no longer holds the passage.** Show the excerpt as the bundle has it, and what the file says near there now. That is usually a send-back: the source changed under the claim. `just lokf-check-refs`, run from `.lokf/` once at the start of a session where `uv` is present, names every such excerpt.
-- **The `resource` is a URL.** No program checked the excerpt. Say it is the passage as the librarian copied it on the day of `generated.at`, and offer the link.
+- **The `resource` is a URL.** The excerpt was not checked by a program. Say it is the passage as the librarian copied it on the day of `generated.at`, and offer the link.
 - **The entry carries no excerpt.** Quote the lines that matter yourself, and say that you chose them.
 
 The excerpt is the librarian's choice of passage, so it is where the reading starts. Show the lines around it, and open the whole source when the person asks. A passage can be in the file and still not carry the claim: a condition left out, or a number from another row. That judgement is the person's, and a passed check is never an answer to "does the source still say this?".
@@ -184,7 +184,7 @@ Prepend under today's `## YYYY-MM-DD` heading in `.lokf/knowledge/log.md` (newes
 * **Deprecation**: [Legacy Orders Sync](../services/legacy-orders-sync.md) retired - replaced by [Orders API](../services/orders-api.md).
 ```
 
-Write no log line for a session that changed nothing.
+Do not write a log line for a session that changed nothing.
 
 ## The curation policy concept
 
@@ -245,7 +245,7 @@ Younger readers: no
 Set to a band of age, 8-12 or 13-18, or to both with a comma between, and ktl-librarian may write retellings of confirmed concepts for those readers on its scheduled runs. Each one is a new concept, which a person confirms against the concept it retells. With no band, a retelling is written only when a person asks for one.
 ```
 
-Then show the draft to the person, as any other item of the session. A default they change is a *Correct now* edit they dictate, and their *Confirm* is what records them: a question about review dates is no verdict on the policy.
+Then show the draft to the person, as any other item of the session. A default they change is a *Correct now* edit they dictate, and their *Confirm* is what records them: a question about review dates is not a verdict on the policy.
 
 Step 1's report reads the `Independent re-check:` and `Automation re-check:` lines, ktl-docent reads `Evidence first:`, and ktl-librarian and ktl-prose read `Younger readers:`. All four are optional, and absent means off.
 
@@ -253,7 +253,7 @@ Derive `stale_after` as *confirmation date + the row's interval*, and always sho
 
 ## Recording something missing
 
-When the person reports that the bundle lacks something ("there's no concept for the billing worker"), write a placeholder for the librarian: type, title, and one open question only. Never fill in facts you do not have. The placeholder's author is the session, `process:ktl-curator`, so the librarian may fill it: the pen changes no concept whose `generated.by` names a person. The person's report is the note under `## Open questions`, which stays theirs:
+When the person reports that the bundle lacks something ("there's no concept for the billing worker"), write a placeholder for the librarian: type, title, and one open question only. Never fill in facts you do not have. The placeholder's author is the session, `process:ktl-curator`, so the librarian may fill it: the pen does not change a concept whose `generated.by` names a person. The person's report is the note under `## Open questions`, which stays theirs:
 
 ```markdown
 ---

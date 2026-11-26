@@ -29,7 +29,7 @@ sources:
 
 Take `author` from the manifest entry's `owner`, and `last_modified` and the version from the header. Pass the mirror file's commit as the operation's `revision`, as for any tracked path. Say in the log line which page and version the concept rests on.
 
-A `Reference` concept, where one is wanted for a document people cite by name, is the other way round: the origin as its `resource`, since that class mirrors an external source, and the mirror path under `sources`. An entry with `reference: true` asks for one per mirrored item, and `knowledge-ingest.sh --patch` writes them as `create` and `patch` operations for the pen, with `references/<entry id>-<item>.md` as the path. Each concept takes its source's title, with any square bracket written as a round one, since the pen refuses a square bracket in a title. Run it, read the patch, and apply it with the pen. Most entries want no such concept: the knowledge concepts cite the mirror, and the source map's row covers the rest.
+A `Reference` concept, where one is wanted for a document people cite by name, is the other way round: the origin as its `resource`, since that class mirrors an external source, and the mirror path under `sources`. An entry with `reference: true` asks for one per mirrored item, and `knowledge-ingest.sh --patch` writes them as `create` and `patch` operations for the pen, with `references/<entry id>-<item>.md` as the path. Each concept takes its source's title, with any square bracket written as a round one, since the pen refuses a square bracket in a title. Run it, read the patch, and apply it with the pen. Most entries do not need such a concept: the knowledge concepts cite the mirror, and the source map's row covers the rest.
 
 ## The source map
 

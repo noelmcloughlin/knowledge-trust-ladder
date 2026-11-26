@@ -8,7 +8,7 @@
 
 `deploy` runs harden-runner and GitHub's own `deploy-pages` action and nothing else. It holds the `pages: write` and `id-token: write` scopes and runs in the `github-pages` environment, which GitHub limits to the default branch when it creates it. It runs only on the default branch, and only once the repository variable `KNOWLEDGE_WEBSITE_ENABLED` is `true`. Until then the workflow builds on every pull request and deploys nothing, which is the state to leave it in where another publisher exists.
 
-The workflow has no placeholders and names no branch: it reads the repository's default branch from the event.
+The workflow has no placeholders and does not name a branch: it reads the repository's default branch from the event.
 
 It runs on a change to the site's folder, the bundle, the README, `SPEC.md`, `docs/`, `.assets/`, the changelog, a schema under `src/` or `.linkml/`, and every Monday from the default branch. A change anywhere else reaches the site with that weekly run, or at once by hand: `gh workflow run knowledge-website.yaml`.
 
@@ -48,7 +48,7 @@ The pull request preview is lost: the workflow builds and checks every pull requ
 
 A link to a file mkdocs served beside the pages, such as `schema/<name>.yaml`, goes to the repository at the built commit, as any link to a file that is not a page does.
 
-An `mkdocs.yml` inside `.linkml/`, the linkml-sidecar's copier project, publishes nothing and needs no retirement.
+An `mkdocs.yml` inside `.linkml/`, the linkml-sidecar's copier project, publishes nothing and does not need retiring.
 
 ### Reading mkdocs.yml
 
@@ -62,7 +62,7 @@ Step 0 reads `mkdocs.yml` once, by eye, and Step 1 writes what it found into `si
 
 Set `baseURL` in `site.toml` to the address Pages serves the site at. Once Pages is on, the preflight's `address` line reads it from the Pages API's `html_url` and warns when `baseURL` differs, so run the preflight again after Pages is switched on or its domain changes.
 
-- **A custom domain** is `https://docs.example.org/`. The domain's DNS and the Pages setting for it stay the repository's own; a deployment from Actions needs no `CNAME` file.
+- **A custom domain** is `https://docs.example.org/`. The domain's DNS and the Pages setting for it stay the repository's own; a deployment from Actions does not need a `CNAME` file.
 - **A user site**, the `<owner>.github.io` repository, is `https://<owner>.github.io/`.
 - **A private site**, on GitHub Enterprise Cloud, gets a domain of its own under `pages.github.io` in place of `<owner>.github.io/<name>/`, which only the Pages API or Settings > Pages shows.
 

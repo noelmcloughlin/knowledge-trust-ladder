@@ -2,27 +2,27 @@
 
 **Version 0.2, a draft.** It is written for OKF 0.2 and LOKF 0.2, the versions a bundle declares in its root `index.md`.
 
-This page states the rules that Knowledge Trust Ladder (KTL) adds to a [LOKF](https://lokf.nolan-nichols.com/specification/) knowledge bundle. It is for anyone who writes a program that reads or writes a bundle KTL keeps, and for anyone who must say what *confirmed by a person* means there.
+This page states the rules that Knowledge Trust Ladder (KTL) adds to a [LOKF](https://lokf.nolan-nichols.com/specification/) knowledge bundle. It is for anyone who writes a program that reads or writes a bundle that KTL keeps, and for anyone who must say what *confirmed by a person* means there.
 
 ## 1. Scope
 
-KTL is an [OKF](https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md) runtime. OKF defines the format and prescribes no runtime, and LOKF gives each field of that format its meaning. This page defines no field, type or relation. A field KTL needs is asked of LOKF.
+KTL is an [OKF](https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md) runtime. OKF defines the format and does not prescribe a runtime, and LOKF gives each field of that format its meaning. This page does not define a field, a type or a relation. A field that KTL needs is asked of LOKF.
 
 The page states what neither specification states, and what more than one program applies:
 
-- the ladder a concept climbs (section 3);
+- the ladder that a concept climbs (section 3);
 
-- which program or person writes each record, and what no program may change (section 5);
+- which program or person writes each record, and what a program must not change (section 5);
 
-- the eighteen conventions a bundle keeps beyond the format (section 6);
+- the eighteen conventions that a bundle keeps beyond the format (section 6);
 
 - what counts as a person's confirmation (section 7);
 
 - how a trust label is computed from the records (section 8).
 
-How each role does its work is in that role's skill, and is no part of this page. [The architecture](docs/architecture.md) names the roles, and [How it works](docs/how-it-works.md) tells how they fit together.
+How each role does its work is in that role's skill, and is not part of this page. [The architecture](docs/architecture.md) names the roles, and [How it works](docs/how-it-works.md) tells how they fit together.
 
-Sections 3 to 8 and section 10 are rules. A sentence there says what a conforming bundle or program does. The examples, section 9 and section 12 explain and add no rule.
+Sections 3 to 8 and section 10 are rules. A sentence there says what a conforming bundle or program does. The examples, section 9 and section 12 are informative, not normative: they explain the rules and do not add to them.
 
 This page is the source for those rules. Each skill is installed alone, so the scripts and the skills' reference pages carry copies, and [section 12](#12-where-each-rule-is-applied) names each copy and the check that holds it to this page.
 
@@ -34,7 +34,7 @@ The format's terms, such as *bundle*, *concept*, *frontmatter* and *actor*, mean
 
 - **Event**: a mapping in a concept's frontmatter that names who acted and when, as `by` and `at`, and may name the source's state as `revision`. The `generated` record is one event, and each entry of `verified` is one.
 
-- **A person's record**: every mapping in the frontmatter whose `by` starts with `human:`, under any key, and every note a person left under `## Open questions`. A note under `process:ktl-curator` counts as one, since that actor stands for a person.
+- **A person's record**: every mapping in the frontmatter whose `by` starts with `human:`, under any key, and every note that a person left under `## Open questions`. A note under `process:ktl-curator` counts as one, since that actor stands for a person.
 
 - **Verdict**: what a person decides about a concept: confirm, send back, correct, retire or later.
 
@@ -52,21 +52,21 @@ A concept that is not retired stands on one of three rungs. Its `verified` event
 
 | Rung | The record | OKF's tier |
 | --- | --- | --- |
-| Nobody has checked this yet | `verified` holds no event | unverified |
+| Nobody has checked this yet | `verified` has no event | unverified |
 | Checked by automation only | `verified` holds events, none by a `human:` actor | machine-confirmed |
 | Confirmed by a person | `verified` holds an event by a `human:` actor | human-reviewed |
 
-Four rules move a concept on the ladder, and no other rule does:
+Only these four rules move a concept on the ladder:
 
 1. **An event raises it.** A check by automation appends or replaces that program's own event. A person's confirmation appends a `human:<id>` event.
 
 2. **An edit drops it.** A concept edited after its latest confirmation is no longer confirmed. It reads *edited since a person last confirmed it* until a person confirms it again.
 
-3. **Everything else flags it.** A question, a passed review date, a source that moved, a reader's dispute and a missing signature each add a label. None changes the rung.
+3. **Everything else flags it.** A question, a passed review date, a source that moved, a reader's dispute and a missing signature each add a label. They do not change the rung.
 
-4. **A retirement takes it off.** A retired concept stands on no rung and carries no other label.
+4. **A retirement takes it off.** A retired concept does not stand on a rung or carry any other label.
 
-No rung and no label is stored. A program computes each one from the records on every read, as section 8 says, so a label always agrees with the records behind it.
+A program does not store a rung or a label. It computes each one from the records on every read, as section 8 says, so a label always agrees with the records behind it.
 
 ## 4. The sidecar's files
 
@@ -75,31 +75,31 @@ A program that reads or writes a bundle finds these at fixed paths.
 | Path | What it holds |
 | --- | --- |
 | `.lokf/knowledge/` | the bundle: one Markdown file per concept |
-| `index.md`, `log.md` | reserved in every folder of the bundle: the table of contents and the change history. Neither is a concept. A program reads the change history from the root `log.md` alone |
-| `diataxis.md` | reserved at the bundle's root alone. In any other folder a file of that name is a concept |
-| `.obsidian/` | a folder an editor keeps in the bundle. No program reads it as part of the bundle |
+| `index.md`, `log.md` | reserved in every folder of the bundle: the table of contents and the change history. Neither is a concept. A program reads the change history only from the root `log.md` |
+| `diataxis.md` | reserved only at the bundle's root. In any other folder a file of that name is a concept |
+| `.obsidian/` | a folder that an editor keeps in the bundle. A program does not read it as part of the bundle |
 | `policies/knowledge-curation.md` | the curation policy, a concept. A line `Independent re-check: <n>` or `Automation re-check: <n>` in its body sets the size of a sample |
 | `.lokf/patch.yaml` | an agent's operations for one run. The pen deletes it once applied, and git never holds it |
-| `.lokf/feedback.md` | what readers missed or disputed. It is input for the librarian, and no part of the bundle |
-| `.lokf/questions.md` | one line for each feedback entry the librarian handled. It only grows |
+| `.lokf/feedback.md` | what readers missed or disputed. It is input for the librarian, not part of the bundle |
+| `.lokf/questions.md` | one line for each feedback entry that the librarian handled. It only grows |
 | `.lokf/curators/` | one public key per curator id, `<id>.asc` for GPG or `<id>.pub` for SSH |
 | `.lokf/justfile` | a line `schema := "<file>"` names the bundle's domain vocabulary, a path under `.lokf/` |
 | `.lokf/mirror/`, `.lokf/ingest.yaml`, `.lokf/ingest.lock.yaml` | copies of pages outside the repository, the manifest that selects them, and where each came from. A concept names a copy as its `resource` |
 
-The `knowledge_bundle` link at the repository's root names `.lokf/knowledge/` for programs that hide a dot-folder. No rule depends on it.
+The `knowledge_bundle` link at the repository's root names `.lokf/knowledge/` for programs that hide a dot-folder. The rules do not depend on it.
 
 ## 5. Who writes what
 
-Every write to the bundle goes one of four ways, and nothing else writes it.
+Every write to the bundle goes one of four ways, and the bundle has no other writer.
 
 | Writer | How it writes | The actor it records |
 | --- | --- | --- |
 | An agent that derives or refreshes concepts: the librarian, the ingest, the federation build | a patch file, which the pen applies (5.2) | `process:<id>`, on `generated`, on its own `verified` event and on its own questions |
 | The curator, a named person, through `ktl-curator` or the KTL Curator plugin | a verdict, written to the concept directly (5.3) | `human:<id>`, or `process:ktl-curator` |
-| `ktl-prose`, a copy editor | the wording of a body an agent wrote and no person confirmed, with one `**Prose**` line in `log.md` | none: it changes no frontmatter |
+| `ktl-prose`, a copy editor | the wording of a body that an agent wrote and no person confirmed, with one `**Prose**` line in `log.md` | none: it does not change frontmatter |
 | The KTL Registrar plugin | a `<!-- lokf:related -->` block in a concept's body, and the root `diataxis.md` | none |
 
-The docent, an agent that answers readers, writes nothing in the bundle. `knowledge-feedback.sh` records a reader's entry in `.lokf/feedback.md` (5.4).
+The docent, an agent that answers readers, does not write anything in the bundle. `knowledge-feedback.sh` records a reader's entry in `.lokf/feedback.md` (5.4).
 
 A person may also edit a concept by hand. Conventions 13 and 14 then hold the edit to what the pen does for an agent: an edit to a confirmed concept moves `generated.at`.
 
@@ -111,13 +111,13 @@ An actor is an OKF section 7 string, kept as a literal.
 
 - `process:<id>` names a program, with an id of the same characters. `process:ktl-librarian` is the librarian. A concept's `verified` list carries at most one event by it, because the librarian replaces its own.
 
-- `process:ktl-curator` stands for a person in a curator's session, where that session writes without a person's name: a note with no authenticated login, the release of a text its author sent back, or a concept the session drafts. No patch file may carry it.
+- `process:ktl-curator` stands for a person in a curator's session, where that session writes without a person's name: a note with no authenticated login, the release of a text that its author sent back, or a concept that the session drafts. A patch file must not carry it.
 
 - `<producer>/<version>` names another tool, as OKF allows on an event. A note under `## Open questions` takes a `human:` or a `process:` actor only (convention 4).
 
 ### 5.2 The pen's operations
 
-A patch file is a YAML mapping. `ops` is its list of operations. It may also carry `by`, the `process:<id>` actor of every stamp, `log`, the line for each operation that gives none, and `handoff`, lines for a reviewer that the pen writes nowhere in the bundle.
+A patch file is a YAML mapping. `ops` is its list of operations. It may also carry `by`, the `process:<id>` actor of every stamp, `log`, the line for each operation that does not give one, and `handoff`, lines for a reviewer that the pen does not write anywhere in the bundle.
 
 Each operation takes `op`, `path` and the keys below, and the pen refuses any other key by name:
 
@@ -135,9 +135,9 @@ Each operation takes `op`, `path` and the keys below, and the pen refuses any ot
 
 - `recheck` and `reindex`: no other key
 
-The pen stamps `generated: { by, at }` from the clock on each concept that a `create`, a `patch` or a `rewrite` writes. `create` and `question` set `status: draft`, and no other operation changes `status`. The pen writes nothing unless every operation passes.
+The pen stamps `generated: { by, at }` from the clock on each concept that a `create`, a `patch` or a `rewrite` writes. `create` and `question` set `status: draft`, and the other operations do not change `status`. The pen writes only if every operation passes.
 
-The pen refuses the whole file for any of the reasons [patch.md](skills/ktl-librarian/references/patch.md#what-it-refuses) lists. These keep a person's record as that person left it:
+The pen refuses the whole file for any of the reasons that [patch.md](skills/ktl-librarian/references/patch.md#what-it-refuses) lists. These keep a person's record as that person left it:
 
 - a line anywhere in the file that would read as a person's event (`by: human:...`) or a person's note (`- <date>, human:...`); prose may mention the actor prefix, but only ktl-curator writes one, in a live session;
 
@@ -159,14 +159,14 @@ The pen refuses the whole file for any of the reasons [patch.md](skills/ktl-libr
 
 ### 5.3 The curator's verdicts
 
-A verdict is written only in a session a person attends. *Confirm* and *Correct now* record that person's `human:<id>`, so they need an identity the session can authenticate. The other three record no person's name.
+A verdict is written only in a session that a person attends. *Confirm* and *Correct now* record that person's `human:<id>`, so they need an identity that the session can authenticate. The other three do not record a person's name.
 
 | Verdict | What it writes |
 | --- | --- |
 | Confirm | Appends a `human:<id>` event to `verified`, with `at` and, where the source's state is known, `revision`. Removes `status: draft`. Sets `stale_after` when the person accepts a date |
 | Wrong, send back | Sets `status: draft` and adds the person's note under `## Open questions`, under `human:<id>`, or under `process:ktl-curator` with no authenticated login. The content stays as it was. When the person wrote the text and releases it, `generated.by` becomes `process:ktl-curator` and the time stays |
 | Wrong, correct now | Makes the smallest edit that states the person's fact. Replaces `generated` with that person and the time, appends a `verified` event with the same time, and removes `status: draft` |
-| Retire | Sets `status: deprecated`, and `isReplacedBy` to the successor's `id` when the person names one. Changes nothing else in the concept |
+| Retire | Sets `status: deprecated`, and `isReplacedBy` to the successor's `id` when the person names one. Does not change anything else in the concept |
 | Later | Keeps or sets `status: draft`, and sets `stale_after` when the person names a date |
 
 A person's note is cleared only on that person's word. A session that changed something writes one `**Curation**` line in the root `log.md`, and one `**Deprecation**` line for each retirement, which links the successor when the person names one:
@@ -178,7 +178,7 @@ A person's note is cleared only on that person's word. A session that changed so
 * **Deprecation**: [Legacy Orders Sync](../services/legacy-orders-sync.md) retired - replaced by [Orders API](../services/orders-api.md).
 ```
 
-A program reads a retired concept's successor from its `isReplacedBy` alone: the first target, in the field or under `relations`, that names a concept of the bundle. The `**Deprecation**` line is history, and no program reads a successor from it. Only the curator writes these two lines and a retired concept's `isReplacedBy`. The pen refuses a log line that starts with either label, and a `set` that touches the field on a retired concept.
+A program reads a retired concept's successor only from its `isReplacedBy`: the first target, in the field or under `relations`, that names a concept of the bundle. The `**Deprecation**` line is history, and a program does not read a successor from it. Only the curator writes these two lines and a retired concept's `isReplacedBy`. The pen refuses a log line that starts with either label, and a `set` that touches the field on a retired concept.
 
 [review-session.md](skills/ktl-curator/references/review-session.md) gives each edit in full.
 
@@ -207,11 +207,11 @@ When an operation names an entry in `from_feedback`, the pen removes the entry a
 - <day handled> <Kind> <concept path>[: `<the reader's question>`]
 ```
 
-The question is one line of at most 300 characters, with no character a reader cannot see. [feedback.md](skills/ktl-docent/references/feedback.md) gives the rest.
+The question is one line of at most 300 characters, and a reader can see every character in it. [feedback.md](skills/ktl-docent/references/feedback.md) gives the rest.
 
 ## 6. The conventions
 
-`lokf validate` checks frontmatter against the schema. It reads a concept body as an opaque string and never reads `log.md`. A bundle KTL keeps also holds to these eighteen conventions, which `knowledge-conventions.sh` checks. Other pages cite a convention by its number.
+`lokf validate` checks frontmatter against the schema. It reads a concept body as an opaque string and never reads `log.md`. A bundle that KTL keeps also holds to these eighteen conventions, which `knowledge-conventions.sh` checks. Other pages cite a convention by its number.
 
 <!-- conventions:start -->
 
@@ -223,21 +223,21 @@ The question is one line of at most 300 characters, with no character a reader c
 
 4. A bullet under `## Open questions` is `- YYYY-MM-DD, <actor>: ...`, with a `human:` or `process:` actor: the shape the curator and both plugins write and read. The curator quotes the first bullet, so a trailing signature would become the question.
 
-5. Every `resource:`, an exclusion's too, that names no URL and no other scheme, such as `urn:` or `doi:`, names a file or directory that exists, relative to the repository root: the nearest directory holding `.lokf/`, or else the bundle's parent. URLs are never fetched.
+5. Every `resource:`, an exclusion's too, that names neither a URL nor another scheme, such as `urn:` or `doi:`, names a file or directory that exists, relative to the repository root: the nearest directory holding `.lokf/`, or else the bundle's parent. URLs are never fetched.
 
-6. A commit-shaped `revision` (lokf 0.9.0 and later), seven or more lower-case hex characters on any event, names a commit in the history of HEAD that holds the concept's local `resource`. With `--since <commit>` it names no commit made after that base: a squash merge or a rebase replaces such a commit, and a `sha256:` digest pins the file instead. A `revision` of any other shape, such as an ETag or a digest, is not checked. The rule needs the full history: outside git it is skipped, and a shallow clone is reported.
+6. A commit-shaped `revision` (lokf 0.9.0 and later), seven or more lower-case hex characters on any event, names a commit in the history of HEAD that holds the concept's local `resource`. With `--since <commit>` it does not name a commit made after that base: a squash merge or a rebase replaces such a commit, and a `sha256:` digest pins the file instead. A `revision` of any other shape, such as an ETag or a digest, is not checked. The rule needs the full history: outside git it is skipped, and a shallow clone is reported.
 
 7. One file per `id`. A sync client's conflict copy or a pasted duplicate passes `lokf validate` and silently merges into the original in the graph.
 
 8. Every Markdown file's path in the bundle is lowercase: each segment starts with a letter or a digit and holds a-z, 0-9, `.`, `_`, `-`. Two paths that differ only by case collide on Windows, macOS and SharePoint, and sync clients name a conflict copy with a space, a parenthesis or an upper-case host name.
 
-9. Every concept is a file, not a symbolic link, and starts with a `---` frontmatter block that closes. No byte order mark or blank line stands in front of it, no space or tab follows a `---` delimiter, and no other `---` sits inside it. Otherwise LOKF, or lokf before 0.10.0, reads more or less of the file as frontmatter than this script does.
+9. Every concept is a file, not a symbolic link, and starts with a `---` frontmatter block that closes. It has no byte order mark or blank line in front of it, no space or tab after a `---` delimiter, and no other `---` inside it. Otherwise LOKF, or lokf before 0.10.0, reads more or less of the file as frontmatter than this script does.
 
-10. The fields the provenance gates read line by line are spelt so that a line reader and a parser read the same thing. They are `id`, `verified`, `generated`, and `by`, `at` and `revision` at any depth. Each carries no quoted or explicit key, space before the colon, escape or block scalar, and none is given twice in one mapping. No value spans lines or sits below its key, and no comment sits beside one, inside a flow form or between the events of a list. `resource` keeps the same spellings, though a comment may stand beside it, and `sources` and `exclusions` hold no flow form. The whole block holds no tag, anchor, alias or merge key, on any field or collection. The block is not indented whole or one flow mapping, and holds no line break but a line feed.
+10. The fields the provenance gates read line by line are spelt so that a line reader and a parser read the same thing. They are `id`, `verified`, `generated`, and `by`, `at` and `revision` at any depth. Each has no quoted or explicit key, space before the colon, escape or block scalar, and none is given twice in one mapping. A value does not span lines or sit below its key, and a comment does not sit beside one, inside a flow form or between the events of a list. `resource` keeps the same spellings, though a comment may stand beside it, and `sources` and `exclusions` have no flow form. The whole block has no tag, anchor, alias or merge key, on any field or collection. The block is not indented whole or one flow mapping, and its only line break is the line feed.
 
 11. No `at:` is later than the commit that first recorded it, or, before it is committed, than now. A time ahead of the clock, such as local time labelled `Z` or a round placeholder, sorts after the edits and confirmations that followed it, so a concept reads as edited since it was confirmed when it was not. A rename or a shallow clone can only make that commit look later, so the rule can miss a bad time but never flags a good one. A time with an offset other than `Z` is not compared. Outside git the rule is skipped.
 
-12. An index bullet that names a concept carries that concept's title and description, in the folder's index.md and in the root's. A concept no index lists is not a finding.
+12. An index bullet that names a concept carries that concept's title and description, in the folder's index.md and in the root's. A concept that no index lists is not a finding.
 
 13. A concept labelled confirmed by a person still says what that person confirmed: an edit to its claims after the commit that recorded the latest confirmation must move `generated.at` past that confirmation. Its claims are its body and its frontmatter, less the open questions, KTL Registrar's `lokf:related` block, and `generated`, `verified`, `status`, `stale_after`, `timestamp` and `usage_window`. A retired concept is not read, and outside git the rule is skipped.
 
@@ -249,15 +249,15 @@ The question is one line of at most 300 characters, with no character a reader c
 
 17. A logged write has a file behind it: each `**Added**` and `**Deprecation**` bullet in log.md names a concept the bundle holds. The rule reads the bullets added since `--since <commit>`, or without it those under the newest day heading. A `**Removal**` bullet under the same or a newer day that names the same concept excuses one.
 
-18. Each `exclusions` entry (lokf 0.9.0 and later) gives a `reason` that is not blank, and no material is both a `sources` entry and an exclusion of one concept.
+18. Each `exclusions` entry (lokf 0.9.0 and later) gives a `reason` that is not blank, and a material is not both a `sources` entry and an exclusion of one concept.
 
 <!-- conventions:end -->
 
-Conventions 2, 3, 8, 10 and 18 are stricter than the format. OKF permits an unquoted datetime, a bare `verified` mapping, any file name and any YAML, and LOKF permits a blank reason and a material listed both ways. Every program that reads a bundle still reads a bare `verified` mapping as a one-item list, as OKF requires. A bundle written to the letter of OKF may fail these conventions: that is a policy of the gate, and no defect in the bundle.
+Conventions 2, 3, 8, 10 and 18 are stricter than the format. OKF permits an unquoted datetime, a bare `verified` mapping, any file name and any YAML, and LOKF permits a blank reason and a material listed both ways. Every program that reads a bundle still reads a bare `verified` mapping as a one-item list, as OKF requires. A bundle written to the letter of OKF may fail these conventions: that is a policy of the gate, not a defect in the bundle.
 
 Five conventions read the bundle's commits: 6, 11, 13, 14 and 17. Outside git, 6, 11, 13 and 14 are skipped, and 17 reads the bullets under the newest day heading. Conventions 6, 14 and 17 read a pull request's own commits when the script is given `--since <base>` and `--head <last commit>`, and 14 is skipped without `--since`.
 
-The script exits 0 when the bundle holds to every convention it could check, 1 on a finding, and 2 when it could not run. With `--strict`, it also exits 2 when it could not check a convention, so a gate never passes one unread. [gate.md](skills/ktl-sidecar/references/gate.md#the-eighteen-conventions) gives the reason for each convention and the cases each one reads.
+The script exits 0 when the bundle holds to every convention that it could check, 1 on a finding, and 2 when it could not run. With `--strict`, it also exits 2 when it could not check a convention, so a gate never passes one unread. [gate.md](skills/ktl-sidecar/references/gate.md#the-eighteen-conventions) gives the reason for each convention and the cases that each one reads.
 
 ## 7. A person's confirmation
 
@@ -275,9 +275,9 @@ For each actor, the gate requires one of:
 
 An approval stands until the account requests changes or the approval is dismissed. It stands only while each changed concept that carries the person's name is byte for byte what the approved commit held, so a rebase that replaces the approved commit ends it.
 
-A repository that cannot sign and has nobody else to approve may turn on a third route, the attestation: a named reviewer of a protected environment approves each such pull request by hand. It records that a person with access vouched for the confirmation, and that person need not be the one the event names.
+A repository that cannot sign and has nobody else to approve may turn on a third route, the attestation: a named reviewer of a protected environment approves each such pull request by hand. It records that a person with access vouched for the confirmation, and that person need not be the one that the event names.
 
-A gate that cannot read the change, the reviews or the commits backs nothing and fails.
+A gate that cannot read the change, the reviews or the commits does not back anything, and it fails.
 
 ### 7.2 A removal is a claim too
 
@@ -291,15 +291,15 @@ A person's record is never removed without that person.
 
 ### 7.3 With no forge
 
-`knowledge-provenance.sh` checks each such commit's signature against the key that `.lokf/curators/` holds for that id. A key that is not there names no curator. A change that adds or alters a person's key cannot also carry that person's confirmation. Until the folder holds a key, the script checks nothing and says so. Where the folder holds one, the gate on a forge runs this check as well, so each such commit carries that key's signature.
+`knowledge-provenance.sh` checks each such commit's signature against the key that `.lokf/curators/` holds for that id. A key that is not there does not name a curator. A change that adds or alters a person's key cannot also carry that person's confirmation. Until the folder holds a key, the script does not check anything and says so. Where the folder holds one, the gate on a forge runs this check as well, so each such commit carries that key's signature.
 
-The script's `--unattended` form takes no key. It refuses any change to a person's record, and is what an agent's own pull request runs.
+The script's `--unattended` form does not take a key. It refuses any change to a person's record, and is what an agent's own pull request runs.
 
 ### 7.4 What a confirmation covers
 
-Conventions 13 and 14 tie the confirmation to the text the person saw. An edit after the confirmation moves `generated.at` past it, and the commit that records a confirmation changes the verdict and not what the concept says.
+Conventions 13 and 14 tie the confirmation to the text that the person saw. An edit after the confirmation moves `generated.at` past it, and the commit that records a confirmation changes the verdict and not what the concept says.
 
-The gate holds a person's `verified` and `generated` events, and no other record, to that person. These it does not read:
+The gate holds only a person's `verified` and `generated` events to that person. It does not read these:
 
 - a `human:` actor under `revised`, `refuted`, an exclusion's `by` or a source's `author`;
 
@@ -313,7 +313,7 @@ The pen refuses each of those from an agent (5.2). A change by hand to one of th
 
 ## 8. Trust labels
 
-A program reports the labels below. It computes each one on every read and stores none. Each label is a signal for the reader to weigh, and never a score.
+A program reports the labels below. It computes each one on every read and does not store it. Each label is a signal for the reader to weigh, and never a score.
 
 | Label | Rule | Field(s) | RDF (optional) |
 | --- | --- | --- | --- |
@@ -331,11 +331,11 @@ A program reports the labels below. It computes each one on every read and store
 | *N* other concepts rely on this | count of other concepts whose typed relations target this concept's `id`, each counted once; a retired concept counts for none and is counted for none | the fourteen relation fields + `relations[].target` + a domain vocabulary's own slots | various |
 | Derived from a concept edited since its confirmation | a `derivedFrom` target, in the field or in `relations[]`, was last edited later than this concept's latest `human:` event. Only a concept confirmed by a person and not edited since is listed, and never for a retired target | `derivedFrom`, `relations`, `generated`, `verified` | `prov:wasDerivedFrom` |
 | Doesn't fit the known vocabulary | `type` missing, or neither one of LOKF's core classes nor a class of the host's domain vocabulary; or a `status` other than `draft`, `stable` and `deprecated` | `type`, `status` | `@type` |
-| Not tied to a signed commit | a `human:` `verified` event whose introducing commit carries no signature, or that no commit git holds added. The signature's presence is read, not its validity | `verified` + git history | - |
+| Not tied to a signed commit | a `human:` `verified` event whose introducing commit has no signature, or that no commit git holds added. The signature's presence is read, not its validity | `verified` + git history | - |
 
-Every concept is counted under exactly one of *confirmed by a person*, *edited since a person last confirmed it*, *checked by automation only*, *nobody has checked this yet* and *retired*, so those five add up to the number of concepts. The other labels overlap them: a concept can be confirmed by a person and past its review date. A retired concept carries no other label.
+Every concept is counted under exactly one of *confirmed by a person*, *edited since a person last confirmed it*, *checked by automation only*, *nobody has checked this yet* and *retired*, so those five add up to the number of concepts. The other labels overlap them: a concept can be confirmed by a person and past its review date. A retired concept does not carry any other label.
 
-The last edit of a concept is the later of `generated.at` and `revised.at`. The pen writes `generated` alone, and LOKF lets another producer record an edit as `revised`. Two times are compared whole, in UTC, and never by their day. A program that cannot read a time leaves the concept out of the label that needs it.
+The last edit of a concept is the later of `generated.at` and `revised.at`. The pen writes only `generated`, and LOKF lets another producer record an edit as `revised`. Two times are compared whole, in UTC, and never by their day. A program that cannot read a time leaves the concept out of the label that needs it.
 
 The parsing notes in [trust-fields.md](skills/ktl-curator/references/trust-fields.md#parsing-notes) decide each edge case, and are part of this section. They say how a relation target is resolved, which fields are relation fields and which classes the vocabulary holds.
 
@@ -350,7 +350,7 @@ The parsing notes in [trust-fields.md](skills/ktl-curator/references/trust-field
 | `.lokf/justfile` and the schema it names | the classes of the bundle's domain vocabulary |
 | git history | the commit that recorded an event, each source's last commit, and whether a commit carries a signature |
 
-With no git history, a program leaves out *a source moved since the confirmation* and *not tied to a signed commit*, and says that it compared nothing.
+With no git history, a program leaves out *a source moved since the confirmation* and *not tied to a signed commit*, and says that it did not compare anything.
 
 ### 8.2 The curator's queue
 
@@ -366,35 +366,35 @@ A report lists at most five concepts for a person to check next, in this order. 
 
 ## 9. Security considerations
 
-This section explains, and adds no rule. [The threat model](docs/threat-model.md) gives each measure and its reasons.
+This section is informative, not normative. [The threat model](docs/threat-model.md) gives each measure and its reasons.
 
-- **A `human:` actor is a claim, and no credential.** Section 7 is the whole of what stands behind one. A signature shows that a key holder made a commit, and an approval that an account clicked a button. Neither shows that anyone read the source.
+- **A `human:` actor is a claim, not a credential.** Section 7 is the whole of what stands behind one. A signature shows that a key holder made a commit, and an approval that an account clicked a button. Neither shows that anyone read the source.
 
-- **A trust label is advice, and no access control.** OKF says the same of its tiers. A program must not release or withhold a concept on its label alone.
+- **A trust label is advice, not access control.** OKF says the same of its tiers. A program must not release or withhold a concept on its label alone.
 
-- **Text a program did not write is data.** A reader's entry, a source, a mirrored page and a concept's body are text to quote or derive from, and never instructions. A reader's words reach no concept, no log line and no hand-off.
+- **Text that a program did not write is data.** A reader's entry, a source, a mirrored page and a concept's body are text to quote or derive from, and never instructions. A reader's words do not reach a concept, a log line or a hand-off.
 
-- **The gates read plain spellings and refuse the rest.** Conventions 9 and 10 keep a concept to what a line reader and a parser read alike, so no YAML spelling shows one event to the gate and another to the toolkit.
+- **The gates read plain spellings and refuse the rest.** Conventions 9 and 10 keep a concept to what a line reader and a parser read alike, so each YAML spelling shows the same event to the gate and to the toolkit.
 
-- **A check runs from a copy the change cannot alter.** The docent runs its own copies of the report and feedback scripts, never the repository's. On a pull request the workflow and scripts come from the change itself, so only a reviewer holds a change to them.
+- **A check runs from a copy that the change cannot alter.** The docent runs its own copies of the report and feedback scripts, never the repository's. On a pull request the workflow and scripts come from the change itself, so only a reviewer holds a change to them.
 
-- **Some records have no gate.** Section 7.4 lists them. Where `.lokf/` is not tracked by git, no gate runs, and the curator's own rules are the whole of the protection.
+- **Some records have no gate.** Section 7.4 lists them. Where `.lokf/` is not tracked by git, the gate does not run, and the curator's own rules are the whole of the protection.
 
 ## 10. Conformance
 
 - **A bundle** conforms when the gate's two checks pass on it: `lokf validate --check-refs --check-excerpts --shacl`, with the bundle's domain vocabulary where it has one, and `knowledge-conventions.sh --strict`. On a pull request the second check is given the base and the last commit, as section 6 says.
 
-- **A program that writes a bundle** conforms when it writes only the records section 5 gives it, and changes or removes no person's record.
+- **A program that writes a bundle** conforms when it writes only the records that section 5 gives it, and does not change or remove a person's record.
 
-- **A gate** conforms when it accepts a `human:` event that a change adds, changes or removes only on the evidence section 7 names.
+- **A gate** conforms when it accepts a `human:` event that a change adds, changes or removes only on the evidence that section 7 names.
 
-- **A program that reports trust** conforms when it computes each label as section 8 says, on every read, and stores none. [tests/conformance/reader/](tests/conformance/reader/) holds a bundle with one concept for each label that needs neither git nor today's date, and `expected.json` beside it holds what such a program reports of it.
+- **A program that reports trust** conforms when it computes each label as section 8 says, on every read, and does not store it. [tests/conformance/reader/](tests/conformance/reader/) holds a bundle with one concept for each label that needs neither git nor today's date, and `expected.json` beside it holds what such a program reports of it.
 
 ## 11. Versioning
 
 The version of this page is `<major>.<minor>`, as OKF's and LOKF's are, and it matches theirs. Version 0.2 states the rules for a bundle whose root `index.md` declares `okf_version: "0.2"` and `lokf_version: "0.2"`.
 
-KTL's releases, `vMAJOR.MINOR.PATCH`, are a separate track, as the `lokf` package's are from LOKF's version. A release may change a rule of this page, and [the changelog](CHANGELOG.md) records each change. A sidecar's scripts apply the rules of the release they were copied from. A convention keeps its number, and a new one takes the next number, because other pages cite the numbers.
+KTL's releases, `vMAJOR.MINOR.PATCH`, are a separate track, as the `lokf` package's are from LOKF's version. A release may change a rule of this page, and [the changelog](CHANGELOG.md) records each change. A sidecar's scripts apply the rules of the release that they were copied from. A convention keeps its number, and a new one takes the next number, because other pages cite the numbers.
 
 ## 12. Where each rule is applied
 

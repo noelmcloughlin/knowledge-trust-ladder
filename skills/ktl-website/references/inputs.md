@@ -8,7 +8,7 @@ A file the repository lacks is passed over without a setting: its mount finds no
 
 - `.lokf/knowledge/index.md`: its frontmatter (`base_iri`, `license`, `publisher`, `description`) fills the table on the bundle's overview page, and its text is that page's. The build needs this file.
 - Each concept file becomes a page at `/knowledge/<id>/`. Its frontmatter is read as data, so a concept that sets `url`, `aliases`, `draft` or `layout` changes nothing. An id with a capital keeps it in the address. The page shows the concept's type, genre and tags, its definition, its checks, its review date, its sources with any `excerpt`, and its licence or the bundle's. A source under `.lokf/mirror/` names where the ingest fetched it, the source's version and the day, from the committed `.lokf/ingest.lock.yaml`; the confidential cache's lock is never read. The typed relations come from the `graph.json` that `lokf export` writes, both ways, not from the frontmatter.
-- Each folder of the bundle is a group in the navigation, from its `index.md`. A new folder needs no line anywhere.
+- Each folder of the bundle is a group in the navigation, from its `index.md`. A new folder does not need a line anywhere.
 - Three names are not concepts, by the rule `knowledge-report.sh` follows: `index.md` and `log.md` in any folder, which the lokf toolkit reserves, and `diataxis.md` at the bundle's root, where the KTL Registrar plugin writes its map. A `log.md` in a folder and the root's `diataxis.md` have no page, and `scripts/lokf-export.py` keeps the root's `diataxis.md` out of the four export files, where the toolkit alone would write it as a node. Each is served as Markdown, and a link to one goes to GitHub. A `diataxis.md` in a folder is a concept like any other.
 - A concept's neighbours are listed beside its words: the concepts that point at it, then the concepts it points at, each with its trust dot and the relation.
 - `.lokf/knowledge/log.md`: the bundle log page, and `/knowledge/log.xml`, an Atom feed of its newest thirty days, a day being a `## YYYY-MM-DD` section. Every page names the feed in its head.
@@ -39,7 +39,7 @@ A sixth button, *Specification*, follows *Architecture* when the repository has 
 ## The docs pages
 
 - Each `.md` file under `docs/` becomes a page at `/docs/<name>/`, in lower case. A folder's `index.md` is that folder's own page. A file or folder whose name starts with a dot is left out, and so is a folder `docsExclude` names.
-- The title is the frontmatter's `title`, or the file's first `#` heading. No other frontmatter key reaches Hugo.
+- The title is the frontmatter's `title`, or the file's first `#` heading. Other frontmatter keys do not reach Hugo.
 - Each page's Markdown is served at `/docs/<name>.md`: the file from its `#` title down, with every link, image and raw-HTML address made a full one, so it reads the same away from the site. Fenced code is left as written. The page's head names the file as its `text/markdown` alternate, and `llms.txt` lists it.
 - A figure or a PDF file of the folder is served as it is: a file whose name ends in `.avif`, `.gif`, `.ico`, `.jpeg`, `.jpg`, `.pdf`, `.png`, `.svg` or `.webp`, in capitals or not. No file of another kind is served, since a browser would run an HTML or XML document, whatever its name ends in, as a page of the site's origin. A link to one goes to the file on GitHub. The same holds for `.assets/`, and the bundle serves its Markdown alone.
 - The pages sit in groups in the navigation, found or set as [customising.md](customising.md) says.
@@ -48,14 +48,14 @@ A sixth button, *Specification*, follows *Architecture* when the repository has 
 
 - A docs file named `<page>.<language>-simple.md` retells `<page>.md` beside it. Both pages offer *Full* and the retelling above their titles. The retelling's button reads *For readers aged 13 to 18* when the file says "This page is for readers aged 13 to 18.", and *In shorter words* otherwise.
 - A concept retells the one concept it is `derivedFrom` when it names its readers, in `audience` or in a tag such as `audience-13-18`.
-- A retelling has no line in the navigation, and a page with no retelling shows no choice.
+- A retelling has no line in the navigation, and a page with no retelling does not show a choice.
 
 ## The schema's pages
 
 - The schema is the file `site.toml`'s `schema` names, when it is set: a path from the root, or `pkg:<package>/<path>` for a schema inside a Python package, found without importing it in the environment of the uv project `schemaProject` names. Otherwise it is the first `src/<name>/schema/<name>.yaml` whose folder and file share a name, in `site.toml`'s `linkml` folder, at the root, then under `.linkml/`.
 - With none, it is the schema the bundle is written in: the domain vocabulary in `.lokf/schema/domain.yaml`, on a host whose bundle federates others, or else LOKF core, `.lokf/schema/lokf.yaml` or the copy in the `lokf` package that `.lokf/uv.lock` pins. Its overview says so and names LOKF's version, and its elements have no `/elements/<Name>/` address, since their identifiers resolve elsewhere.
-- `prepare.sh` runs LinkML's `gen-doc` on it, with the LinkML that `.lokf/uv.lock` already pins, so the site adds no tool for it. Each class, slot, enumeration and type has `gen-doc`'s own page under `/schema/classes/`, `/schema/slots/`, `/schema/enums/` and `/schema/types/`, its name's case kept: a class has its Mermaid diagram, its slots with the inherited ones, where it is used, its mappings, and its YAML as written and as induced. Imports are read, so a type such as `string` has a page.
-- Each element also answers at `/elements/<Name>/`, whatever its kind, which sends the browser on to its page. That is the address mkdocs gave it and the one a schema's w3id rules point at, so it needs no setting. `/elements/` itself goes to the overview.
+- `prepare.sh` runs LinkML's `gen-doc` on it, with the LinkML that `.lokf/uv.lock` already pins, so the site does not add a tool for it. Each class, slot, enumeration and type has `gen-doc`'s own page under `/schema/classes/`, `/schema/slots/`, `/schema/enums/` and `/schema/types/`, its name's case kept: a class has its Mermaid diagram, its slots with the inherited ones, where it is used, its mappings, and its YAML as written and as induced. Imports are read, so a type such as `string` has a page.
+- Each element also answers at `/elements/<Name>/`, whatever its kind, which sends the browser on to its page. That is the address mkdocs gave it and the one a schema's w3id rules point at, so it does not need a setting. `/elements/` itself goes to the overview.
 - The overview shows an entity-relationship diagram of the whole schema, which `gen-erdiagram` writes, unless it is too large for Mermaid to draw. The schema file is served beside the pages, with each local file it imports at the same relative path, so the served copy loads as the repository's does.
 - `gen-doc` writes for mkdocs, so its frontmatter and search wrapper are removed and each `<details>` is given the blank lines that make its YAML a code block.
 - Search covers the schema's overview, classes and enumerations, and leaves its slots and types out.
@@ -68,7 +68,7 @@ A sixth button, *Specification*, follows *Architecture* when the repository has 
 
 - `site.toml`'s `browse` names a folder of SQLite databases, from the repository's root. Nothing is served until it is set, since the databases go on the public site.
 - Each `.sqlite`, `.sqlite3` or `.db` file in the folder is served under `/browse/`, and nothing else in it is. When the folder holds none, `prepare.sh` first runs `browseBuild` from the repository's root.
-- The Datasette metadata beside them, `metadata.yaml`, `metadata.yml` or `metadata.json`, is served as `metadata.json` without its `plugins` settings. Datasette Lite runs no plugin, and those settings can hold a credential.
+- The Datasette metadata beside them, `metadata.yaml`, `metadata.yml` or `metadata.json`, is served as `metadata.json` without its `plugins` settings. Datasette Lite does not run a plugin, and those settings can hold a credential.
 - Two metadata files stop the build, and so does a database with a journal beside it that is not empty, since a copy of it could be torn.
 - The page at `/browse/` gives each database a section, titled and described from the metadata's `databases` entry when it has one, with its size, a download link and a link that opens it in Datasette Lite with the metadata and its analytics off. Datasette Lite runs Datasette in the reader's browser. The navigation lists the page before the changelog.
 
@@ -77,7 +77,7 @@ A sixth button, *Specification*, follows *Architecture* when the repository has 
 - A ```` ```mermaid ```` block on any page, quoted or not, is drawn in the reader's browser. The script that draws it loads only on a page that has one.
 - The figures and PDF files of `.assets/` are served under `/assets/`. A click on a figure opens it over the page, as large as the window allows.
 - An SVG that holds a script, an event handler or a `javascript:` address stops the build, since a browser opens an SVG as a page of its own. `scripts/check-svg.py` reads each as XML, so a prefix, a character reference or a name in capitals hides nothing. The build stops too on a `foreignObject` or XHTML element, a `data:` address a browser opens as a page, a DOCTYPE, an `xml-stylesheet` instruction, a file that is not well-formed XML, and a compressed `.svgz`.
-- An image from another site loads from that site's own address. The page sends no referrer with the request.
+- An image from another site loads from that site's own address. The page does not send a referrer with the request.
 
 ## Links
 

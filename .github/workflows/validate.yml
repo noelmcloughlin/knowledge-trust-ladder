@@ -333,5 +333,6 @@ jobs:
           # entry point, see ktl-sidecar Step 2), already checked at
           # its real path.
           skip: knowledge_bundle
-          # in-toto's attestation files end .intoto.jsonl.
-          ignore_words_list: intoto
+          # in-toto's attestation files end .intoto.jsonl, and Childs is the
+          # surname of an author ktl-prose cites.
+          ignore_words_list: intoto,childs

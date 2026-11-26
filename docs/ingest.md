@@ -9,11 +9,11 @@ Nothing in the trust ladder changes. A concept derived from a wiki page is agent
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-ingest-dark.svg">
-    <img src="../.assets/ktl-ingest.svg" alt="Four kinds of source outside the repository feed the ingest: the manifest names them, the script fetches and converts them in a read-only job with no agent, and writes the mirror and the lock. A pull request each Sunday is the review; the librarian on Monday derives concepts that cite the mirror file and the origin page" width="720" />
+    <img src="../.assets/ktl-ingest.svg" alt="Four kinds of source outside the repository feed the ingest: the manifest names them, the script fetches and converts them in a read-only job without an agent, and writes the mirror and the lock. One pull request, opened by the Sunday run and refreshed until a person merges it, is the review; the librarian on Monday derives concepts that cite the mirror file and the origin page" width="720" />
   </picture>
 </p>
 
-***As a flow diagram, drawn with Archify: [light](../.assets/companions/ktl-ingest.svg), [dark](../.assets/companions/ktl-ingest-dark.svg).***
+*As a flow diagram, drawn with Archify: [light](../.assets/companions/ktl-ingest.svg), [dark](../.assets/companions/ktl-ingest-dark.svg).*
 
 [The ingest reference](ingest-reference.md) lists what can be mirrored, every key of the manifest, and what the mirror and the lock record.
 
@@ -49,7 +49,7 @@ A run starts no more work after 25 minutes, so it ends inside the workflow's 30,
 
 The body is the run's summary, then the checklist. Read the diff as you would read the page: is this text something the repository should hold? Remove a page that should not be in the repository from the manifest, not from the diff. A file marked `gone` or `unlisted` stays while a concept cites it, until the librarian has handled that concept. Once none does, the next scheduled run removes it, and the diff shows the removal. The lock's `since` date says how long it has been away. A line marked `failed` with a credential's name is a secret not yet set, or expired, and the run shows it as a warning too. So is a line about the time limit.
 
-A pull request closed without merging is a no: a scheduled run proposes the mirror again only once the manifest has changed, and a run started by hand proposes it now. No checks run on this pull request, and that is expected: GitHub starts none for a pull request a workflow opens, and the mirror holds no bundle file to check. Merge it, and the librarian's next run reads what changed.
+A pull request closed without merging is a no: a scheduled run proposes the mirror again only once the manifest has changed, and a run started by hand proposes it now. Checks do not run on this pull request, and that is expected: GitHub starts none for a pull request a workflow opens, and the mirror has no bundle file to check. Merge it, and the librarian's next run reads what changed.
 
 ## Where the rest is written
 

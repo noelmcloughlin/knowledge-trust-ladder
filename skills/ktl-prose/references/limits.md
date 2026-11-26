@@ -8,7 +8,7 @@ A **finding** names something other than wording that differs, and the script ex
 
 - a number or its unit, a link, a code span, an HTML tag, a quotation or a code block;
 - a list or a table cut short, a hard line break, or a paragraph cut in two inside a sentence;
-- a frontmatter byte, a body a person vouched for, or a new character no reader sees;
+- a frontmatter byte, a body a person vouched for, or a new character that no reader sees;
 - in a script, any line that is not prose;
 - a sentence, list item or table row that otherwise stayed and turned over.
 
@@ -43,7 +43,7 @@ The script changes nothing. You reword the text, and you can slip. Each item bel
 - **Whether a link works.** It compares each target as written and opens none. It tracks `[text][label]` and each definition, and it does not see a `[label]` used by itself.
 - **HTML across a blank line.** It reads the text of `<code>` or `<pre>` as code only within one block. After a blank line it reads the rest as prose.
 - **Meaning in a script's code.** In a script it reads the comments and docstrings as prose. It holds every other line as it was: code, a directive, a command in a comment and the name that opens a row of a table. So it never says whether a comment still describes its code.
-- **Line endings.** It reads files as CI does, with CRLF as LF, so a change of only the line endings is no finding. A byte order mark at the start goes the same way.
+- **Line endings.** It reads files as CI does, with CRLF as LF, so a change of only the line endings is not a finding. A byte order mark at the start goes the same way.
 - **A rewording committed with the stamp.** The librarian's work list names a body that changed after the commit that recorded its stamp. A rewording in that same commit goes unseen, and so does one squashed into it, so keep the rewording in a pull request of its own.
 - **A rewording already committed.** `--against` knows only the revision you name. A rewording committed before the check passes against `HEAD`, so name the revision from before it.
 - **A retelling's sense.** A retelling's number passes if the adult text holds it anywhere, and a claim turned upside down passes.
@@ -57,6 +57,7 @@ Never type the escape for such a character into a tool call: the call may decode
 - **A number said another way.** `<5` to `less than 5`, or `20 MB` to `twenty megabytes`, reads as a number gone. Keep the number as it was. A spelling of a listed unit is fine: `10 ms` and `10 milliseconds` are one number.
 - **A list number out of order.** A number in its list's order is a marker, which may change. Any other opens a fact, so renumbering a list that starts at 5 is a finding.
 - **A reversal that is not one.** `Add a bullet? No.` to `Do not add a bullet.` reads as a negative gained, since the negative moved in from the next sentence. Keep the earlier sentence, or the person reads the two and rewords it by hand. Replayed over 351 real rewordings, this happened in 2.
+- **A prohibition whose negative moved to the verb.** `No patch file may carry it.` to `A patch file must not carry it.` reads as `may` turned into `must`. Keep the word of strength: write `may not`.
 - **Two things that changed places and agree.** `The key matches the login.` to `The login matches the key.` reads as two runs of words that changed places. Keep the earlier order. Two items joined by `and` or `or` may change places.
 - **A count that grew with its list.** `The gate runs three checks, and one more on a release.` to `The gate runs four checks on a release.` reads as one number word for another. Keep the earlier count, or explain the finding in the hand-off.
 - **A paragraph that ends without a full stop.** A reworded paragraph that ends on a bare word reads as one cut in two. End it with its full stop.

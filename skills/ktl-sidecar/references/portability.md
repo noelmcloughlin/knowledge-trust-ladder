@@ -41,7 +41,7 @@ The skills repository tests every script and workflow under `templates/` before 
 - **A port.** The gate ported to another forge by the recipe below, or a step rewritten for another shell, is the host's, with its tests.
 - **Another operating system.** The tests run on Linux. The scripts are written for bash 3.2 and POSIX tools, so macOS and Git for Windows are covered by design and not by a run there. Run the preflight and the conventions check once on such a host, and report a difference as an issue on the skills repository.
 
-No test can prove that an agent follows a `SKILL.md`. The trust labels, the gate and the curator's verdicts guard against that, and they are the same on every host.
+A test cannot prove that an agent follows a `SKILL.md`. The trust labels, the gate and the curator's verdicts guard against that, and they are the same on every host.
 
 ## The host need not be git, GitHub, or Linux
 
@@ -61,7 +61,7 @@ What has to be rewritten is what talks to GitHub:
 - In the registrar workflow, the `provenance` job reads reviews and commit verification through `gh api`. GitLab exposes the same facts as `GET /projects/:id/merge_requests/:iid/approvals` and `GET /projects/:id/repository/commits/:sha/signature`. Forgejo, which Codeberg runs, and Gitea expose them as the pull request's reviews and the commit's `verification` object.
 - The release workflow uploads the zip with `gh release upload` and records a GitHub attestation. On another forge, attach the zip through that forge's release API, or skip the workflow; the bundle is in git either way.
 
-One difference to carry over: GitHub forbids approving one's own pull request, and GitLab does so only when the project's *Prevent approval by author* setting is on. A port must therefore check that the approver is not the author instead of assuming it. Forgejo Actions, on Codeberg among other hosts, and Gitea Actions run GitHub Actions syntax, so the workflows may run nearly as they are there, with those calls replaced. Where porting the gate is not worth it, the forge-free gate below needs no forge.
+One difference to carry over: GitHub forbids approving one's own pull request, and GitLab does so only when the project's *Prevent approval by author* setting is on. A port must therefore check that the approver is not the author instead of assuming it. Forgejo Actions, on Codeberg among other hosts, and Gitea Actions run GitHub Actions syntax, so the workflows may run nearly as they are there, with those calls replaced. Where porting the gate is not worth it, the forge-free gate below does not need a forge.
 
 ### Not Linux: Windows and PowerShell
 
@@ -85,7 +85,7 @@ Three Windows habits to know about:
 
 ### Behind a package mirror or proxy, or with an old python3
 
-A company package index, such as Nexus or Artifactory, often serves no upload times. `uv sync` in `.lokf/` still installs the toolkit: it resolves the same versions through the mirror, and rewrites every address in `uv.lock` to the mirror's. There uv drops every file it cannot date when an `exclude-newer` date applies. The scripts carry none, and where the person's uv settings set one, the pen, the conventions check and the ingest lift it for each package uv names that the script pins, keep its version, and say so. Run `uv sync` in `.lokf/` once to run them from `.lokf/.venv`, which `uv.lock` pins by hash. The ingest reads a PDF with pypdf, which the toolkit does not install. Run `uv add pypdf` in `.lokf/` to add it. When the conventions check exits 2 and says "could not run", the runner failed, not the bundle.
+A company package index, such as Nexus or Artifactory, often does not serve upload times. `uv sync` in `.lokf/` still installs the toolkit: it resolves the same versions through the mirror, and rewrites every address in `uv.lock` to the mirror's. There uv drops every file it cannot date when an `exclude-newer` date applies. The scripts carry none, and where the person's uv settings set one, the pen, the conventions check and the ingest lift it for each package uv names that the script pins, keep its version, and say so. Run `uv sync` in `.lokf/` once to run them from `.lokf/.venv`, which `uv.lock` pins by hash. The ingest reads a PDF with pypdf, which the toolkit does not install. Run `uv add pypdf` in `.lokf/` to add it. When the conventions check exits 2 and says "could not run", the runner failed, not the bundle.
 
 Make the lock where the gate installs from. `.lokf/uv.lock` records the index it was made against, and every file's address there. A lock made against PyPI fails the gate's `uv sync --locked` on a runner whose index is a mirror. A lock rewritten behind the mirror fails on GitHub's own runners, and names the mirror's host in the repository. So commit a lock made against PyPI where GitHub's runners run the gate, and one made against the mirror where the runners install through it. The preflight's `lock` line says when the two differ.
 
@@ -111,7 +111,7 @@ Obsidian is optional; nothing in the skills needs it. The default layout is the 
 
 The host vault stays clean for two reasons. Obsidian never indexes a dot-folder. And its file reconciler (`reconcileSymbolicLinkCreation`, 1.13.7; the help page says the same in words) skips a link whose resolved path equals, contains or lies inside a folder it already watches, the vault root included. So a vault opened at the host root lists neither `.lokf/` nor `knowledge_bundle`.
 
-A real folder inside the vault is indexed like any other, and so is a link whose target lies *outside* the vault. (A vault may link a repository's `.lokf/knowledge` into one of its folders and list it under the plugins' *Bundle root folders*.) Either way the exhibition enters the workshop's link suggestions, quick switcher, graph and search. *Settings → Files and links → Excluded files* hides it from search, graph view and unlinked mentions, but only makes it less noticeable in the quick switcher and link suggestions ([Obsidian's settings help](https://obsidian.md/help/settings)), and Obsidian Sync carries no links. Hence the rule: the bundle is never placed as a real folder inside a vault.
+A real folder inside the vault is indexed like any other, and so is a link whose target lies *outside* the vault. (A vault may link a repository's `.lokf/knowledge` into one of its folders and list it under the plugins' *Bundle root folders*.) Either way the exhibition enters the workshop's link suggestions, quick switcher, graph and search. *Settings → Files and links → Excluded files* hides it from search, graph view and unlinked mentions, but only makes it less noticeable in the quick switcher and link suggestions ([Obsidian's settings help](https://obsidian.md/help/settings)), and Obsidian Sync does not carry links. Hence the rule: the bundle is never placed as a real folder inside a vault.
 
 ### The ingest on another host
 

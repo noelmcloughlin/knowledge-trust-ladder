@@ -13,7 +13,7 @@ A host may also write project skills of its own under `.claude/skills/`. When a 
 
 A concept may say that one of the host's skills needs an installed skill. It never describes an installed or vendored skill as the host's own.
 
-A skill template is not a skill: a `SKILL.md` meant to be copied, such as one in a `template/` folder. Cover it in the concept that says how to create a skill, and give it no concept of its own.
+A skill template is not a skill: a `SKILL.md` meant to be copied, such as one in a `template/` folder. Cover it in the concept that says how to create a skill, and do not give it a concept of its own.
 
 ## What a skill's concept holds
 
@@ -32,7 +32,7 @@ ktl-docent tells a skill's concept from a how-to by that `resource`. The concept
 
 The procedure stays in `SKILL.md`. An agent loads it from there when the skill starts, and a copy in the bundle would only drift from it. Where a `SKILL.md` is almost all procedure, keep the concept to a sentence or two on what the skill is for and when to use it.
 
-Many collections hold skills that name no other. A concept then has no relation to another skill, and its relations point instead to what the skills share: a licence, a way to install them, the specification they follow.
+Many collections hold skills that do not name another. A concept then has no relation to another skill, and its relations point instead to what the skills share: a licence, a way to install them, the specification they follow.
 
 Cite `SKILL.md`, and only the other files a claim depends on. A skill's folder changes often, and each file a concept cites puts the concept on the work list whenever it changes.
 

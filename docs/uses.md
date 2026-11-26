@@ -41,18 +41,18 @@ The bundles that the README lists as exhibitions come from three kinds of reposi
 
 KTL fits as the knowledge side of it. A bundle can hold what a team's pipelines are, which checks a branch requires, which policy asks for them, and who confirmed each of those claims and when. This repository's own bundle holds its security policy, its threat model, its release procedure and its repository checks as concepts, each with its sources and its label. A domain vocabulary adds the types that a security standard defines, such as those of SLSA or CWE, beside LOKF's own.
 
-KTL is not the tooling side. It runs no scanner, stores no secret, writes no bill of materials and decides no deployment. Its gate checks the bundle and never the code: a red check means a record is malformed or a confirmation has nobody behind it, and says nothing about a vulnerability.
+KTL is not the tooling side. It does not run a scanner, store a secret, write a bill of materials or decide a deployment. Its gate checks the bundle and never the code: a red check means a record is malformed or a confirmation has nobody behind it, and says nothing about a vulnerability.
 
 ### Technology governance
 
 KTL fits where governance needs to know who is accountable for a statement. [Three lines of defence](three-lines.md) places each role in the model that regulated industries use, and says what an auditor can check and where that evidence stops. Across repositories, a [domain](federation.md) is a set of bundles with one accountable owner.
 
-KTL is not a governance, risk and compliance system. It keeps no risk register, tests no control and tracks no exception. It records that a named person agreed a concept says what its source says. Whether the source is right stays with the organisation.
+KTL is not a governance, risk and compliance system. It does not keep a risk register, test a control or track an exception. It records that a named person agreed a concept says what its source says. Whether the source is right stays with the organisation.
 
 ## What it is not
 
 - **Not the source of truth.** The source is. A concept is a claim about a source, and the label says how far to trust the claim.
-- **Not a judge of truth.** No program in KTL decides that a claim is correct. A person does, by name.
+- **Not a judge of truth.** Programs in KTL do not decide that a claim is correct. A person does, by name.
 - **Not a vector store.** Nothing is embedded. A reader, person or agent, starts from `index.md` and follows typed relations.
 - **Not live.** A bundle is as fresh as its last refresh. Who is on call today, or what is deployed this minute, belongs in the system that knows it.
 - **Not a place for secrets or personal data.** A bundle may be published.

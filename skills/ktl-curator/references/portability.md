@@ -7,7 +7,7 @@ The rule never changes: a `human:<id>` event carries an id that something outsid
 | GitHub | `gh api user --jq .login`; or the signing-key route below | the `provenance` job: an approving review by that account, or its verified signature on the commit |
 | GitLab | `glab api user`, filtered to its `username` field as [review-session.md](review-session.md#who-is-recording) shows; or the signing-key route | no template exists; the recipe is in ktl-sidecar's [portability.md](../../ktl-sidecar/references/portability.md) |
 | Forgejo, Gitea, Codeberg | the signing-key route, with a token where the key listing needs one | same: no template, recipe there |
-| Another forge, Bitbucket included | the signing-key route if the forge lists keys; else no *Confirm* | untested; the forge-free gate below is the safe choice |
+| Another forge, Bitbucket included | the signing-key route if the forge lists keys; else *Confirm* is unavailable | untested; the forge-free gate below is the safe choice |
 | No forge: a synced or shared folder, a plain directory | the account the platform's version history attributes the save to | that version history, and nothing else |
 | `.lokf/` gitignored | as the forge above, but nothing will ever check it | nothing; say so in the report |
 
@@ -15,7 +15,7 @@ The rule never changes: a `human:<id>` event carries an id that something outsid
 
 This route is for a forge with no CLI at hand, or a forge this skill has no CLI for. It binds a claimed login to possession of a key, which is the same fact the gate relies on later.
 
-1. Read the key the person signs with: `git config user.signingkey`. For GPG that is a key id, and the key that signs is often a *subkey* of it; `gpg --list-keys --with-subkey-fingerprints <id>` shows both. For SSH (`gpg.format ssh`) it is a public key file or its contents. No value with signing on means git picks the GPG key by the committer's email; `git log -1 --format=%GK` after a signed commit names the key it used.
+1. Read the key the person signs with: `git config user.signingkey`. For GPG that is a key id, and the key that signs is often a *subkey* of it; `gpg --list-keys --with-subkey-fingerprints <id>` shows both. For SSH (`gpg.format ssh`) it is a public key file or its contents. With signing on and no value, git picks the GPG key by the committer's email; `git log -1 --format=%GK` after a signed commit names the key it used.
 2. The person states their login. On its own that is a claim, as this skill says elsewhere.
 3. Fetch the forge's public key listing for that login and look for that key. GitHub: `https://api.github.com/users/<login>/gpg_keys` (match `key_id`, or a `subkeys[].key_id`) or `/users/<login>/ssh_signing_keys` (match the key line). GitLab: `https://<host>/api/v4/users?username=<login>` for the id, then `/api/v4/users/<id>/gpg_keys` or `/users/<id>/keys`. Forgejo and Gitea: `/api/v1/users/<login>/gpg_keys` and `/users/<login>/keys`, which some instances (Codeberg among them) serve only with a token. All of it needs `curl`; the preflight's `network` line says when there is none.
 4. Only when the key is listed under that login, record `human:<login>`. If it is not listed, or the listing cannot be read, *Confirm* and *Correct now* stay unavailable: say so, and offer the three verbs that assert nothing.
