@@ -49,7 +49,7 @@ Another, [`ktl-website`](../skills/ktl-website/SKILL.md), builds a website from 
 Each entry carries a label in plain words:
 
 - **Confirmed by a person**: a named person checked it against its source.
-- **Checked by automation only**: automation re-checked that the source still matches, and no person has.
+- **Checked by automation only**: automation re-checked that the source still matches, but a person has not.
 - **Nobody has checked this yet**: no check of any kind is recorded.
 
 Other labels say an entry is **still a draft**, **edited since a person last confirmed it**, **past its review date** or **retired**. **Reopened** means a person confirmed it, and a new question is waiting.

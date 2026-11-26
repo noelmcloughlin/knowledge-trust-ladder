@@ -1,116 +1,145 @@
-<svg width="720" height="691" viewBox="0 0 720 691" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<svg width="720" height="752" viewBox="0 0 720 752" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d" font-family="'Atkinson Hyperlegible Next', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
 <title id="t">Tiers of domains</title>
-<desc id="d">Top to bottom. Each domain is labelled with its domain concept's path and its namespace in the form https://w3id.org/, the publisher's own w3id namespace, the project, then knowledge/. domains/federation, where this build starts and perhaps a member of another domain, names domains/domain1 and domains/domain2; each is a thin LOKF bundle with its own curator and releases, and each names a domain in turn, domains/domain3 and domains/domain4. Those name the bundles: any number under each, one repository each, drawn as a stack of cards, and one shared model such as gist-linkml, biolink-model or the FINOS CDM, named by both at one release, so it joins once: the diamond rule. Each card carries a small ladder whose rungs are the three actors, and three pills reading derived, checked and confirmed: green for what an agent derived, gold for what deterministic tools checked, blue for what a named person confirmed; each domain box carries the same three dots. Four numbered rules follow: every domain bounds a workspace of its own; confirming a domain member attests that it belongs and who answers for it, not what its members say; the diamond rule, that a bundle two domains name joins once at the same release and stops the build at different releases, until the two owners agree on one release and both pin it; and max_depth on the domain a build starts from says how many tiers it follows, three unless set. A note says that every namespace takes that form, a domain's beside its members' and never above them.</desc>
-<rect width="720" height="691" fill="#E4E1D7"/>
-<!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#5F5E5A"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#7A4E0B"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#E4E1D7" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#0C447C" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#3B6D11" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#3B6D11" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#5F5E5A">Knowledge</text><text x="56" y="32.5" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#5F5E5A">Trust Ladder</text><!-- ktl-brand:end -->
-<text x="360" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#2C2C2A">Tiers of domains</text>
-<rect x="20" y="48" width="680" height="256" rx="20" fill="#F1EFE8"/>
-<text x="40" y="76" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#2C2C2A">Domains: each tier a thin bundle, with its own curator and its own releases</text>
-<rect x="220" y="90" width="280" height="48" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="2"/>
-<g transform="translate(246,114)" stroke="#0C447C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
-<text x="270" y="110" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0C447C">domains/federation</text>
-<text x="270" y="127" font-family="Arial, sans-serif" font-size="9.5" fill="#0C447C">https://w3id.org/&lt;org&gt;/federation/knowledge/</text>
-<circle cx="462" cy="105" r="3.5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
-<circle cx="473" cy="105" r="3.5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
-<circle cx="484" cy="105" r="3.5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
-<text x="512" y="118" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#5F5E5A">where this build starts</text>
-<line x1="360" y1="138" x2="360" y2="152" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M355.5 145.4 L360 152 L364.5 145.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<line x1="166" y1="152" x2="554" y2="152" stroke="#6E6D66" stroke-width="1.3"/>
-<line x1="166" y1="152" x2="166" y2="166" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M161.5 159.4 L166 166 L170.5 159.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<line x1="554" y1="152" x2="554" y2="166" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M549.5 159.4 L554 166 L558.5 159.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="26" y="166" width="280" height="48" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="2"/>
-<g transform="translate(52,190)" stroke="#0C447C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
-<text x="76" y="186" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0C447C">domains/domain1</text>
-<text x="76" y="203" font-family="Arial, sans-serif" font-size="9.5" fill="#0C447C">https://w3id.org/&lt;org&gt;/domain1/knowledge/</text>
-<circle cx="268" cy="181" r="3.5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
-<circle cx="279" cy="181" r="3.5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
-<circle cx="290" cy="181" r="3.5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
-<rect x="414" y="166" width="280" height="48" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="2"/>
-<g transform="translate(440,190)" stroke="#0C447C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
-<text x="464" y="186" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0C447C">domains/domain2</text>
-<text x="464" y="203" font-family="Arial, sans-serif" font-size="9.5" fill="#0C447C">https://w3id.org/&lt;org&gt;/domain2/knowledge/</text>
-<circle cx="656" cy="181" r="3.5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
-<circle cx="667" cy="181" r="3.5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
-<circle cx="678" cy="181" r="3.5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
-<line x1="166" y1="214" x2="166" y2="242" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M161.5 235.4 L166 242 L170.5 235.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<line x1="554" y1="214" x2="554" y2="242" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M549.5 235.4 L554 242 L558.5 235.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="26" y="242" width="280" height="48" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="2"/>
-<g transform="translate(52,266)" stroke="#0C447C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
-<text x="76" y="262" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0C447C">domains/domain3</text>
-<text x="76" y="279" font-family="Arial, sans-serif" font-size="9.5" fill="#0C447C">https://w3id.org/&lt;org&gt;/domain3/knowledge/</text>
-<circle cx="268" cy="257" r="3.5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
-<circle cx="279" cy="257" r="3.5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
-<circle cx="290" cy="257" r="3.5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
-<rect x="414" y="242" width="280" height="48" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="2"/>
-<g transform="translate(440,266)" stroke="#0C447C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
-<text x="464" y="262" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0C447C">domains/domain4</text>
-<text x="464" y="279" font-family="Arial, sans-serif" font-size="9.5" fill="#0C447C">https://w3id.org/&lt;org&gt;/domain4/knowledge/</text>
-<circle cx="656" cy="257" r="3.5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
-<circle cx="667" cy="257" r="3.5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
-<circle cx="678" cy="257" r="3.5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
-<rect x="20" y="330" width="680" height="156" rx="20" fill="#F1EFE8"/>
-<rect x="96.5" y="342" width="149" height="100" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.5"/>
-<rect x="91.5" y="347" width="149" height="100" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.5"/>
-<rect x="86.5" y="352" width="149" height="100" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
-<g transform="translate(161.0,374)" stroke-linecap="round"><line x1="-7" y1="-11" x2="-7" y2="11" stroke="#A8A69D" stroke-width="2"/><line x1="7" y1="-11" x2="7" y2="11" stroke="#A8A69D" stroke-width="2"/><line x1="-7" y1="7" x2="7" y2="7" stroke="#3B6D11" stroke-width="3"/><line x1="-7" y1="0" x2="7" y2="0" stroke="#B7791F" stroke-width="3"/><line x1="-7" y1="-7" x2="7" y2="-7" stroke="#185FA5" stroke-width="3"/></g>
-<text x="161.0" y="400" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#27500A">Bundles</text>
-<text x="161.0" y="415" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#27500A">any number, one repository each</text>
-<rect x="91.0" y="422" width="44" height="15" rx="7.5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
-<text x="113.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#27500A">derived</text>
-<rect x="139.0" y="422" width="44" height="15" rx="7.5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
-<text x="161.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#7A4E0B">checked</text>
-<rect x="187.0" y="422" width="44" height="15" rx="7.5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
-<text x="209.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#0C447C">confirmed</text>
-<rect x="260" y="352" width="200" height="100" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
-<g transform="translate(360.0,374)" stroke-linecap="round"><line x1="-7" y1="-11" x2="-7" y2="11" stroke="#A8A69D" stroke-width="2"/><line x1="7" y1="-11" x2="7" y2="11" stroke="#A8A69D" stroke-width="2"/><line x1="-7" y1="7" x2="7" y2="7" stroke="#3B6D11" stroke-width="3"/><line x1="-7" y1="0" x2="7" y2="0" stroke="#B7791F" stroke-width="3"/><line x1="-7" y1="-7" x2="7" y2="-7" stroke="#185FA5" stroke-width="3"/></g>
-<text x="360.0" y="400" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#27500A">A shared model</text>
-<text x="360.0" y="415" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#27500A">gist-linkml, biolink-model, FINOS CDM…</text>
-<rect x="290.0" y="422" width="44" height="15" rx="7.5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
-<text x="312.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#27500A">derived</text>
-<rect x="338.0" y="422" width="44" height="15" rx="7.5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
-<text x="360.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#7A4E0B">checked</text>
-<rect x="386.0" y="422" width="44" height="15" rx="7.5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
-<text x="408.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#0C447C">confirmed</text>
-<text x="360.0" y="447" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-style="italic" fill="#7A4E0B">named by both, at one release</text>
-<rect x="484.5" y="342" width="149" height="100" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.5"/>
-<rect x="479.5" y="347" width="149" height="100" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.5"/>
-<rect x="474.5" y="352" width="149" height="100" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
-<g transform="translate(549.0,374)" stroke-linecap="round"><line x1="-7" y1="-11" x2="-7" y2="11" stroke="#A8A69D" stroke-width="2"/><line x1="7" y1="-11" x2="7" y2="11" stroke="#A8A69D" stroke-width="2"/><line x1="-7" y1="7" x2="7" y2="7" stroke="#3B6D11" stroke-width="3"/><line x1="-7" y1="0" x2="7" y2="0" stroke="#B7791F" stroke-width="3"/><line x1="-7" y1="-7" x2="7" y2="-7" stroke="#185FA5" stroke-width="3"/></g>
-<text x="549.0" y="400" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#27500A">Bundles</text>
-<text x="549.0" y="415" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#27500A">any number, one repository each</text>
-<rect x="479.0" y="422" width="44" height="15" rx="7.5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
-<text x="501.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#27500A">derived</text>
-<rect x="527.0" y="422" width="44" height="15" rx="7.5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
-<text x="549.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#7A4E0B">checked</text>
-<rect x="575.0" y="422" width="44" height="15" rx="7.5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
-<text x="597.0" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" fill="#0C447C">confirmed</text>
-<text x="360" y="474" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#5F5E5A">Bundles: each on its own trust ladder, named by the tier above it; the rungs and pills are the three actors below.</text>
-<line x1="166" y1="290" x2="166" y2="342" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M161.5 335.4 L166 342 L170.5 335.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<line x1="554" y1="290" x2="554" y2="342" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M549.5 335.4 L554 342 L558.5 335.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<line x1="200" y1="290" x2="330" y2="352" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M326.0 345.1 L330 352 L322.1 353.2" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<line x1="520" y1="290" x2="390" y2="352" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M397.9 353.2 L390 352 L394.0 345.1" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="20" y="516" width="680" height="133" rx="12" fill="#ffffff" stroke="#D3D1C7" stroke-width="1"/>
-<g transform="translate(46,549)" stroke="#5F5E5A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
-<text x="70" y="538" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#2C2C2A">Four rules</text>
-<text x="70" y="555" font-family="Arial, sans-serif" font-size="10" fill="#5F5E5A">1. Every domain bounds a workspace of its own: the domain a build starts from is its top, and may be a member of another.</text>
-<text x="70" y="570" font-family="Arial, sans-serif" font-size="10" fill="#5F5E5A">2. Confirming a domain member attests that it belongs and who answers for it, not what its members say.</text>
-<text x="70" y="585" font-family="Arial, sans-serif" font-size="10" fill="#5F5E5A">3. The diamond rule: two domains may name the same bundle. At the same release it joins once; at different releases the build stops.</text>
-<text x="81" y="600" font-family="Arial, sans-serif" font-size="10" fill="#5F5E5A">It stays stopped until the two owners agree on one release and both pin it.</text>
-<text x="70" y="615" font-family="Arial, sans-serif" font-size="10" fill="#5F5E5A">4. max_depth on the domain a build starts from says how many tiers it follows, 3 unless set; a domain may not name one above it.</text>
-<text x="70" y="630" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#5F5E5A">Each namespace is https://w3id.org/&lt;org&gt;/&lt;project&gt;/knowledge/, a domain's beside its members', never above them.</text>
-<circle cx="52" cy="673" r="5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
-<text x="63" y="677" font-family="Arial, sans-serif" font-size="12" fill="#27500A">an agent derives it</text>
-<circle cx="206" cy="673" r="5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
-<text x="217" y="677" font-family="Arial, sans-serif" font-size="12" fill="#7A4E0B">deterministic tools check it</text>
-<circle cx="418" cy="673" r="5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
-<text x="429" y="677" font-family="Arial, sans-serif" font-size="12" fill="#0C447C">a named person vouches for it</text>
+<desc id="d">Tiers of domains. Each tier is a repository of its own, with its own curator and releases. The top domain, domains/federation, is where this build starts, and may itself be a member of another domain. It names domains/domain1 and domains/domain2, which are tier 1. Each names a domain in turn, domains/domain3 and domains/domain4, which are tier 2. Those name the bundles, tier 3: any number under each, one repository each, drawn as a stack, and one shared model, an upper ontology such as gist, named by both at one release, so that it joins the workspace once. Each box gives a domain concept's path and an example namespace, such as https://w3id.org/&lt;org&gt;/domain1/knowledge/. Four rules keep a tree of domains sound. One: every domain bounds a workspace of its own, and a build knows nothing of a domain above its top domain. Two: confirming a domain confirms the delegation, that the domain belongs and who answers for it, not what its members say. Three, the diamond rule: two domains may name the same bundle; at the same release it joins the workspace once, and at different releases the build stops until the two owners agree on one release and both pin it. Four: the depth is the top domain's to set; max_depth is how many tiers the build follows, 3 unless set, a domain at the last tier stops the build, and a domain may not name itself or a domain above it. Namespaces may not nest: give a domain a namespace beside its members', never above them.</desc>
+<rect width="720" height="752" fill="#FFFFFF"/>
+<!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#5F5E5A"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#7A4E0B"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#0C447C" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#3B6D11" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#3B6D11" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.9" fill="#4A4944">KNOWLEDGE</text><text x="56" y="32.5" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.9" fill="#4A4944">TRUST LADDER</text><!-- ktl-brand:end -->
+<line x1="150" y1="11" x2="150" y2="37" stroke="#C4C2B8" stroke-width="1"/>
+<text x="164" y="31" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="20" font-weight="700" fill="#1C1C1A">Tiers of domains</text>
+<line x1="24" y1="48" x2="696" y2="48" stroke="#1C1C1A" stroke-width="1.5"/>
+<line x1="24" y1="53" x2="696" y2="53" stroke="#1C1C1A" stroke-width="0.75"/>
+<path d="M30 48 v5 M42 48 v5 M54 48 v5 M66 48 v5 M78 48 v5 M90 48 v5 M102 48 v5 M114 48 v5 M126 48 v5 M138 48 v5 M150 48 v5 M162 48 v5 M174 48 v5 M186 48 v5 M198 48 v5 M210 48 v5 M222 48 v5 M234 48 v5 M246 48 v5 M258 48 v5 M270 48 v5 M282 48 v5 M294 48 v5 M306 48 v5 M318 48 v5 M330 48 v5 M342 48 v5 M354 48 v5 M366 48 v5 M378 48 v5 M390 48 v5 M402 48 v5 M414 48 v5 M426 48 v5 M438 48 v5 M450 48 v5 M462 48 v5 M474 48 v5 M486 48 v5 M498 48 v5 M510 48 v5 M522 48 v5 M534 48 v5 M546 48 v5 M558 48 v5 M570 48 v5 M582 48 v5 M594 48 v5 M606 48 v5 M618 48 v5 M630 48 v5 M642 48 v5 M654 48 v5 M666 48 v5 M678 48 v5 M690 48 v5" stroke="#1C1C1A" stroke-width="0.75" fill="none"/>
+<text x="24" y="82" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="14.5" font-style="italic" fill="#1C1C1A">Each tier is a repository of its own, with its own curator and releases</text>
+<line x1="24" y1="90" x2="696" y2="90" stroke="#C4C2B8" stroke-width="1"/>
+<text x="24" y="148" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#6E6D66">TOP DOMAIN</text>
+<text x="24" y="234" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#6E6D66">TIER 1</text>
+<text x="24" y="320" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#6E6D66">TIER 2</text>
+<text x="24" y="422" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#6E6D66">TIER 3</text>
+<rect x="255" y="122" width="290" height="46" fill="#FFFFFF" stroke="#185FA5" stroke-width="1.25"/>
+<rect x="254.38" y="108" width="159.79" height="14.6" fill="#185FA5"/>
+<path d="M260.6 110 v10 M267.4 110 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="260.6" y="116.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="260.6" y="113.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="260.6" y="110.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="272.4" y="118.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">WHERE THIS BUILD STARTS</text>
+<text x="267" y="142" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="700" font-style="normal" fill="#1C1C1A">domains/federation</tspan></text>
+<text x="267" y="159" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="9.5" fill="#4A4944">https://w3id.org/&lt;org&gt;/federation/knowledge/</text>
+<rect x="104" y="208" width="290" height="46" fill="#FFFFFF" stroke="#185FA5" stroke-width="1.25"/>
+<rect x="103.38" y="194" width="60.9" height="14.6" fill="#185FA5"/>
+<path d="M109.6 196 v10 M116.4 196 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="109.6" y="202.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="109.6" y="199.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="109.6" y="196.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="121.4" y="204.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">DOMAIN</text>
+<text x="116" y="228" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="700" font-style="normal" fill="#1C1C1A">domains/domain1</tspan></text>
+<text x="116" y="245" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="9.5" fill="#4A4944">https://w3id.org/&lt;org&gt;/domain1/knowledge/</text>
+<rect x="406" y="208" width="290" height="46" fill="#FFFFFF" stroke="#185FA5" stroke-width="1.25"/>
+<rect x="405.38" y="194" width="60.9" height="14.6" fill="#185FA5"/>
+<path d="M411.6 196 v10 M418.4 196 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="411.6" y="202.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="411.6" y="199.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="411.6" y="196.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="423.4" y="204.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">DOMAIN</text>
+<text x="418" y="228" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="700" font-style="normal" fill="#1C1C1A">domains/domain2</tspan></text>
+<text x="418" y="245" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="9.5" fill="#4A4944">https://w3id.org/&lt;org&gt;/domain2/knowledge/</text>
+<rect x="104" y="294" width="290" height="46" fill="#FFFFFF" stroke="#185FA5" stroke-width="1.25"/>
+<rect x="103.38" y="280" width="60.9" height="14.6" fill="#185FA5"/>
+<path d="M109.6 282 v10 M116.4 282 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="109.6" y="288.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="109.6" y="285.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="109.6" y="282.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="121.4" y="290.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">DOMAIN</text>
+<text x="116" y="314" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="700" font-style="normal" fill="#1C1C1A">domains/domain3</tspan></text>
+<text x="116" y="331" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="9.5" fill="#4A4944">https://w3id.org/&lt;org&gt;/domain3/knowledge/</text>
+<rect x="406" y="294" width="290" height="46" fill="#FFFFFF" stroke="#185FA5" stroke-width="1.25"/>
+<rect x="405.38" y="280" width="60.9" height="14.6" fill="#185FA5"/>
+<path d="M411.6 282 v10 M418.4 282 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="411.6" y="288.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="411.6" y="285.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="411.6" y="282.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="423.4" y="290.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">DOMAIN</text>
+<text x="418" y="314" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="700" font-style="normal" fill="#1C1C1A">domains/domain4</tspan></text>
+<text x="418" y="331" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="9.5" fill="#4A4944">https://w3id.org/&lt;org&gt;/domain4/knowledge/</text>
+<path d="M400 168 L400 184 L304 184 L304 203" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M304 208 L300.4 200 L307.6 200 Z" fill="#6E6D66"/>
+<circle cx="400" cy="168" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M400 168 L400 184 L606 184 L606 203" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M606 208 L602.4 200 L609.6 200 Z" fill="#6E6D66"/>
+<path d="M304 254 L304 289" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M304 294 L300.4 286 L307.6 286 Z" fill="#6E6D66"/>
+<circle cx="304" cy="254" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M606 254 L606 289" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M606 294 L602.4 286 L609.6 286 Z" fill="#6E6D66"/>
+<circle cx="606" cy="254" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<rect x="112" y="380" width="180" height="62" fill="#FFFFFF" stroke="#3B6D11" stroke-width="1"/>
+<rect x="108" y="384" width="180" height="62" fill="#FFFFFF" stroke="#3B6D11" stroke-width="1"/>
+<rect x="104" y="388" width="180" height="62" fill="#FFFFFF" stroke="#3B6D11" stroke-width="1.25"/>
+<rect x="103.38" y="374" width="66.72" height="14.6" fill="#3B6D11"/>
+<path d="M109.6 376 v10 M116.4 376 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="109.6" y="382.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="121.4" y="384.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">BUNDLES</text>
+<text x="116" y="408" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="700" fill="#1C1C1A">Bundles</text>
+<text x="116" y="425" font-size="10.5" fill="#6E6D66">any number,</text>
+<text x="116" y="438" font-size="10.5" fill="#6E6D66">one repository each</text>
+<rect x="310" y="388" width="180" height="62" fill="#FFFFFF" stroke="#3B6D11" stroke-width="1.25"/>
+<rect x="309.38" y="374" width="107.44" height="14.6" fill="#3B6D11"/>
+<path d="M315.6 376 v10 M322.4 376 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="315.6" y="382.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="327.4" y="384.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">A SHARED MODEL</text>
+<text x="322" y="408" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="700" fill="#1C1C1A">A shared model</text>
+<text x="322" y="425" font-size="10.5" fill="#6E6D66">an upper ontology</text>
+<text x="322" y="438" font-size="10.5" fill="#6E6D66">such as gist</text>
+<rect x="524" y="380" width="180" height="62" fill="#FFFFFF" stroke="#3B6D11" stroke-width="1"/>
+<rect x="520" y="384" width="180" height="62" fill="#FFFFFF" stroke="#3B6D11" stroke-width="1"/>
+<rect x="516" y="388" width="180" height="62" fill="#FFFFFF" stroke="#3B6D11" stroke-width="1.25"/>
+<rect x="515.38" y="374" width="66.72" height="14.6" fill="#3B6D11"/>
+<path d="M521.6 376 v10 M528.4 376 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="521.6" y="382.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="533.4" y="384.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">BUNDLES</text>
+<text x="528" y="408" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="700" fill="#1C1C1A">Bundles</text>
+<text x="528" y="425" font-size="10.5" fill="#6E6D66">any number,</text>
+<text x="528" y="438" font-size="10.5" fill="#6E6D66">one repository each</text>
+<path d="M224 340 L224 383" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M224 388 L220.4 380 L227.6 380 Z" fill="#6E6D66"/>
+<circle cx="224" cy="340" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M646 340 L646 383" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M646 388 L642.4 380 L649.6 380 Z" fill="#6E6D66"/>
+<circle cx="646" cy="340" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M354 340 L435.63 385.56" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M440 388 L431.26 387.24 L434.77 380.96 Z" fill="#6E6D66"/>
+<circle cx="354" cy="340" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M436 340 L457.76 383.53" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M460 388 L453.2 382.45 L459.64 379.23 Z" fill="#6E6D66"/>
+<circle cx="436" cy="340" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<text x="400" y="468" text-anchor="middle" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="12" font-style="italic" fill="#4A4944">named by both, at one release:</text>
+<text x="400" y="482" text-anchor="middle" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="12" font-style="italic" fill="#4A4944">it joins the workspace once</text>
+<text x="24" y="512" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="14.5" font-style="italic" fill="#1C1C1A">Four rules keep a tree of domains sound</text>
+<line x1="24" y1="520" x2="696" y2="520" stroke="#C4C2B8" stroke-width="1"/>
+<circle cx="33" cy="536" r="8.5" fill="#FFFFFF" stroke="#1C1C1A" stroke-width="1"/>
+<text x="33" y="540" text-anchor="middle" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="11.5" font-weight="700" fill="#1C1C1A">1</text>
+<text x="50" y="540" font-size="11.5" fill="#4A4944"><tspan font-weight="700" fill="#1C1C1A">Every domain bounds a workspace of its own.</tspan> A build knows nothing of a domain above</text>
+<text x="50" y="555" font-size="11.5" fill="#4A4944">its top domain.</text>
+<circle cx="33" cy="576" r="8.5" fill="#FFFFFF" stroke="#1C1C1A" stroke-width="1"/>
+<text x="33" y="580" text-anchor="middle" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="11.5" font-weight="700" fill="#1C1C1A">2</text>
+<text x="50" y="580" font-size="11.5" fill="#4A4944"><tspan font-weight="700" fill="#1C1C1A">Confirming a domain confirms the delegation:</tspan> that the domain belongs and who</text>
+<text x="50" y="595" font-size="11.5" fill="#4A4944">answers for it, not what its members say.</text>
+<circle cx="33" cy="616" r="8.5" fill="#FFFFFF" stroke="#1C1C1A" stroke-width="1"/>
+<text x="33" y="620" text-anchor="middle" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="11.5" font-weight="700" fill="#1C1C1A">3</text>
+<text x="50" y="620" font-size="11.5" fill="#4A4944"><tspan font-weight="700" fill="#1C1C1A">The diamond rule.</tspan> Two domains may name the same bundle. At the same release it joins the</text>
+<text x="50" y="635" font-size="11.5" fill="#4A4944">workspace once. At different releases the build stops, until both owners pin one release.</text>
+<circle cx="33" cy="656" r="8.5" fill="#FFFFFF" stroke="#1C1C1A" stroke-width="1"/>
+<text x="33" y="660" text-anchor="middle" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="11.5" font-weight="700" fill="#1C1C1A">4</text>
+<text x="50" y="660" font-size="11.5" fill="#4A4944"><tspan font-weight="700" fill="#1C1C1A">The depth is the top domain's to set.</tspan> <tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#1C1C1A">max_depth</tspan> is how many tiers the build follows, 3 unless</text>
+<text x="50" y="675" font-size="11.5" fill="#4A4944">set. A domain at the last tier stops the build. A domain may not name itself or a domain above it.</text>
+<text x="24" y="702" font-size="10.5" fill="#6E6D66">Namespaces may not nest. Give a domain a namespace beside its members', never above them.</text>
+<line x1="24" y1="718" x2="696" y2="718" stroke="#C4C2B8" stroke-width="1"/>
+<rect x="24" y="725.5" width="18" height="13" fill="#3B6D11"/>
+<path d="M29.6 727 v10 M36.4 727 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="29.6" y="733.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="49" y="736" font-size="11.5" fill="#4A4944">an agent derives it</text>
+<rect x="191.54" y="725.5" width="18" height="13" fill="#185FA5"/>
+<path d="M197.14 727 v10 M203.94 727 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="197.14" y="733.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="197.14" y="730.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="197.14" y="727.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="216.54" y="736" font-size="11.5" fill="#4A4944">a named person vouches for it</text>
 </svg>

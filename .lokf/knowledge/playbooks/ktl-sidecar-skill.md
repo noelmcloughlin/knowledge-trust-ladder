@@ -52,7 +52,7 @@ sources:
     excerpt: each day at 04:10 UTC, so a release reaches this host within a day
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-18T00:02:42Z"
+    at: "2026-11-26T02:26:42Z"
   - by: human:noelmcloughlin
     at: "2026-11-13T14:52:01Z"
     revision: "38892f8d2d5af8495e2b17d503f1f6dba9fd45ba"

@@ -21,7 +21,7 @@ A file outside the bundle is often a source: a concept names it as its `resource
 grep -rnF 'resource: <path>' .lokf/knowledge
 ```
 
-A rewording changes no fact in the source, and it still costs those concepts something. Tell the person what, before you start:
+A rewording does not change a fact in the source, and it still costs those concepts something. Tell the person what, before you start:
 
 - **The file's revision moves.** From lokf 0.9.0 an event may carry the `revision` of the source it rested on. Each such event now names a state the file has left, so a person must open the source again to learn that nothing changed.
 - **An excerpt may no longer be found.** From lokf 0.9.0 a source may carry an `excerpt`: a passage copied from the file word for word. Reword that passage and the copy matches nothing.
@@ -41,7 +41,7 @@ A person may ask for a version of a file for younger readers, such as a README f
    ```
 
 3. **Point the original to it.** Add one sentence to the original that names the new file, once the person agrees. That sentence changes a file concepts may rest on, so say first what it costs, as [Before you reword a source](#before-you-reword-a-source) describes.
-4. **Check it.** Run the style check on the new file. Its opening sentence names its band, so the script holds it to that band's limits. Then run `prose-check.py --derived-from <original> <new file>`, and fix each finding. No script reads meaning, so read the new file against the original, sentence by sentence: each sentence must rest on one the original holds.
+4. **Check it.** Run the style check on the new file. Its opening sentence names its band, so the script holds it to that band's limits. Then run `prose-check.py --derived-from <original> <new file>`, and fix each finding. A script does not read meaning, so read the new file against the original, sentence by sentence: each sentence must rest on one the original holds.
 5. **Hand it off** with the band, both files, what the retelling left out and where each explanation came from. The person who reads the pull request checks that the meaning held.
 
 A new file costs the bundle nothing beyond that one sentence, because no concept rests on it yet. A file this page says you never touch is never retold either.
@@ -80,4 +80,4 @@ Never touch either of these:
 - a directive, or a line of a heredoc;
 - a command in a comment, or the name that opens a row of a table.
 
-Undo what it names. Both also read every line for a character no reader sees. No script says whether a comment still describes its code, so read each reworded comment beside the code under it.
+Undo what it names. Both also read every line for a character that no reader sees. A script does not say whether a comment still describes its code, so read each reworded comment beside the code under it.

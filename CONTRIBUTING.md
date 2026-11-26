@@ -6,7 +6,7 @@ Thanks for your interest in improving `knowledge-trust-ladder`.
 
 ## Development setup
 
-The skills need no build step: they are Markdown, YAML, shell and Python. Only `website/` builds (`bash website/scripts/build.sh`).
+The skills do not need a build step: they are Markdown, YAML, shell and Python. Only `website/` builds (`bash website/scripts/build.sh`).
 
 ```bash
 git clone https://github.com/noelmcloughlin/knowledge-trust-ladder.git

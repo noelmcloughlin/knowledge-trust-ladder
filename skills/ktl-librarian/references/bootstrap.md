@@ -1,6 +1,6 @@
 # Bootstrap discovery: the first run
 
-This page is for the **librarian** on its first run, or on any run that finds the bundle holding no concept beyond the sidecar's two examples. Every later run is a steady-state refresh, which starts from the work list instead (SKILL.md section 1).
+This page is for the **librarian** on its first run, or on any run that finds the bundle with no concept beyond the sidecar's two examples. Every later run is a steady-state refresh, which starts from the work list instead (SKILL.md section 1).
 
 Sweep the repository with generic heuristics and map what you find to LOKF classes:
 
@@ -17,7 +17,7 @@ Sweep the repository with generic heuristics and map what you find to LOKF class
 
 A host with `.lokf/ingest.yaml` has sources outside the repository too: the manifest is one more file the sweep reads, and each entry's folder under `.lokf/mirror/` yields concepts as a folder of documents does, cited as [ingest.md](ingest.md) says.
 
-Replace the sidecar's two example services: `delete` them through the pen once real concepts stand in their place. A concept you create carries no `human:` actor and starts as `status: draft`, as every concept the pen creates does.
+Replace the sidecar's two example services: `delete` them through the pen once real concepts stand in their place. A concept you create has no `human:` actor and starts as `status: draft`, as every concept the pen creates does.
 
 **Relate the concepts as you write them.** Give each concept the relations its source states, as [Rule 4](golden-rules.md#rule-4-typed-relationships) says, in the patch that creates it. Before the hand-off, run `bash .lokf/scripts/knowledge-report.sh isolated`, and read the source of each concept it names once more.
 

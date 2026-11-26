@@ -15,7 +15,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/references/linkml
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-18T00:02:42Z"
+    at: "2026-11-26T02:26:42Z"
 sources:
   - resource: https://pypi.org/project/lokf/
   - resource: https://github.com/nicholsn/lokf/blob/ee37659ca2f78915f5a691da7bad9239da624c87/src/lokf/cli.py

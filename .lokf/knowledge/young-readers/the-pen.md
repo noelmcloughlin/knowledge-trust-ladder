@@ -16,7 +16,7 @@ tags:
   - audience-13-18
 generated:
   by: process:ktl-librarian
-  at: "2026-11-18T08:53:06Z"
+  at: "2026-11-26T02:26:42Z"
 status: draft
 verified:
   - by: process:ktl-librarian
@@ -76,7 +76,13 @@ A patch may also carry `handoff`. These are up to ten lines for the person revie
 
 # Who else writes the bundle?
 
-The pen is the librarian's only way to write the bundle. A person writes the curator's verdicts another way, through ktl-curator or the KTL Curator plugin. The architecture page names the pen as the [[registrar]] for the librarian.
+The pen is the librarian's only way to write the bundle. Three others write it in other ways:
+
+- A person writes the curator's verdicts, through ktl-curator or the KTL Curator plugin.
+- ktl-prose rewords a concept that an agent wrote and no person confirmed.
+- The KTL Registrar plugin writes a block of related links into a concept, and the file `diataxis.md`.
+
+The docent does not write in the bundle. The architecture page names the pen as the [[registrar]] for the librarian.
 
 ## Open questions
 

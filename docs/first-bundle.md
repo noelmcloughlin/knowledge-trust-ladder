@@ -1,6 +1,6 @@
 # Your first bundle
 
-This page is for anyone who has not yet run Knowledge Trust Ladder (KTL). It takes one repository from no bundle to a first confirmed concept and a first answer.
+This page is for anyone who has not yet run Knowledge Trust Ladder (KTL). It takes one repository without a bundle to a first confirmed concept and a first answer.
 
 You need a git repository, an agent that runs Agent Skills, such as Claude Code or GitHub Copilot, and [`uv`](https://docs.astral.sh/uv/). [A captured run](examples/first-bundle.md) shows what each step printed on a small repository.
 

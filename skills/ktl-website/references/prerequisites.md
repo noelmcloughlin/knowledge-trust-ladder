@@ -26,4 +26,4 @@ When a person cannot act on a `missing` or `warn` line, write them a short reque
 | `lint` | Which Markdown lint configurations the repository has, for Step 2 to exclude the generated folders from. | Nothing; a lint run over the generated folders fails until they are excluded. | the maintainer | "Please exclude `website/(dist\|generated\|resources\|\.venv)/` from the Markdown lint and link checks." |
 | `session` | Whether a person is present or the run is automated. | Unattended: the placeholders need a person's values, so the skill stops after the screen. | nobody | Nothing. |
 
-The preflight changes nothing and is safe to run again. An `ok` line needs no action. The skills repository's contract checks that every line it can print as missing or a warning has a row here.
+The preflight changes nothing and is safe to run again. An `ok` line does not need action. The skills repository's contract checks that every line it can print as missing or a warning has a row here.

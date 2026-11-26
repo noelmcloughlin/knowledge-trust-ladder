@@ -10,7 +10,7 @@ generated:
   at: "2026-11-19T21:15:57Z"
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-19T00:10:04Z"
+    at: "2026-11-26T02:26:42Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:15:05Z"
   - by: human:noelmcloughlin

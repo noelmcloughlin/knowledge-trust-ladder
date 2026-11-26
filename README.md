@@ -26,7 +26,7 @@ Install the skills:
 gh skill install noelmcloughlin/knowledge-trust-ladder --all --scope user
 ```
 
-Or install [`ktl`](https://pypi.org/project/ktl/) from PyPI via `uv/pipx`. Default is GitHub Copilot, unless `--agent` is passed:
+Or install [`ktl`](https://pypi.org/project/ktl/) from PyPI via `uv/pipx`, or with pip inside a virtual environment. Default is GitHub Copilot, unless `--agent` is passed:
 
 ```bash
 uvx ktl skills install --scope user
@@ -34,10 +34,10 @@ uvx ktl skills install --scope user
 
 Then open your agent in a repository and say, in turn:
 
-1. "ktl-sidecar, Add a LOKF knowledge bundle to this repository."
-2. "ktl-librarian, Fill the knowledge bundle from this repository."
-3. "ktl-curator, What in the bundle needs my confirmation?"
-4. "ktl-docent, I have questions about the project."
+1. "Add a LOKF knowledge bundle to this repository."
+2. "Fill the knowledge bundle from this repository."
+3. "What in the bundle needs my confirmation?"
+4. "I have questions about the project."
 
 [Your first bundle](https://w3id.org/ktl/docs/first-bundle/) guides you. On GitHub, `uvx ktl gh plan` lists the settings your bundle's workflows need, and `uvx ktl gh apply` sets them. [The install page](https://w3id.org/ktl/docs/install/#quick-start) shows other ways to install, and names the agents.
 

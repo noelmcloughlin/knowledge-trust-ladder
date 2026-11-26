@@ -24,7 +24,7 @@ relatedTo:
   - https://w3id.org/ktl/knowledge/explanation/context-layer
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-19T00:10:04Z"
+    at: "2026-11-26T02:26:42Z"
 references:
   - https://w3id.org/ktl/knowledge/explanation/young-readers
 ---

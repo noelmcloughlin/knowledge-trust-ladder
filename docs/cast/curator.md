@@ -35,7 +35,7 @@ The skill prints a one-screen report first: the health line, what is worth ten m
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../../.assets/ktl-review-session-dark.svg">
-    <img src="../../.assets/ktl-review-session.svg" alt="The curator's review session: one concept, one verb, one person's answer, written into the concept's own frontmatter" width="720" />
+    <img src="../../.assets/ktl-review-session.svg" alt="The curator's review session: the report's queue, then one concept at a time with its source before its claim, and one verb as that person's answer; a session writes one Curation line in log.md" width="720" />
   </picture>
 </p>
 

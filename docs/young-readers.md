@@ -35,17 +35,17 @@ A retelling names the adult concept as its source. So when the adult concept cha
 - **For every confirmed concept, on a schedule**: set `Younger readers: 8-12` in the curation policy, with `ktl-curator`.
 - **For one answer**: tell the docent who the answer is for, as in "Explain this for my class of ten-year-olds."
 
-Name the band in the request. When a request names no age, grade or school year, the skill asks which band is meant.
+Name the band in the request. When a request does not name an age, a grade or a school year, the skill asks which band is meant.
 
 ## What KTL never does
 
 - **It never guesses an age.** The skills never infer a reader's age from how they write, and never ask a reader's own age. The person who asks names the band.
-- **It never records a reader.** No file holds a reader's name, age or words. A host that reads a retelling with young readers records only a count in a band, such as "read with two readers in the band for 8 to 12".
+- **It never records a reader.** Files do not hold a reader's name, age or words. A host that reads a retelling with young readers records only a count in a band, such as "read with two readers in the band for 8 to 12".
 - **It never asks for consent on a host's behalf.** Consent from the readers, and from their parents or carers, stays with the host.
 
 ## What exists today
 
-This repository has tried retellings on its own pages only. [The architecture page for readers aged 13 to 18](architecture.en-simple.md) is one, and the bundle holds one retold concept, the pen. [Captured runs](examples/prose.md) show both being written and checked. We know of no school or youth group that has built a bundle this way.
+This repository has tried retellings on its own pages only. [The architecture page for readers aged 13 to 18](architecture.en-simple.md) is one, and the bundle holds one retold concept, the pen. [Captured runs](examples/prose.md) show both being written and checked. We do not know of a school or youth group that has built a bundle this way.
 
 ## The other end of the range
 

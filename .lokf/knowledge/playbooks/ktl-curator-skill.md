@@ -30,7 +30,7 @@ sources:
   - resource: skills/ktl-curator/references/queries.md
 verified:
   - by: process:ktl-librarian
-    at: "2026-11-19T00:10:04Z"
+    at: "2026-11-26T02:26:42Z"
   - by: human:noelmcloughlin
     at: "2026-10-13T01:13:17Z"
   - by: human:noelmcloughlin

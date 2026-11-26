@@ -6,14 +6,14 @@ This page is for whoever writes `.lokf/ingest.yaml`, or reads what a run recorde
 
 - **Confluence pages**, chosen by label, space, page, page tree or CQL query, on Cloud or Data Center.
 - **Pages and documents at an address**: HTML, Markdown, plain text and PDF. Most PDFs work, meaning any whose text can be selected and copied in a viewer. A scan of paper holds pictures of pages and no text, and is refused.
-- **Files in another git repository**, a folder at a branch, tag or commit. A GitHub or GitLab wiki is such a repository. A run downloads the file list, then only the files that changed. Every such entry needs git 2.31 or later. Git follows no redirect with a credential, or where the manifest refuses private addresses. Where the manifest refuses private addresses, an entry that names a host, not an IP address, needs git 2.37 or later, unless a proxy resolves its name. So name a moved repository by its new address, and a host outside ASCII by its `xn--` form. Name the address git fetches, too: one that git's own configuration rewrites, by `url.<base>.insteadOf`, is refused.
+- **Files in another git repository**, a folder at a branch, tag or commit. A GitHub or GitLab wiki is such a repository. A run downloads the file list, then only the files that changed. Every such entry needs git 2.31 or later. Git does not follow a redirect with a credential, or where the manifest refuses private addresses. Where the manifest refuses private addresses, an entry that names a host, not an IP address, needs git 2.37 or later, unless a proxy resolves its name. So name a moved repository by its new address, and a host outside ASCII by its `xn--` form. Name the address git fetches, too: one that git's own configuration rewrites, by `url.<base>.insteadOf`, is refused.
 - **The output of a command** this repository holds: a client for a service the ingest has no fetcher for, a schema dump, an export.
 
 There is no fetcher for Jira, since issues are unsuitable as knowledge sources. Attachments and images are not fetched, and a link to one keeps its origin address. A source that is not text, such as a database, is mirrored only through a command that prints it.
 
 ## The manifest
 
-The manifest, `.lokf/ingest.yaml`, lists what to mirror: for each entry a place, a selector, who answers for the source and why this repository mirrors it. It holds no token. An `auth` block names environment variables.
+The manifest, `.lokf/ingest.yaml`, lists what to mirror: for each entry a place, a selector, who answers for the source and why this repository mirrors it. It does not hold a token. An `auth` block names environment variables.
 
 ```yaml
 ingest_version: "1"
@@ -87,7 +87,7 @@ A command is code the repository runs in a job that holds secrets, so commit one
 
 The mirror, `.lokf/mirror/<entry id>/`, holds one Markdown file per page or document. Each opens with a header: origin, title, version, digest of the bytes fetched, retrieval time and converter. A file is named by the item's stable identity, a page id or a path, never its title, so a retitled page is the same file. The workflow publishes a name of letters, digits and `._/@+-` only, so a file named otherwise is spelled with those characters, with a digest of its name added: `Release Notes.md` becomes `Release-Notes-2040e8c7.md`, and its header keeps the name. Links are made absolute against the address the page was served from: after a redirect the header names that address, without its query, as `redirected_to`. A redirect from https to http is refused, whatever `allow_private_addresses` says: a manifest names the http address itself where plain http is meant. A PDF carries a comment before each page so a concept can cite the page.
 
-The mirror is tracked, and stays so: the work list, the gate and coverage all read it as repository content, and the scheduled librarian holds no secret with which to fetch. Never clear it before a run. Refresh it instead, since a run fetches only what moved and restores any file missing from the disk. `git checkout -- .lokf/mirror` brings back committed files without a fetch.
+The mirror is tracked, and stays so: the work list, the gate and coverage all read it as repository content, and the scheduled librarian has no secret with which to fetch. Never clear it before a run. Refresh it instead, since a run fetches only what moved and restores any file missing from the disk. `git checkout -- .lokf/mirror` brings back committed files without a fetch.
 
 ## The lock
 
@@ -106,7 +106,7 @@ Each item's record keeps `mirror_sha256`, the digest of its file as written. A f
 
 ## Sensitivity
 
-A committed mirror is published as far as the repository is, so the script refuses what the repository's visibility does not allow. `public` may be committed anywhere. `internal`, the default, may be committed to a private repository only. `confidential` is never committed: the copy goes to the ignored `.lokf/.cache/mirror/`, a concept names the origin as its `resource`, the work list cannot compare it, and a scheduled librarian reads text no person reviewed.
+A committed mirror is published as far as the repository is, so the script refuses what the repository's visibility does not allow. `public` may be committed anywhere. `internal`, the default, may be committed to a private repository only. `confidential` is never committed: the copy goes to the ignored `.lokf/.cache/mirror/`, a concept names the origin as its `resource`, the work list cannot compare it, and a scheduled librarian reads text that no person reviewed.
 
 A confidential entry's records go to `.lokf/.cache/ingest.lock.yaml`, beside its copies. The committed lock says only how the entry's last run went, so no page's title, address or author is committed. The summary counts the entry's items and names none. With `lock_details: true`, the committed lock records the entry's items, as it does for any other entry. The script refuses a `confidential` entry when git does not ignore the cache or tracks a file in it. When an entry's sensitivity or `lock_details` changes, its next run moves its records and removes its files from the old folder, then fetches them into the new one.
 

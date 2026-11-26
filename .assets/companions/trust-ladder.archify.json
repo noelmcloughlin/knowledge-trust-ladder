@@ -7,60 +7,198 @@
     "quality_profile": "showcase",
     "locale": "en",
     "translations": {
-      "diagram.description.lifecycle": "Three rungs a concept climbs, left to right: still a draft, which the librarian wrote and nobody has checked; checked by automation, once a refresh records a process: event; confirmed by a person, once a named person records a human: event. An edit after the confirmation drops the rung until a person confirms again. A question reopens the concept, and the rung stays."
+      "diagram.description.lifecycle": "Three rungs, left to right: nobody has checked this yet; checked by automation only; confirmed by a person, once a person's confirmation appends a human: event. A person can confirm from either lower rung. An edit after the confirmation drops the rung until a person confirms again. A question reopens the concept, and the rung stays."
     },
     "repository": {
       "url": "https://github.com/noelmcloughlin/knowledge-trust-ladder.git",
       "provider": "github",
       "link_mode": "web",
-      "revision": "f488b192183e2261cac6a92c2c36edd228ce2d3a"
+      "revision": "2df7b5d1a6ca43c340ea4d7efc0a94af2bdcb06a"
     },
     "legend": {
       "entries": {
-        "start": { "label": "the librarian wrote it" },
-        "waiting": { "label": "waits for a person" },
-        "success": { "label": "a named person vouches for it" }
+        "start": {
+          "label": "nobody has checked it"
+        },
+        "waiting": {
+          "label": "checked by automation, or waits for a person"
+        },
+        "success": {
+          "label": "a named person vouches for it"
+        }
       }
     }
   },
-  "mainPath": ["draft", "automation", "confirmed"],
+  "mainPath": [
+    "unchecked",
+    "automation",
+    "confirmed"
+  ],
   "states": [
-    { "id": "draft", "type": "start", "label": "Still a draft", "sublabel": "the librarian wrote it", "tag": "nobody has checked", "step": "1",
+    {
+      "id": "unchecked",
+      "type": "start",
+      "label": "Nobody has checked this yet",
+      "sublabel": "verified has no event",
+      "tag": "unverified",
+      "step": "1",
       "sources": [
-        { "path": "skills/ktl-librarian/SKILL.md", "line": 91, "label": "the pen marks a new concept a draft" },
-        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-report.sh", "line": 34, "end_line": 35, "label": "nobody has checked; still a draft" }
-      ] },
-    { "id": "automation", "type": "waiting", "label": "Checked by automation", "sublabel": "verified: process:<id>", "tag": "only", "step": "2",
+        {
+          "path": "SPEC.md",
+          "line": 55,
+          "label": "the first rung"
+        },
+        {
+          "path": "SPEC.md",
+          "line": 322,
+          "label": "the label's rule"
+        }
+      ]
+    },
+    {
+      "id": "automation",
+      "type": "waiting",
+      "label": "Checked by automation only",
+      "sublabel": "none by a human: actor",
+      "tag": "machine-confirmed",
+      "step": "2",
       "sources": [
-        { "path": "skills/ktl-librarian/SKILL.md", "line": 48, "label": "a refresh records the pen's recheck" },
-        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-report.sh", "line": 33, "label": "checked by automation only" }
-      ] },
-    { "id": "confirmed", "type": "success", "label": "Confirmed by a person", "sublabel": "verified: human:<id>", "step": "3",
+        {
+          "path": "SPEC.md",
+          "line": 56,
+          "label": "the second rung"
+        },
+        {
+          "path": "SPEC.md",
+          "line": 61,
+          "label": "a check appends or replaces its own event"
+        }
+      ]
+    },
+    {
+      "id": "confirmed",
+      "type": "success",
+      "label": "Confirmed by a person",
+      "sublabel": "an event by a human: actor",
+      "tag": "human-reviewed",
+      "step": "3",
       "sources": [
-        { "path": "skills/ktl-curator/SKILL.md", "line": 87, "label": "Confirm adds a verified event" },
-        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-report.sh", "line": 28, "label": "an event whose actor starts human:" }
-      ] },
-    { "id": "edited", "type": "waiting", "label": "Edited since confirmed", "sublabel": "drops the rung",
+        {
+          "path": "SPEC.md",
+          "line": 57,
+          "label": "the top rung"
+        },
+        {
+          "path": "SPEC.md",
+          "line": 166,
+          "label": "Confirm appends a human: event"
+        }
+      ]
+    },
+    {
+      "id": "edited",
+      "type": "waiting",
+      "label": "Edited since confirmed",
+      "sublabel": "until a person confirms again",
       "sources": [
-        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-report.sh", "line": 29, "end_line": 32, "label": "generated.at after the confirmation" },
-        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-report.sh", "line": 565, "end_line": 568, "label": "an edit outranks the confirmation" }
-      ] },
-    { "id": "reopened", "type": "waiting", "label": "Reopened", "sublabel": "the rung stays", "tag": "a question waits",
+        {
+          "path": "SPEC.md",
+          "line": 63,
+          "label": "an edit drops the rung"
+        },
+        {
+          "path": "SPEC.md",
+          "line": 326,
+          "label": "the label's rule"
+        }
+      ]
+    },
+    {
+      "id": "reopened",
+      "type": "waiting",
+      "label": "Reopened",
+      "sublabel": "the rung stays",
+      "tag": "a question waits",
       "sources": [
-        { "path": "skills/ktl-sidecar/templates/scripts/knowledge-report.sh", "line": 36, "end_line": 40, "label": "a draft a person has confirmed" },
-        { "path": "docs/architecture.md", "line": 87, "label": "a question never drops the rung" }
-      ] }
+        {
+          "path": "SPEC.md",
+          "line": 324,
+          "label": "a draft a person has confirmed"
+        },
+        {
+          "path": "SPEC.md",
+          "line": 65,
+          "label": "a flag does not change the rung"
+        }
+      ]
+    }
   ],
   "transitions": [
-    { "id": "draft-automation", "from": "draft", "to": "automation", "label": "refresh" },
-    { "id": "automation-confirmed", "from": "automation", "to": "confirmed", "label": "person" },
-    { "id": "confirmed-edited", "from": "confirmed", "to": "edited", "label": "edited after it", "variant": "dashed" },
-    { "id": "edited-confirmed", "from": "edited", "to": "confirmed", "label": "confirmed again" },
-    { "id": "confirmed-reopened", "from": "confirmed", "to": "reopened", "label": "a question", "variant": "dashed" },
-    { "id": "reopened-confirmed", "from": "reopened", "to": "confirmed", "label": "answered" }
+    {
+      "id": "unchecked-automation",
+      "from": "unchecked",
+      "to": "automation",
+      "label": "a check by automation"
+    },
+    {
+      "id": "automation-confirmed",
+      "from": "automation",
+      "to": "confirmed",
+      "label": "a person confirms"
+    },
+    {
+      "id": "unchecked-confirmed",
+      "from": "unchecked",
+      "to": "confirmed",
+      "label": "a person confirms",
+      "variant": "dashed"
+    },
+    {
+      "id": "confirmed-edited",
+      "from": "confirmed",
+      "to": "edited",
+      "label": "an edit after it",
+      "variant": "dashed"
+    },
+    {
+      "id": "edited-confirmed",
+      "from": "edited",
+      "to": "confirmed",
+      "label": "confirmed again"
+    },
+    {
+      "id": "confirmed-reopened",
+      "from": "confirmed",
+      "to": "reopened",
+      "label": "a question",
+      "variant": "dashed"
+    },
+    {
+      "id": "reopened-confirmed",
+      "from": "reopened",
+      "to": "confirmed",
+      "label": "confirmed again"
+    }
   ],
   "cards": [
-    { "dot": "slate", "title": "Also shown", "items": ["past its review date", "a reader disputed this", "retired, or retired, replaced by its successor", "how many other concepts rely on it"] },
-    { "dot": "cyan", "title": "The number to watch", "items": ["Confirmed by a person: n of N", "computed from the frontmatter on every read, never stored, so it cannot drift", "meant to rise slowly, a few concepts a sitting"] }
+    {
+      "dot": "slate",
+      "title": "Four rules move a concept",
+      "items": [
+        "An event raises it",
+        "An edit drops it",
+        "Everything else flags it: a label, and the rung stays",
+        "A retirement takes it off: retired, replaced by its successor"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "The number to watch",
+      "items": [
+        "Confirmed by a person: n of N",
+        "computed on every read, and never stored",
+        "meant to rise slowly, a handful of concepts in a sitting"
+      ]
+    }
   ]
 }

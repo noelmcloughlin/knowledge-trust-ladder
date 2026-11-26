@@ -31,7 +31,7 @@ A **knowledge bundle** is the catalogue: a plain folder of Markdown concept file
 
 A bundle is prose a person reads, structure a schema checks, meaning a graph can query, and context the next task can start from. It is written in **[LOKF](https://pypi.org/project/lokf/)** (Linked Open Knowledge Format), [a semantic profile of OKF](https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md) whose [specification](https://lokf.nolan-nichols.com/specification/) is [a single LinkML schema](https://github.com/nicholsn/lokf/blob/v0.9.0/lokf.yaml). People, agents and any tool that speaks OKF, JSON Schema, JSON-LD, SHACL or [another supported format](https://linkml.io/linkml/generators/index.html) can read it.
 
-**KTL is an OKF runtime.** OKF sets out to "standardize the small set of frontmatter fields that make an agent-maintained corpus **trustable**, without prescribing any runtime". In KTL those fields are the rungs a claim climbs and the gate that refuses a `human:` confirmation no person can be tied to. LOKF supplies "a fixed taxonomy of concept types", which OKF leaves to the producer. A domain whose concepts stop fitting it [extends the vocabulary](../skills/ktl-curator/references/domain-vocabularies.md), so its own types are checked rather than tolerated. Whoever uses a claim as context, person or agent, also reads how far it has been checked, whether from one bundle or from [many federated into one layer](context-layer.md#many-bundles-federated-into-one-context-layer-the-design).
+**KTL is an OKF runtime.** OKF sets out to "standardize the small set of frontmatter fields that make an agent-maintained corpus **trustable**, without prescribing any runtime". In KTL those fields are the rungs a claim climbs and the gate that refuses a `human:` confirmation that no person can be tied to. LOKF supplies "a fixed taxonomy of concept types", which OKF leaves to the producer. A domain whose concepts stop fitting it [extends the vocabulary](../skills/ktl-curator/references/domain-vocabularies.md), so its own types are checked rather than tolerated. Whoever uses a claim as context, person or agent, also reads how far it has been checked, whether from one bundle or from [many federated into one layer](context-layer.md#many-bundles-federated-into-one-context-layer-the-design).
 
 ## Four skills, three lines of the poem
 
@@ -46,7 +46,7 @@ Each line of the poem is one role's work, and each role has a page of its own.
 
 The **sidecar** installs `.lokf/`, a dot-folder beside the code like `.git/`, kept out of the project's build. The **librarian** records *facts about the repository*, never verdicts about truth. The **curator** records *judgements a person made*, never facts it derived. The **docent** is read-only on the bundle.
 
-**Curator** is the museum sense, the one who authenticates, weighs provenance and decides what goes on exhibit. It is not the data-management sense, which is the **librarian**'s job. The curator is always a person, and the skill and the plugin that carry the name reach no verdict of their own.
+**Curator** is the museum sense, the one who authenticates, weighs provenance and decides what goes on exhibit. It is not the data-management sense, which is the **librarian**'s job. The curator is always a person, and the skill and the plugin that carry the name do not reach a verdict of their own.
 
 On a fresh repository they run in order: **sidecar**, then **librarian** filling the bundle with drafts, then **curator**, where a person turns drafts into confirmed knowledge. After that it is a loop: the **librarian** refreshes on a schedule, readers report what the bundle missed, and the **curator** reviews what is new or changed.
 
@@ -59,11 +59,11 @@ The **registrar** keeps the records in order: each accession (an item added to t
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../.assets/ktl-architecture-dark.svg">
-    <img src="../.assets/ktl-architecture.svg" alt="Who writes the bundle and what checks it: the librarian writes only patch.yaml, which the pen, knowledge-apply.sh, applies to the bundle; the curator writes a verified event in that person's name through ktl-curator or the plugin; the docent writes nothing there, and knowledge-feedback.sh records a reader's miss. Below, the registrar's gate checks each pull request, and knowledge-report.sh computes every trust label on each read" width="720" />
+    <img src="../.assets/ktl-architecture.svg" alt="Who writes the bundle and what checks it. Every write goes one of four ways: the librarian writes only patch.yaml, which the pen, knowledge-apply.sh, applies to the bundle; the curator writes a verdict to the concept directly; ktl-prose rewords what an agent wrote; and the KTL Registrar plugin writes a related block and diataxis.md. The docent does not write in the bundle, and knowledge-feedback.sh records a reader's entry in feedback.md, beside it. Below, the gate checks each pull request that touches the bundle, and knowledge-report.sh computes every trust label on each read" width="720" />
   </picture>
 </p>
 
-***As a flow diagram, drawn with Archify: [light](../.assets/companions/ktl-architecture.svg), [dark](../.assets/companions/ktl-architecture-dark.svg).***
+*As a flow diagram, drawn with Archify: [light](../.assets/companions/ktl-architecture.svg), [dark](../.assets/companions/ktl-architecture-dark.svg).*
 
 In [Obsidian](https://obsidian.md/) there is no CI, so two optional plugins work inside the editor. [KTL Registrar](https://w3id.org/ktl/registrar/) does the registrar's work, checking each record as it is typed. [KTL Curator](https://w3id.org/ktl/curator/) is the curator's assistant, and runs this repository's `ktl-curator` review session without an agent ([The bundle in Obsidian](obsidian.md)).
 
@@ -82,18 +82,18 @@ In the **three lines of defence** that regulated industries use, the librarian a
 The **curator** reports each concept's trust record in plain words:
 
 - **Confirmed by a person**: a named person checked it against its source.
-- **Checked by automation only**: automation re-checked that the source still matches, and no person has.
+- **Checked by automation only**: automation re-checked that the source still matches, but a person has not.
 - **Nobody has checked this yet**: no check of any kind is recorded.
 - **Still a draft**, **reopened**, **edited since a person last confirmed it**, **past its review date**, **a reader disputed this**, **retired** or **retired, replaced by** its successor; and, for prioritising, how many other concepts rely on each one. A question asked after a confirmation reopens a concept and flags what waits. It never drops the rung. Only an edit after the confirmation does that.
 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../.assets/trust-ladder-dark.svg">
-    <img src="../.assets/trust-ladder.svg" alt="The trust ladder: still a draft, checked by automation, confirmed by a person. It shows what drops a concept a rung, and what only flags it" width="720" />
+    <img src="../.assets/trust-ladder.svg" alt="The trust ladder, drawn as a ladder of three rungs: nobody has checked this yet, checked by automation only, confirmed by a person. An event raises a concept, an edit drops it, everything else flags it, and a retirement takes it off. The labels that flag a concept are listed below the ladder" width="720" />
   </picture>
 </p>
 
-***As a flow diagram, drawn with Archify: [light](../.assets/companions/trust-ladder.svg), [dark](../.assets/companions/trust-ladder-dark.svg).***
+*As a flow diagram, drawn with Archify: [light](../.assets/companions/trust-ladder.svg), [dark](../.assets/companions/trust-ladder-dark.svg).*
 
 The labels are computed from the frontmatter on every read, never stored, so they always agree with what they describe. [The specification](../SPEC.md#8-trust-labels) gives the rule behind each label, and [the ladder](../SPEC.md#3-the-ladder) the four rules that move a concept on it. Each is a signal for the reader to weigh, never a score. The number to watch is **confirmed by a person: n of N**. It is meant to rise slowly, a handful of concepts in a sitting.
 
@@ -101,7 +101,7 @@ The labels are computed from the frontmatter on every read, never stored, so the
 
 | | |
 | --- | --- |
-| A first run, from no bundle to a confirmed concept and an answer | [first-bundle.md](first-bundle.md) |
+| A first run, from a repository without a bundle to a confirmed concept and an answer | [first-bundle.md](first-bundle.md) |
 | How to install the six skills, which ones to start with, and how to pin them to one release | [install.md](install.md) |
 | What each role does, how to ask it, and what checks it | [sidecar](cast/sidecar.md), [librarian](cast/librarian.md), [registrar](cast/registrar.md), [curator](cast/curator.md), [docent](cast/docent.md), [`ktl-prose`](cast/prose.md), [`ktl-website`](cast/website.md) |
 | The context layer: what it is, how one bundle already is one, and why bundles federate through domains | [context-layer.md](context-layer.md), and [what it integrates with](context-layer-technology.md) |
@@ -125,7 +125,7 @@ The labels are computed from the frontmatter on every read, never stored, so the
 - [Google Cloud](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing), creator of the Open Knowledge Format (OKF) specification that LOKF profiles.
 - [Andrej Karpathy's LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f), a pattern for building personal knowledge bases with LLMs.
 - [WikiSkill](https://arxiv.org/abs/2608.27454) by Tang et al. (Google Research, 2026) and [SkillWiki](https://arxiv.org/abs/2606.16523) by Huang et al. (2026), two papers whose reading changed how the skills learn from readers and verdicts.
-- [Archify](https://github.com/tt-a1i/archify) by tt-a1i, under the MIT License, which draws the flow diagrams in `.assets/companions/`. They embed the JetBrains Mono font, under the SIL Open Font License.
+- [Archify](https://github.com/tt-a1i/archify) by tt-a1i, under the Apache License 2.0, which draws the flow diagrams in `.assets/companions/`. They embed the JetBrains Mono font, under the SIL Open Font License.
 
 This is an independent project. It is not affiliated with, endorsed by, or an
 official distribution of LOKF or of the Open Knowledge Format. "LOKF" and

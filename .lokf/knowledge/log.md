@@ -1,5 +1,14 @@
 # Change Log
 
+## 2026-11-26
+
+* **Changed**: ktl-prose skill gives rule 5 as "Do not use a dash as punctuation", and says that rule 11 now puts a negative on its verb, which the check script reports, as `CHANGELOG.md` says under Unreleased.
+* **Changed**: The pen names all three of the bundle's other writers, the curator, ktl-prose and the KTL Registrar plugin, as `docs/how-it-works.md` does since d0a1e8a.
+* **Changed**: The pen, for readers aged 13 to 18, names the same three other writers as the glossary page it retells.
+* **Changed**: Why a distribution repository cites `src/ktl/README.md` for the package's Python floor, which `docs/install.md` no longer states, and adds pipx and pip in a virtual environment, as `docs/install.md` does since d0a1e8a.
+* **Resolved**: `docs/three-lines.md` now says the gate checks the SHACL shapes where `uv.lock` holds the shacl extra, as `skills/ktl-sidecar/references/gate.md` does, since d0a1e8a.
+* **Changed**: Trust ladder now describes the architecture page's redrawn figure, which names the three rungs and the four rules that move a concept on them.
+
 ## 2026-11-23
 
 * **Changed**: a sibling's sync pull request now moves within a day, as `CONTRIBUTING.md` has said since 0.70.1.

@@ -19,7 +19,7 @@ KTL was not built to it, but each of its roles fits. Every control named on this
   </picture>
 </p>
 
-The **docent** sits outside the lines, where the reader does, and reports what it could not answer to the librarian, as untrusted input. The **sidecar** installs the tools and the gate. `ktl-prose`, an optional helper, sits on the maker's side of the first line: it rewords what the librarian wrote before a person confirms it. A copy editor is not the author, so it writes no `generated` record, and `log.md` and git record the pass.
+The **docent** sits outside the lines, where the reader does, and reports what it could not answer to the librarian, as untrusted input. The **sidecar** installs the tools and the gate. `ktl-prose`, an optional helper, sits on the maker's side of the first line: it rewords what the librarian wrote before a person confirms it. A copy editor is not the author, so it does not write a `generated` record, and `log.md` and git record the pass.
 
 Above the lines sits a governing body: for a bundle, the owners of the repository that holds it. Their two instruments are the organisation's rules for AI-assisted work (this project's are its [AI covenant](../AI_COVENANT.md)) and the curation policy. The policy is a concept in the bundle that says who curates and how often each kind of concept is re-confirmed, and it is reviewed like any other concept. The [four levels of checking](how-it-works.md#four-levels-of-checking) are these same checks ordered by when they happen.
 
@@ -39,14 +39,14 @@ Every trust label is computed from the frontmatter on each read and never stored
 | Who produced the current text, and when? | `generated.by`, `generated.at` |
 | Who confirmed it, and when? | `verified[].by`, `verified[].at` |
 | Which state of the source was the check made against? | `verified[].revision` and `generated.revision`: the commit hash of a file, which the gate resolves against the tree; a `sha256:` digest of a file its own branch changed, which `knowledge-report.sh` compares with the file; or an ETag or digest for a URL, which nothing checks. Absent means unrecorded, never unchanged. With or without it, `knowledge-report.sh` lists each confirmed concept whose source has a commit after the one that recorded the confirmation |
-| Which words of the source does a claim rest on? | `sources[].excerpt`, joined to the claim by a footnote. The gate finds each one in its file on every change, and fetches no URL |
+| Which words of the source does a claim rest on? | `sources[].excerpt`, joined to the claim by a footnote. The gate finds each one in its file on every change, and does not fetch a URL |
 | Is the confirmed text the text they saw? | the `validate` job's log: conventions rule 13 fails a change to a confirmed concept's content that leaves `generated` older than the confirmation, so an edited concept reads *edited since* and never as confirmed |
 | Was that really them? | the `provenance` job's log on the pull request: the forge's verdict on the approval or the signature, not the runner's. Locally, the curator skill's *Not tied to a signed commit* count |
 | When must it be looked at again, and by what rule? | `stale_after`, proposed from `policies/knowledge-curation.md` |
 | Has a person's record been removed? | the `provenance` job's log: a confirmation struck out, or gone with its concept, needs that person's approval or signature as an added one does. On the scheduled librarian's pull request, `knowledge-provenance.sh --unattended` in the job that holds the write token |
 | What changed, and why? | `log.md`, and git |
 | Did a second person re-check it? | the `check` column of `knowledge-report.sh evidence`: `second-person` marks a `human:` event by anyone but the first person to confirm |
-| Is the checker independent of the checked? | the JSON Schema is generated from the upstream `lokf.yaml`, not written by the bundle's authors; the toolkit also generates SHACL shapes, which no KTL check runs yet; the bundle projects to RDF and answers [SPARQL](../skills/ktl-curator/references/queries.md) |
+| Is the checker independent of the checked? | the JSON Schema is generated from the upstream `lokf.yaml`, not written by the bundle's authors; the gate also checks the projected graph against the SHACL shapes the toolkit generates from the same file, where `uv.lock` holds lokf's `shacl` extra; the bundle projects to RDF and answers [SPARQL](../skills/ktl-curator/references/queries.md) |
 
 `knowledge-report.sh evidence` prints every `generated` record and `verified` event as one tab-separated table. `knowledge-release.yaml` attaches that table beside the bundle's zip as `evidence-<tag>-<name>.tsv`, with a checksum and a signed build provenance.
 
@@ -127,7 +127,7 @@ The model's critics are the UK Parliamentary Commission on Banking Standards (th
 
 **The criticism.** Text generation produces content "unfaithful to the provided source content" ([Ji et al., ACM Computing Surveys, 2023](https://doi.org/10.1145/3571730)).
 
-**What KTL does.** Every record names the source it was derived from, so faithfulness can be checked against something. What the librarian cannot settle is marked `status: draft` with an open question until a person decides. The registrar checks what needs no judgement: a local `resource` that no longer exists, a `revision` naming no commit that holds it, and a quoted `sources[].excerpt` that its file no longer holds. It fetches no URL.
+**What KTL does.** Every record names the source it was derived from, so faithfulness can be checked against something. What the librarian cannot settle is marked `status: draft` with an open question until a person decides. The registrar checks what does not need judgement: a local `resource` that no longer exists, a `revision` that does not name a commit holding it, and a quoted `sources[].excerpt` that its file no longer holds. It does not fetch a URL.
 
 **Verdict: answered in part.** Left open: the registrar never judges truth, and the librarian's scheduled re-check is the same kind of tool that wrote the text, so it is self-review. The independent judgement is the curator's.
 

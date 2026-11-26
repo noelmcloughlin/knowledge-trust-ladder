@@ -1020,6 +1020,17 @@ def scripts(tmp_path_factory):
         + "ktl-docent reads the bullets alone and chooses a concept from them before it opens any file at all."
         + " .lokf/ holds the bundle.\n",
     )
+    # A negative on a noun, and the places where "no" stays.
+    write(
+        d / "negative.md",
+        "# A page\n\nThe page explains and adds no rule. A label is advice, and no access control. That is no rule of style.\n\nNo program reads the folder.\n",
+    )
+    write(
+        d / "negative-kept.md",
+        "# A page\n\nThe file has no frontmatter, no title, and no body. A concept with no source is no longer listed, and there is no gate for it."
+        " No other form is valid. When no date is known, the gate says no to it, and the limit is no higher than 40.\n\n"
+        "| Key | Value |\n| --- | --- |\n| `log` | No other key goes here today |\n| `status` | a draft, and no event by a person |\n",
+    )
     write(
         d / "spans.md",
         "# A page\n\nThe grade is 4.71 x letters - 21.43, and `run` ends its options as in cmd -- <args> here."
@@ -1053,6 +1064,11 @@ SCRIPTS = [
     (1, "items.py:7: dash:", "and so is the continuation of an item numbered with a letter", ["items.py"]),
     (1, 'names.md:3: words: "at all"', "a sentence that starts with a lowercase name is a sentence of its own", ["names.md"]),
     (0, "OK", "a minus, an end of options, \"at all\" before a noun and \"stops without\" before a manner are not reported", ["spans.md"]),
+    (1, 'negative.md:3: words: "adds no rule"', "a negative on a noun after a verb is reported", ["negative.md"]),
+    (1, 'negative.md:3: words: "and no access"', "and so is one that sets a thing against another", ["negative.md"]),
+    (1, 'negative.md:3: words: "is no rule"', "and one that says what a thing is", ["negative.md"]),
+    (1, 'negative.md:5: words: "No program"', "and one that opens a sentence before a verb other than be", ["negative.md"]),
+    (0, "OK", '"no" after have, with and there is, in a fixed phrase, in a series and in a table cell is not reported', ["negative-kept.md"]),
 ]
 
 
@@ -1183,6 +1199,7 @@ REFUSED = [
     ("a paragraph cut in two in the middle of a sentence", "broken", "The pen writes the bundle, and it refuses a human actor.\n", "The pen writes the bundle,\n\nand it refuses a human actor.\n"),
     ("the words of two links swapped", "link", "See [the gate](gate.md) and [the pen](pen.md).\n", "See [the pen](gate.md) and [the gate](pen.md).\n"),
     ("a number cut with the thing it counted", "digits", "The job retries 3 times. It starts 3 workers.\n", "The job retries 3 times. It starts workers.\n"),
+    ("a prohibition whose may became must", "opposite", "No patch file may carry it.\n", "A patch file must not carry it.\n"),
 ]
 
 
@@ -1227,6 +1244,9 @@ ALLOWED = [
     ("a paragraph split where its topic turns", "The gate reads commits. The pen writes the bundle.\n", "The gate reads commits.\n\nThe pen writes the bundle.\n"),
     ("the words of a link", "Read [the policy](SECURITY.md) first.\n", "Read [the security policy](SECURITY.md) first.\n"),
     ("the items of a bulleted list in a new order", "- the README\n- the docs\n", "- the docs\n- the README\n"),
+    # Rule 11 puts a negative on its verb, and the word of strength stays.
+    ("a negative moved from a noun to its verb", "The page adds no rule.\n", "The page does not add a rule.\n"),
+    ("a prohibition's negative moved to its verb", "No patch file may carry it.\n", "A patch file may not carry it.\n"),
 ]
 
 

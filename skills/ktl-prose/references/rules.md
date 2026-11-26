@@ -6,7 +6,7 @@ One rule stands above the thirteen: a rewording changes the wording and never a 
 
 ## Reading a sentence
 
-No script reads for rules 1, 2, 8 and 10, and a reader who looks for every fault at once finds few. Ask these questions of each sentence, in this order. The first asks whether the sentence should be there, so that you reword none that goes.
+A script does not read for rules 1, 2, 8 and 10, and a reader who looks for every fault at once finds few. Ask these questions of each sentence, in this order. The first asks whether the sentence should be there, so that you reword none that goes.
 
 1. **Does the page need it?** A sentence that the page already says, or one that says nothing, is a sentence to cut (rule 10).
 2. **Has it a verb, and does it say who acts?** A fragment needs its verb (rule 2), and the actor comes first (rule 1).
@@ -25,7 +25,7 @@ Before: The whole tree, workflows and docs included: [docs/repository-layout.md]
 After:  [docs/repository-layout.md](docs/repository-layout.md) shows the whole tree, workflows and docs included.
 ```
 
-No script finds a late verb, so here is a method. Find the main verb, count the words before it, and restructure when there are more than about eight. An opening that dangles is the same fault: "Running on a schedule, the bundle is refreshed" says that the bundle runs.
+A script does not find a late verb, so here is a method. Find the main verb, count the words before it, and restructure when there are more than about eight. An opening that dangles is the same fault: "Running on a schedule, the bundle is refreshed" says that the bundle runs.
 
 A long aside between a subject and its verb delays the verb as a long opening does. Move the aside to the end, after a colon.
 
@@ -87,7 +87,7 @@ After:  Commits typed with Conventional Commits decide the version [...] All fiv
 
 The script reports each paragraph or list item past 150 words as `paragraph`, and never a table cell. The limit is the Federal Plain Language Guidelines' "no more than 150 words in three to eight sentences". The script counts 21 in the docs and skills before the third pass and none after it.
 
-No script sees a second topic, so here is a method for the paragraph, as rule 1 has one for the verb. Write down the grammatical subject of each sentence, in order. A paragraph on one topic gives a run of subjects that name one thing, or that thing and its parts. Two sets of subjects that take turns are two topics in one paragraph. In a comment that said which half of a check reads which rules, and how the Python half is started, the subjects ran *rules*, *this script*, *rules*, *this half*, *a runner*. Split by set, and not where the eye happens to rest. Williams calls the run of subjects a topic string, and makes it his test of whether a reader finds a passage coherent. The script reports a paragraph past eight sentences as `sentences`, the top of the Federal Plain Language Guidelines' three to eight.
+A script does not see a second topic, so here is a method for the paragraph, as rule 1 has one for the verb. Write down the grammatical subject of each sentence, in order. A paragraph on one topic gives a run of subjects that name one thing, or that thing and its parts. Two sets of subjects that take turns are two topics in one paragraph. In a comment that said which half of a check reads which rules, and how the Python half is started, the subjects ran *rules*, *this script*, *rules*, *this half*, *a runner*. Split by set, and not where the eye happens to rest. Williams calls the run of subjects a topic string, and makes it his test of whether a reader finds a passage coherent. The script reports a paragraph past eight sentences as `sentences`, the top of the Federal Plain Language Guidelines' three to eight.
 
 It gives way to sense. The aim is that every word tells, and some sentences need their length. A semicolon is right in a series whose items hold commas. A paragraph gives way to an argument that a break would cut in two. Split where the topic turns, never at a word count: a page of one-sentence paragraphs is as hard to follow as one block, since nothing groups its sentences.
 
@@ -109,7 +109,7 @@ After:  This shell half checks rules 1, 5, 6, 8 and 11 itself: they are git and 
 
 This is a house rule. It gives way when the reason is a warning: put a danger before the step that meets it.
 
-## 5. Use no dash as punctuation
+## 5. Do not use a dash as punctuation
 
 Each dash hides a choice the writer did not make. A colon introduces. Commas or parentheses set an aside apart. A full stop ends the thought.
 
@@ -159,9 +159,9 @@ After:  The gate checks each pull request. If the gate fails, it blocks the merg
 
 That pair was made for this page. The two passes show the rule as a pattern: each role name is set in bold, and each of "host", "gate" and "forge" is defined once and then kept.
 
-A pointing word is a name too. "Here", "there", "this half" and "that" each stand for a file or a part of one, and each is one more name for the reader to resolve. In a comment, name the file or the half. In one script the Python half had four names and the shell half three, and no sentence read wrong on its own.
+A pointing word is a name too. "Here", "there", "this half" and "that" each stand for a file or a part of one, and each is one more name for the reader to resolve. In a comment, name the file or the half. In one script the Python half had four names and the shell half three, and every sentence read right on its own.
 
-"Either way", "regardless" and "in both cases" point at alternatives, and the reader must be able to find them: in the same paragraph, or as the items of the list or the subsections the sentence closes. A README used "either way" after a section called "Three cases", and no reader could say which two it meant. The repair is to name the cases, or to cut the sentence when the page states its fact elsewhere (rule 10).
+"Either way", "regardless" and "in both cases" point at alternatives, and the reader must be able to find them: in the same paragraph, or as the items of the list or the subsections the sentence closes. A README used "either way" after a section called "Three cases", and a reader could not say which two it meant. The repair is to name the cases, or to cut the sentence when the page states its fact elsewhere (rule 10).
 
 ```text
 Before: linkml-author works on the schema either way.
@@ -209,15 +209,15 @@ The third pass replaced the figures below. The script reports the words of the f
 Keep the small words that show how a sentence is built. English lets a writer drop "that" from "the copy that the lock pins". A reader whose first language is not English then has to find the clause without its mark, and so does a translation tool. Microsoft's guidance says "Include that and who. They help to clarify the sentence structure." Write "only" for "alone" where the word limits a claim, and put it next to what it limits: the same guidance says "Pay particular attention to the placement of only".
 
 ```text
-Before: The copy `uv.lock` pins is linked, so a host needs no edit a sync would undo. The job's token reads this repository alone.
-After:  The copy that `uv.lock` pins is linked, so a host needs no edit that a sync would undo. The job's token reads only this repository.
+Before: The copy `uv.lock` pins is linked, so a host does not need an edit a sync would undo. The job's token reads this repository alone.
+After:  The copy that `uv.lock` pins is linked, so a host does not need an edit that a sync would undo. The job's token reads only this repository.
 ```
 
-That pair was made for this page. No script lists "alone", since a file "left alone" is a literal use.
+That pair was made for this page. The script does not list "alone", since a file "left alone" is a literal use.
 
 The quiet figures are the ones a writer does not see. A rule "goes to" a half, a key "comes first", a script "hands" a file to another. Each makes the program a place and its parts things that travel, and asks the reader to turn the journey back into the action. Rule 1 is the test and the repair: name the actor and the literal verb, as in "the Python half checks rule 4" and "the .venv is tried first". Most of these are phrasal verbs, which Thrush's study found a non-native reader can misread, and Microsoft's guidance for a worldwide audience asks writers to avoid such idioms. The script lists none of them: "go", "come" and "hand" are literal too often.
 
-It gives way to an abbreviation that is the thing's own name: CI, YAML, IRI. A term the page has defined needs no second definition. A figure gives way to a name the project defines, such as *the pen* or *the doorway*, once its page has defined it. It gives way to a word of the analogy the project names its roles by, such as the librarian's *desk*, once the project's glossary defines it. It gives way too to a term of art the reader's own field uses in that exact sense, such as pinning a version.
+It gives way to an abbreviation that is the thing's own name: CI, YAML, IRI. A term the page has defined does not need a second definition. A figure gives way to a name the project defines, such as *the pen* or *the doorway*, once its page has defined it. It gives way to a word of the analogy the project names its roles by, such as the librarian's *desk*, once the project's glossary defines it. It gives way too to a term of art the reader's own field uses in that exact sense, such as pinning a version.
 
 ## 10. Cut words that carry nothing
 
@@ -230,7 +230,7 @@ After:  **"Require signed commits" as a branch rule is off, and must stay off.**
 
 The first pass cut "deliberately" four times and "honest" or "honestly" four times, and added neither back. The script reports "deliberately" and "honestly" as `words`.
 
-A possessive already says whose a thing is, a noun already names it, and a negative is already whole. So read each "own" after a possessive, each "itself" after a noun and each "at all" after a negative, and cut the one that draws no contrast.
+A possessive already says whose a thing is, a noun already names it, and a negative is already whole. So read each "own" after a possessive, each "itself" after a noun and each "at all" after a negative, and cut the one that does not draw a contrast.
 
 ```text
 Before: It never touches the Node build (`build.yml`) or the LOKF bundle's own semantics. The tool itself is installed at exact pinned versions inside the workflow.
@@ -287,7 +287,27 @@ After:  For a GitHub release it checks the attestation too, signed by the member
 
 That pair comes from a pass over this repository's threat model. The script reports "stop without", "stops without" and "stopped without" as `words`. It skips each one before "notice", "warning" or a word ending in "ing", since "stops without failing" says how a thing stops, not what it needs.
 
-It gives way to a prohibition that guards something. "Never write a `human:` event" is the rule itself, and no positive form says it as well. Keep its strength too: `must` stays `must`.
+When a sentence must say what is not, put the negative on the verb. English can put it on a noun instead, as "adds no rule" does for "does not add a rule". That form is the shorter one, so a pass that cuts words produces it. It is also the stronger one. The Editor's Manual says that "No is more emphatic than not any", and that "no" before a noun states that a thing is "quite different from what has been assumed or implied": "I am no expert" says more than "I am not an expert".
+
+```text
+Before: This page defines no field, type or relation. A retired concept stands on no rung and carries no other label.
+After:  This page does not define a field, a type or a relation. A retired concept does not stand on a rung or carry any other label.
+```
+
+Four more sentences put a negative on a noun, and each has a plain form:
+
+| The sentence | As in | Write |
+| --- | --- | --- |
+| It sets one thing against another with "and no" | "A trust label is advice, and no access control." | "A trust label is advice, not access control." |
+| It closes a list with "and no other" | "Four rules move a concept on the ladder, and no other rule does." | "Only these four rules move a concept on the ladder." |
+| It opens with "No" before a verb other than *be* | "No program reads it as part of the bundle." | "A program does not read it as part of the bundle." |
+| It says what a thing is with "is no" | "That is no rule of style but a hazard." | "That is a hazard, not a rule of style." |
+
+That pair and the first three rows come from a pass that set this repository's specification beside the OKF specification, and the last row from this page. OKF 0.3 writes "not" 119 times and "no" before a noun 25 times. Of those 25, 14 follow *have* or "with", three are the subject of *be*, six stand in a label or a note, and two follow another verb. A study of speech in Northern England and Ontario found the same split: "functional verbs retain no-negation, while lexical verbs favour any".
+
+The script reports as `words` a "no" that follows a word other than *have* or "with", an "and no" after a comma, and a "No" that opens a sentence before a verb other than *be* or *have*. It skips "there is no", "no longer", "no more than" and "no one", the last "no" of a series, and a "no" that opens a clause after a joining word such as "when" or "that". A table cell is a label, so the script reads neither a "No" that opens one nor an "and no" in one. "Nothing", "none" and "nowhere" after a verb are the same form, as "writes nothing" is for "does not write anything". The script does not list them, since "does nothing" is often the plain thing to say, so a reader decides.
+
+It gives way to a prohibition that guards something. "Never write a `human:` event" is the rule itself, and a positive form does not say it as well. Keep its strength too: `must` stays `must`. A "no" stays on its noun where it states an absence after *have*, "with" or "there is", as in "has no frontmatter" and "a concept with no source". It stays as the subject of *be*, as in "No other form is valid", and in a subject that the sentence cannot name another way, such as "Nothing in the format proves the claim".
 
 ## 12. Open each page by saying who it is for
 
@@ -298,9 +318,9 @@ Before: The human-facing labels in SKILL.md map onto OKF v0.2 §5 / LOKF Golden 
 After:  This page is for the **curator** and for anyone reading its report: it defines each trust label by the frontmatter fields behind it.
 ```
 
-A concept body opens by saying what the thing is, as its `description` does. Add no sentence the text did not hold. Reorder what is there, and report the opening that is missing.
+A concept body opens by saying what the thing is, as its `description` does. Do not add a sentence that the text did not hold. Reorder what is there, and report the opening that is missing.
 
-It gives way in a reference table or a glossary entry, which names no reader and says what the thing is.
+It gives way in a reference table or a glossary entry, which does not name a reader and says what the thing is.
 
 ## 13. Report what you cannot fix
 
@@ -313,9 +333,9 @@ Exact:  Provide 20 spare tiles of each type used, including all variations in co
 
 Report a vague quantity, a sentence you cannot parse and a claim that looks wrong, each with its line. Leave the text as it is, and never guess. A wrong fact in a concept is ktl-librarian's to correct from the source.
 
-Two more cases go in the report, because only the author can settle them. One is a quantity no source on the page gives: "a repository that holds a schema but no project, which is most of them" counts something nobody counted, and the author either has the count or cuts the clause. The other is a phrase that stands for a list the text never gives: "both skills find the schema by what files say" stands for the three files the skills look for, and the author either names them or points at the page that does. In the bundle the source may hold the count or the list, and ktl-librarian carries it over.
+Two more cases go in the report, because only the author can settle them. One is a quantity that no source on the page gives: "a repository that holds a schema but no project, which is most of them" counts something nobody counted, and the author either has the count or cuts the clause. The other is a phrase that stands for a list the text never gives: "both skills find the schema by what files say" stands for the three files the skills look for, and the author either names them or points at the page that does. In the bundle the source may hold the count or the list, and ktl-librarian carries it over.
 
-Plain wording is no proof of a true claim. Paul Graham argues that writing which sounds good is more likely to be right, because the writer who repairs a clumsy sentence often has to repair the idea in it. He limits that to writing used to develop ideas. A copy editor who smooths another's sentence gets the sound without the repair.
+Plain wording is not proof of a true claim. Paul Graham argues that writing which sounds good is more likely to be right, because the writer who repairs a clumsy sentence often has to repair the idea in it. He limits that to writing used to develop ideas. A copy editor who smooths another's sentence gets the sound without the repair.
 
 ## What the genre asks
 
@@ -325,12 +345,12 @@ A concept's `genre` says what its page is for: `tutorial`, `how-to`, `reference`
 | --- | --- | --- |
 | `how-to` | takes a reader through a task | Steps in a numbered list, each starting with its verb (rules 2 and 7). A reason comes after its step and stays short (rule 4). |
 | `tutorial` | teaches a newcomer by doing | Steps as in a how-to. |
-| `reference` | states what a thing is | Statements, in the same form from one entry to the next (rule 8). It names no reader (rule 12). |
+| `reference` | states what a thing is | Statements, in the same form from one entry to the next (rule 8). It does not name a reader (rule 12). |
 | `explanation` | says why | Connected reasoning, which a list would cut apart (rule 7's exception). |
 
 Diátaxis, where the four come from, makes a how-to guide "a sequence" with "no digression, explanation, teaching", and says of reference: "It should be austere."
 
-A page that has left its genre is not a matter of wording. A how-to that explains at length is one, and so is a reference that instructs. Reword what is there, change no page's shape, and name the page in the report for ktl-librarian, whose rule is to split a concept that drifts. Outside the bundle a page has no `genre`, and its title and its place in the docs say what it is for.
+A page that has left its genre is not a matter of wording. A how-to that explains at length is one, and so is a reference that instructs. Reword what is there, do not change a page's shape, and name the page in the report for ktl-librarian, whose rule is to split a concept that drifts. Outside the bundle a page has no `genre`, and its title and its place in the docs say what it is for.
 
 ## Line breaks in the source
 
@@ -356,4 +376,4 @@ It gives way in a table, frontmatter and a heading, which keep their own lines, 
 - **The rules are defaults.** Strunk opens his own rules by observing that "the best writers sometimes disregard the rules of rhetoric". That is why each rule above says when it gives way.
 - **Rules 4, 5 and 6 are house rules, stricter than the books.** The conventions the gate checks are stricter than OKF in the same way. The reason is the same: an agent told a rule in prose breaks it, and a strict rule is one a script can check.
 - **A script sees part of five rules.** `scripts/prose-check.py` reports `long`, `paragraph` and `sentences` for rule 3, `dash` for rule 5, and `words` for rules 9, 10 and 11. Each finding is a candidate, not a verdict. It skips frontmatter, fenced and indented code blocks, code spans, link targets, headings, quotations and a short emphasised label, and reads a prose line that opens with an inline HTML tag. Given a script (`.sh`, `.py`, `.yaml`, `.yml`, `.toml` or a justfile), it reads each `#` comment block as a paragraph, and in Python each docstring. It leaves out a shebang, a directive, a `# /// script` block and the body of a heredoc. The other eight rules need a reader, and so does every figure of speech it does not list.
-- **The script also reports a character no reader sees, as `unseen`.** That is no rule of style but a hazard. A zero-width space or a byte order mark renders as nothing. A right-to-left override reorders what a reader sees: the "Trojan Source" attack (CVE-2021-42574) uses it to make code read differently from how it runs. An agent that types such a character's escape into a tool call can write the character itself. Delete one from prose you may reword, and report one in code, in a quotation or in a concept you may not touch.
+- **The script also reports a character that no reader sees, as `unseen`.** That is a hazard, not a rule of style. A zero-width space or a byte order mark renders as nothing. A right-to-left override reorders what a reader sees: the "Trojan Source" attack (CVE-2021-42574) uses it to make code read differently from how it runs. An agent that types such a character's escape into a tool call can write the character itself. Delete one from prose you may reword, and report one in code, in a quotation or in a concept you may not touch.

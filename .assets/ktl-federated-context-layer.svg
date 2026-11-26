@@ -1,110 +1,156 @@
-<svg width="720" height="784" viewBox="0 0 720 784" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
-<title id="t">Context layer</title>
-<desc id="d">Bottom to top. Four sub-domain bundles, A to D, are each built and curated in their own repository on their own trust ladder. Each validates against a LinkML schema and projects to a graph: A and C against the LOKF schema, B and D against a domain schema that imports it. Each release is validated, packed, checksummed and attested into an artifact repository, which holds versioned releases of bundles today, and of domain schemas and manifests once a domain is built. Domains are manifests, not copies, each labelled with its domain concept's path: domains/domain1 selects bundles A and B, domains/domain2 selects C and D, and domains/federation, where the build starts, selects both domains; a named person confirms each one's membership, and they are bound only when the workspace is built. The context layer is one traversable knowledge graph in the workspace domains/federation bounds, built ahead of time and refreshed on each release, with every trust label computed on read. Readers - agents, copilots and the people who ask them - traverse it on demand. The domain manifests and the context layer shipped on 2026-10-16 as the sidecar's federation templates, with ktl-federation as the first host; the bundles, the release step and the artifact repository are what every repository has.</desc>
-<rect width="720" height="784" fill="#E4E1D7"/>
-<!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#5F5E5A"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#7A4E0B"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#E4E1D7" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#0C447C" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#3B6D11" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#3B6D11" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#5F5E5A">Knowledge</text><text x="56" y="32.5" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#5F5E5A">Trust Ladder</text><!-- ktl-brand:end -->
-<text x="360.0" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#2C2C2A">Context layer</text>
-<g transform="translate(0,-610)">
-<rect x="20" y="658" width="680" height="66" rx="12" fill="#ffffff" stroke="#D3D1C7" stroke-width="1"/>
-<g transform="translate(46,691)" stroke="#5F5E5A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="-6" r="4"/><path d="M-8 9 a8 8 0 0 1 16 0"/></g>
-<text x="70" y="680" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#2C2C2A">Readers</text>
-<text x="70" y="696" font-family="Arial, sans-serif" font-size="10.5" fill="#5F5E5A">agents, copilots and the people who ask them</text>
-<text x="70" y="711" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">every answer says how far it has been checked</text>
-</g>
-<line x1="360" y1="144" x2="360" y2="118" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M355.5 124.6 L360 118 L364.5 124.6" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="368" y="135" font-family="Arial, sans-serif" font-size="10" fill="#6E6D66">index first, then traverse on demand</text>
-<g transform="translate(0,-410)">
-<rect x="20" y="558" width="680" height="66" rx="12" fill="#FBF1DE" stroke="#B7791F" stroke-width="2"/>
-<g transform="translate(46,591)" stroke="#7A4E0B" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-8" y1="-7" x2="8" y2="7"/><line x1="8" y1="-7" x2="-8" y2="7"/><line x1="-8" y1="-7" x2="8" y2="-7"/><circle cx="0" cy="0" r="3" fill="#FBF1DE"/><circle cx="-8" cy="-7" r="2.5" fill="#FBF1DE"/><circle cx="8" cy="-7" r="2.5" fill="#FBF1DE"/><circle cx="-8" cy="7" r="2.5" fill="#FBF1DE"/><circle cx="8" cy="7" r="2.5" fill="#FBF1DE"/></g>
-<text x="70" y="580" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#7A4E0B">The context layer</text>
-<text x="70" y="596" font-family="Arial, sans-serif" font-size="10.5" fill="#7A4E0B">one traversable knowledge graph, in the workspace domains/federation bounds</text>
-<text x="70" y="611" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">built ahead of time, refreshed on each release; every trust label computed on read</text>
-</g>
-<line x1="360" y1="244" x2="360" y2="218" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M355.5 224.6 L360 218 L364.5 224.6" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="368" y="235" font-family="Arial, sans-serif" font-size="10" fill="#6E6D66">resolved, fetched and verified when the workspace is built</text>
-<g transform="translate(0,-148)">
-<rect x="20" y="396" width="680" height="128" rx="20" fill="#F1EFE8"/>
-<text x="40" y="424" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#2C2C2A">Domains: manifests on the same ladder, bound when the workspace is built</text>
-<rect x="44" y="440" width="196" height="66" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="2"/>
-<g transform="translate(70,473)" stroke="#0C447C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
-<text x="94" y="462" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0C447C">domains/domain1</text>
-<text x="94" y="478" font-family="Arial, sans-serif" font-size="10.5" fill="#0C447C">selects bundles A and B</text>
-<text x="94" y="493" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">a thin LOKF bundle</text>
-<rect x="262" y="440" width="196" height="66" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="2"/>
-<g transform="translate(288,473)" stroke="#0C447C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
-<text x="312" y="462" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0C447C">domains/federation</text>
-<text x="312" y="478" font-family="Arial, sans-serif" font-size="10.5" fill="#0C447C">selects both domains</text>
-<text x="312" y="493" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">the workspace boundary</text>
-<rect x="480" y="440" width="196" height="66" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="2"/>
-<g transform="translate(506,473)" stroke="#0C447C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-10" width="20" height="20" rx="2"/><line x1="-6" y1="-4" x2="-4" y2="-4"/><line x1="-1" y1="-4" x2="6" y2="-4"/><line x1="-6" y1="0.5" x2="-4" y2="0.5"/><line x1="-1" y1="0.5" x2="6" y2="0.5"/><line x1="-6" y1="5" x2="-4" y2="5"/><line x1="-1" y1="5" x2="6" y2="5"/></g>
-<text x="530" y="462" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0C447C">domains/domain2</text>
-<text x="530" y="478" font-family="Arial, sans-serif" font-size="10.5" fill="#0C447C">selects bundles C and D</text>
-<text x="530" y="493" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">a thin LOKF bundle</text>
-<line x1="243" y1="473" x2="259" y2="473" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M252.4 477.5 L259 473 L252.4 468.5" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<line x1="477" y1="473" x2="461" y2="473" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M467.6 477.5 L461 473 L467.6 468.5" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-</g>
-<line x1="360" y1="406" x2="360" y2="380" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M355.5 386.6 L360 380 L364.5 386.6" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="368" y="397" font-family="Arial, sans-serif" font-size="10" fill="#6E6D66">a manifest names the releases it selects, each by its base_iri</text>
-<g transform="translate(0,114)">
-<rect x="20" y="296" width="680" height="66" rx="12" fill="#ffffff" stroke="#D3D1C7" stroke-width="1"/>
-<g transform="translate(46,329)" stroke="#5F5E5A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-9" width="20" height="5" rx="1"/><path d="M-8 -4 V9 H8 V-4"/><line x1="-3" y1="1" x2="3" y2="1"/></g>
-<text x="70" y="318" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#2C2C2A">Artifact repository</text>
-<text x="70" y="334" font-family="Arial, sans-serif" font-size="10.5" fill="#5F5E5A">versioned releases of bundles today; domain schemas and manifests join them when a domain is built</text>
-<text x="70" y="349" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">each one a zip with its checksum; nothing here is edited, only added</text>
-</g>
-<line x1="360" y1="506" x2="360" y2="480" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M355.5 486.6 L360 480 L364.5 486.6" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="368" y="497" font-family="Arial, sans-serif" font-size="10" fill="#6E6D66">each release is validated, packed, checksummed and attested</text>
-<g transform="translate(0,462)">
-<rect x="20" y="48" width="680" height="214" rx="20" fill="#F1EFE8"/>
-<text x="40" y="76" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#2C2C2A">Sub-domains: one bundle per repository, each on its own trust ladder</text>
-<rect x="44" y="92" width="149" height="136" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
-<g transform="translate(118.5,118)" stroke="#27500A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-8" y1="6" x2="0" y2="-8"/><line x1="8" y1="6" x2="0" y2="-8"/><line x1="-8" y1="6" x2="8" y2="6"/><circle cx="0" cy="-8" r="3" fill="#EAF3DE"/><circle cx="-8" cy="6" r="3" fill="#EAF3DE"/><circle cx="8" cy="6" r="3" fill="#EAF3DE"/></g>
-<text x="118.5" y="148" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#27500A">Bundle A</text>
-<text x="118.5" y="164" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#27500A">repository A</text>
-<rect x="60.5" y="174" width="116" height="18" rx="9.0" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
-<text x="111.5" y="187" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#7A4E0B">LOKF schema</text>
-<path d="M156.5 183 l3 3 l6 -7" fill="none" stroke="#7A4E0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="60.5" y="198" width="116" height="18" rx="9.0" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
-<text x="118.5" y="211" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#0C447C">confirmed n of N</text>
-<rect x="205" y="92" width="149" height="136" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
-<g transform="translate(279.5,118)" stroke="#27500A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-8" y1="6" x2="0" y2="-8"/><line x1="8" y1="6" x2="0" y2="-8"/><line x1="-8" y1="6" x2="8" y2="6"/><circle cx="0" cy="-8" r="3" fill="#EAF3DE"/><circle cx="-8" cy="6" r="3" fill="#EAF3DE"/><circle cx="8" cy="6" r="3" fill="#EAF3DE"/></g>
-<text x="279.5" y="148" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#27500A">Bundle B</text>
-<text x="279.5" y="164" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#27500A">repository B</text>
-<rect x="221.5" y="174" width="116" height="18" rx="9.0" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
-<text x="272.5" y="187" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#7A4E0B">domain schema</text>
-<path d="M317.5 183 l3 3 l6 -7" fill="none" stroke="#7A4E0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="221.5" y="198" width="116" height="18" rx="9.0" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
-<text x="279.5" y="211" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#0C447C">confirmed n of N</text>
-<rect x="366" y="92" width="149" height="136" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
-<g transform="translate(440.5,118)" stroke="#27500A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-8" y1="6" x2="0" y2="-8"/><line x1="8" y1="6" x2="0" y2="-8"/><line x1="-8" y1="6" x2="8" y2="6"/><circle cx="0" cy="-8" r="3" fill="#EAF3DE"/><circle cx="-8" cy="6" r="3" fill="#EAF3DE"/><circle cx="8" cy="6" r="3" fill="#EAF3DE"/></g>
-<text x="440.5" y="148" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#27500A">Bundle C</text>
-<text x="440.5" y="164" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#27500A">repository C</text>
-<rect x="382.5" y="174" width="116" height="18" rx="9.0" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
-<text x="433.5" y="187" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#7A4E0B">LOKF schema</text>
-<path d="M478.5 183 l3 3 l6 -7" fill="none" stroke="#7A4E0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="382.5" y="198" width="116" height="18" rx="9.0" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
-<text x="440.5" y="211" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#0C447C">confirmed n of N</text>
-<rect x="527" y="92" width="149" height="136" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
-<g transform="translate(601.5,118)" stroke="#27500A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-8" y1="6" x2="0" y2="-8"/><line x1="8" y1="6" x2="0" y2="-8"/><line x1="-8" y1="6" x2="8" y2="6"/><circle cx="0" cy="-8" r="3" fill="#EAF3DE"/><circle cx="-8" cy="6" r="3" fill="#EAF3DE"/><circle cx="8" cy="6" r="3" fill="#EAF3DE"/></g>
-<text x="601.5" y="148" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#27500A">Bundle D</text>
-<text x="601.5" y="164" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#27500A">repository D</text>
-<rect x="543.5" y="174" width="116" height="18" rx="9.0" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
-<text x="594.5" y="187" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#7A4E0B">domain schema</text>
-<path d="M639.5 183 l3 3 l6 -7" fill="none" stroke="#7A4E0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="543.5" y="198" width="116" height="18" rx="9.0" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
-<text x="601.5" y="211" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#0C447C">confirmed n of N</text>
-<text x="360" y="248" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#5F5E5A">Each validates against a LinkML schema and projects to a graph; a domain schema imports LOKF's and adds its own types.</text>
-</g>
-<circle cx="52" cy="746" r="5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
-<text x="63" y="750" font-family="Arial, sans-serif" font-size="12" fill="#27500A">an agent derives it</text>
-<circle cx="206" cy="746" r="5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
-<text x="217" y="750" font-family="Arial, sans-serif" font-size="12" fill="#7A4E0B">deterministic tools check it</text>
-<circle cx="418" cy="746" r="5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
-<text x="429" y="750" font-family="Arial, sans-serif" font-size="12" fill="#0C447C">a named person vouches for it</text>
+<svg width="720" height="828" viewBox="0 0 720 828" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d" font-family="'Atkinson Hyperlegible Next', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+<title id="t">Many bundles, one context layer</title>
+<desc id="d">Drawn bottom to top, from repository bundles to a context layer and its readers. At the bottom, bundles: one per repository, each on its own trust ladder. Four are drawn, A to D; A and C validate against LOKF core, B and D against a domain vocabulary, and each shows how many concepts a person confirmed. Once the registrar's checks pass, a bundle is packed and checksummed into the artifact repository: versioned releases of bundles and of domains, on GitHub a release, each a reproducible zip with its checksum, a domain vocabulary where the bundle has one, and an attestation where the forge offers one. Above it, domains: thin bundles that select releases. A member concept names a release by its address, tag and checksum. domains/federation, the top domain, selects two domains; domains/domain1 selects bundles A and B, and domains/domain2 selects bundles C and D. A person confirms each member that a domain selects, and nothing is copied upward. Each release is resolved, fetched and verified into the context layer: one workspace, with one named graph per bundle, keyed by its base_iri. A script builds it ahead of time, and again on each release of the top domain, and a trust label is computed when a query runs. At the top, the readers, agents, copilots and the people who ask them, read the index first and then traverse on demand.</desc>
+<rect width="720" height="828" fill="#FFFFFF"/>
+<!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#5F5E5A"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#7A4E0B"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#0C447C" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#3B6D11" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#3B6D11" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.9" fill="#4A4944">KNOWLEDGE</text><text x="56" y="32.5" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.9" fill="#4A4944">TRUST LADDER</text><!-- ktl-brand:end -->
+<line x1="150" y1="11" x2="150" y2="37" stroke="#C4C2B8" stroke-width="1"/>
+<text x="164" y="31" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="20" font-weight="700" fill="#1C1C1A">Many bundles, one context layer</text>
+<line x1="24" y1="48" x2="696" y2="48" stroke="#1C1C1A" stroke-width="1.5"/>
+<line x1="24" y1="53" x2="696" y2="53" stroke="#1C1C1A" stroke-width="0.75"/>
+<path d="M30 48 v5 M42 48 v5 M54 48 v5 M66 48 v5 M78 48 v5 M90 48 v5 M102 48 v5 M114 48 v5 M126 48 v5 M138 48 v5 M150 48 v5 M162 48 v5 M174 48 v5 M186 48 v5 M198 48 v5 M210 48 v5 M222 48 v5 M234 48 v5 M246 48 v5 M258 48 v5 M270 48 v5 M282 48 v5 M294 48 v5 M306 48 v5 M318 48 v5 M330 48 v5 M342 48 v5 M354 48 v5 M366 48 v5 M378 48 v5 M390 48 v5 M402 48 v5 M414 48 v5 M426 48 v5 M438 48 v5 M450 48 v5 M462 48 v5 M474 48 v5 M486 48 v5 M498 48 v5 M510 48 v5 M522 48 v5 M534 48 v5 M546 48 v5 M558 48 v5 M570 48 v5 M582 48 v5 M594 48 v5 M606 48 v5 M618 48 v5 M630 48 v5 M642 48 v5 M654 48 v5 M666 48 v5 M678 48 v5 M690 48 v5" stroke="#1C1C1A" stroke-width="0.75" fill="none"/>
+<rect x="24" y="82" width="672" height="48" fill="#FFFFFF" stroke="#4A4944" stroke-width="1.25"/>
+<rect x="23.38" y="68" width="55.72" height="14.6" fill="#1C1C1A"/>
+<text x="30.4" y="78.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">READERS</text>
+<text x="36" y="112" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A">Agents, copilots and the people who ask them</text>
+<path d="M360 176 L360 135" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M360 130 L363.6 138 L356.4 138 Z" fill="#6E6D66"/>
+<circle cx="360" cy="176" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<text x="372" y="157" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="12" font-style="italic" fill="#4A4944">the index first, then a walk on demand</text>
+<rect x="24" y="176" width="672" height="76" fill="#FFFFFF" stroke="#8A5A0B" stroke-width="1.25"/>
+<rect x="23.38" y="162" width="78.35" height="14.6" fill="#8A5A0B"/>
+<path d="M29.6 164 v10 M36.4 164 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="29.6" y="170.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="29.6" y="167.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="41.4" y="172.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">WORKSPACE</text>
+<text x="36" y="198" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A">The context layer</text>
+<text x="36" y="215" font-size="11.5" fill="#4A4944">one workspace, with one named graph per bundle, keyed by its <tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#1C1C1A">base_iri</tspan></text>
+<text x="36" y="229" font-size="10.5" fill="#6E6D66">A script builds it ahead of time, and again on each release of the top domain.</text>
+<text x="36" y="243" font-size="10.5" fill="#6E6D66">A trust label is computed when a query runs.</text>
+<path d="M360 294 L360 257" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M360 252 L363.6 260 L356.4 260 Z" fill="#6E6D66"/>
+<circle cx="360" cy="294" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<text x="372" y="277" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="12" font-style="italic" fill="#4A4944">each release resolved, fetched and verified</text>
+<text x="24" y="314" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="14.5" font-style="italic" fill="#1C1C1A">Domains: thin bundles that select releases</text>
+<line x1="24" y1="322" x2="696" y2="322" stroke="#C4C2B8" stroke-width="1"/>
+<rect x="24" y="350" width="196" height="62" fill="#FFFFFF" stroke="#185FA5" stroke-width="1.25"/>
+<rect x="23.38" y="336" width="60.9" height="14.6" fill="#185FA5"/>
+<path d="M29.6 338 v10 M36.4 338 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="29.6" y="344.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="29.6" y="341.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="29.6" y="338.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="41.4" y="346.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">DOMAIN</text>
+<text x="36" y="372" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="700" font-style="normal" fill="#1C1C1A">domains/domain1</tspan></text>
+<text x="36" y="389" font-size="11.5" fill="#4A4944">selects bundles A and B</text>
+<rect x="248" y="350" width="224" height="62" fill="#FFFFFF" stroke="#185FA5" stroke-width="1.25"/>
+<rect x="247.38" y="336" width="84.17" height="14.6" fill="#185FA5"/>
+<path d="M253.6 338 v10 M260.4 338 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="253.6" y="344.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="253.6" y="341.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="253.6" y="338.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="265.4" y="346.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">TOP DOMAIN</text>
+<text x="260" y="372" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="700" font-style="normal" fill="#1C1C1A">domains/federation</tspan></text>
+<text x="260" y="389" font-size="11.5" fill="#4A4944">selects both domains,</text>
+<text x="260" y="404" font-size="11.5" fill="#4A4944">and is where the build starts</text>
+<rect x="500" y="350" width="196" height="62" fill="#FFFFFF" stroke="#185FA5" stroke-width="1.25"/>
+<rect x="499.38" y="336" width="60.9" height="14.6" fill="#185FA5"/>
+<path d="M505.6 338 v10 M512.4 338 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="505.6" y="344.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="505.6" y="341.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="505.6" y="338.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="517.4" y="346.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">DOMAIN</text>
+<text x="512" y="372" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="700" font-style="normal" fill="#1C1C1A">domains/domain2</tspan></text>
+<text x="512" y="389" font-size="11.5" fill="#4A4944">selects bundles C and D</text>
+<path d="M248 381 L225 381" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M220 381 L228 377.4 L228 384.6 Z" fill="#6E6D66"/>
+<circle cx="248" cy="381" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M472 381 L495 381" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M500 381 L492 384.6 L492 377.4 Z" fill="#6E6D66"/>
+<circle cx="472" cy="381" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<text x="24" y="432" font-size="11.5" fill="#4A4944">A person confirms each member that a domain selects. Nothing is copied upward.</text>
+<path d="M360 486 L360 449" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M360 444 L363.6 452 L356.4 452 Z" fill="#6E6D66"/>
+<circle cx="360" cy="486" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<text x="372" y="469" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="12" font-style="italic" fill="#4A4944">a member concept names a release</text>
+<rect x="24" y="486" width="672" height="76" fill="#FFFFFF" stroke="#4A4944" stroke-width="1.25"/>
+<rect x="23.38" y="472" width="61.54" height="14.6" fill="#1C1C1A"/>
+<text x="30.4" y="482.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">RELEASES</text>
+<text x="36" y="508" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A">Artifact repository</text>
+<text x="36" y="525" font-size="11.5" fill="#4A4944">versioned releases of bundles and of domains; on GitHub, a release</text>
+<text x="36" y="539" font-size="10.5" fill="#6E6D66">a reproducible zip with its checksum, a domain vocabulary where the bundle has one,</text>
+<text x="36" y="553" font-size="10.5" fill="#6E6D66">and an attestation where the forge offers one</text>
+<path d="M360 604 L360 567" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M360 562 L363.6 570 L356.4 570 Z" fill="#6E6D66"/>
+<circle cx="360" cy="604" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<text x="372" y="587" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="12" font-style="italic" fill="#4A4944">the registrar's checks pass, then it is packed</text>
+<text x="24" y="624" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="14.5" font-style="italic" fill="#1C1C1A">Bundles: one per repository, each on its own trust ladder</text>
+<line x1="24" y1="632" x2="696" y2="632" stroke="#C4C2B8" stroke-width="1"/>
+<rect x="24" y="660" width="156" height="92" fill="#FFFFFF" stroke="#3B6D11" stroke-width="1.25"/>
+<rect x="23.38" y="646" width="60.9" height="14.6" fill="#3B6D11"/>
+<path d="M29.6 648 v10 M36.4 648 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="29.6" y="654.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="41.4" y="656.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">BUNDLE</text>
+<text x="36" y="680" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="700" fill="#1C1C1A">Bundle A</text>
+<text x="36" y="697" font-size="10.5" fill="#6E6D66">repository A</text>
+<rect x="34" y="702" width="136" height="19" fill="#FFFFFF" stroke="#8A5A0B" stroke-width="1"/>
+<rect x="34" y="702" width="3.5" height="19" fill="#8A5A0B"/>
+<text x="103.5" y="715.2" text-anchor="middle" font-size="11" fill="#1C1C1A">LOKF core</text>
+<rect x="34" y="725" width="136" height="19" fill="#FFFFFF" stroke="#185FA5" stroke-width="1"/>
+<rect x="34" y="725" width="3.5" height="19" fill="#185FA5"/>
+<text x="103.5" y="738.2" text-anchor="middle" font-size="11" fill="#1C1C1A">confirmed n of N</text>
+<rect x="196" y="660" width="156" height="92" fill="#FFFFFF" stroke="#3B6D11" stroke-width="1.25"/>
+<rect x="195.38" y="646" width="60.9" height="14.6" fill="#3B6D11"/>
+<path d="M201.6 648 v10 M208.4 648 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="201.6" y="654.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="213.4" y="656.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">BUNDLE</text>
+<text x="208" y="680" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="700" fill="#1C1C1A">Bundle B</text>
+<text x="208" y="697" font-size="10.5" fill="#6E6D66">repository B</text>
+<rect x="206" y="702" width="136" height="19" fill="#FFFFFF" stroke="#8A5A0B" stroke-width="1"/>
+<rect x="206" y="702" width="3.5" height="19" fill="#8A5A0B"/>
+<text x="275.5" y="715.2" text-anchor="middle" font-size="11" fill="#1C1C1A">domain vocabulary</text>
+<rect x="206" y="725" width="136" height="19" fill="#FFFFFF" stroke="#185FA5" stroke-width="1"/>
+<rect x="206" y="725" width="3.5" height="19" fill="#185FA5"/>
+<text x="275.5" y="738.2" text-anchor="middle" font-size="11" fill="#1C1C1A">confirmed n of N</text>
+<rect x="368" y="660" width="156" height="92" fill="#FFFFFF" stroke="#3B6D11" stroke-width="1.25"/>
+<rect x="367.38" y="646" width="60.9" height="14.6" fill="#3B6D11"/>
+<path d="M373.6 648 v10 M380.4 648 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="373.6" y="654.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="385.4" y="656.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">BUNDLE</text>
+<text x="380" y="680" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="700" fill="#1C1C1A">Bundle C</text>
+<text x="380" y="697" font-size="10.5" fill="#6E6D66">repository C</text>
+<rect x="378" y="702" width="136" height="19" fill="#FFFFFF" stroke="#8A5A0B" stroke-width="1"/>
+<rect x="378" y="702" width="3.5" height="19" fill="#8A5A0B"/>
+<text x="447.5" y="715.2" text-anchor="middle" font-size="11" fill="#1C1C1A">LOKF core</text>
+<rect x="378" y="725" width="136" height="19" fill="#FFFFFF" stroke="#185FA5" stroke-width="1"/>
+<rect x="378" y="725" width="3.5" height="19" fill="#185FA5"/>
+<text x="447.5" y="738.2" text-anchor="middle" font-size="11" fill="#1C1C1A">confirmed n of N</text>
+<rect x="540" y="660" width="156" height="92" fill="#FFFFFF" stroke="#3B6D11" stroke-width="1.25"/>
+<rect x="539.38" y="646" width="60.9" height="14.6" fill="#3B6D11"/>
+<path d="M545.6 648 v10 M552.4 648 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="545.6" y="654.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="557.4" y="656.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">BUNDLE</text>
+<text x="552" y="680" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="700" fill="#1C1C1A">Bundle D</text>
+<text x="552" y="697" font-size="10.5" fill="#6E6D66">repository D</text>
+<rect x="550" y="702" width="136" height="19" fill="#FFFFFF" stroke="#8A5A0B" stroke-width="1"/>
+<rect x="550" y="702" width="3.5" height="19" fill="#8A5A0B"/>
+<text x="619.5" y="715.2" text-anchor="middle" font-size="11" fill="#1C1C1A">domain vocabulary</text>
+<rect x="550" y="725" width="136" height="19" fill="#FFFFFF" stroke="#185FA5" stroke-width="1"/>
+<rect x="550" y="725" width="3.5" height="19" fill="#185FA5"/>
+<text x="619.5" y="738.2" text-anchor="middle" font-size="11" fill="#1C1C1A">confirmed n of N</text>
+<text x="24" y="772" font-size="10.5" fill="#6E6D66">A bundle validates against LOKF core, or against its own domain vocabulary, and projects to a graph.</text>
+<line x1="24" y1="794" x2="696" y2="794" stroke="#C4C2B8" stroke-width="1"/>
+<rect x="24" y="801.5" width="18" height="13" fill="#3B6D11"/>
+<path d="M29.6 803 v10 M36.4 803 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="29.6" y="809.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="49" y="812" font-size="11.5" fill="#4A4944">an agent derives it</text>
+<rect x="191.54" y="801.5" width="18" height="13" fill="#8A5A0B"/>
+<path d="M197.14 803 v10 M203.94 803 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="197.14" y="809.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="197.14" y="806.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="216.54" y="812" font-size="11.5" fill="#4A4944">deterministic tools check it</text>
+<rect x="418.08" y="801.5" width="18" height="13" fill="#185FA5"/>
+<path d="M423.69 803 v10 M430.48 803 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="423.69" y="809.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="423.69" y="806.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="423.69" y="803.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="443.08" y="812" font-size="11.5" fill="#4A4944">a named person vouches for it</text>
 </svg>

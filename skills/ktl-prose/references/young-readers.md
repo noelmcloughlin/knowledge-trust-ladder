@@ -33,7 +33,7 @@ The numbers come from plain-language guides, and each band sits inside them:
 
 - **A paragraph.** The NHS asks for paragraphs of up to 3 sentences, and GOV.UK for no more than 5 ([Clear language](https://guidance.publishing.service.gov.uk/writing-to-gov-uk-standards/writing-guidelines/clear-language/)). The word limits follow from those counts at the band's sentence length.
 
-- **The grade.** The target uses the Automated Readability Index, which turns letters per word and words per sentence into a United States school grade plus one. A score of 7 matches readers aged 11 to 12, and 9 matches 13 to 14. WCAG asks for text no harder than lower secondary education, or a simpler version beside it. A grade is a hint and never a verdict: a page of short list items scores low whatever its words, and no formula knows which terms a reader has met.
+- **The grade.** The target uses the Automated Readability Index, which turns letters per word and words per sentence into a United States school grade plus one. A score of 7 matches readers aged 11 to 12, and 9 matches 13 to 14. WCAG asks for text no harder than lower secondary education, or a simpler version beside it. A grade is a hint and never a verdict: a page of short list items scores low whatever its words, and a formula does not know which terms a reader has met.
 
 Ages are the scale, because readers come from many school systems. ISCED, UNESCO's International Standard Classification of Education, names the levels. A school year in one country is only an example of how a person may say it.
 
@@ -50,7 +50,7 @@ The check script holds a page to a band's limits:
 uv run <skill>/scripts/prose-check.py --audience 13-18 <file>
 ```
 
-A page that opens as rule 1 below asks, "This page is for readers aged 13 to 18.", names its own band. A plain style run then holds it to that band, and a note says so. Give `--audience` to a page that names no band, such as an original before its pass for dyslexic readers. A page that names one band while `--audience` asks for another is a finding. `--max-words` and `--max-paragraph` still set their own limit when given.
+A page that opens as rule 1 below asks, "This page is for readers aged 13 to 18.", names its own band. A plain style run then holds it to that band, and a note says so. Give `--audience` to a page that does not name a band, such as an original before its pass for dyslexic readers. A page that names one band while `--audience` asks for another is a finding. `--max-words` and `--max-paragraph` still set their own limit when given.
 
 Under a band, the script also counts the sentences in each paragraph, and reports "via" and the Latin abbreviations "i.e.", "vs", "cf." and "etc." It notes two things that never change the exit status:
 
@@ -78,7 +78,7 @@ A person names the band, and the skill never guesses it. Take the band from the 
 3. in the bundle, a band in the concept's `tags`, such as `audience-13-18`;
 4. in the bundle, the curation policy's `Younger readers:` line, which a person sets with ktl-curator. `prose-check.py --bundle` prints it as its `audience:` line, so repeat that line in Step 1's report.
 
-Map a request to a band by age. A school year or a grade maps through the table above. "Explain it like I'm five" means the band for 8 to 12, the lowest these limits cover. A range that crosses two bands takes the younger one. When a request names no age, grade or year, ask the person: "Which ages is it for: 8 to 12, or 13 to 18?"
+Map a request to a band by age. A school year or a grade maps through the table above. "Explain it like I'm five" means the band for 8 to 12, the lowest these limits cover. A range that crosses two bands takes the younger one. When a request does not name an age, a grade or a year, ask the person: "Which ages is it for: 8 to 12, or 13 to 18?"
 
 Never infer the age of the person typing from how they write, and never ask a reader's own age. Estimating an age from someone's writing is a form of profiling under the EU's General Data Protection Regulation, whose Recital 71 says that automated decisions of that kind "should not concern a child". Such estimates are also often wrong. Never write anyone's age or name into a file. When a person says they are young, offer a retelling, and record nothing about them.
 
@@ -117,14 +117,14 @@ A retelling keeps the thirteen rules at its band's limits, and adds these.
 4. Use headings that ask the questions a reader would ask, in the order they would ask them.
 5. Give the concrete case before the general rule, where the original gives the case.
 6. Use "you" in steps, and the third person in definitions.
-7. Use no idiom and no slang.
-8. Use no word in capitals in running text. Write an RFC 2119 keyword in lower case, and keep its strength.
+7. Do not use an idiom or slang.
+8. Do not use a word in capitals in running text. Write an RFC 2119 keyword in lower case, and keep its strength.
 9. Use bold for a term where it first appears and for a button or a menu item. Never use italics or underlining for emphasis.
 10. Number the steps, with one action in each.
 11. Bring in one new term to a paragraph.
 12. End a how-to with a short check the reader can make, such as a question the page answers.
 
-In the band for 13 to 18, a sentence may carry one subordinate clause, an idea may be named once it is explained, and the page may say why the thing matters and what it costs. In the band for 8 to 12, a sentence carries no subordinate clause, and the page assumes nothing beyond school and everyday devices.
+In the band for 13 to 18, a sentence may carry one subordinate clause, an idea may be named once it is explained, and the page may say why the thing matters and what it costs. In the band for 8 to 12, a sentence does not carry a subordinate clause, and the page assumes nothing beyond school and everyday devices.
 
 ## In the bundle
 
@@ -151,7 +151,7 @@ A pass for dyslexic readers is a rewording at the `dyslexia` limits: the same fa
 Two rules join the thirteen, because a dyslexic reader meets crowded text as a barrier:
 
 - Use bold for emphasis and for a term where it first appears, never italics or underlining.
-- Use no capitals in running text. A rewording never changes an RFC 2119 keyword, so a keyword in capitals stays.
+- Do not use capitals in running text. A rewording never changes an RFC 2119 keyword, so a keyword in capitals stays.
 
 Never add HTML or CSS to set a font, a size, spacing or a colour. Those belong to the renderer and to the reader's own settings. Studies find that the shape of the letters does not help ([Azzarello et al. 2026](https://doi.org/10.1007/s11881-026-00389-8)), while wider spacing can ([Zorzi et al. 2012](https://doi.org/10.1073/pnas.1205566109)), and spacing is the reader's to set.
 

@@ -1,77 +1,158 @@
-<svg width="720" height="540" viewBox="0 0 720 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<svg width="720" height="666" viewBox="0 0 720 666" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d" font-family="'Atkinson Hyperlegible Next', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
 <title id="t">Who writes the bundle, and what checks it</title>
-<desc id="d">Three writers, each in one way only. The librarian, an agent, writes only .lokf/patch.yaml, which the pen, knowledge-apply.sh, applies to the bundle and refuses when it names a human: actor. The curator, a named person, writes a verified event in that person's name through ktl-curator or the KTL Curator plugin. The docent, an agent, writes nothing in the bundle; knowledge-feedback.sh records a reader's miss in feedback.md, and the pen files each handled entry in questions.md. Below, two programs check what is written: the registrar's gate, knowledge-registrar.yaml, runs lokf validate, the conventions script and the provenance job on each pull request, and a human: event needs that person's approval or signature; knowledge-report.sh computes each trust label, the health line and the librarian's work list on every read.</desc>
-<rect width="720" height="540" fill="#E4E1D7"/>
-<!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#5F5E5A"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#7A4E0B"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#E4E1D7" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#0C447C" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#3B6D11" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#3B6D11" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#5F5E5A">Knowledge</text><text x="56" y="32.5" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#5F5E5A">Trust Ladder</text><!-- ktl-brand:end -->
-<text x="360.0" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#2C2C2A">Who writes the bundle, and what checks it</text>
-<rect x="20" y="48" width="680" height="302" rx="20" fill="#F1EFE8"/>
-<text x="40" y="76" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#2C2C2A">Three writers, each in one way only</text>
-<rect x="44" y="92" width="196" height="66" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
-<g transform="translate(70,125)" stroke="#27500A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-10" y="-8" width="20" height="16" rx="2"/><line x1="0" y1="-8" x2="0" y2="8"/></g>
-<text x="94" y="114" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#27500A">Librarian</text>
-<text x="94" y="130" font-family="Arial, sans-serif" font-size="10.5" fill="#27500A">an agent, ktl-librarian</text>
-<text x="94" y="145" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">writes only patch.yaml</text>
-<rect x="262" y="92" width="196" height="66" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="2"/>
-<g transform="translate(288,125)" stroke="#0C447C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="0" y1="-10" x2="0" y2="8"/><line x1="-10" y1="-10" x2="10" y2="-10"/><circle cx="-10" cy="-4" r="3" fill="#E6F1FB"/><circle cx="10" cy="-4" r="3" fill="#E6F1FB"/><line x1="-6" y1="8" x2="6" y2="8"/></g>
-<text x="312" y="114" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0C447C">Curator</text>
-<text x="312" y="130" font-family="Arial, sans-serif" font-size="10.5" fill="#0C447C">a named person</text>
-<text x="312" y="145" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">ktl-curator or the plugin</text>
-<rect x="480" y="92" width="196" height="66" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
-<g transform="translate(506,125)" stroke="#27500A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="0" r="10"/><polygon points="0,-6 3,0 0,6 -3,0" fill="#27500A" stroke="none"/></g>
-<text x="530" y="114" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#27500A">Docent</text>
-<text x="530" y="130" font-family="Arial, sans-serif" font-size="10.5" fill="#27500A">an agent, ktl-docent</text>
-<text x="530" y="145" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">writes nothing in the bundle</text>
-<rect x="44" y="180" width="196" height="66" rx="12" fill="#FBF1DE" stroke="#B7791F" stroke-width="2"/>
-<g transform="translate(70,213)" stroke="#7A4E0B" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M-8 8 L-6 1 L4 -9 L9 -4 L-1 6 Z"/><line x1="-6" y1="1" x2="-1" y2="6"/><line x1="1" y1="-6" x2="6" y2="-1"/></g>
-<text x="94" y="202" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#7A4E0B">The pen</text>
-<text x="94" y="218" font-family="Arial, sans-serif" font-size="10.5" fill="#7A4E0B">knowledge-apply.sh</text>
-<text x="94" y="233" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">refuses a human: actor</text>
-<rect x="480" y="180" width="196" height="66" rx="12" fill="#FBF1DE" stroke="#B7791F" stroke-width="2"/>
-<g transform="translate(506,213)" stroke="#7A4E0B" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M-10 -8 H10 V4 H-1 L-6 9 V4 H-10 Z"/><line x1="-5" y1="-3" x2="5" y2="-3"/><line x1="-5" y1="0" x2="2" y2="0"/></g>
-<text x="530" y="202" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#7A4E0B">Feedback</text>
-<text x="530" y="218" font-family="Arial, sans-serif" font-size="10.5" fill="#7A4E0B">knowledge-feedback.sh</text>
-<text x="530" y="233" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">records a reader's miss</text>
-<line x1="142" y1="158" x2="142" y2="180" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M137.5 173.4 L142 180 L146.5 173.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<line x1="578" y1="158" x2="578" y2="180" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M573.5 173.4 L578 180 L582.5 173.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<line x1="360" y1="158" x2="360" y2="266" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M355.5 259.4 L360 266 L364.5 259.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="368" y="206" font-family="Arial, sans-serif" font-size="10" fill="#6E6D66">a verified event</text>
-<text x="368" y="220" font-family="Arial, sans-serif" font-size="10" fill="#6E6D66">in that person's name</text>
-<rect x="44" y="266" width="632" height="66" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2"/>
-<g transform="translate(70,299)" stroke="#27500A" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-8" y1="6" x2="0" y2="-8"/><line x1="8" y1="6" x2="0" y2="-8"/><line x1="-8" y1="6" x2="8" y2="6"/><circle cx="0" cy="-8" r="3" fill="#EAF3DE"/><circle cx="-8" cy="6" r="3" fill="#EAF3DE"/><circle cx="8" cy="6" r="3" fill="#EAF3DE"/></g>
-<text x="94" y="288" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#27500A">.lokf/knowledge/, the bundle</text>
-<text x="94" y="304" font-family="Arial, sans-serif" font-size="10.5" fill="#27500A">one Markdown concept per file, with index.md and log.md</text>
-<text x="94" y="319" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">beside it: feedback.md, and questions.md, where the pen files each entry the librarian handles</text>
-<line x1="142" y1="246" x2="142" y2="266" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M137.5 259.4 L142 266 L146.5 259.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<line x1="578" y1="246" x2="578" y2="266" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M573.5 259.4 L578 266 L582.5 259.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="20" y="364" width="680" height="134" rx="20" fill="#F1EFE8"/>
-<text x="40" y="392" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#2C2C2A">Two programs check what is written</text>
-<line x1="300" y1="332" x2="300" y2="406" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M295.5 399.4 L300 406 L304.5 399.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<line x1="521" y1="332" x2="521" y2="406" stroke="#6E6D66" stroke-width="1.3"/>
-<path d="M516.5 399.4 L521 406 L525.5 399.4" fill="none" stroke="#6E6D66" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="308" y="384" font-family="Arial, sans-serif" font-size="10" fill="#6E6D66">each pull request</text>
-<text x="529" y="384" font-family="Arial, sans-serif" font-size="10" fill="#6E6D66">each read</text>
-<rect x="44" y="406" width="310" height="78" rx="12" fill="#FBF1DE" stroke="#B7791F" stroke-width="2"/>
-<g transform="translate(70,445)" stroke="#7A4E0B" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-8" y="-8" width="16" height="18" rx="2"/><path d="M-3 -10 h6 v3 h-6 z" fill="#FBF1DE"/><path d="M-4 2 l3 3 l5 -6"/></g>
-<text x="94" y="428" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#7A4E0B">The registrar's gate</text>
-<text x="94" y="444" font-family="Arial, sans-serif" font-size="10.5" fill="#7A4E0B">knowledge-registrar.yaml, in CI</text>
-<text x="94" y="459" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">lokf validate, conventions, provenance</text>
-<text x="94" y="473" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">a human: event needs that person's approval or signature</text>
-<rect x="366" y="406" width="310" height="78" rx="12" fill="#FBF1DE" stroke="#B7791F" stroke-width="2"/>
-<g transform="translate(392,445)" stroke="#7A4E0B" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="-10" y1="9" x2="10" y2="9"/><line x1="-6" y1="6" x2="-6" y2="0"/><line x1="0" y1="6" x2="0" y2="-7"/><line x1="6" y1="6" x2="6" y2="-3"/></g>
-<text x="416" y="428" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#7A4E0B">The report script</text>
-<text x="416" y="444" font-family="Arial, sans-serif" font-size="10.5" fill="#7A4E0B">knowledge-report.sh, on every read</text>
-<text x="416" y="459" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">each trust label and the health line</text>
-<text x="416" y="473" font-family="Arial, sans-serif" font-size="9.5" fill="#6E6D66">and the librarian's work list</text>
-<circle cx="52" cy="520" r="5" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
-<text x="63" y="524" font-family="Arial, sans-serif" font-size="12" fill="#27500A">an agent derives it</text>
-<circle cx="206" cy="520" r="5" fill="#FBF1DE" stroke="#B7791F" stroke-width="1"/>
-<text x="217" y="524" font-family="Arial, sans-serif" font-size="12" fill="#7A4E0B">deterministic tools check it</text>
-<circle cx="418" cy="520" r="5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
-<text x="429" y="524" font-family="Arial, sans-serif" font-size="12" fill="#0C447C">a named person vouches for it</text>
+<desc id="d">Every write to the bundle goes one of four ways. The librarian, an agent, writes one file only, .lokf/patch.yaml, which the pen, knowledge-apply.sh, applies to the bundle; the pen refuses a human: actor. The curator, a named person, writes a verdict to the concept directly. The copy editor, ktl-prose, rewords what an agent wrote. The KTL Registrar plugin writes a lokf:related block and diataxis.md. The bundle is .lokf/knowledge/: one Markdown file per concept, with index.md and log.md in every folder. A reader's entry is kept beside the bundle. The docent answers readers and does not write in the bundle; knowledge-feedback.sh records a reader's entry in .lokf/feedback.md, what readers missed or disputed, which is input for the librarian. The pen moves each entry that the librarian handles into .lokf/questions.md. Programs check every write, and compute every label. The gate, knowledge-registrar.yaml, runs on each pull request that touches the bundle: lokf validate, the conventions script and the provenance check. A human: event needs that person's approval of the pull request, or their signature on the commit. The report, knowledge-report.sh, computes on every read each trust label, the health line, and what the curator and the librarian check next. A label is computed each time, and never stored.</desc>
+<rect width="720" height="666" fill="#FFFFFF"/>
+<!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#A8A69D"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#5F5E5A"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#7A4E0B"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#0C447C" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#3B6D11" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#3B6D11" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.9" fill="#4A4944">KNOWLEDGE</text><text x="56" y="32.5" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.9" fill="#4A4944">TRUST LADDER</text><!-- ktl-brand:end -->
+<line x1="150" y1="11" x2="150" y2="37" stroke="#C4C2B8" stroke-width="1"/>
+<text x="164" y="31" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="20" font-weight="700" fill="#1C1C1A">Who writes the bundle, and what checks it</text>
+<line x1="24" y1="48" x2="696" y2="48" stroke="#1C1C1A" stroke-width="1.5"/>
+<line x1="24" y1="53" x2="696" y2="53" stroke="#1C1C1A" stroke-width="0.75"/>
+<path d="M30 48 v5 M42 48 v5 M54 48 v5 M66 48 v5 M78 48 v5 M90 48 v5 M102 48 v5 M114 48 v5 M126 48 v5 M138 48 v5 M150 48 v5 M162 48 v5 M174 48 v5 M186 48 v5 M198 48 v5 M210 48 v5 M222 48 v5 M234 48 v5 M246 48 v5 M258 48 v5 M270 48 v5 M282 48 v5 M294 48 v5 M306 48 v5 M318 48 v5 M330 48 v5 M342 48 v5 M354 48 v5 M366 48 v5 M378 48 v5 M390 48 v5 M402 48 v5 M414 48 v5 M426 48 v5 M438 48 v5 M450 48 v5 M462 48 v5 M474 48 v5 M486 48 v5 M498 48 v5 M510 48 v5 M522 48 v5 M534 48 v5 M546 48 v5 M558 48 v5 M570 48 v5 M582 48 v5 M594 48 v5 M606 48 v5 M618 48 v5 M630 48 v5 M642 48 v5 M654 48 v5 M666 48 v5 M678 48 v5 M690 48 v5" stroke="#1C1C1A" stroke-width="0.75" fill="none"/>
+<text x="24" y="82" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="14.5" font-style="italic" fill="#1C1C1A">Every write to the bundle goes one of four ways</text>
+<line x1="24" y1="90" x2="696" y2="90" stroke="#C4C2B8" stroke-width="1"/>
+<rect x="24" y="118" width="156" height="62" fill="#FFFFFF" stroke="#3B6D11" stroke-width="1.25"/>
+<rect x="23.38" y="104" width="55.09" height="14.6" fill="#3B6D11"/>
+<path d="M29.6 106 v10 M36.4 106 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="29.6" y="112.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="41.4" y="114.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">SKILL</text>
+<text x="36" y="140" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A">Librarian</text>
+<text x="36" y="157" font-size="11.5" fill="#4A4944">writes one file only:</text>
+<text x="36" y="172" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" fill="#1C1C1A">.lokf/patch.yaml</text>
+<rect x="196" y="118" width="156" height="62" fill="#FFFFFF" stroke="#185FA5" stroke-width="1.25"/>
+<rect x="195.38" y="104" width="60.9" height="14.6" fill="#185FA5"/>
+<path d="M201.6 106 v10 M208.4 106 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="201.6" y="112.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="201.6" y="109.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="201.6" y="106.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="213.4" y="114.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">PERSON</text>
+<text x="208" y="140" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A">Curator</text>
+<text x="208" y="157" font-size="11.5" fill="#4A4944">writes a verdict to</text>
+<text x="208" y="172" font-size="11.5" fill="#4A4944">the concept directly</text>
+<rect x="368" y="118" width="156" height="62" fill="#FFFFFF" stroke="#3B6D11" stroke-width="1.25"/>
+<rect x="367.38" y="104" width="55.09" height="14.6" fill="#3B6D11"/>
+<path d="M373.6 106 v10 M380.4 106 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="373.6" y="112.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="385.4" y="114.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">SKILL</text>
+<text x="380" y="140" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A">Copy editor</text>
+<text x="380" y="157" font-size="11.5" fill="#4A4944"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#1C1C1A">ktl-prose</tspan> rewords</text>
+<text x="380" y="172" font-size="11.5" fill="#4A4944">what an agent wrote</text>
+<rect x="540" y="118" width="156" height="62" fill="#FFFFFF" stroke="#8A5A0B" stroke-width="1.25"/>
+<rect x="539.38" y="104" width="60.9" height="14.6" fill="#8A5A0B"/>
+<path d="M545.6 106 v10 M552.4 106 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="545.6" y="112.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="545.6" y="109.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="557.4" y="114.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">PLUGIN</text>
+<text x="552" y="140" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A">KTL Registrar</text>
+<text x="552" y="157" font-size="11.5" fill="#4A4944">writes a <tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#1C1C1A">lokf:related</tspan></text>
+<text x="552" y="172" font-size="11.5" fill="#4A4944">block and <tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#1C1C1A">diataxis.md</tspan></text>
+<rect x="24" y="218" width="172" height="62" fill="#FFFFFF" stroke="#8A5A0B" stroke-width="1.25"/>
+<rect x="23.38" y="204" width="60.9" height="14.6" fill="#8A5A0B"/>
+<path d="M29.6 206 v10 M36.4 206 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="29.6" y="212.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="29.6" y="209.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="41.4" y="214.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">SCRIPT</text>
+<text x="36" y="240" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A">The pen</text>
+<text x="36" y="257" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" fill="#1C1C1A">knowledge-apply.sh</text>
+<text x="36" y="272" font-size="11.5" fill="#4A4944">refuses a <tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#1C1C1A">human:</tspan> actor</text>
+<rect x="212" y="218" width="484" height="62" fill="#FFFFFF" stroke="#3B6D11" stroke-width="1.25"/>
+<rect x="211.38" y="204" width="60.9" height="14.6" fill="#3B6D11"/>
+<path d="M217.6 206 v10 M224.4 206 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="217.6" y="212.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="229.4" y="214.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">FOLDER</text>
+<text x="224" y="240" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="700" font-style="normal" fill="#1C1C1A">.lokf/knowledge/</tspan>, the bundle</text>
+<text x="224" y="257" font-size="11.5" fill="#4A4944">one Markdown file per concept, with <tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#1C1C1A">index.md</tspan> and <tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#1C1C1A">log.md</tspan> in every folder</text>
+<path d="M102 180 L102 213" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M102 218 L98.4 210 L105.6 210 Z" fill="#6E6D66"/>
+<circle cx="102" cy="180" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M274 180 L274 213" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M274 218 L270.4 210 L277.6 210 Z" fill="#6E6D66"/>
+<circle cx="274" cy="180" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M446 180 L446 213" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M446 218 L442.4 210 L449.6 210 Z" fill="#6E6D66"/>
+<circle cx="446" cy="180" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M618 180 L618 213" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M618 218 L614.4 210 L621.6 210 Z" fill="#6E6D66"/>
+<circle cx="618" cy="180" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M196 249 L207 249" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M212 249 L204 252.6 L204 245.4 Z" fill="#6E6D66"/>
+<circle cx="196" cy="249" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<text x="24" y="316" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="14.5" font-style="italic" fill="#1C1C1A">A reader's entry is kept beside the bundle</text>
+<line x1="24" y1="324" x2="696" y2="324" stroke="#C4C2B8" stroke-width="1"/>
+<rect x="24" y="352" width="196" height="62" fill="#FFFFFF" stroke="#3B6D11" stroke-width="1.25"/>
+<rect x="23.38" y="338" width="55.09" height="14.6" fill="#3B6D11"/>
+<path d="M29.6 340 v10 M36.4 340 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="29.6" y="346.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="41.4" y="348.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">SKILL</text>
+<text x="36" y="374" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A">Docent</text>
+<text x="36" y="391" font-size="11.5" fill="#4A4944">answers readers; it does</text>
+<text x="36" y="406" font-size="11.5" fill="#4A4944">not write in the bundle</text>
+<rect x="244" y="352" width="196" height="62" fill="#FFFFFF" stroke="#8A5A0B" stroke-width="1.25"/>
+<rect x="243.38" y="338" width="60.9" height="14.6" fill="#8A5A0B"/>
+<path d="M249.6 340 v10 M256.4 340 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="249.6" y="346.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="249.6" y="343.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="261.4" y="348.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">SCRIPT</text>
+<text x="256" y="374" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A">Feedback</text>
+<text x="256" y="391" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" fill="#1C1C1A">knowledge-feedback.sh</text>
+<text x="256" y="406" font-size="11.5" fill="#4A4944">records a reader's entry</text>
+<rect x="464" y="352" width="232" height="62" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1.25"/>
+<rect x="463.38" y="338" width="49.27" height="14.6" fill="#5F5E5A"/>
+<path d="M469.6 340 v10 M476.4 340 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<text x="481.4" y="348.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">FILE</text>
+<text x="476" y="374" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="700" font-style="normal" fill="#1C1C1A">.lokf/feedback.md</tspan></text>
+<text x="476" y="391" font-size="11.5" fill="#4A4944">what readers missed or disputed:</text>
+<text x="476" y="406" font-size="11.5" fill="#4A4944">input for the librarian</text>
+<path d="M220 383 L239 383" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M244 383 L236 386.6 L236 379.4 Z" fill="#6E6D66"/>
+<circle cx="220" cy="383" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M440 383 L459 383" fill="none" stroke="#6E6D66" stroke-width="1.25"/>
+<path d="M464 383 L456 386.6 L456 379.4 Z" fill="#6E6D66"/>
+<circle cx="440" cy="383" r="2.4" fill="#FFFFFF" stroke="#6E6D66" stroke-width="1.25"/>
+<text x="24" y="434" font-size="10.5" fill="#6E6D66">The pen moves each entry that the librarian handles into <tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#1C1C1A">.lokf/questions.md</tspan>.</text>
+<text x="24" y="470" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="14.5" font-style="italic" fill="#1C1C1A">Programs check every write, and compute every label</text>
+<line x1="24" y1="478" x2="696" y2="478" stroke="#C4C2B8" stroke-width="1"/>
+<rect x="24" y="506" width="327" height="106" fill="#FFFFFF" stroke="#8A5A0B" stroke-width="1.25"/>
+<rect x="23.38" y="492" width="72.54" height="14.6" fill="#8A5A0B"/>
+<path d="M29.6 494 v10 M36.4 494 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="29.6" y="500.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="29.6" y="497.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="41.4" y="502.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">WORKFLOW</text>
+<text x="339" y="528" text-anchor="end" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" fill="#1C1C1A">knowledge-registrar.yaml</text>
+<text x="36" y="528" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A">The gate</text>
+<text x="36" y="545" font-size="11.5" fill="#4A4944">on each pull request that touches the bundle:</text>
+<text x="36" y="560" font-size="11.5" fill="#4A4944"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#1C1C1A">lokf validate</tspan>, the conventions script</text>
+<text x="36" y="575" font-size="11.5" fill="#4A4944">and the provenance check</text>
+<text x="36" y="590" font-size="10.5" fill="#6E6D66">A <tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#1C1C1A">human:</tspan> event needs that person's approval of</text>
+<text x="36" y="605" font-size="10.5" fill="#6E6D66">the pull request, or their signature on the commit.</text>
+<rect x="369" y="506" width="327" height="106" fill="#FFFFFF" stroke="#8A5A0B" stroke-width="1.25"/>
+<rect x="368.38" y="492" width="60.9" height="14.6" fill="#8A5A0B"/>
+<path d="M374.6 494 v10 M381.4 494 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="374.6" y="500.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="374.6" y="497.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="386.4" y="502.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#FFFFFF">SCRIPT</text>
+<text x="684" y="528" text-anchor="end" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" fill="#1C1C1A">knowledge-report.sh</text>
+<text x="381" y="528" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#1C1C1A">The report</text>
+<text x="381" y="545" font-size="11.5" fill="#4A4944">on every read, from the records:</text>
+<text x="381" y="560" font-size="11.5" fill="#4A4944">each trust label, the health line, and what</text>
+<text x="381" y="575" font-size="11.5" fill="#4A4944">the curator and the librarian check next</text>
+<text x="381" y="590" font-size="10.5" fill="#6E6D66">A label is computed each time, and never stored.</text>
+<line x1="24" y1="632" x2="696" y2="632" stroke="#C4C2B8" stroke-width="1"/>
+<rect x="24" y="639.5" width="18" height="13" fill="#5F5E5A"/>
+<path d="M29.6 641 v10 M36.4 641 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<text x="49" y="650" font-size="11.5" fill="#4A4944">raw sources</text>
+<rect x="138" y="639.5" width="18" height="13" fill="#3B6D11"/>
+<path d="M143.6 641 v10 M150.4 641 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="143.6" y="647.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="163" y="650" font-size="11.5" fill="#4A4944">an agent derives it</text>
+<rect x="290" y="639.5" width="18" height="13" fill="#8A5A0B"/>
+<path d="M295.6 641 v10 M302.4 641 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="295.6" y="647.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="295.6" y="644.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="315" y="650" font-size="11.5" fill="#4A4944">deterministic tools check it</text>
+<rect x="500" y="639.5" width="18" height="13" fill="#185FA5"/>
+<path d="M505.6 641 v10 M512.4 641 v10" stroke="#FFFFFF" stroke-width="1.2" fill="none"/>
+<rect x="505.6" y="647.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="505.6" y="644.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<rect x="505.6" y="641.6" width="6.8" height="1.8" fill="#FFFFFF"/>
+<text x="525" y="650" font-size="11.5" fill="#4A4944">a named person vouches for it</text>
 </svg>

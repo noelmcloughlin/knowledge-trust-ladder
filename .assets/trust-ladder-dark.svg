@@ -1,48 +1,105 @@
-<svg width="720" height="388" viewBox="0 0 720 388" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<svg width="720" height="592" viewBox="0 0 720 592" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d" font-family="'Atkinson Hyperlegible Next', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
 <title id="t">Trust stays visible</title>
-<desc id="d">Three rungs a concept climbs, left to right: still a draft, written by the librarian and unchecked; checked by automation only, where a scheduled refresh re-read the source, found it still matches and appended a verified event with a process: actor; confirmed by a person, where a named human read the source and a verified event was appended. A dashed return path shows that an edit after a person's confirmation drops a concept a rung: it reads as edited since a person last confirmed it and no longer counts as confirmed. A question asked after the confirmation, or a send-back, only reopens it: the rung stays and a flag says what waits, and a passed review date is a flag that drops nothing. Chips list the other labels: retired, edited since confirmed, past its review date, how many concepts rely on it, retired and replaced by its successor, and a reader disputed this. A counter, Confirmed 12 of 40, is the number to watch; it is computed from frontmatter on every read and meant to rise slowly.</desc>
-<rect width="720" height="388" fill="#1C1C1A"/>
-<!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#6E6D66"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#6E6D66"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#ABA9A0"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#E4BD6E"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#1C1C1A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#93C0F2" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#23301B" stroke="#6FA33F" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#6FA33F" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#6FA33F" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#ABA9A0">Knowledge</text><text x="56" y="32.5" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#ABA9A0">Trust Ladder</text><!-- ktl-brand:end -->
-<text x="360.0" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#E6E4DC">Trust stays visible</text>
-<rect x="20" y="48" width="680" height="242" rx="20" fill="#262623"/>
-<text x="40" y="76" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#E6E4DC">Every concept says how far it has been checked</text>
-<rect x="44" y="92" width="176" height="96" rx="12" fill="#30302C" stroke="#4A4944" stroke-width="1"/>
-<g transform="translate(132,116)" stroke="#ABA9A0" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-9" y="-11" width="18" height="22" rx="2"/><line x1="-5" y1="-3" x2="5" y2="-3"/><line x1="-5" y1="2" x2="5" y2="2"/><line x1="-5" y1="7" x2="2" y2="7"/></g>
-<text x="132" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#E6E4DC">Still a draft</text>
-<text x="132" y="161" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#ABA9A0">the librarian wrote it;</text>
-<text x="132" y="176" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">nobody has checked this yet</text>
-<rect x="272" y="92" width="176" height="96" rx="12" fill="#33290F" stroke="#C99A3E" stroke-width="2"/>
-<g transform="translate(360,116)" stroke="#E4BD6E" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-8" y="-8" width="16" height="18" rx="2"/><path d="M-3 -10 h6 v3 h-6 z" fill="#33290F"/><path d="M-4 2 l3 3 l5 -6"/></g>
-<text x="360" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#E4BD6E">Checked by automation</text>
-<text x="360" y="161" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#E4BD6E">a refresh re-read the source</text>
-<text x="360" y="176" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">verified: process:&lt;id&gt; appended</text>
-<rect x="500" y="92" width="176" height="96" rx="12" fill="#142639" stroke="#5A9BE0" stroke-width="2"/>
-<g transform="translate(588,116)" stroke="#93C0F2" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="-6" r="4"/><path d="M-8 9 a8 8 0 0 1 16 0"/></g>
-<text x="588" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#93C0F2">Confirmed by a person</text>
-<text x="588" y="161" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#93C0F2">a named person read the source</text>
-<text x="588" y="176" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#8F8E86">verified: human:&lt;id&gt; appended</text>
-<line x1="226" y1="140" x2="266" y2="140" stroke="#8F8E86" stroke-width="1.3"/><path d="M259.4 144.5 L266 140 L259.4 135.5" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><text x="246.0" y="132.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#8F8E86">refresh</text>
-<line x1="454" y1="140" x2="494" y2="140" stroke="#8F8E86" stroke-width="1.3"/><path d="M487.4 144.5 L494 140 L487.4 135.5" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><text x="474.0" y="132.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#8F8E86">person</text>
-<path d="M588 188 v18 h-456 v-18" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-dasharray="3 3"/>
-<path d="M126 194 L132 187 L138 194" fill="none" stroke="#8F8E86" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="360" y="202" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#8F8E86">edited since confirmed drops a rung · a question reopens it: the rung stays, a flag says what waits</text>
-<text x="40" y="232" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#ABA9A0">Also shown:</text>
-<rect x="110" y="218" width="60" height="20" rx="10.0" fill="#30302C" stroke="#4A4944" stroke-width="1"/><text x="140.0" y="232.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#ABA9A0">retired</text>
-<rect x="178" y="218" width="132" height="20" rx="10.0" fill="#30302C" stroke="#4A4944" stroke-width="1"/><text x="244.0" y="232.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#ABA9A0">edited since confirmed</text>
-<rect x="318" y="218" width="118" height="20" rx="10.0" fill="#30302C" stroke="#4A4944" stroke-width="1"/><text x="377.0" y="232.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#ABA9A0">past its review date</text>
-<rect x="444" y="218" width="160" height="20" rx="10.0" fill="#30302C" stroke="#4A4944" stroke-width="1"/><text x="524.0" y="232.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#ABA9A0">n other concepts rely on this</text>
-<rect x="110" y="246" width="118" height="20" rx="10.0" fill="#30302C" stroke="#4A4944" stroke-width="1"/><text x="169.0" y="260.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#ABA9A0">retired, replaced by</text>
-<rect x="236" y="246" width="130" height="20" rx="10.0" fill="#30302C" stroke="#4A4944" stroke-width="1"/><text x="301.0" y="260.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#ABA9A0">a reader disputed this</text>
-<rect x="20" y="302" width="680" height="46" rx="12" fill="#30302C" stroke="#4A4944" stroke-width="1"/>
-<text x="40" y="321" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#E6E4DC">The number to watch</text>
-<text x="40" y="337" font-family="Arial, sans-serif" font-size="10.5" fill="#8F8E86">computed from the frontmatter on every read, never stored - so it cannot drift</text>
-<rect x="418" y="314" width="118" height="22" rx="11.0" fill="#142639" stroke="#5A9BE0" stroke-width="1"/><text x="477.0" y="329.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#93C0F2">Confirmed 12 / 40</text>
-<text x="548" y="329" font-family="Arial, sans-serif" font-size="11" fill="#ABA9A0">meant to rise slowly,</text>
-<text x="548" y="341" font-family="Arial, sans-serif" font-size="11" fill="#ABA9A0">a few concepts a sitting</text>
-<circle cx="52" cy="372" r="5" fill="#30302C" stroke="#ABA9A0" stroke-width="1"/>
-<text x="63" y="376" font-family="Arial, sans-serif" font-size="12" fill="#ABA9A0">raw / unprocessed</text>
-<circle cx="193" cy="372" r="5" fill="#33290F" stroke="#C99A3E" stroke-width="1"/>
-<text x="204" y="376" font-family="Arial, sans-serif" font-size="12" fill="#E4BD6E">deterministic tools check it</text>
-<circle cx="405" cy="372" r="5" fill="#142639" stroke="#5A9BE0" stroke-width="1"/>
-<text x="416" y="376" font-family="Arial, sans-serif" font-size="12" fill="#93C0F2">a named person vouches for it</text>
+<desc id="d">A concept that is not retired stands on one of three rungs, drawn as a ladder. The lowest rung, which OKF calls unverified: nobody has checked this yet, and verified has no event. The middle rung, machine-confirmed: checked by automation only, where verified holds events, none by a human: actor. The top rung, human-reviewed: confirmed by a person, where verified holds an event by a human: actor. Four rules move a concept. One: an event raises it, a check by automation or a person's confirmation, from either lower rung. Two: an edit drops it, and the concept reads edited since a person last confirmed it until a person confirms it again. Three: everything else flags it, so a label is added and the rung stays. Four: a retirement takes it off, and a retired concept does not stand on a rung or carry any other label; it reads retired, replaced by its successor. The number to watch is confirmed by a person, 12 of 40 in the example, computed on every read and never stored. The labels that flag a concept beside its rung: still a draft; reopened; past its review date; due soon; a source moved since the confirmation; a reader disputed this; N other concepts rely on this; doesn't fit the known vocabulary; derived from a concept edited since its confirmation; not tied to a signed commit.</desc>
+<rect width="720" height="592" fill="#16171A"/>
+<!-- ktl-brand:start --><g transform="translate(20,7) scale(0.46875)"><rect x="17.5" y="12" width="4.5" height="38" rx="2.25" fill="#6E6D66"/><rect x="42" y="12" width="4.5" height="38" rx="2.25" fill="#6E6D66"/><rect x="17.5" y="38" width="29" height="5" rx="2.5" fill="#ABA9A0"/><rect x="17.5" y="28.5" width="29" height="5" rx="2.5" fill="#E4BD6E"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#16171A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16 L29.5 23.5 L49.5 6.5" fill="none" stroke="#93C0F2" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 49.5 C26 45 15 45 6.5 47.5 v9.5 C15 54.5 26 54.5 32 59 C38 54.5 49 54.5 57.5 57 v-9.5 C49 45 38 45 32 49.5 z" fill="#23301B" stroke="#6FA33F" stroke-width="1.7" stroke-linejoin="round"/><line x1="32" y1="49.5" x2="32" y2="59" stroke="#6FA33F" stroke-width="1.7"/><path d="M11 50.6 C16 49.6 22 49.8 27 51.6 M37 51.6 C42 49.8 48 49.6 53 50.6" fill="none" stroke="#6FA33F" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g><text x="56" y="20" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.9" fill="#C2C0B7">KNOWLEDGE</text><text x="56" y="32.5" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.9" fill="#C2C0B7">TRUST LADDER</text><!-- ktl-brand:end -->
+<line x1="150" y1="11" x2="150" y2="37" stroke="#3F3F3B" stroke-width="1"/>
+<text x="164" y="31" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="20" font-weight="700" fill="#ECEAE3">Trust stays visible</text>
+<line x1="24" y1="48" x2="696" y2="48" stroke="#ECEAE3" stroke-width="1.5"/>
+<line x1="24" y1="53" x2="696" y2="53" stroke="#ECEAE3" stroke-width="0.75"/>
+<path d="M30 48 v5 M42 48 v5 M54 48 v5 M66 48 v5 M78 48 v5 M90 48 v5 M102 48 v5 M114 48 v5 M126 48 v5 M138 48 v5 M150 48 v5 M162 48 v5 M174 48 v5 M186 48 v5 M198 48 v5 M210 48 v5 M222 48 v5 M234 48 v5 M246 48 v5 M258 48 v5 M270 48 v5 M282 48 v5 M294 48 v5 M306 48 v5 M318 48 v5 M330 48 v5 M342 48 v5 M354 48 v5 M366 48 v5 M378 48 v5 M390 48 v5 M402 48 v5 M414 48 v5 M426 48 v5 M438 48 v5 M450 48 v5 M462 48 v5 M474 48 v5 M486 48 v5 M498 48 v5 M510 48 v5 M522 48 v5 M534 48 v5 M546 48 v5 M558 48 v5 M570 48 v5 M582 48 v5 M594 48 v5 M606 48 v5 M618 48 v5 M630 48 v5 M642 48 v5 M654 48 v5 M666 48 v5 M678 48 v5 M690 48 v5" stroke="#ECEAE3" stroke-width="0.75" fill="none"/>
+<text x="24" y="82" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="14.5" font-style="italic" fill="#ECEAE3">A concept that is not retired stands on one of three rungs</text>
+<line x1="24" y1="90" x2="696" y2="90" stroke="#3F3F3B" stroke-width="1"/>
+<rect x="50" y="104" width="5" height="344" fill="#6E6D66"/>
+<rect x="366" y="104" width="5" height="344" fill="#6E6D66"/>
+<rect x="40" y="128" width="340" height="58" fill="#16171A" stroke="#93C0F2" stroke-width="1.25"/>
+<rect x="39.38" y="114" width="107.44" height="14.6" fill="#93C0F2"/>
+<path d="M45.6 116 v10 M52.4 116 v10" stroke="#16171A" stroke-width="1.2" fill="none"/>
+<rect x="45.6" y="122.6" width="6.8" height="1.8" fill="#16171A"/>
+<rect x="45.6" y="119.6" width="6.8" height="1.8" fill="#16171A"/>
+<rect x="45.6" y="116.6" width="6.8" height="1.8" fill="#16171A"/>
+<text x="57.4" y="124.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#16171A">HUMAN-REVIEWED</text>
+<text x="52" y="150" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#ECEAE3">Confirmed by a person</text>
+<text x="52" y="167" font-size="11.5" fill="#C2C0B7"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#ECEAE3">verified</tspan> holds an event by a <tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#ECEAE3">human:</tspan> actor</text>
+<rect x="40" y="262" width="340" height="58" fill="#16171A" stroke="#E4BD6E" stroke-width="1.25"/>
+<rect x="39.38" y="248" width="124.89" height="14.6" fill="#E4BD6E"/>
+<path d="M45.6 250 v10 M52.4 250 v10" stroke="#16171A" stroke-width="1.2" fill="none"/>
+<rect x="45.6" y="256.6" width="6.8" height="1.8" fill="#16171A"/>
+<rect x="45.6" y="253.6" width="6.8" height="1.8" fill="#16171A"/>
+<text x="57.4" y="258.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#16171A">MACHINE-CONFIRMED</text>
+<text x="52" y="284" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#ECEAE3">Checked by automation only</text>
+<text x="52" y="301" font-size="11.5" fill="#C2C0B7"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#ECEAE3">verified</tspan> holds events, none by a <tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#ECEAE3">human:</tspan> actor</text>
+<rect x="40" y="364" width="340" height="58" fill="#16171A" stroke="#ABA9A0" stroke-width="1.25"/>
+<rect x="39.38" y="350" width="84.17" height="14.6" fill="#ABA9A0"/>
+<path d="M45.6 352 v10 M52.4 352 v10" stroke="#16171A" stroke-width="1.2" fill="none"/>
+<rect x="45.6" y="358.6" width="6.8" height="1.8" fill="#16171A"/>
+<text x="57.4" y="360.1" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="0.7" fill="#16171A">UNVERIFIED</text>
+<text x="52" y="386" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="15" font-weight="700" fill="#ECEAE3">Nobody has checked this yet</text>
+<text x="52" y="403" font-size="11.5" fill="#C2C0B7"><tspan font-family="ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="10.5" font-weight="400" font-style="normal" fill="#ECEAE3">verified</tspan> has no event</text>
+<path d="M346 364 L346 325" fill="none" stroke="#9A988F" stroke-width="1.25"/>
+<path d="M346 320 L349.6 328 L342.4 328 Z" fill="#9A988F"/>
+<circle cx="346" cy="364" r="2.4" fill="#16171A" stroke="#9A988F" stroke-width="1.25"/>
+<circle cx="346" cy="343" r="8.5" fill="#16171A" stroke="#ECEAE3" stroke-width="1"/>
+<text x="346" y="347" text-anchor="middle" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="11.5" font-weight="700" fill="#ECEAE3">1</text>
+<path d="M346 262 L346 191" fill="none" stroke="#9A988F" stroke-width="1.25"/>
+<path d="M346 186 L349.6 194 L342.4 194 Z" fill="#9A988F"/>
+<circle cx="346" cy="262" r="2.4" fill="#16171A" stroke="#9A988F" stroke-width="1.25"/>
+<circle cx="346" cy="236" r="8.5" fill="#16171A" stroke="#ECEAE3" stroke-width="1"/>
+<text x="346" y="240" text-anchor="middle" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="11.5" font-weight="700" fill="#ECEAE3">1</text>
+<path d="M150 186 L150 207" fill="none" stroke="#9A988F" stroke-width="1.25"/>
+<path d="M150 212 L146.4 204 L153.6 204 Z" fill="#9A988F"/>
+<circle cx="150" cy="186" r="2.4" fill="#16171A" stroke="#9A988F" stroke-width="1.25"/>
+<circle cx="171" cy="199" r="8.5" fill="#16171A" stroke="#ECEAE3" stroke-width="1"/>
+<text x="171" y="203" text-anchor="middle" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="11.5" font-weight="700" fill="#ECEAE3">2</text>
+<rect x="62" y="212" width="264.53" height="19" fill="#16171A" stroke="#9A988F" stroke-width="1"/>
+<text x="194.26" y="225.2" text-anchor="middle" font-size="11" fill="#ECEAE3">edited since a person last confirmed it</text>
+<circle cx="418" cy="123.5" r="8.5" fill="#16171A" stroke="#ECEAE3" stroke-width="1"/>
+<text x="418" y="127.5" text-anchor="middle" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="11.5" font-weight="700" fill="#ECEAE3">1</text>
+<text x="434" y="128" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="700" fill="#ECEAE3">An event raises it</text>
+<text x="434" y="144" font-size="11.5" fill="#C2C0B7">a check by automation, or a person's</text>
+<text x="434" y="159" font-size="11.5" fill="#C2C0B7">confirmation, from either lower rung</text>
+<circle cx="418" cy="182.5" r="8.5" fill="#16171A" stroke="#ECEAE3" stroke-width="1"/>
+<text x="418" y="186.5" text-anchor="middle" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="11.5" font-weight="700" fill="#ECEAE3">2</text>
+<text x="434" y="187" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="700" fill="#ECEAE3">An edit drops it</text>
+<text x="434" y="203" font-size="11.5" fill="#C2C0B7">until a person confirms it again</text>
+<circle cx="418" cy="226.5" r="8.5" fill="#16171A" stroke="#ECEAE3" stroke-width="1"/>
+<text x="418" y="230.5" text-anchor="middle" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="11.5" font-weight="700" fill="#ECEAE3">3</text>
+<text x="434" y="231" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="700" fill="#ECEAE3">Everything else flags it</text>
+<text x="434" y="247" font-size="11.5" fill="#C2C0B7">a label is added, and the rung stays</text>
+<circle cx="418" cy="270.5" r="8.5" fill="#16171A" stroke="#ECEAE3" stroke-width="1"/>
+<text x="418" y="274.5" text-anchor="middle" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="11.5" font-weight="700" fill="#ECEAE3">4</text>
+<text x="434" y="275" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="700" fill="#ECEAE3">A retirement takes it off</text>
+<text x="434" y="291" font-size="11.5" fill="#C2C0B7">a retired concept does not stand on a</text>
+<text x="434" y="306" font-size="11.5" fill="#C2C0B7">rung or carry any other label</text>
+<rect x="434" y="314" width="189.29" height="19" fill="#16171A" stroke="#9A988F" stroke-width="1"/>
+<text x="528.64" y="327.2" text-anchor="middle" font-size="11" fill="#ECEAE3">retired, replaced by &lt;path&gt;</text>
+<text x="410" y="400" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="700" fill="#ECEAE3">The number to watch</text>
+<rect x="410" y="410" width="214.37" height="19" fill="#16171A" stroke="#93C0F2" stroke-width="1"/>
+<rect x="410" y="410" width="3.5" height="19" fill="#93C0F2"/>
+<text x="518.68" y="423.2" text-anchor="middle" font-size="11" fill="#ECEAE3">Confirmed by a person: 12 of 40</text>
+<text x="410" y="446" font-size="10.5" fill="#9A988F">computed on every read, and never stored</text>
+<circle cx="33" cy="477.5" r="8.5" fill="#16171A" stroke="#ECEAE3" stroke-width="1"/>
+<text x="33" y="481.5" text-anchor="middle" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="11.5" font-weight="700" fill="#ECEAE3">3</text>
+<text x="48" y="482" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="14.5" font-style="italic" fill="#ECEAE3">The labels that flag a concept, beside its rung</text>
+<line x1="48" y1="490" x2="696" y2="490" stroke="#3F3F3B" stroke-width="1"/>
+<rect x="24" y="502" width="101.51" height="19" fill="#16171A" stroke="#9A988F" stroke-width="1"/>
+<text x="74.75" y="515.2" text-anchor="middle" font-size="11" fill="#ECEAE3">still a draft</text>
+<rect x="133.51" y="502" width="70.16" height="19" fill="#16171A" stroke="#9A988F" stroke-width="1"/>
+<text x="168.59" y="515.2" text-anchor="middle" font-size="11" fill="#ECEAE3">reopened</text>
+<rect x="211.67" y="502" width="145.4" height="19" fill="#16171A" stroke="#9A988F" stroke-width="1"/>
+<text x="284.37" y="515.2" text-anchor="middle" font-size="11" fill="#ECEAE3">past its review date</text>
+<rect x="365.07" y="502" width="70.16" height="19" fill="#16171A" stroke="#9A988F" stroke-width="1"/>
+<text x="400.15" y="515.2" text-anchor="middle" font-size="11" fill="#ECEAE3">due soon</text>
+<rect x="443.23" y="502" width="251.99" height="19" fill="#16171A" stroke="#9A988F" stroke-width="1"/>
+<text x="569.22" y="515.2" text-anchor="middle" font-size="11" fill="#ECEAE3">a source moved since the confirmation</text>
+<rect x="24" y="528" width="157.94" height="19" fill="#16171A" stroke="#9A988F" stroke-width="1"/>
+<text x="102.97" y="541.2" text-anchor="middle" font-size="11" fill="#ECEAE3">a reader disputed this</text>
+<rect x="189.94" y="528" width="201.83" height="19" fill="#16171A" stroke="#9A988F" stroke-width="1"/>
+<text x="290.86" y="541.2" text-anchor="middle" font-size="11" fill="#ECEAE3">N other concepts rely on this</text>
+<rect x="399.77" y="528" width="220.64" height="19" fill="#16171A" stroke="#9A988F" stroke-width="1"/>
+<text x="510.09" y="541.2" text-anchor="middle" font-size="11" fill="#ECEAE3">doesn't fit the known vocabulary</text>
+<rect x="24" y="554" width="346.04" height="19" fill="#16171A" stroke="#9A988F" stroke-width="1"/>
+<text x="197.02" y="567.2" text-anchor="middle" font-size="11" fill="#ECEAE3">derived from a concept edited since its confirmation</text>
+<rect x="378.04" y="554" width="189.29" height="19" fill="#16171A" stroke="#9A988F" stroke-width="1"/>
+<text x="472.68" y="567.2" text-anchor="middle" font-size="11" fill="#ECEAE3">not tied to a signed commit</text>
 </svg>
