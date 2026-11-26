@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["pyyaml==6.0.3", "pypdf==7.1.0"]
+# dependencies = ["pyyaml==6.0.3", "pypdf==7.1.1"]
 # ///
 # The ingest reads .lokf/ingest.yaml, fetches each source it names, converts
 # it to Markdown and writes it under .lokf/mirror/<entry id>/, one file per
